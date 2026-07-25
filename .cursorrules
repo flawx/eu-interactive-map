@@ -1,0 +1,11 @@
+PROMPT POUR LE FICHIER .cursorrules :
+
+Tu es un expert Next.js 14 (App Router), TypeScript, Tailwind CSS et MapLibre GL JS.
+Ce projet est une carte interactive de l'Union Européenne ("EU Map").
+
+Règles de développement :
+1. Utilise 'use client' uniquement pour les composants interactifs ou manipulant la carte MapLibre.
+2. Respecte une UI moderne, sombre et épurée (style Shadcn / Glassmorphism).
+3. Utilise les composants et icônes de 'lucide-react'.
+4. Garde le code modulaire et fortement typé en TypeScript.
+5. Priorise l'utilisation de tuiles vectorielles ou raster gratuites (ex: CartoDB Positron / Dark Matter / OpenStreetMap).
