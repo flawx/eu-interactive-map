@@ -39,6 +39,12 @@ type MapControlDockProps = {
   onDimensionModeChange: (mode: MapDimensionMode) => void;
 };
 
+const cardStyle = {
+  background: "var(--map-ui-surface)",
+  borderColor: "var(--map-ui-border)",
+  boxShadow: "var(--map-ui-shadow)",
+} as const;
+
 export default function MapControlDock({
   t,
   commandsRef,
@@ -100,99 +106,116 @@ export default function MapControlDock({
     commands[action]();
   };
 
-  const panelBottom = anchor
-    ? Math.max(16, window.innerHeight - anchor.top + 8)
-    : 96;
-  const panelRight = anchor
+  const panelWidth = Math.min(272, typeof window !== "undefined" ? window.innerWidth - 32 : 272);
+  const preferredRight = anchor
     ? Math.max(16, window.innerWidth - anchor.right)
-    : 16;
+    : 18;
+  const preferredBottom = anchor
+    ? Math.max(16, window.innerHeight - anchor.top + 8)
+    : 110;
+  const maxRight = Math.max(16, (typeof window !== "undefined" ? window.innerWidth : 400) - panelWidth - 16);
+  const panelRight = Math.min(preferredRight, maxRight);
+  const panelBottom = Math.min(
+    preferredBottom,
+    typeof window !== "undefined" ? Math.max(16, window.innerHeight - 220) : preferredBottom,
+  );
 
   return (
     <>
       <div
-        className="pointer-events-none absolute right-4 flex flex-col items-end gap-2"
+        className="pointer-events-none absolute"
         style={{
           zIndex: 920,
-          bottom: "max(1.5rem, calc(24px + env(safe-area-inset-bottom, 0px)))",
+          right: 18,
+          bottom: "calc(30px + env(safe-area-inset-bottom, 0px))",
         }}
       >
         <div
-          className="pointer-events-auto flex flex-col overflow-hidden rounded-[18px] border"
+          className="pointer-events-auto"
           style={{
-            background: "var(--map-ui-surface)",
-            borderColor: "var(--map-ui-border)",
-            boxShadow: "var(--map-ui-shadow)",
+            display: "grid",
+            gridTemplateColumns: "repeat(2, auto)",
+            gap: "clamp(6px, 1.5vw, 8px)",
+            alignItems: "end",
           }}
         >
-          <DockButton
-            ref={layersButtonRef}
-            label={t.mapControls.layers}
-            pressed={layersOpen}
-            onClick={() => setLayersOpen((value) => !value)}
-            ariaControls={layersPanelId}
+          <div
+            className="flex flex-col overflow-hidden rounded-[18px] border"
+            style={cardStyle}
           >
-            <Layers className="h-5 w-5" aria-hidden="true" />
-          </DockButton>
+            <DockButton
+              ref={layersButtonRef}
+              label={t.mapControls.layers}
+              pressed={layersOpen}
+              onClick={() => setLayersOpen((value) => !value)}
+              ariaControls={layersPanelId}
+            >
+              <Layers className="h-5 w-5" aria-hidden="true" />
+            </DockButton>
 
-          <Divider />
+            <Divider />
 
-          <DockButton
-            label={is3d ? t.mapControls.disable3d : t.mapControls.enable3d}
-            pressed={is3d}
-            disabled={!terrainReady && !is3d}
-            onClick={() => onDimensionModeChange(is3d ? "2d" : "3d")}
-          >
-            <span className="flex flex-col items-center leading-none">
-              <Box className="h-4 w-4" aria-hidden="true" />
-              <span className="mt-0.5 text-[9px] font-semibold">
-                {is3d ? t.mapControls.view3d : t.mapControls.view2d}
+            <DockButton
+              label={is3d ? t.mapControls.disable3d : t.mapControls.enable3d}
+              pressed={is3d}
+              disabled={!terrainReady && !is3d}
+              onClick={() => onDimensionModeChange(is3d ? "2d" : "3d")}
+            >
+              <span className="flex flex-col items-center leading-none">
+                <Box className="h-4 w-4" aria-hidden="true" />
+                <span className="mt-0.5 text-[9px] font-semibold">
+                  {is3d ? t.mapControls.view3d : t.mapControls.view2d}
+                </span>
               </span>
-            </span>
-          </DockButton>
+            </DockButton>
 
-          <Divider />
+            <Divider />
 
-          <DockButton
-            label={t.mapControls.tiltUp}
-            disabled={!canPitchUp}
-            onClick={() => run("pitchUp")}
+            <DockButton
+              label={t.mapControls.tiltUp}
+              disabled={!canPitchUp}
+              onClick={() => run("pitchUp")}
+            >
+              <ChevronUp className="h-5 w-5" aria-hidden="true" />
+            </DockButton>
+
+            <DockButton
+              label={t.mapControls.tiltDown}
+              disabled={!canPitchDown}
+              onClick={() => run("pitchDown")}
+            >
+              <ChevronDown className="h-5 w-5" aria-hidden="true" />
+            </DockButton>
+          </div>
+
+          <div
+            className="flex flex-col overflow-hidden rounded-[18px] border"
+            style={cardStyle}
           >
-            <ChevronUp className="h-5 w-5" aria-hidden="true" />
-          </DockButton>
+            <DockButton
+              label={t.mapControls.resetNorth}
+              onClick={() => run("resetNorth")}
+            >
+              <Compass
+                className="h-5 w-5 transition-transform duration-200"
+                style={{ transform: `rotate(${-bearing}deg)` }}
+                aria-hidden="true"
+              />
+            </DockButton>
 
-          <DockButton
-            label={t.mapControls.tiltDown}
-            disabled={!canPitchDown}
-            onClick={() => run("pitchDown")}
-          >
-            <ChevronDown className="h-5 w-5" aria-hidden="true" />
-          </DockButton>
+            <Divider />
 
-          <Divider />
+            <DockButton label={t.mapControls.zoomIn} onClick={() => run("zoomIn")}>
+              <Plus className="h-5 w-5" aria-hidden="true" />
+            </DockButton>
 
-          <DockButton
-            label={t.mapControls.resetNorth}
-            onClick={() => run("resetNorth")}
-          >
-            <Compass
-              className="h-5 w-5 transition-transform duration-200"
-              style={{ transform: `rotate(${-bearing}deg)` }}
-              aria-hidden="true"
-            />
-          </DockButton>
-
-          <Divider />
-
-          <DockButton label={t.mapControls.zoomIn} onClick={() => run("zoomIn")}>
-            <Plus className="h-5 w-5" aria-hidden="true" />
-          </DockButton>
-
-          <DockButton
-            label={t.mapControls.zoomOut}
-            onClick={() => run("zoomOut")}
-          >
-            <Minus className="h-5 w-5" aria-hidden="true" />
-          </DockButton>
+            <DockButton
+              label={t.mapControls.zoomOut}
+              onClick={() => run("zoomOut")}
+            >
+              <Minus className="h-5 w-5" aria-hidden="true" />
+            </DockButton>
+          </div>
         </div>
       </div>
 
@@ -204,8 +227,9 @@ export default function MapControlDock({
             id={layersPanelId}
             role="dialog"
             aria-label={t.mapControls.layers}
-            className="fixed w-[min(17rem,calc(100vw-2rem))] rounded-[18px] border p-3"
+            className="fixed rounded-[18px] border p-3"
             style={{
+              width: panelWidth,
               bottom: panelBottom,
               right: panelRight,
               zIndex: 1260,
@@ -289,7 +313,7 @@ const DockButton = forwardRef<
       aria-controls={ariaControls}
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex h-11 w-11 items-center justify-center outline-none transition hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1a73e8]/60 disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-flex h-11 w-11 min-h-11 min-w-11 items-center justify-center outline-none transition hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1a73e8]/60 disabled:cursor-not-allowed disabled:opacity-40"
       style={{ color: "var(--map-ui-text)" }}
     >
       {children}

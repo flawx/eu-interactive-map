@@ -159,6 +159,50 @@ function boundsFromPolygons(polygons: GeoJSON.Position[][][]): LngLatBounds {
   return bounds;
 }
 
+function setSymbolLayoutIfChanged(
+  map: MapLibreMap,
+  layerId: string,
+  property: "text-pitch-alignment" | "text-rotation-alignment" | "text-keep-upright",
+  value: "viewport" | boolean,
+): void {
+  try {
+    const current = map.getLayoutProperty(layerId, property);
+    if (current === value) return;
+    map.setLayoutProperty(layerId, property, value);
+  } catch {
+    // Some symbol layers refuse individual text layout properties.
+  }
+}
+
+/**
+ * Keep vector basemap / place labels facing the screen in pitched 3D views.
+ * No-op when the style has no symbol layers with text-field (e.g. raster Voyager).
+ */
+function keepBasemapLabelsUpright(map: MapLibreMap): void {
+  const layers = map.getStyle()?.layers;
+  if (!layers) return;
+
+  for (const layer of layers) {
+    if (layer.type !== "symbol") continue;
+
+    const textField = layer.layout?.["text-field"];
+    if (textField === undefined || textField === "") continue;
+
+    try {
+      setSymbolLayoutIfChanged(map, layer.id, "text-pitch-alignment", "viewport");
+      setSymbolLayoutIfChanged(
+        map,
+        layer.id,
+        "text-rotation-alignment",
+        "viewport",
+      );
+      setSymbolLayoutIfChanged(map, layer.id, "text-keep-upright", true);
+    } catch {
+      // Ignore layers that cannot accept upright text layout.
+    }
+  }
+}
+
 const FLAME_ICON_PATH =
   "M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4";
 
@@ -1259,6 +1303,8 @@ export default function MapContainer({
         }
       }
 
+      keepBasemapLabelsUpright(map);
+
       map.on("click", "effis-burned-area-snapshots-fill", handleEffisSnapshotClick);
       map.on(
         "mouseenter",
@@ -1370,6 +1416,7 @@ export default function MapContainer({
         source: "terrain-dem",
         exaggeration: 1.15,
       });
+      keepBasemapLabelsUpright(map);
       map.easeTo({
         pitch: Math.max(map.getPitch(), 50),
         duration: 700,
