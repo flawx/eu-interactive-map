@@ -7,6 +7,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
+import MapControlDock from "@/components/map/MapControlDock";
 import MapLegend from "@/components/map/MapLegend";
 import {
   defaultLocale,
@@ -22,7 +23,15 @@ import type {
   EffisBurnedArea,
   WildfireIncident,
 } from "@/lib/incidents/types";
+import type { MapCameraCommands } from "@/lib/map/mapCameraCommands";
 import type { MapFocusRequest } from "@/lib/map/focusRequest";
+import {
+  readMapViewPreferences,
+  writeMapBaseMode,
+  writeMapDimensionMode,
+  type MapBaseMode,
+  type MapDimensionMode,
+} from "@/lib/map/mapViewPreferences";
 import type { MapSearchResult } from "@/lib/search/mapSearch";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
@@ -113,6 +122,12 @@ export default function MapInterface() {
   );
   const [legendHighlight, setLegendHighlight] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
+  const [baseMode, setBaseMode] = useState<MapBaseMode>("map");
+  const [dimensionMode, setDimensionMode] = useState<MapDimensionMode>("2d");
+  const [mapPitch, setMapPitch] = useState(0);
+  const [mapBearing, setMapBearing] = useState(0);
+  const [terrainReady, setTerrainReady] = useState(false);
+  const mapCommandsRef = useRef<MapCameraCommands | null>(null);
   const focusNonceRef = useRef(0);
   const firmsRefreshStartedRef = useRef(false);
   const firmsHistoryRefreshStartedRef = useRef(false);
@@ -132,6 +147,12 @@ export default function MapInterface() {
       null,
     [wildfireIncidents, selectedWildfireId],
   );
+
+  useEffect(() => {
+    const prefs = readMapViewPreferences();
+    setBaseMode(prefs.baseMode);
+    setDimensionMode(prefs.dimensionMode);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -922,6 +943,31 @@ export default function MapInterface() {
               : null
           }
           focusGeometryRef={focusGeometryRef}
+          mapCommandsRef={mapCommandsRef}
+          baseMode={baseMode}
+          dimensionMode={dimensionMode}
+          onCameraChange={(snapshot) => {
+            setMapPitch(snapshot.pitch);
+            setMapBearing(snapshot.bearing);
+          }}
+          onTerrainReadyChange={setTerrainReady}
+        />
+        <MapControlDock
+          t={t}
+          commandsRef={mapCommandsRef}
+          baseMode={baseMode}
+          dimensionMode={dimensionMode}
+          pitch={mapPitch}
+          bearing={mapBearing}
+          terrainReady={terrainReady}
+          onBaseModeChange={(mode) => {
+            setBaseMode(mode);
+            writeMapBaseMode(mode);
+          }}
+          onDimensionModeChange={(mode) => {
+            setDimensionMode(mode);
+            writeMapDimensionMode(mode);
+          }}
         />
         <MapLegend
           locale={locale}

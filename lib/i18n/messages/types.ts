@@ -204,4 +204,20 @@ export type Messages = {
     address: string;
     source: string;
   };
+  mapControls: {
+    layers: string;
+    view2d: string;
+    view3d: string;
+    enable3d: string;
+    disable3d: string;
+    tiltUp: string;
+    tiltDown: string;
+    resetNorth: string;
+    zoomIn: string;
+    zoomOut: string;
+    baseMap: string;
+    baseRelief: string;
+    baseSatellite: string;
+    satellitePending: string;
+  };
 };

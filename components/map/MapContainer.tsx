@@ -21,6 +21,11 @@ import type {
   MapFocusRequest,
   TemporaryMapMarker,
 } from "@/lib/map/focusRequest";
+import type { MapCameraCommands } from "@/lib/map/mapCameraCommands";
+import type {
+  MapBaseMode,
+  MapDimensionMode,
+} from "@/lib/map/mapViewPreferences";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Worker CDN : évite le MIME text/html renvoyé par Webpack/Next pour le worker local
@@ -210,6 +215,11 @@ export default function MapContainer({
   focusRequest = null,
   temporaryMarker = null,
   focusGeometryRef,
+  mapCommandsRef,
+  baseMode = "map",
+  dimensionMode = "2d",
+  onCameraChange,
+  onTerrainReadyChange,
 }: {
   showEurozone: boolean;
   showNonEurozone: boolean;
@@ -235,6 +245,15 @@ export default function MapContainer({
   focusGeometryRef?: MutableRefObject<
     ((geometry: GeoJSON.Geometry) => void) | null
   >;
+  mapCommandsRef?: MutableRefObject<MapCameraCommands | null>;
+  baseMode?: MapBaseMode;
+  dimensionMode?: MapDimensionMode;
+  onCameraChange?: (snapshot: {
+    pitch: number;
+    bearing: number;
+    zoom: number;
+  }) => void;
+  onTerrainReadyChange?: (ready: boolean) => void;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -270,6 +289,14 @@ export default function MapContainer({
   );
   onEffisBurnedAreasAvailabilityChangeRef.current =
     onEffisBurnedAreasAvailabilityChange;
+  const baseModeRef = useRef(baseMode);
+  baseModeRef.current = baseMode;
+  const dimensionModeRef = useRef(dimensionMode);
+  dimensionModeRef.current = dimensionMode;
+  const onCameraChangeRef = useRef(onCameraChange);
+  onCameraChangeRef.current = onCameraChange;
+  const onTerrainReadyChangeRef = useRef(onTerrainReadyChange);
+  onTerrainReadyChangeRef.current = onTerrainReadyChange;
   const [mapSourcesReadyVersion, setMapSourcesReadyVersion] = useState(0);
 
   const applyLayerVisibility = (
@@ -366,6 +393,7 @@ export default function MapContainer({
       },
       center: [15.2551, 54.5260],
       zoom: 4,
+      maxPitch: 70,
     });
 
     mapRef.current = map;
@@ -405,6 +433,11 @@ export default function MapContainer({
         onEffisBurnedAreasAvailabilityChangeRef.current?.(true);
       }
 
+      if (eventSourceId === "terrain-dem") {
+        onTerrainReadyChangeRef.current?.(false);
+        return;
+      }
+
       const isDecodeError =
         message === "The source image could not be decoded";
 
@@ -428,6 +461,50 @@ export default function MapContainer({
     };
 
     map.on("error", handleMapError);
+
+    const emitCameraChange = () => {
+      onCameraChangeRef.current?.({
+        pitch: map.getPitch(),
+        bearing: map.getBearing(),
+        zoom: map.getZoom(),
+      });
+    };
+
+    map.on("rotate", emitCameraChange);
+    map.on("move", emitCameraChange);
+    map.on("pitch", emitCameraChange);
+    emitCameraChange();
+
+    if (mapCommandsRef) {
+      mapCommandsRef.current = {
+        zoomIn: () => {
+          map.zoomIn({ duration: 300 });
+        },
+        zoomOut: () => {
+          map.zoomOut({ duration: 300 });
+        },
+        resetNorth: () => {
+          map.easeTo({
+            bearing: 0,
+            ...(dimensionModeRef.current === "2d" ? { pitch: 0 } : {}),
+            duration: 500,
+          });
+        },
+        pitchUp: () => {
+          map.easeTo({
+            pitch: Math.min(70, map.getPitch() + 15),
+            duration: 350,
+          });
+        },
+        pitchDown: () => {
+          map.easeTo({
+            pitch: Math.max(0, map.getPitch() - 15),
+            duration: 350,
+          });
+        },
+        isReady: () => Boolean(mapRef.current),
+      };
+    }
 
     const updateEuOpacity = () => {
       const zoom = map.getZoom();
@@ -711,7 +788,42 @@ export default function MapContainer({
       layersReady = true;
       const burnedAreasTime = formatEffisTimeRange(7);
 
-      // Satellite overlays (above Voyager, below country fills / GDACS markers).
+      if (!map.getSource("terrain-dem")) {
+        map.addSource("terrain-dem", {
+          type: "raster-dem",
+          tiles: [
+            "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
+          ],
+          tileSize: 256,
+          encoding: "terrarium",
+          minzoom: 0,
+          maxzoom: 15,
+          attribution:
+            "Elevation data © Mapzen, AWS Open Data and contributors",
+        });
+      }
+
+      if (!map.getLayer("terrain-hillshade")) {
+        map.addLayer({
+          id: "terrain-hillshade",
+          type: "hillshade",
+          source: "terrain-dem",
+          layout: {
+            visibility:
+              baseModeRef.current === "relief" ? "visible" : "none",
+          },
+          paint: {
+            "hillshade-exaggeration": 0.35,
+            "hillshade-shadow-color": "#473b2f",
+            "hillshade-highlight-color": "#ffffff",
+            "hillshade-accent-color": "#7c6f5d",
+          },
+        });
+      }
+
+      onTerrainReadyChangeRef.current?.(true);
+
+      // Satellite overlays (above Voyager / hillshade, below country fills / GDACS).
       map.addSource("effis-burned-areas", {
         type: "raster",
         tiles: [
@@ -1223,6 +1335,13 @@ export default function MapContainer({
       gdacsFlameMarkersRef.current = [];
       map.off("zoom", updateEuOpacity);
       map.off("error", handleMapError);
+      map.off("rotate", emitCameraChange);
+      map.off("move", emitCameraChange);
+      map.off("pitch", emitCameraChange);
+      if (mapCommandsRef) {
+        mapCommandsRef.current = null;
+      }
+      onTerrainReadyChangeRef.current?.(false);
       map.remove();
       mapRef.current = null;
       if (focusGeometryRef) {
@@ -1230,6 +1349,42 @@ export default function MapContainer({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("terrain-hillshade")) return;
+
+    map.setLayoutProperty(
+      "terrain-hillshade",
+      "visibility",
+      baseMode === "relief" ? "visible" : "none",
+    );
+  }, [baseMode, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getSource("terrain-dem")) return;
+
+    if (dimensionMode === "3d") {
+      map.setTerrain({
+        source: "terrain-dem",
+        exaggeration: 1.15,
+      });
+      map.easeTo({
+        pitch: Math.max(map.getPitch(), 50),
+        duration: 700,
+      });
+      return;
+    }
+
+    map.setTerrain(null);
+    if (map.getPitch() !== 0) {
+      map.easeTo({
+        pitch: 0,
+        duration: 600,
+      });
+    }
+  }, [dimensionMode, mapSourcesReadyVersion]);
 
   useEffect(() => {
     if (!focusGeometryRef) return;

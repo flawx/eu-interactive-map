@@ -13,6 +13,11 @@ import type {
   MapFocusRequest,
   TemporaryMapMarker,
 } from "@/lib/map/focusRequest";
+import type { MapCameraCommands } from "@/lib/map/mapCameraCommands";
+import type {
+  MapBaseMode,
+  MapDimensionMode,
+} from "@/lib/map/mapViewPreferences";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -43,6 +48,15 @@ type MapClientProps = {
   focusGeometryRef?: MutableRefObject<
     ((geometry: GeoJSON.Geometry) => void) | null
   >;
+  mapCommandsRef?: MutableRefObject<MapCameraCommands | null>;
+  baseMode?: MapBaseMode;
+  dimensionMode?: MapDimensionMode;
+  onCameraChange?: (snapshot: {
+    pitch: number;
+    bearing: number;
+    zoom: number;
+  }) => void;
+  onTerrainReadyChange?: (ready: boolean) => void;
 };
 
 export default function MapClient({
@@ -68,6 +82,11 @@ export default function MapClient({
   focusRequest = null,
   temporaryMarker = null,
   focusGeometryRef,
+  mapCommandsRef,
+  baseMode = "map",
+  dimensionMode = "2d",
+  onCameraChange,
+  onTerrainReadyChange,
 }: MapClientProps) {
   return (
     <MapContainer
@@ -93,6 +112,11 @@ export default function MapClient({
       focusRequest={focusRequest}
       temporaryMarker={temporaryMarker}
       focusGeometryRef={focusGeometryRef}
+      mapCommandsRef={mapCommandsRef}
+      baseMode={baseMode}
+      dimensionMode={dimensionMode}
+      onCameraChange={onCameraChange}
+      onTerrainReadyChange={onTerrainReadyChange}
     />
   );
 }
