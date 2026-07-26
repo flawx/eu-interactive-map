@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { MutableRefObject } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
@@ -33,6 +34,9 @@ type MapClientProps = {
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
+  focusGeometryRef?: MutableRefObject<
+    ((geometry: GeoJSON.Geometry) => void) | null
+  >;
 };
 
 export default function MapClient({
@@ -55,6 +59,7 @@ export default function MapClient({
   firmsSnapshotsByIncidentId,
   firmsHistorySnapshotsByIncidentId,
   onEffisBurnedAreasAvailabilityChange,
+  focusGeometryRef,
 }: MapClientProps) {
   return (
     <MapContainer
@@ -77,6 +82,7 @@ export default function MapClient({
       firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
       firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}
       onEffisBurnedAreasAvailabilityChange={onEffisBurnedAreasAvailabilityChange}
+      focusGeometryRef={focusGeometryRef}
     />
   );
 }

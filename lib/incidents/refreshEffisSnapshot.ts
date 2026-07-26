@@ -22,6 +22,7 @@ import {
   type ParsedEffisFeature,
 } from "@/lib/incidents/effisWfs";
 import { createSupabaseServiceClient } from "@/lib/supabase/client";
+import { recordEffisBurnedAreaObservation } from "@/lib/incidents/wildfireObservations";
 
 export type RefreshEffisSnapshotInput = {
   incidentId: string;
@@ -306,6 +307,8 @@ export async function refreshEffisSnapshotForIncident(
       if (previousSnapshot) return preservedResult(previousSnapshot, false);
       return unavailableResult(false);
     }
+
+    await recordEffisBurnedAreaObservation(saved);
 
     return {
       snapshot: saved,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import {
   Map as MapLibreMap,
   Marker,
@@ -203,6 +203,7 @@ export default function MapContainer({
   firmsSnapshotsByIncidentId,
   firmsHistorySnapshotsByIncidentId,
   onEffisBurnedAreasAvailabilityChange,
+  focusGeometryRef,
 }: {
   showEurozone: boolean;
   showNonEurozone: boolean;
@@ -223,6 +224,9 @@ export default function MapContainer({
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
+  focusGeometryRef?: MutableRefObject<
+    ((geometry: GeoJSON.Geometry) => void) | null
+  >;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -1211,8 +1215,37 @@ export default function MapContainer({
       map.off("error", handleMapError);
       map.remove();
       mapRef.current = null;
+      if (focusGeometryRef) {
+        focusGeometryRef.current = null;
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!focusGeometryRef) return;
+
+    focusGeometryRef.current = (geometry: GeoJSON.Geometry) => {
+      const map = mapRef.current;
+      if (!map || !("coordinates" in geometry)) return;
+
+      const bounds = new LngLatBounds();
+      extendBoundsWithCoordinates(bounds, geometry.coordinates);
+
+      if (bounds.isEmpty()) return;
+
+      map.fitBounds(bounds, {
+        padding: 80,
+        maxZoom: 12,
+        duration: 800,
+      });
+    };
+
+    return () => {
+      if (focusGeometryRef.current) {
+        focusGeometryRef.current = null;
+      }
+    };
+  }, [focusGeometryRef]);
 
   useEffect(() => {
     const map = mapRef.current;
