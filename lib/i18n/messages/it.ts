@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const it = {
   legend: {
@@ -70,5 +70,7 @@ export const it = {
     satelliteLookupLoading: "Ricerca del perimetro satellitare…",
     effisDisclaimer: "Perimetro derivato da satellite. Forma e superficie possono essere riviste dopo ulteriori analisi.",
     calculatedArea: "Calcolata dal perimetro satellitare",
+    satellitePerimeterUpdated: "Perimetro satellitare aggiornato",
+    savedSatelliteArea: "Superficie del perimetro satellitare salvato",
   },
 } satisfies Messages;

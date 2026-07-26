@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const fi = {
   legend: {
@@ -70,5 +70,7 @@ export const fi = {
     satelliteLookupLoading: "Tarkistetaan satelliittireunaa…",
     effisDisclaimer: "Satelliittiperäinen reuna. Muoto ja pinta-ala voivat tarkentua lisäanalyysin jälkeen.",
     calculatedArea: "Laskettu satelliittireunasta",
+    satellitePerimeterUpdated: "Satelliittikehä päivitetty",
+    savedSatelliteArea: "Tallennettu satelliittikehän pinta-ala",
   },
 } satisfies Messages;

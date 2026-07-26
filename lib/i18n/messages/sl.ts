@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const sl = {
   legend: {
@@ -70,5 +70,7 @@ export const sl = {
     satelliteLookupLoading: "Preverjanje satelitskega perimetra…",
     effisDisclaimer: "Perimeter iz satelitskih podatkov. Oblika in površina se lahko po nadaljnji analizi spremenita.",
     calculatedArea: "Izračunano iz satelitskega perimetra",
+    satellitePerimeterUpdated: "Satelitski obod posodobljen",
+    savedSatelliteArea: "Shranjena površina satelitskega oboda",
   },
 } satisfies Messages;

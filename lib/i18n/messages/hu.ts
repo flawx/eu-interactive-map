@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const hu = {
   legend: {
@@ -70,5 +70,7 @@ export const hu = {
     satelliteLookupLoading: "Műholdas kerület keresése…",
     effisDisclaimer: "Műholdas alapú kerület. Alakja és területe további elemzés után módosulhat.",
     calculatedArea: "A műholdas kerületből számítva",
+    satellitePerimeterUpdated: "Műholdas kerület frissítve",
+    savedSatelliteArea: "Mentett műholdas kerület területe",
   },
 } satisfies Messages;

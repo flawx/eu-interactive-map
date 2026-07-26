@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import EffisBurnedAreaPanel from "@/components/incidents/EffisBurnedAreaPanel";
 import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
@@ -12,10 +12,20 @@ import {
   type Locale,
 } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
+import {
+  validateEffisBurnedAreaSnapshot,
+  type EffisBurnedAreaSnapshot,
+} from "@/lib/incidents/effisSnapshot";
 import type {
   EffisBurnedArea,
   WildfireIncident,
 } from "@/lib/incidents/types";
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 export default function MapInterface() {
   const [locale, setLocale] = useState<Locale>(defaultLocale);
@@ -41,6 +51,10 @@ export default function MapInterface() {
   const [selectedEffisBurnedArea, setSelectedEffisBurnedArea] =
     useState<EffisBurnedArea | null>(null);
   const [effisBurnedAreaLoading, setEffisBurnedAreaLoading] = useState(false);
+  const [effisSnapshotsByIncidentId, setEffisSnapshotsByIncidentId] = useState<
+    Record<string, EffisBurnedAreaSnapshot>
+  >({});
+  const refreshedSnapshotIdsRef = useRef<Set<string>>(new Set());
 
   const t = getMessages(locale);
 
@@ -115,6 +129,122 @@ export default function MapInterface() {
     };
   }, []);
 
+  useEffect(() => {
+    if (wildfireIncidents.length === 0) return;
+
+    const controller = new AbortController();
+
+    const loadCachedSnapshots = async () => {
+      for (let index = 0; index < wildfireIncidents.length; index += 2) {
+        if (controller.signal.aborted) return;
+
+        const batch = wildfireIncidents.slice(index, index + 2);
+        const results = await Promise.allSettled(
+          batch.map(async (incident) => {
+            const response = await fetch(
+              `/api/incidents/effis/snapshots/${encodeURIComponent(incident.id)}`,
+              { signal: controller.signal },
+            );
+
+            if (!response.ok) {
+              return null;
+            }
+
+            const data: unknown = await response.json();
+            if (
+              !data ||
+              typeof data !== "object" ||
+              !("snapshot" in data) ||
+              !data.snapshot
+            ) {
+              return null;
+            }
+
+            const snapshot = validateEffisBurnedAreaSnapshot(data.snapshot);
+            if (!snapshot) return null;
+
+            return { incidentId: incident.id, snapshot };
+          }),
+        );
+
+        for (const result of results) {
+          if (result.status !== "fulfilled" || !result.value) continue;
+
+          const { incidentId, snapshot } = result.value;
+          setEffisSnapshotsByIncidentId((currentSnapshots) => ({
+            ...currentSnapshots,
+            [incidentId]: snapshot,
+          }));
+        }
+      }
+
+      if (controller.signal.aborted) return;
+
+      for (const incident of wildfireIncidents) {
+        if (controller.signal.aborted) return;
+        if (refreshedSnapshotIdsRef.current.has(incident.id)) continue;
+
+        refreshedSnapshotIdsRef.current.add(incident.id);
+
+        try {
+          const response = await fetch(
+            `/api/incidents/effis/snapshots/${encodeURIComponent(incident.id)}/refresh`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                longitude: incident.longitude,
+                latitude: incident.latitude,
+                countryCode: incident.countryCode,
+              }),
+              signal: controller.signal,
+            },
+          );
+
+          if (response.ok) {
+            const data: unknown = await response.json();
+            if (
+              data &&
+              typeof data === "object" &&
+              "snapshot" in data &&
+              data.snapshot
+            ) {
+              const snapshot = validateEffisBurnedAreaSnapshot(data.snapshot);
+              if (snapshot) {
+                setEffisSnapshotsByIncidentId((currentSnapshots) => ({
+                  ...currentSnapshots,
+                  [incident.id]: snapshot,
+                }));
+              }
+            }
+          }
+        } catch (error: unknown) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+          if (
+            typeof error === "object" &&
+            error !== null &&
+            "name" in error &&
+            error.name === "AbortError"
+          ) {
+            return;
+          }
+        }
+
+        await sleep(1500);
+      }
+    };
+
+    void loadCachedSnapshots();
+
+    return () => {
+      controller.abort();
+    };
+  }, [wildfireIncidents]);
+
   void wildfiresLoading;
 
   const handleCountrySelect = (countryCode: string | null) => {
@@ -152,6 +282,8 @@ export default function MapInterface() {
           }
         }}
         onEffisBurnedAreaLoadingChange={setEffisBurnedAreaLoading}
+        effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
+        selectedWildfireId={selectedWildfireId}
       />
       <MapLegend
         locale={locale}
@@ -189,6 +321,11 @@ export default function MapInterface() {
         <WildfireIncidentPanel
           incident={selectedWildfire}
           locale={locale}
+          snapshot={
+            selectedWildfireId
+              ? effisSnapshotsByIncidentId[selectedWildfireId] ?? null
+              : null
+          }
           onClose={() => setSelectedWildfireId(null)}
         />
       )}
@@ -201,20 +338,23 @@ export default function MapInterface() {
         />
       )}
 
-      <label className="absolute left-4 top-4 z-10 block">
-        <span className="sr-only">Language</span>
+      <div className="absolute right-4 top-4 z-10">
+        <label className="sr-only" htmlFor="map-language">
+          Language
+        </label>
         <select
+          id="map-language"
           value={locale}
           onChange={(event) => setLocale(event.target.value as Locale)}
-          className="rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-md outline-none transition hover:border-white/20 focus:border-white/30"
+          className="rounded-md border border-white/10 bg-slate-950/80 px-2 py-1 text-xs text-white outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-sky-400/70"
         >
-          {supportedLocales.map((code) => (
-            <option key={code} value={code} className="bg-slate-950 text-slate-200">
-              {languageNames.of(code) ?? code}
+          {supportedLocales.map((supportedLocale) => (
+            <option key={supportedLocale} value={supportedLocale}>
+              {languageNames.of(supportedLocale) ?? supportedLocale}
             </option>
           ))}
         </select>
-      </label>
+      </div>
     </>
   );
 }

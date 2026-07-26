@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const bg = {
   legend: {
@@ -70,5 +70,7 @@ export const bg = {
     satelliteLookupLoading: "Проверка на сателитния периметър…",
     effisDisclaimer: "Периметър от сателитни данни. Формата и площта могат да бъдат преработени след допълнителен анализ.",
     calculatedArea: "Изчислена от сателитния периметър",
+    satellitePerimeterUpdated: "Сателитният периметър е обновен",
+    savedSatelliteArea: "Запазена площ на сателитния периметър",
   },
 } satisfies Messages;

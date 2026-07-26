@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const cs = {
   legend: {
@@ -70,5 +70,7 @@ export const cs = {
     satelliteLookupLoading: "Kontrola satelitního perimetru…",
     effisDisclaimer: "Perimetr ze satelitních dat. Jeho tvar a plocha mohou být po další analýze upraveny.",
     calculatedArea: "Vypočteno ze satelitního perimetru",
+    satellitePerimeterUpdated: "Satelitní obvod aktualizován",
+    savedSatelliteArea: "Uložená plocha satelitního obvodu",
   },
 } satisfies Messages;

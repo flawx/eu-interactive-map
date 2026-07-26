@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const mt = {
   legend: {
@@ -70,5 +70,7 @@ export const mt = {
     satelliteLookupLoading: "Qed jittaqqas il-perimetru satellitari…",
     effisDisclaimer: "Perimetru derivat mis-satellita. Il-forma u ż-żona jistgħu jiġu riveduti wara analiżi ulterjuri.",
     calculatedArea: "Kalkulata mill-perimetru satellitari",
+    satellitePerimeterUpdated: "Perimetru tas-satellita aġġornat",
+    savedSatelliteArea: "Erja tal-perimetru tas-satellita ssejvjata",
   },
 } satisfies Messages;

@@ -70,5 +70,7 @@ export const fr = {
     satelliteLookupLoading: "Recherche du périmètre satellite…",
     effisDisclaimer: "Périmètre issu de données satellites. Sa forme et sa superficie peuvent être révisées après analyse.",
     calculatedArea: "Calculée à partir du périmètre satellite",
+    satellitePerimeterUpdated: "Périmètre satellite mis à jour",
+    savedSatelliteArea: "Superficie du périmètre satellite sauvegardé",
   },
 } satisfies Messages;
