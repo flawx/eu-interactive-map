@@ -5,10 +5,12 @@ import EffisBurnedAreaPanel from "@/components/incidents/EffisBurnedAreaPanel";
 import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel";
 import AppHeader from "@/components/layout/AppHeader";
 import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
+import CapitalCityPanel from "@/components/europe/CapitalCityPanel";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
 import MapLegend from "@/components/map/MapLegend";
+import { getEuCapitalById } from "@/lib/europe/euCapitals";
 import {
   defaultLocale,
   type Locale,
@@ -97,6 +99,12 @@ export default function MapInterface() {
   );
   const [showSchengenNonEU, setShowSchengenNonEU] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.schengenOutsideEu,
+  );
+  const [showEuCapitals, setShowEuCapitals] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euCapitals,
+  );
+  const [selectedCapitalId, setSelectedCapitalId] = useState<string | null>(
+    null,
   );
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(
     null,
@@ -204,6 +212,7 @@ export default function MapInterface() {
     setShowNonEurozone(prefs.euOutsideEuroArea);
     setShowSchengenNonEU(prefs.schengenOutsideEu);
     setShowCandidates(prefs.euCandidates);
+    setShowEuCapitals(prefs.euCapitals);
     setShowWildfires(prefs.majorWildfires);
     setShowSatelliteActiveFires(prefs.satelliteActiveFires);
     setShowSatelliteBurnedAreas(prefs.recentSatelliteHistory);
@@ -225,6 +234,7 @@ export default function MapInterface() {
       euOutsideEuroArea: showNonEurozone,
       schengenOutsideEu: showSchengenNonEU,
       euCandidates: showCandidates,
+      euCapitals: showEuCapitals,
       majorWildfires: showWildfires,
       satelliteActiveFires: showSatelliteActiveFires,
       recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -235,6 +245,7 @@ export default function MapInterface() {
     showNonEurozone,
     showSchengenNonEU,
     showCandidates,
+    showEuCapitals,
     showWildfires,
     showSatelliteActiveFires,
     showSatelliteBurnedAreas,
@@ -1061,12 +1072,35 @@ export default function MapInterface() {
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
     setSelectedCountryCode(countryCode);
+  };
+
+  const handleCapitalSelect = (capitalId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    clearTemporaryPlace();
+    setSelectedCapitalId(capitalId);
+
+    if (capitalId) {
+      setShowEuCapitals(true);
+      const capital = getEuCapitalById(capitalId);
+      if (capital) {
+        requestFocus({
+          kind: "point",
+          longitude: capital.longitude,
+          latitude: capital.latitude,
+          zoom: 10,
+        });
+      }
+    }
   };
 
   const handleWildfireSelect = (incidentId: string | null) => {
     setSelectedCountryCode(null);
     setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
     setSelectedWildfireId(incidentId);
   };
 
@@ -1093,6 +1127,7 @@ export default function MapInterface() {
     setSelectedCountryCode(null);
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -1108,6 +1143,7 @@ export default function MapInterface() {
       setSelectedCountryCode(null);
       setSelectedWildfireId(null);
       setSelectedEffisBurnedArea(null);
+      setSelectedCapitalId(null);
       setTemporaryPlace(result);
       requestFocus({
         kind: "point",
@@ -1131,6 +1167,11 @@ export default function MapInterface() {
       return;
     }
 
+    if (result.type === "capital" && result.capitalId) {
+      handleCapitalSelect(result.capitalId);
+      return;
+    }
+
     if (result.type === "capital" || result.type === "eu_institution") {
       if (result.countryCode) {
         handleCountrySelect(result.countryCode);
@@ -1138,6 +1179,7 @@ export default function MapInterface() {
         setSelectedWildfireId(null);
         setSelectedEffisBurnedArea(null);
         setSelectedCountryCode(null);
+        setSelectedCapitalId(null);
       }
       requestFocus({
         kind: "point",
@@ -1179,6 +1221,9 @@ export default function MapInterface() {
           showSchengenNonEU={showSchengenNonEU}
           selectedCountryCode={selectedCountryCode}
           onCountrySelect={handleCountrySelect}
+          showEuCapitals={showEuCapitals}
+          selectedCapitalId={selectedCapitalId}
+          onCapitalSelect={handleCapitalSelect}
           wildfireIncidents={wildfireIncidents}
           showWildfires={showWildfires}
           onWildfireSelect={handleWildfireSelect}
@@ -1280,6 +1325,8 @@ export default function MapInterface() {
           onToggleCandidates={setShowCandidates}
           showSchengenNonEU={showSchengenNonEU}
           onToggleSchengenNonEU={setShowSchengenNonEU}
+          showEuCapitals={showEuCapitals}
+          onToggleEuCapitals={setShowEuCapitals}
           showWildfires={showWildfires}
           onToggleWildfires={setShowWildfires}
           showSatelliteActiveFires={showSatelliteActiveFires}
@@ -1321,6 +1368,21 @@ export default function MapInterface() {
             {t.incidents.effisUnavailableNasaShown}
           </div>
         )}
+
+        {selectedCapitalId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <CapitalCityPanel
+              capitalId={selectedCapitalId}
+              locale={locale}
+              onClose={() => setSelectedCapitalId(null)}
+              onOpenCountry={(countryCode) => {
+                setSelectedCapitalId(null);
+                handleCountrySelect(countryCode);
+              }}
+            />
+          )}
 
         {selectedCountryCode && !selectedWildfire && !selectedEffisBurnedArea && (
           <CountryInfoPanel

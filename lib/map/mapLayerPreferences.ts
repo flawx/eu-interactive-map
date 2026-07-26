@@ -3,6 +3,7 @@ export type MapLayerPreferences = {
   euOutsideEuroArea: boolean;
   schengenOutsideEu: boolean;
   euCandidates: boolean;
+  euCapitals: boolean;
   majorWildfires: boolean;
   satelliteActiveFires: boolean;
   recentSatelliteHistory: boolean;
@@ -13,6 +14,7 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   euOutsideEuroArea: true,
   schengenOutsideEu: false,
   euCandidates: false,
+  euCapitals: false,
   majorWildfires: false,
   satelliteActiveFires: false,
   recentSatelliteHistory: false,
@@ -26,6 +28,7 @@ const LAYER_KEYS = [
   "euOutsideEuroArea",
   "schengenOutsideEu",
   "euCandidates",
+  "euCapitals",
   "majorWildfires",
   "satelliteActiveFires",
   "recentSatelliteHistory",
@@ -77,6 +80,7 @@ export function saveMapLayerPreferences(
       euOutsideEuroArea: Boolean(preferences.euOutsideEuroArea),
       schengenOutsideEu: Boolean(preferences.schengenOutsideEu),
       euCandidates: Boolean(preferences.euCandidates),
+      euCapitals: Boolean(preferences.euCapitals),
       majorWildfires: Boolean(preferences.majorWildfires),
       satelliteActiveFires: Boolean(preferences.satelliteActiveFires),
       recentSatelliteHistory: Boolean(preferences.recentSatelliteHistory),

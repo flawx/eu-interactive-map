@@ -47,6 +47,8 @@ type MapSearchBoxProps = {
 
 function categoryLabel(category: MapSearchCategory, t: Messages): string {
   switch (category) {
+    case "eu_capitals":
+      return t.search.groupEuCapitals;
     case "countries_capitals":
       return t.search.groupCountriesCapitals;
     case "eu_institutions":
@@ -60,12 +62,31 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
   }
 }
 
-function ResultIcon({ type }: { type: MapSearchResult["type"] }) {
+function ResultIcon({
+  type,
+  countryCode,
+}: {
+  type: MapSearchResult["type"];
+  countryCode?: string;
+}) {
+  if (type === "capital" && countryCode) {
+    const region = (countryCode === "EL" ? "GR" : countryCode).toLowerCase();
+    return (
+      <img
+        src={`https://flagcdn.io/w40/${region}.png`}
+        alt=""
+        width={20}
+        height={15}
+        className="mt-0.5 h-[15px] w-5 shrink-0 rounded-[2px] object-cover"
+      />
+    );
+  }
+
   switch (type) {
     case "country":
       return <Landmark className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />;
     case "capital":
-      return <MapPin className="h-4 w-4 text-[#188038]" aria-hidden="true" />;
+      return <MapPin className="h-4 w-4 text-[#003399]" aria-hidden="true" />;
     case "wildfire":
       return <Flame className="h-4 w-4 text-[#d93025]" aria-hidden="true" />;
     case "eu_institution":
@@ -310,7 +331,7 @@ export default function MapSearchBox({
                 : "hover:bg-[var(--map-ui-surface-hover)]"
             }`}
           >
-            <ResultIcon type={result.type} />
+            <ResultIcon type={result.type} countryCode={result.countryCode} />
             <span className="min-w-0 flex-1">
               <span
                 className="block truncate text-sm font-medium"
@@ -452,7 +473,10 @@ export default function MapSearchBox({
                           : "hover:bg-[var(--map-ui-surface-hover)]"
                       }`}
                     >
-                      <ResultIcon type={result.type} />
+                      <ResultIcon
+                        type={result.type}
+                        countryCode={result.countryCode}
+                      />
                       <span className="min-w-0 flex-1">
                         <span
                           className="block truncate text-sm font-medium"

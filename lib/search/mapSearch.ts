@@ -3,6 +3,7 @@ import {
   nationalDaysByCountry,
   type EuInstitutionId,
 } from "@/lib/data/countryFacts";
+import { EU_CAPITALS, EU_MEMBER_COUNTRY_CODES } from "@/lib/europe/euCapitals";
 import type { WildfireIncident } from "@/lib/incidents/types";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -16,6 +17,7 @@ export type MapSearchResultType =
 
 export type MapSearchCategory =
   | "countries_capitals"
+  | "eu_capitals"
   | "eu_institutions"
   | "active_alerts"
   | "app_places"
@@ -32,6 +34,7 @@ export type MapSearchResult = {
   bbox?: [number, number, number, number];
   icon: string;
   countryCode?: string;
+  capitalId?: string;
   incidentId?: string;
   source: "local" | "nominatim";
   metadata: Record<string, string | number | boolean | null>;
@@ -42,41 +45,14 @@ export type MapSearchGroup = {
   results: MapSearchResult[];
 };
 
-/** Real capital seats for countries already present in the local countryFacts index. */
-const CAPITALS_BY_COUNTRY: ReadonlyArray<{
+/** Non-EU capitals still indexed for search (Schengen / candidates). */
+const NON_EU_CAPITALS_BY_COUNTRY: ReadonlyArray<{
   countryCode: string;
   name: string;
   aliases: readonly string[];
   longitude: number;
   latitude: number;
 }> = [
-  { countryCode: "AT", name: "Vienna", aliases: ["Wien", "Vienne"], longitude: 16.3738, latitude: 48.2082 },
-  { countryCode: "BE", name: "Brussels", aliases: ["Bruxelles", "Brussel"], longitude: 4.3517, latitude: 50.8503 },
-  { countryCode: "BG", name: "Sofia", aliases: ["Sofiya"], longitude: 23.3219, latitude: 42.6977 },
-  { countryCode: "HR", name: "Zagreb", aliases: [], longitude: 15.9819, latitude: 45.815 },
-  { countryCode: "CY", name: "Nicosia", aliases: ["Lefkosia"], longitude: 33.3823, latitude: 35.1856 },
-  { countryCode: "CZ", name: "Prague", aliases: ["Praha", "Prag"], longitude: 14.4378, latitude: 50.0755 },
-  { countryCode: "DK", name: "Copenhagen", aliases: ["København", "Kopenhagen"], longitude: 12.5683, latitude: 55.6761 },
-  { countryCode: "EE", name: "Tallinn", aliases: [], longitude: 24.7536, latitude: 59.437 },
-  { countryCode: "FI", name: "Helsinki", aliases: ["Helsingfors"], longitude: 24.9384, latitude: 60.1699 },
-  { countryCode: "FR", name: "Paris", aliases: [], longitude: 2.3522, latitude: 48.8566 },
-  { countryCode: "DE", name: "Berlin", aliases: [], longitude: 13.405, latitude: 52.52 },
-  { countryCode: "EL", name: "Athens", aliases: ["Athína", "Athenes", "Athènes"], longitude: 23.7275, latitude: 37.9838 },
-  { countryCode: "HU", name: "Budapest", aliases: [], longitude: 19.0402, latitude: 47.4979 },
-  { countryCode: "IE", name: "Dublin", aliases: ["Baile Átha Cliath"], longitude: -6.2603, latitude: 53.3498 },
-  { countryCode: "IT", name: "Rome", aliases: ["Roma"], longitude: 12.4964, latitude: 41.9028 },
-  { countryCode: "LV", name: "Riga", aliases: ["Rīga"], longitude: 24.1052, latitude: 56.9496 },
-  { countryCode: "LT", name: "Vilnius", aliases: [], longitude: 25.2797, latitude: 54.6872 },
-  { countryCode: "LU", name: "Luxembourg", aliases: ["Luxemburg"], longitude: 6.1296, latitude: 49.6116 },
-  { countryCode: "MT", name: "Valletta", aliases: [], longitude: 14.5146, latitude: 35.8989 },
-  { countryCode: "NL", name: "Amsterdam", aliases: [], longitude: 4.9041, latitude: 52.3676 },
-  { countryCode: "PL", name: "Warsaw", aliases: ["Warszawa", "Varsovie"], longitude: 21.0122, latitude: 52.2297 },
-  { countryCode: "PT", name: "Lisbon", aliases: ["Lisboa", "Lisbonne"], longitude: -9.1393, latitude: 38.7223 },
-  { countryCode: "RO", name: "Bucharest", aliases: ["București", "Bucarest"], longitude: 26.1025, latitude: 44.4268 },
-  { countryCode: "SK", name: "Bratislava", aliases: [], longitude: 17.1077, latitude: 48.1486 },
-  { countryCode: "SI", name: "Ljubljana", aliases: [], longitude: 14.5058, latitude: 46.0569 },
-  { countryCode: "ES", name: "Madrid", aliases: [], longitude: -3.7038, latitude: 40.4168 },
-  { countryCode: "SE", name: "Stockholm", aliases: [], longitude: 18.0686, latitude: 59.3293 },
   { countryCode: "IS", name: "Reykjavík", aliases: ["Reykjavik"], longitude: -21.8174, latitude: 64.1466 },
   { countryCode: "LI", name: "Vaduz", aliases: [], longitude: 9.5209, latitude: 47.141 },
   { countryCode: "NO", name: "Oslo", aliases: [], longitude: 10.7522, latitude: 59.9139 },
@@ -91,6 +67,8 @@ const CAPITALS_BY_COUNTRY: ReadonlyArray<{
   { countryCode: "TR", name: "Ankara", aliases: [], longitude: 32.8597, latitude: 39.9334 },
   { countryCode: "UA", name: "Kyiv", aliases: ["Kiev", "Київ"], longitude: 30.5234, latitude: 50.4501 },
 ];
+
+const EU_MEMBER_CODE_SET = new Set<string>(EU_MEMBER_COUNTRY_CODES);
 
 /** Known seats for EU institutions already referenced in countryFacts. */
 const INSTITUTION_SEATS: ReadonlyArray<{
@@ -236,7 +214,9 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
       title,
       ...(COUNTRY_ALIASES[countryCode] ?? []),
     ];
-    const capital = CAPITALS_BY_COUNTRY.find((c) => c.countryCode === countryCode);
+    const capital =
+      EU_CAPITALS.find((c) => c.countryCode === countryCode) ??
+      NON_EU_CAPITALS_BY_COUNTRY.find((c) => c.countryCode === countryCode);
 
     results.push({
       id: `country:${countryCode}`,
@@ -255,8 +235,38 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
     });
   }
 
-  for (const capital of CAPITALS_BY_COUNTRY) {
+  for (const capital of EU_CAPITALS) {
+    const countryName = countryDisplayName(capital.countryCode, locale);
+    const title =
+      capital.wikipediaTitles?.[locale] ?? capital.canonicalName;
+    results.push({
+      id: `eu-capital:${capital.id}`,
+      type: "capital",
+      category: "eu_capitals",
+      title,
+      subtitle: countryName,
+      longitude: capital.longitude,
+      latitude: capital.latitude,
+      icon: "capital",
+      countryCode: capital.countryCode,
+      capitalId: capital.id,
+      source: "local",
+      metadata: {
+        searchText: [
+          title,
+          capital.canonicalName,
+          capital.nativeName,
+          ...capital.aliases,
+          countryName,
+          capital.countryCode,
+        ].join(" "),
+      },
+    });
+  }
+
+  for (const capital of NON_EU_CAPITALS_BY_COUNTRY) {
     if (!(capital.countryCode in nationalDaysByCountry)) continue;
+    if (EU_MEMBER_CODE_SET.has(capital.countryCode)) continue;
     const countryName = countryDisplayName(capital.countryCode, locale);
     results.push({
       id: `capital:${capital.countryCode}`,
@@ -393,6 +403,7 @@ export function searchLocalIndex(
     .map((entry) => entry.item);
 
   const order: MapSearchCategory[] = [
+    "eu_capitals",
     "countries_capitals",
     "eu_institutions",
     "active_alerts",

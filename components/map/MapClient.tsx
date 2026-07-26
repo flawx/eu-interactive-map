@@ -31,6 +31,9 @@ type MapClientProps = {
   showSchengenNonEU: boolean;
   selectedCountryCode: string | null;
   onCountrySelect: (countryCode: string | null) => void;
+  showEuCapitals: boolean;
+  selectedCapitalId: string | null;
+  onCapitalSelect: (capitalId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -72,6 +75,9 @@ export default function MapClient({
   showSchengenNonEU,
   selectedCountryCode,
   onCountrySelect,
+  showEuCapitals,
+  selectedCapitalId,
+  onCapitalSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -105,6 +111,9 @@ export default function MapClient({
       showSchengenNonEU={showSchengenNonEU}
       selectedCountryCode={selectedCountryCode}
       onCountrySelect={onCountrySelect}
+      showEuCapitals={showEuCapitals}
+      selectedCapitalId={selectedCapitalId}
+      onCapitalSelect={onCapitalSelect}
       wildfireIncidents={wildfireIncidents}
       showWildfires={showWildfires}
       onWildfireSelect={onWildfireSelect}

@@ -25,6 +25,8 @@ type MapLegendProps = {
   onToggleCandidates: (value: boolean) => void;
   showSchengenNonEU: boolean;
   onToggleSchengenNonEU: (value: boolean) => void;
+  showEuCapitals: boolean;
+  onToggleEuCapitals: (value: boolean) => void;
   showWildfires: boolean;
   onToggleWildfires: (value: boolean) => void;
   showSatelliteActiveFires: boolean;
@@ -53,6 +55,8 @@ export default function MapLegend({
   onToggleCandidates,
   showSchengenNonEU,
   onToggleSchengenNonEU,
+  showEuCapitals,
+  onToggleEuCapitals,
   showWildfires,
   onToggleWildfires,
   showSatelliteActiveFires,
@@ -90,6 +94,7 @@ export default function MapLegend({
     showNonEurozone,
     showSchengenNonEU,
     showCandidates,
+    showEuCapitals,
   ].filter(Boolean).length;
 
   const alertsActive = [
@@ -103,6 +108,7 @@ export default function MapLegend({
     euOutsideEuroArea: showNonEurozone,
     schengenOutsideEu: showSchengenNonEU,
     euCandidates: showCandidates,
+    euCapitals: showEuCapitals,
     majorWildfires: showWildfires,
     satelliteActiveFires: showSatelliteActiveFires,
     recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -218,6 +224,23 @@ export default function MapLegend({
             color="#f59e0b"
             label={t.legend.officialCandidate}
           />
+          <LayerToggle
+            checked={showEuCapitals}
+            onChange={onToggleEuCapitals}
+            color="#003399"
+            label={t.legend.euCapitals}
+            swatchClassName="relative overflow-hidden rounded-full"
+            swatchStyle={{
+              background:
+                "radial-gradient(circle at 50% 50%, #facc15 0 28%, #003399 30%)",
+            }}
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.euCapitalsDescription}
+          </p>
         </Category>
 
         <Category

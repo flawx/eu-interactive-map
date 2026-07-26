@@ -16,6 +16,7 @@ import type {
 } from "@/lib/incidents/types";
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
+import { EU_CAPITALS } from "@/lib/europe/euCapitals";
 import type { Locale } from "@/lib/i18n/config";
 import type {
   MapFocusRequest,
@@ -243,6 +244,95 @@ function createFlameMarkerElement(
   return el;
 }
 
+function buildEuCapitalsCollection(locale: Locale): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: EU_CAPITALS.map((capital) => ({
+      type: "Feature",
+      properties: {
+        capitalId: capital.id,
+        name: capital.wikipediaTitles?.[locale] ?? capital.canonicalName,
+        nativeName: capital.nativeName,
+        countryCode: capital.countryCode,
+        searchLabel: [capital.canonicalName, capital.nativeName, ...capital.aliases].join(" "),
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [capital.longitude, capital.latitude],
+      },
+    })),
+  };
+}
+
+function createEuCapitalIcon(): { width: number; height: number; data: Uint8Array } {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return { width: size, height: size, data: new Uint8Array(size * size * 4) };
+  }
+  // soft shadow
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2 + 1, 18, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fill();
+  // white ring
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, 18, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  // EU blue disc
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, 15, 0, Math.PI * 2);
+  ctx.fillStyle = "#003399";
+  ctx.fill();
+  // yellow star (simple 5-point)
+  const drawStar = (cx: number, cy: number, spikes: number, outer: number, inner: number) => {
+    let rot = (Math.PI / 2) * 3;
+    let x = cx;
+    let y = cy;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outer);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outer;
+      y = cy + Math.sin(rot) * outer;
+      ctx.lineTo(x, y);
+      rot += Math.PI / spikes;
+      x = cx + Math.cos(rot) * inner;
+      y = cy + Math.sin(rot) * inner;
+      ctx.lineTo(x, y);
+      rot += Math.PI / spikes;
+    }
+    ctx.lineTo(cx, cy - outer);
+    ctx.closePath();
+    ctx.fillStyle = "#facc15";
+    ctx.fill();
+  };
+  drawStar(size / 2, size / 2, 5, 8, 3.5);
+  const imageData = ctx.getImageData(0, 0, size, size);
+  return { width: size, height: size, data: new Uint8Array(imageData.data.buffer) };
+}
+
+function capitalSelectionCaseExpression(
+  selectedCapitalId: string | null,
+  selectedValue: number,
+  defaultValue: number,
+): [
+  "case",
+  ["==", ["get", "capitalId"], string],
+  number,
+  number,
+] {
+  return [
+    "case",
+    ["==", ["get", "capitalId"], selectedCapitalId ?? ""],
+    selectedValue,
+    defaultValue,
+  ];
+}
+
 export default function MapContainer({
   showEurozone,
   showNonEurozone,
@@ -250,6 +340,9 @@ export default function MapContainer({
   showSchengenNonEU,
   selectedCountryCode,
   onCountrySelect,
+  showEuCapitals = false,
+  selectedCapitalId = null,
+  onCapitalSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -281,6 +374,9 @@ export default function MapContainer({
   showSchengenNonEU: boolean;
   selectedCountryCode: string | null;
   onCountrySelect: (countryCode: string | null) => void;
+  showEuCapitals?: boolean;
+  selectedCapitalId?: string | null;
+  onCapitalSelect: (capitalId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -326,6 +422,14 @@ export default function MapContainer({
   showSchengenNonEURef.current = showSchengenNonEU;
   const onCountrySelectRef = useRef(onCountrySelect);
   onCountrySelectRef.current = onCountrySelect;
+  const showEuCapitalsRef = useRef(showEuCapitals);
+  showEuCapitalsRef.current = showEuCapitals;
+  const selectedCapitalIdRef = useRef(selectedCapitalId);
+  selectedCapitalIdRef.current = selectedCapitalId;
+  const onCapitalSelectRef = useRef(onCapitalSelect);
+  onCapitalSelectRef.current = onCapitalSelect;
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
   const onWildfireSelectRef = useRef(onWildfireSelect);
   onWildfireSelectRef.current = onWildfireSelect;
   const showSatelliteActiveFiresRef = useRef(showSatelliteActiveFires);
@@ -628,6 +732,14 @@ export default function MapContainer({
             duration: 800,
           });
         }
+      }
+    };
+
+    const handleCapitalClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const capitalId = feature?.properties?.capitalId;
+      if (typeof capitalId === "string") {
+        onCapitalSelectRef.current(capitalId);
       }
     };
 
@@ -1375,6 +1487,83 @@ export default function MapContainer({
         });
       }
 
+      if (!map.getSource("eu-capitals")) {
+        map.addSource("eu-capitals", {
+          type: "geojson",
+          data: buildEuCapitalsCollection(localeRef.current),
+          promoteId: "capitalId",
+        });
+      }
+
+      if (!map.hasImage("eu-capital-icon")) {
+        map.addImage("eu-capital-icon", createEuCapitalIcon(), { pixelRatio: 2 });
+      }
+
+      if (!map.getLayer("eu-capitals-halo")) {
+        map.addLayer({
+          id: "eu-capitals-halo",
+          type: "circle",
+          source: "eu-capitals",
+          layout: {
+            visibility: showEuCapitalsRef.current ? "visible" : "none",
+          },
+          paint: {
+            "circle-radius": capitalSelectionCaseExpression(
+              selectedCapitalIdRef.current,
+              16,
+              12,
+            ),
+            "circle-color": "#1a73e8",
+            "circle-opacity": 0.25,
+          },
+        });
+      }
+
+      if (!map.getLayer("eu-capitals-symbol")) {
+        map.addLayer({
+          id: "eu-capitals-symbol",
+          type: "symbol",
+          source: "eu-capitals",
+          layout: {
+            visibility: showEuCapitalsRef.current ? "visible" : "none",
+            "icon-image": "eu-capital-icon",
+            "icon-size": capitalSelectionCaseExpression(
+              selectedCapitalIdRef.current,
+              0.55,
+              0.45,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+          },
+        });
+      }
+
+      if (!map.getLayer("eu-capitals-label")) {
+        map.addLayer({
+          id: "eu-capitals-label",
+          type: "symbol",
+          source: "eu-capitals",
+          minzoom: 4,
+          layout: {
+            visibility: showEuCapitalsRef.current ? "visible" : "none",
+            "text-field": ["get", "name"],
+            "text-size": 12,
+            "text-offset": [0, 1.4],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#1f2937",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       // Reorder so brown (7d history) sits below red (24h active) which sits
       // below the EFFIS layers, all stacked above the base country layers.
       const layerStackOrder = [
@@ -1390,6 +1579,9 @@ export default function MapContainer({
         "effis-burned-area-snapshots-fill",
         "effis-burned-area-snapshots-border",
         "effis-burned-area-snapshots-selected",
+        "eu-capitals-halo",
+        "eu-capitals-symbol",
+        "eu-capitals-label",
         "user-location-accuracy",
         "user-location-halo",
         "user-location-pulse",
@@ -1421,6 +1613,9 @@ export default function MapContainer({
       map.on("click", "firms-recent-history-fill", handleFirmsHistoryClick);
       map.on("mouseenter", "firms-recent-history-fill", setPointerCursor);
       map.on("mouseleave", "firms-recent-history-fill", resetCursor);
+      map.on("click", "eu-capitals-symbol", handleCapitalClick);
+      map.on("mouseenter", "eu-capitals-symbol", setPointerCursor);
+      map.on("mouseleave", "eu-capitals-symbol", resetCursor);
       map.on("click", handleEffisBurnedAreaClick);
 
       // Re-run GeoJSON sync effects that may have run before sources existed
@@ -1467,6 +1662,9 @@ export default function MapContainer({
       map.off("click", "firms-recent-history-fill", handleFirmsHistoryClick);
       map.off("mouseenter", "firms-recent-history-fill", setPointerCursor);
       map.off("mouseleave", "firms-recent-history-fill", resetCursor);
+      map.off("click", "eu-capitals-symbol", handleCapitalClick);
+      map.off("mouseenter", "eu-capitals-symbol", setPointerCursor);
+      map.off("mouseleave", "eu-capitals-symbol", resetCursor);
       map.off("click", handleEffisBurnedAreaClick);
 
       effisRequestControllerRef.current?.abort();
@@ -1712,6 +1910,53 @@ export default function MapContainer({
     if (!map) return;
     applySchengenNonEUVisibility(map, showSchengenNonEU);
   }, [showSchengenNonEU]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showEuCapitals ? "visible" : "none";
+    for (const layerId of [
+      "eu-capitals-halo",
+      "eu-capitals-symbol",
+      "eu-capitals-label",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showEuCapitals, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource("eu-capitals") as GeoJSONSource | undefined;
+    if (!source) return;
+
+    source.setData(buildEuCapitalsCollection(locale));
+  }, [locale, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("eu-capitals-halo")) {
+      map.setPaintProperty(
+        "eu-capitals-halo",
+        "circle-radius",
+        capitalSelectionCaseExpression(selectedCapitalId, 16, 12),
+      );
+    }
+
+    if (map.getLayer("eu-capitals-symbol")) {
+      map.setLayoutProperty(
+        "eu-capitals-symbol",
+        "icon-size",
+        capitalSelectionCaseExpression(selectedCapitalId, 0.55, 0.45),
+      );
+    }
+  }, [selectedCapitalId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;
