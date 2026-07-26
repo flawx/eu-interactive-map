@@ -9,7 +9,8 @@ export const mt = {
     officialCandidate: "Kandidat uffiċjali għall-UE",
     majorWildfires: "Nirien kbar",
     satelliteActiveFires: "Skoperti satellitari ta’ nirien attivi",
-    satelliteBurnedAreas: "Perimetri ta’ żoni maħruqa mis-satellita",
+    satelliteBurnedAreas: "Żoni riċenti rilevati bis-satellita — 7 ijiem",
+    satelliteHistoryNote: "Iż-żoni kannella juru rilevamenti satellitari kumulattivi, mhux perimetru uffiċjali ta’ żona maħruqa.",
   },
   countryPanel: {
     code: "Kodiċi",
@@ -83,5 +84,13 @@ export const mt = {
     firmsLiveData: "Aġġornament live",
     firmsCachedData: "Snapshot fil-cache",
     effisTemporarilyUnavailable: "Il-perimetri taż-żoni maħruqa EFFIS mhumiex disponibbli temporanjament.",
+    firmsHistoryTitle: "Storja satellitari riċenti",
+    firmsHistoryPeriod: "Perjodu kopert",
+    firmsHistoryDetectionCount: "Impronti storiċi",
+    firmsHistoryDisclaimer: "Din il-valur tikkorrispondi għal pixels rilevati bejn 24 siegħa u 7 ijiem. Ma tikkonfermax l-erja tassew maħruqa.",
+    firmsHistoryLoading: "Qed titgħabba l-istorja satellitari…",
+    firmsHistoryUnavailable: "L-ebda storja satellitari mhija disponibbli bħalissa.",
+    effisUnavailableNasaShown: "Perimetru uffiċjali EFFIS mhux disponibbli — storja NASA murija.",
+    firmsHistoryRefreshedAt: "L-aħħar aġġornament",
   },
 } satisfies Messages;

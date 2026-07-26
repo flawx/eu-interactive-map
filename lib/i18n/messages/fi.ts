@@ -9,7 +9,8 @@ export const fi = {
     officialCandidate: "Virallinen EU-ehdokasmaa",
     majorWildfires: "Suuret metsäpalot",
     satelliteActiveFires: "Satelliittihavainnot aktiivisista tulipaloista",
-    satelliteBurnedAreas: "Satelliitin havaitsemat palaneet alueet",
+    satelliteBurnedAreas: "Äskettäin satelliitilla havaitut alueet — 7 päivää",
+    satelliteHistoryNote: "Ruskeat alueet näyttävät kumulatiivisia satelliittihavaintoja, eivät virallista palaneen alueen reunaa.",
   },
   countryPanel: {
     code: "Koodi",
@@ -83,5 +84,13 @@ export const fi = {
     firmsLiveData: "Live-päivitys",
     firmsCachedData: "Välimuistissa oleva tilannekuva",
     effisTemporarilyUnavailable: "EFFIS-palaneiden alueiden kehät eivät ole tilapäisesti saatavilla.",
+    firmsHistoryTitle: "Viimeaikainen satelliittihistoria",
+    firmsHistoryPeriod: "Katettu ajanjakso",
+    firmsHistoryDetectionCount: "Historialliset jäljet",
+    firmsHistoryDisclaimer: "Tämä arvo vastaa 24 tunnin ja 7 päivän välillä havaittuja pikseleitä. Se ei vahvista todellista palanutta pinta-alaa.",
+    firmsHistoryLoading: "Ladataan satelliittihistoriaa…",
+    firmsHistoryUnavailable: "Satelliittihistoriaa ei ole juuri nyt saatavilla.",
+    effisUnavailableNasaShown: "Virallinen EFFIS-reuna ei ole saatavilla — NASA-historia näytetään.",
+    firmsHistoryRefreshedAt: "Viimeisin päivitys",
   },
 } satisfies Messages;

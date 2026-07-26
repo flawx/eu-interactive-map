@@ -9,7 +9,8 @@ export const sk = {
     officialCandidate: "Oficiálny kandidát na vstup do EÚ",
     majorWildfires: "Veľké lesné požiare",
     satelliteActiveFires: "Satelitné detekcie aktívnych požiarov",
-    satelliteBurnedAreas: "Satelitné perimetre spálených plôch",
+    satelliteBurnedAreas: "Nedávno satelitne detegované oblasti — 7 dní",
+    satelliteHistoryNote: "Hnedé oblasti ukazujú kumulatívne satelitné detekcie, nie oficiálny obvod spálenej plochy.",
   },
   countryPanel: {
     code: "Kód",
@@ -83,5 +84,13 @@ export const sk = {
     firmsLiveData: "Živé obnovenie",
     firmsCachedData: "Uložený snímok",
     effisTemporarilyUnavailable: "Obvody spálených plôch EFFIS sú dočasne nedostupné.",
+    firmsHistoryTitle: "Nedávna satelitná história",
+    firmsHistoryPeriod: "Pokryté obdobie",
+    firmsHistoryDetectionCount: "Historické stopy",
+    firmsHistoryDisclaimer: "Táto hodnota zodpovedá pixelom detegovaným medzi 24 hodinami a 7 dňami. Nepotvrdzuje skutočne spálenú plochu.",
+    firmsHistoryLoading: "Načítava sa satelitná história…",
+    firmsHistoryUnavailable: "Satelitná história momentálne nie je dostupná.",
+    effisUnavailableNasaShown: "Oficiálny obvod EFFIS nedostupný — zobrazená história NASA.",
+    firmsHistoryRefreshedAt: "Posledná aktualizácia",
   },
 } satisfies Messages;

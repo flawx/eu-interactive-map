@@ -9,7 +9,8 @@ export const pl = {
     officialCandidate: "Oficjalny kandydat do UE",
     majorWildfires: "Duże pożary lasów",
     satelliteActiveFires: "Detekcje satelitarne aktywnych pożarów",
-    satelliteBurnedAreas: "Perymetry obszarów spalonych z satelity",
+    satelliteBurnedAreas: "Obszary niedawno wykryte satelitarnie — 7 dni",
+    satelliteHistoryNote: "Brązowe obszary pokazują skumulowane detekcje satelitarne, a nie oficjalny obwód spalonego terenu.",
   },
   countryPanel: {
     code: "Kod",
@@ -83,5 +84,13 @@ export const pl = {
     firmsLiveData: "Odświeżanie na żywo",
     firmsCachedData: "Migawka z pamięci podręcznej",
     effisTemporarilyUnavailable: "Obwody obszarów spalonych EFFIS są tymczasowo niedostępne.",
+    firmsHistoryTitle: "Niedawna historia satelitarna",
+    firmsHistoryPeriod: "Objęty okres",
+    firmsHistoryDetectionCount: "Historyczne odciski",
+    firmsHistoryDisclaimer: "Ta wartość odpowiada pikselom wykrytym między 24 godzinami a 7 dniami. Nie potwierdza faktycznie spalonej powierzchni.",
+    firmsHistoryLoading: "Ładowanie historii satelitarnej…",
+    firmsHistoryUnavailable: "Brak dostępnej historii satelitarnej.",
+    effisUnavailableNasaShown: "Oficjalny obwód EFFIS niedostępny — pokazano historię NASA.",
+    firmsHistoryRefreshedAt: "Ostatnie odświeżenie",
   },
 } satisfies Messages;

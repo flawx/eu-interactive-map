@@ -8,6 +8,7 @@ export type Messages = {
     majorWildfires: string;
     satelliteActiveFires: string;
     satelliteBurnedAreas: string;
+    satelliteHistoryNote: string;
   };
   countryPanel: {
     code: string;
@@ -81,5 +82,13 @@ export type Messages = {
     firmsLiveData: string;
     firmsCachedData: string;
     effisTemporarilyUnavailable: string;
+    firmsHistoryTitle: string;
+    firmsHistoryPeriod: string;
+    firmsHistoryDetectionCount: string;
+    firmsHistoryDisclaimer: string;
+    firmsHistoryLoading: string;
+    firmsHistoryUnavailable: string;
+    effisUnavailableNasaShown: string;
+    firmsHistoryRefreshedAt: string;
   };
 };

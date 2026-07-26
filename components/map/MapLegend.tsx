@@ -172,6 +172,9 @@ export default function MapLegend({
             {t.legend.satelliteBurnedAreas}
           </span>
         </label>
+        <p className="text-[10px] leading-snug text-slate-400">
+          {t.legend.satelliteHistoryNote}
+        </p>
 
         <p className="text-[10px] leading-snug text-slate-400">
           {t.incidents.gdacsScopeDisclaimer}

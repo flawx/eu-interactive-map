@@ -9,7 +9,8 @@ export const sv = {
     officialCandidate: "Officiell EU-kandidat",
     majorWildfires: "Stora skogsbränder",
     satelliteActiveFires: "Satellitdetektioner av aktiva bränder",
-    satelliteBurnedAreas: "Satellitperimetrar för brända områden",
+    satelliteBurnedAreas: "Nyligen satellitdetekterade områden — 7 dagar",
+    satelliteHistoryNote: "Bruna områden visar kumulativa satellitdetektioner, inte en officiell brandområdesperimeter.",
   },
   countryPanel: {
     code: "Kod",
@@ -83,5 +84,13 @@ export const sv = {
     firmsLiveData: "Liveuppdatering",
     firmsCachedData: "Cachelagrad ögonblicksbild",
     effisTemporarilyUnavailable: "EFFIS-brandområdesperimetrar är tillfälligt otillgängliga.",
+    firmsHistoryTitle: "Senaste satellithistorik",
+    firmsHistoryPeriod: "Täckt period",
+    firmsHistoryDetectionCount: "Historiska fotavtryck",
+    firmsHistoryDisclaimer: "Detta värde motsvarar pixlar detekterade mellan 24 timmar och 7 dagar. Det bekräftar inte den faktiskt brända ytan.",
+    firmsHistoryLoading: "Laddar satellithistorik…",
+    firmsHistoryUnavailable: "Ingen satellithistorik tillgänglig just nu.",
+    effisUnavailableNasaShown: "Officiell EFFIS-perimeter otillgänglig — NASA-historik visas.",
+    firmsHistoryRefreshedAt: "Senaste uppdatering",
   },
 } satisfies Messages;

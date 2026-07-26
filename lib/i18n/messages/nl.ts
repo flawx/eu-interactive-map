@@ -9,7 +9,8 @@ export const nl = {
     officialCandidate: "Officiële EU-kandidaat",
     majorWildfires: "Grote bosbranden",
     satelliteActiveFires: "Satellietdetecties van actieve branden",
-    satelliteBurnedAreas: "Satellietperimeters van verbrande gebieden",
+    satelliteBurnedAreas: "Recent satellietgedetecteerde gebieden — 7 dagen",
+    satelliteHistoryNote: "Bruine zones tonen cumulatieve satellietdetecties, geen officiële verbrande-oppervlakteperimeter.",
   },
   countryPanel: {
     code: "Code",
@@ -83,5 +84,13 @@ export const nl = {
     firmsLiveData: "Live-vernieuwing",
     firmsCachedData: "Gecachte snapshot",
     effisTemporarilyUnavailable: "EFFIS-brandperimeters zijn tijdelijk niet beschikbaar.",
+    firmsHistoryTitle: "Recente satelliethistorie",
+    firmsHistoryPeriod: "Gedekte periode",
+    firmsHistoryDetectionCount: "Historische voetafdrukken",
+    firmsHistoryDisclaimer: "Deze waarde komt overeen met pixels gedetecteerd tussen 24 uur en 7 dagen. Ze bevestigt niet het werkelijk verbrande oppervlak.",
+    firmsHistoryLoading: "Satelliethistorie laden…",
+    firmsHistoryUnavailable: "Momenteel geen satelliethistorie beschikbaar.",
+    effisUnavailableNasaShown: "Officiële EFFIS-perimeter niet beschikbaar — NASA-historie getoond.",
+    firmsHistoryRefreshedAt: "Laatste vernieuwing",
   },
 } satisfies Messages;

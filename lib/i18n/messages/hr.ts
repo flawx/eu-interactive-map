@@ -9,7 +9,8 @@ export const hr = {
     officialCandidate: "Službeni kandidat za EU",
     majorWildfires: "Veći šumski požari",
     satelliteActiveFires: "Satelitska otkrivanja aktivnih požara",
-    satelliteBurnedAreas: "Satelitski perimetri spaljenih područja",
+    satelliteBurnedAreas: "Nedavno satelitski otkrivene zone — 7 dana",
+    satelliteHistoryNote: "Smeđe zone prikazuju kumulativna satelitska otkrića, a ne službeni opseg spaljenog područja.",
   },
   countryPanel: {
     code: "Kod",
@@ -83,5 +84,13 @@ export const hr = {
     firmsLiveData: "Ažuriranje uživo",
     firmsCachedData: "Predmemorirani snimak",
     effisTemporarilyUnavailable: "EFFIS opsezi spaljenih područja privremeno nisu dostupni.",
+    firmsHistoryTitle: "Nedavna satelitska povijest",
+    firmsHistoryPeriod: "Pokriveno razdoblje",
+    firmsHistoryDetectionCount: "Povijesni otisci",
+    firmsHistoryDisclaimer: "Ova vrijednost odgovara pikselima otkrivenima između 24 sata i 7 dana. Ne potvrđuje stvarno spaljenu površinu.",
+    firmsHistoryLoading: "Učitavanje satelitske povijesti…",
+    firmsHistoryUnavailable: "Satelitska povijest trenutačno nije dostupna.",
+    effisUnavailableNasaShown: "Službeni EFFIS opseg nedostupan — prikazana NASA povijest.",
+    firmsHistoryRefreshedAt: "Zadnje osvježavanje",
   },
 } satisfies Messages;

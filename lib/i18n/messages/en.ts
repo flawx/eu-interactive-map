@@ -9,7 +9,8 @@ export const en = {
     officialCandidate: "Official EU candidate",
     majorWildfires: "Major wildfires",
     satelliteActiveFires: "Satellite active-fire detections",
-    satelliteBurnedAreas: "Satellite burned-area perimeters",
+    satelliteBurnedAreas: "Recent satellite-detected areas — 7 days",
+    satelliteHistoryNote: "Brown areas show cumulative satellite detections, not an official burned-area perimeter.",
   },
   countryPanel: {
     code: "Code",
@@ -83,5 +84,13 @@ export const en = {
     firmsLiveData: "Live refresh",
     firmsCachedData: "Cached snapshot",
     effisTemporarilyUnavailable: "EFFIS burned-area perimeters are temporarily unavailable.",
+    firmsHistoryTitle: "Recent satellite history",
+    firmsHistoryPeriod: "Covered period",
+    firmsHistoryDetectionCount: "Historical footprints",
+    firmsHistoryDisclaimer: "This value corresponds to pixels detected between 24 hours and 7 days. It does not confirm the area actually burned.",
+    firmsHistoryLoading: "Loading satellite history…",
+    firmsHistoryUnavailable: "No satellite history available at the moment.",
+    effisUnavailableNasaShown: "Official EFFIS perimeter unavailable — NASA history shown.",
+    firmsHistoryRefreshedAt: "Last refresh",
   },
 } satisfies Messages;

@@ -9,7 +9,8 @@ export const de = {
     officialCandidate: "Offizieller EU-Kandidat",
     majorWildfires: "Große Waldbrände",
     satelliteActiveFires: "Satelliten-Detektionen aktiver Feuer",
-    satelliteBurnedAreas: "Satelliten-Perimeter verbrannter Flächen",
+    satelliteBurnedAreas: "Kürzlich per Satellit erkannte Gebiete — 7 Tage",
+    satelliteHistoryNote: "Braune Flächen zeigen kumulative Satellitenerfassungen, keinen offiziellen Brandflächenumfang.",
   },
   countryPanel: {
     code: "Code",
@@ -83,5 +84,13 @@ export const de = {
     firmsLiveData: "Live-Aktualisierung",
     firmsCachedData: "Zwischengespeicherter Snapshot",
     effisTemporarilyUnavailable: "EFFIS-Brandflächenperimeter sind vorübergehend nicht verfügbar.",
+    firmsHistoryTitle: "Aktuelle Satellitenhistorie",
+    firmsHistoryPeriod: "Abgedeckter Zeitraum",
+    firmsHistoryDetectionCount: "Historische Fußabdrücke",
+    firmsHistoryDisclaimer: "Dieser Wert entspricht Pixeln, die zwischen 24 Stunden und 7 Tagen erkannt wurden. Er bestätigt nicht die tatsächlich verbrannte Fläche.",
+    firmsHistoryLoading: "Satellitenhistorie wird geladen…",
+    firmsHistoryUnavailable: "Derzeit ist keine Satellitenhistorie verfügbar.",
+    effisUnavailableNasaShown: "Offizieller EFFIS-Umfang nicht verfügbar — NASA-Historie angezeigt.",
+    firmsHistoryRefreshedAt: "Letzte Aktualisierung",
   },
 } satisfies Messages;

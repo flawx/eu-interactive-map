@@ -31,7 +31,7 @@ type MapClientProps = {
   selectedWildfireId: string | null;
   locale: Locale;
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
-  onFirmsRasterAvailabilityChange?: (available: boolean) => void;
+  firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
 };
 
@@ -53,7 +53,7 @@ export default function MapClient({
   selectedWildfireId,
   locale,
   firmsSnapshotsByIncidentId,
-  onFirmsRasterAvailabilityChange,
+  firmsHistorySnapshotsByIncidentId,
   onEffisBurnedAreasAvailabilityChange,
 }: MapClientProps) {
   return (
@@ -75,7 +75,7 @@ export default function MapClient({
       selectedWildfireId={selectedWildfireId}
       locale={locale}
       firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
-      onFirmsRasterAvailabilityChange={onFirmsRasterAvailabilityChange}
+      firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}
       onEffisBurnedAreasAvailabilityChange={onEffisBurnedAreasAvailabilityChange}
     />
   );
