@@ -270,6 +270,43 @@ export default function MapContainer({
         return;
       }
 
+      const eventSourceId =
+        "sourceId" in event && typeof event.sourceId === "string"
+          ? event.sourceId
+          : "source" in event && typeof event.source === "string"
+            ? event.source
+            : null;
+
+      const isEffisSource =
+        eventSourceId === "effis-burned-areas" ||
+        eventSourceId === "effis-active-fires";
+
+      const isDecodeError =
+        message === "The source image could not be decoded";
+
+      if (isDecodeError && isEffisSource) {
+        return;
+      }
+
+      if (
+        isDecodeError &&
+        !eventSourceId &&
+        (
+          (map.getLayer("effis-burned-areas-layer") &&
+            map.getLayoutProperty(
+              "effis-burned-areas-layer",
+              "visibility",
+            ) === "visible") ||
+          (map.getLayer("effis-active-fires-layer") &&
+            map.getLayoutProperty(
+              "effis-active-fires-layer",
+              "visibility",
+            ) === "visible")
+        )
+      ) {
+        return;
+      }
+
       console.error(error);
     };
 

@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 let cachedClient: SupabaseClient | null = null;
 
 /**
- * Server-only Supabase client using the service role key.
+ * Server-only Supabase client using the secret / service role key.
  * Never import this module from Client Components.
  */
 export function getSupabaseServerClient(): SupabaseClient {
@@ -14,13 +14,15 @@ export function getSupabaseServerClient(): SupabaseClient {
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseSecretKey =
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !serviceRoleKey) {
+  if (!url || !supabaseSecretKey) {
     throw new Error("Supabase server configuration is incomplete");
   }
 
-  cachedClient = createClient(url, serviceRoleKey, {
+  cachedClient = createClient(url, supabaseSecretKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
