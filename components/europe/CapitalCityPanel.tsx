@@ -12,6 +12,7 @@ import {
   Mountain,
   Ruler,
   Users,
+  X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
@@ -186,9 +187,10 @@ export default function CapitalCityPanel({
             type="button"
             onClick={onClose}
             aria-label={t.countryPanel.close}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            title={t.countryPanel.close}
+            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
-            Ã—
+            <X aria-hidden="true" size={22} strokeWidth={2} />
           </button>
         </div>
         <p className="mt-2 inline-flex rounded-full border border-[#003399]/40 bg-[#003399]/25 px-2 py-0.5 text-[10px] font-medium text-[#facc15]">
@@ -244,10 +246,10 @@ export default function CapitalCityPanel({
                 {": "}
                 {[currentPhoto.author, currentPhoto.license]
                   .filter(Boolean)
-                  .join(" Â· ")}
+                  .join(" · ")}
                 {currentPhoto.sourceUrl ? (
                   <>
-                    {" Â· "}
+                    {" · "}
                     <a
                       href={currentPhoto.sourceUrl}
                       target="_blank"
@@ -283,7 +285,7 @@ export default function CapitalCityPanel({
             <>
               <p className="text-sm leading-relaxed text-slate-200">
                 {details.description.length > 520
-                  ? `${details.description.slice(0, 520).trim()}â€¦`
+                  ? `${details.description.slice(0, 520).trim()}…`
                   : details.description}
               </p>
               {details.wikipediaUrl ? (
@@ -332,7 +334,7 @@ export default function CapitalCityPanel({
               label={t.capitalPanel.area}
               value={
                 details?.areaKm2
-                  ? `${formatNumber(details.areaKm2.value)} kmÂ²`
+                  ? `${formatNumber(details.areaKm2.value)} km²`
                   : loading
                     ? t.capitalPanel.loadingDetails
                     : t.capitalPanel.unavailable

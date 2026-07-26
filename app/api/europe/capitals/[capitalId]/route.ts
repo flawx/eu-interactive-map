@@ -1,6 +1,5 @@
 import {
   getEuCapitalById,
-  flagRegionCode,
   type EuCapital,
 } from "@/lib/europe/euCapitals";
 import type {
@@ -12,9 +11,6 @@ import {
   supportedLocales,
   type Locale,
 } from "@/lib/i18n/config";
-
-/** Re-export for consumers that need ISO flag regions (EL → GR). */
-export { flagRegionCode };
 
 const USER_AGENT =
   "EUInteractiveMap/0.1 (educational; contact: local-dev)";
@@ -67,7 +63,7 @@ function isAllowedWikipediaLang(lang: string): boolean {
   return lang === "en" || supportedLocales.includes(lang as Locale);
 }
 
-export function getTranslatedCapitalName(
+function getTranslatedCapitalName(
   capital: EuCapital,
   locale: Locale,
   wikidataLabel?: string | null,
