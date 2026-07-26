@@ -1,25 +1,10 @@
+import { isValidIncidentId } from "@/lib/incidents/effisSnapshot";
 import {
-  isValidIncidentId,
-  rowToEffisBurnedAreaSnapshot,
-  shouldReplaceSnapshot,
-  snapshotToRow,
-  validateEffisBurnedAreaSnapshot,
-  type EffisBurnedAreaSnapshot,
-  type EffisSnapshotRow,
-} from "@/lib/incidents/effisSnapshot";
-import {
-  EFFIS_BURNED_AREA_TYPENAME,
-  EFFIS_SOURCE_URL,
-  buildPointBbox,
-  fetchEffisWfsFeatures,
-  normalizeArea,
-  polygonsToGeoJsonGeometry,
-  selectNearbyEffisFeature,
-  toIsoDateString,
-} from "@/lib/incidents/effisWfs";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+  refreshEffisSnapshotForIncident,
+  SupabaseConfigError,
+} from "@/lib/incidents/refreshEffisSnapshot";
 
-const REQUEST_TIMEOUT_MS = 20_000;
+const REQUEST_TIMEOUT_MS = 35_000;
 
 type RouteContext = {
   params: Promise<{ incidentId: string }>;
@@ -62,46 +47,6 @@ function parseRefreshBody(value: unknown): RefreshBody | null {
   }
 
   return { longitude, latitude, countryCode };
-}
-
-async function readExistingSnapshot(
-  incidentId: string,
-): Promise<EffisBurnedAreaSnapshot | null> {
-  const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("effis_burned_area_snapshots")
-    .select(
-      "incident_id, country_code, source_layer, geometry_geojson, area_hectares, fire_date, final_date, source_updated_at, fetched_at, source_url, metadata",
-    )
-    .eq("incident_id", incidentId)
-    .maybeSingle();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return rowToEffisBurnedAreaSnapshot(data as EffisSnapshotRow);
-}
-
-function preservedResponse(previous: EffisBurnedAreaSnapshot) {
-  return Response.json({
-    snapshot: previous,
-    updated: false,
-    preservedPrevious: true,
-    warning: "EFFIS refresh unavailable; last valid snapshot preserved",
-  });
-}
-
-function unavailableResponse() {
-  return Response.json(
-    {
-      snapshot: null,
-      updated: false,
-      preservedPrevious: false,
-      error: "No EFFIS snapshot is currently available",
-    },
-    { status: 502 },
-  );
 }
 
 export async function POST(
@@ -151,126 +96,68 @@ export async function POST(
     );
   }
 
-  let previousSnapshot: EffisBurnedAreaSnapshot | null = null;
   try {
-    previousSnapshot = await readExistingSnapshot(incidentId);
-  } catch {
+    const result = await refreshEffisSnapshotForIncident(
+      {
+        incidentId,
+        longitude: body.longitude,
+        latitude: body.latitude,
+        countryCode: body.countryCode,
+      },
+      { timeoutMs: REQUEST_TIMEOUT_MS },
+    );
+
+    if (result.error === "Invalid incident id" || result.error === "Invalid coordinates") {
+      return Response.json(
+        {
+          snapshot: null,
+          updated: false,
+          preservedPrevious: false,
+          error: result.error,
+        },
+        { status: 400 },
+      );
+    }
+
+    if (result.snapshot === null && !result.preservedPrevious) {
+      return Response.json(
+        {
+          snapshot: null,
+          updated: false,
+          preservedPrevious: false,
+          error: result.error ?? "No EFFIS snapshot is currently available",
+        },
+        { status: 502 },
+      );
+    }
+
+    return Response.json({
+      snapshot: result.snapshot,
+      updated: result.updated,
+      preservedPrevious: result.preservedPrevious,
+      ...(result.warning ? { warning: result.warning } : {}),
+    });
+  } catch (error) {
+    if (error instanceof SupabaseConfigError) {
+      return Response.json(
+        {
+          snapshot: null,
+          updated: false,
+          preservedPrevious: false,
+          error: "Snapshot storage temporarily unavailable",
+        },
+        { status: 502 },
+      );
+    }
+
     return Response.json(
       {
         snapshot: null,
         updated: false,
         preservedPrevious: false,
-        error: "Snapshot storage temporarily unavailable",
+        error: "No EFFIS snapshot is currently available",
       },
       { status: 502 },
     );
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    const bbox = buildPointBbox(body.longitude, body.latitude);
-    const features = await fetchEffisWfsFeatures(
-      EFFIS_BURNED_AREA_TYPENAME,
-      bbox,
-      controller.signal,
-      10,
-    );
-
-    const selected = selectNearbyEffisFeature(
-      features,
-      body.longitude,
-      body.latitude,
-    );
-
-    if (!selected) {
-      if (previousSnapshot) {
-        return preservedResponse(previousSnapshot);
-      }
-      return unavailableResponse();
-    }
-
-    const geometry = polygonsToGeoJsonGeometry(selected.polygons);
-    if (!geometry) {
-      if (previousSnapshot) {
-        return preservedResponse(previousSnapshot);
-      }
-      return unavailableResponse();
-    }
-
-    const area = normalizeArea(selected);
-    const candidate = validateEffisBurnedAreaSnapshot({
-      incidentId,
-      countryCode: body.countryCode,
-      sourceLayer: selected.sourceLayer,
-      geometry,
-      areaHectares: area.areaHectares,
-      fireDate: toIsoDateString(selected.properties.FIREDATE),
-      finalDate: toIsoDateString(selected.properties.FINALDATE),
-      sourceUpdatedAt: toIsoDateString(selected.properties.LASTUPDATE),
-      fetchedAt: new Date().toISOString(),
-      sourceUrl: EFFIS_SOURCE_URL,
-    });
-
-    if (!candidate) {
-      if (previousSnapshot) {
-        return preservedResponse(previousSnapshot);
-      }
-      return unavailableResponse();
-    }
-
-    if (!shouldReplaceSnapshot(previousSnapshot, candidate)) {
-      return Response.json({
-        snapshot: previousSnapshot,
-        updated: false,
-        preservedPrevious: true,
-      });
-    }
-
-    const metadata = {
-      effisFeatureId: selected.id,
-      countryName: selected.properties.COUNTRY?.trim() || null,
-      provinceName: selected.properties.PROVINCE?.trim() || null,
-      communeName: selected.properties.COMMUNE?.trim() || null,
-    };
-
-    const row = snapshotToRow(candidate, metadata);
-    const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase
-      .from("effis_burned_area_snapshots")
-      .upsert(row, { onConflict: "incident_id" })
-      .select(
-        "incident_id, country_code, source_layer, geometry_geojson, area_hectares, fire_date, final_date, source_updated_at, fetched_at, source_url, metadata",
-      )
-      .single();
-
-    if (error || !data) {
-      if (previousSnapshot) {
-        return preservedResponse(previousSnapshot);
-      }
-      return unavailableResponse();
-    }
-
-    const saved = rowToEffisBurnedAreaSnapshot(data as EffisSnapshotRow);
-    if (!saved) {
-      if (previousSnapshot) {
-        return preservedResponse(previousSnapshot);
-      }
-      return unavailableResponse();
-    }
-
-    return Response.json({
-      snapshot: saved,
-      updated: true,
-      preservedPrevious: false,
-    });
-  } catch {
-    if (previousSnapshot) {
-      return preservedResponse(previousSnapshot);
-    }
-    return unavailableResponse();
-  } finally {
-    clearTimeout(timeoutId);
   }
 }

@@ -430,3 +430,165 @@ export function buildPointBbox(
   const maxLat = Math.min(90, latitude + halfSizeDegrees);
   return [minLon, minLat, maxLon, maxLat];
 }
+
+/** EFFIS time range: YYYY-MM-DD/YYYY-MM-DD (UTC calendar days). */
+export function formatEffisTimeRange(daysBack: number): string {
+  const to = new Date();
+  const toIso = to.toISOString().slice(0, 10);
+  const from = new Date(to);
+  from.setUTCDate(from.getUTCDate() - daysBack);
+  const fromIso = from.toISOString().slice(0, 10);
+  return `${fromIso}/${toIso}`;
+}
+
+function lngLatToWebMercator(longitude: number, latitude: number): [number, number] {
+  const x = (longitude * 20037508.342789244) / 180;
+  let y =
+    Math.log(Math.tan(((90 + latitude) * Math.PI) / 360)) /
+    (Math.PI / 180);
+  y = (y * 20037508.342789244) / 180;
+  return [x, y];
+}
+
+export function extractEffisFeatureIdsFromPlainText(body: string): string[] {
+  const ids = new Set<string>();
+
+  for (const match of body.matchAll(/\bFeature\s+([A-Za-z0-9._-]+)\s*:/gi)) {
+    const value = match[1]?.trim();
+    if (value) ids.add(value);
+  }
+
+  for (const match of body.matchAll(/\bid\s*[:=]\s*['"]?([A-Za-z0-9._-]+)/gi)) {
+    const value = match[1]?.trim();
+    if (value) ids.add(value);
+  }
+
+  return Array.from(ids);
+}
+
+/**
+ * WMS GetFeatureInfo at a lon/lat point against modis.ba.poly.week.
+ * Returns unique feature identifiers found in the text/plain response.
+ */
+export async function findEffisFeatureIdAtPoint(
+  longitude: number,
+  latitude: number,
+  time: string,
+  signal: AbortSignal,
+  halfSizeDegrees = 0.03,
+): Promise<string[]> {
+  const [minX, minY] = lngLatToWebMercator(
+    longitude - halfSizeDegrees,
+    latitude - halfSizeDegrees,
+  );
+  const [maxX, maxY] = lngLatToWebMercator(
+    longitude + halfSizeDegrees,
+    latitude + halfSizeDegrees,
+  );
+
+  const params = new URLSearchParams({
+    SERVICE: "WMS",
+    VERSION: "1.3.0",
+    REQUEST: "GetFeatureInfo",
+    LAYERS: "modis.ba.poly.week",
+    QUERY_LAYERS: "modis.ba.poly.week",
+    STYLES: "",
+    FORMAT: "image/png",
+    TRANSPARENT: "true",
+    CRS: "EPSG:3857",
+    WIDTH: "64",
+    HEIGHT: "64",
+    I: "32",
+    J: "32",
+    FEATURE_COUNT: "10",
+    INFO_FORMAT: "text/plain",
+    TIME: time,
+    BBOX: `${minX},${minY},${maxX},${maxY}`,
+  });
+
+  const response = await fetch(`${EFFIS_WFS_BASE}?${params.toString()}`, {
+    headers: {
+      Accept: "text/plain",
+      "User-Agent": "EUInteractiveMap/0.1",
+    },
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`EFFIS GetFeatureInfo failed with ${response.status}`);
+  }
+
+  const body = await response.text();
+  return extractEffisFeatureIdsFromPlainText(body);
+}
+
+async function fetchWfsWithParams(
+  params: URLSearchParams,
+  signal: AbortSignal,
+): Promise<{ status: number; features: ParsedEffisFeature[] }> {
+  const response = await fetch(`${EFFIS_WFS_BASE}?${params.toString()}`, {
+    headers: {
+      Accept: EFFIS_WFS_OUTPUT_FORMAT,
+      "User-Agent": "EUInteractiveMap/0.1",
+    },
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) {
+    return { status: response.status, features: [] };
+  }
+
+  const xml = await response.text();
+  return {
+    status: response.status,
+    features: parseGmlFeatures(xml, EFFIS_BURNED_AREA_TYPENAME),
+  };
+}
+
+/**
+ * Fetch a single burned-area feature by EFFIS feature identifier.
+ * Tries validated FEATUREID forms, then a CQL id filter.
+ */
+export async function fetchEffisFeatureById(
+  featureId: string,
+  signal: AbortSignal,
+): Promise<ParsedEffisFeature | null> {
+  const cleaned = featureId.trim();
+  if (!cleaned) return null;
+
+  const numericId = cleaned.replace(/^.*\./, "");
+
+  const attempts: Array<Record<string, string>> = [
+    { FEATUREID: `modis.ba.poly.${numericId}` },
+    { FEATUREID: cleaned },
+    { FEATUREID: `ms:modis.ba.poly.${numericId}` },
+    { CQL_FILTER: `id=${numericId}` },
+    { CQL_FILTER: `id='${numericId}'` },
+  ];
+
+  for (const attempt of attempts) {
+    const params = new URLSearchParams({
+      SERVICE: "WFS",
+      VERSION: "1.1.0",
+      REQUEST: "GetFeature",
+      TYPENAME: EFFIS_BURNED_AREA_TYPENAME,
+      MAXFEATURES: "1",
+      SRSNAME: EFFIS_WFS_SRS_NAME,
+      OUTPUTFORMAT: EFFIS_WFS_OUTPUT_FORMAT,
+      ...attempt,
+    });
+
+    const { status, features } = await fetchWfsWithParams(params, signal);
+    if (status >= 500) {
+      throw new Error(`EFFIS WFS failed with ${status}`);
+    }
+    if (features.length > 0) {
+      return features[0];
+    }
+  }
+
+  return null;
+}
+
