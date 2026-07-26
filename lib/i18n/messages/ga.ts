@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const ga = {
   legend: {
@@ -70,5 +70,7 @@ export const ga = {
     satelliteLookupLoading: "Imlíne satéilite á seiceáil…",
     effisDisclaimer: "Imlíne ó shonraí satéilite. Féadfar a cruth agus a hachar a athbhreithniú tar éis anailíse breise.",
     calculatedArea: "Ríomhta ón imlíne satéilite",
+    satellitePerimeterUpdated: "Imeall satailíte nuashonraithe",
+    savedSatelliteArea: "Achar imeall satailíte sábháilte",
   },
 } satisfies Messages;

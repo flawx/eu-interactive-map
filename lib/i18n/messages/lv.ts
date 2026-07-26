@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const lv = {
   legend: {
@@ -70,5 +70,7 @@ export const lv = {
     satelliteLookupLoading: "Pārbauda satelīta perimetru…",
     effisDisclaimer: "No satelīta iegūts perimetrs. Tā formu un platību var pārskatīt pēc turpmākas analīzes.",
     calculatedArea: "Aprēķināts no satelīta perimetra",
+    satellitePerimeterUpdated: "Satelīta perimetrs atjaunināts",
+    savedSatelliteArea: "Saglabātā satelīta perimetra platība",
   },
 } satisfies Messages;

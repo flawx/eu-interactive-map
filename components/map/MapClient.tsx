@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import type {
   EffisBurnedArea,
   WildfireIncident,
@@ -24,6 +25,8 @@ type MapClientProps = {
   showSatelliteBurnedAreas: boolean;
   onEffisBurnedAreaSelect: (burnedArea: EffisBurnedArea | null) => void;
   onEffisBurnedAreaLoadingChange: (loading: boolean) => void;
+  effisSnapshotsByIncidentId: Record<string, EffisBurnedAreaSnapshot>;
+  selectedWildfireId: string | null;
 };
 
 export default function MapClient({
@@ -40,6 +43,8 @@ export default function MapClient({
   showSatelliteBurnedAreas,
   onEffisBurnedAreaSelect,
   onEffisBurnedAreaLoadingChange,
+  effisSnapshotsByIncidentId,
+  selectedWildfireId,
 }: MapClientProps) {
   return (
     <MapContainer
@@ -56,6 +61,8 @@ export default function MapClient({
       showSatelliteBurnedAreas={showSatelliteBurnedAreas}
       onEffisBurnedAreaSelect={onEffisBurnedAreaSelect}
       onEffisBurnedAreaLoadingChange={onEffisBurnedAreaLoadingChange}
+      effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
+      selectedWildfireId={selectedWildfireId}
     />
   );
 }

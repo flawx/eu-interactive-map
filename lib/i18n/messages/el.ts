@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const el = {
   legend: {
@@ -70,5 +70,7 @@ export const el = {
     satelliteLookupLoading: "Έλεγχος δορυφορικής περιμέτρου…",
     effisDisclaimer: "Περίμετρος από δορυφορικά δεδομένα. Το σχήμα και η έκταση ενδέχεται να αναθεωρηθούν μετά από περαιτέρω ανάλυση.",
     calculatedArea: "Υπολογισμένη από τη δορυφορική περίμετρο",
+    satellitePerimeterUpdated: "Ενημερωμένο δορυφορικό περίγραμμα",
+    savedSatelliteArea: "Αποθηκευμένη επιφάνεια δορυφορικού περιγράμματος",
   },
 } satisfies Messages;

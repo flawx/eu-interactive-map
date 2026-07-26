@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const sv = {
   legend: {
@@ -70,5 +70,7 @@ export const sv = {
     satelliteLookupLoading: "Kontrollerar satellitperimeter…",
     effisDisclaimer: "Satellitbaserad perimeter. Form och yta kan revideras efter vidare analys.",
     calculatedArea: "Beräknad från satellitperimetern",
+    satellitePerimeterUpdated: "Satellitperimeter uppdaterad",
+    savedSatelliteArea: "Sparad satellitperimeterarea",
   },
 } satisfies Messages;

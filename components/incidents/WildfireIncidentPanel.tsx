@@ -2,11 +2,13 @@
 
 import { getMessages } from "@/lib/i18n/messages";
 import type { Locale } from "@/lib/i18n/config";
+import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import type { WildfireIncident } from "@/lib/incidents/types";
 
 type WildfireIncidentPanelProps = {
   incident: WildfireIncident;
   locale: Locale;
+  snapshot?: EffisBurnedAreaSnapshot | null;
   onClose: () => void;
 };
 
@@ -31,6 +33,7 @@ function formatIncidentDate(value: string | null, locale: Locale): string | null
 export default function WildfireIncidentPanel({
   incident,
   locale,
+  snapshot = null,
   onClose,
 }: WildfireIncidentPanelProps) {
   const t = getMessages(locale);
@@ -76,6 +79,20 @@ export default function WildfireIncidentPanel({
     Number.isFinite(incident.populationExposure)
       ? numberFormatter.format(incident.populationExposure)
       : null;
+
+  const snapshotArea =
+    snapshot &&
+    snapshot.areaHectares !== null &&
+    Number.isFinite(snapshot.areaHectares)
+      ? `${numberFormatter.format(snapshot.areaHectares)} ha`
+      : null;
+
+  const snapshotUpdatedAt = snapshot
+    ? formatIncidentDate(
+        snapshot.sourceUpdatedAt ?? snapshot.fetchedAt,
+        locale,
+      )
+    : null;
 
   return (
     <aside className="absolute bottom-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md">
@@ -137,6 +154,28 @@ export default function WildfireIncidentPanel({
           </span>
         </div>
 
+        {snapshot && (
+          <>
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.savedSatelliteArea}:
+              </span>
+              <span className="text-slate-100">
+                {snapshotArea || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.satellitePerimeterUpdated}:
+              </span>
+              <span className="text-slate-100">
+                {snapshotUpdatedAt || t.incidents.dataUnavailable}
+              </span>
+            </div>
+          </>
+        )}
+
         <div className="flex items-start gap-2">
           <span className="shrink-0 text-slate-400">
             {t.incidents.exposedPopulation}:
@@ -169,6 +208,12 @@ export default function WildfireIncidentPanel({
         <p className="text-[10px] leading-snug text-slate-400">
           {t.incidents.disclaimer}
         </p>
+
+        {snapshot && (
+          <p className="text-[10px] leading-snug text-slate-400">
+            {t.incidents.effisDisclaimer}
+          </p>
+        )}
       </div>
     </aside>
   );

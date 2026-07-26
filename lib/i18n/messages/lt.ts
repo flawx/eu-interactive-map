@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const lt = {
   legend: {
@@ -70,5 +70,7 @@ export const lt = {
     satelliteLookupLoading: "Tikrinamas palydovo perimetras…",
     effisDisclaimer: "Iš palydovo duomenų gautas perimetras. Jo forma ir plotas gali būti patikslinti po tolesnės analizės.",
     calculatedArea: "Apskaičiuota pagal palydovo perimetrą",
+    satellitePerimeterUpdated: "Palydovinis perimetras atnaujintas",
+    savedSatelliteArea: "Išsaugotas palydovinio perimetro plotas",
   },
 } satisfies Messages;

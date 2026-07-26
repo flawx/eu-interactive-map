@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const ro = {
   legend: {
@@ -70,5 +70,7 @@ export const ro = {
     satelliteLookupLoading: "Se caută perimetrul satelitar…",
     effisDisclaimer: "Perimetru derivat din satelit. Forma și suprafața pot fi revizuite după o analiză ulterioară.",
     calculatedArea: "Calculată din perimetrul satelitar",
+    satellitePerimeterUpdated: "Perimetru satelit actualizat",
+    savedSatelliteArea: "Suprafața perimetrului satelit salvat",
   },
 } satisfies Messages;

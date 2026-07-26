@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const nl = {
   legend: {
@@ -70,5 +70,7 @@ export const nl = {
     satelliteLookupLoading: "Satellietperimeter controleren…",
     effisDisclaimer: "Op satelliet gebaseerde perimeter. Vorm en oppervlakte kunnen na verdere analyse worden herzien.",
     calculatedArea: "Berekend op basis van de satellietperimeter",
+    satellitePerimeterUpdated: "Satellietperimeter bijgewerkt",
+    savedSatelliteArea: "Opgeslagen satellietperimeteroppervlakte",
   },
 } satisfies Messages;

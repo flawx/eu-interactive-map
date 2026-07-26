@@ -13,6 +13,7 @@ import type {
   EffisBurnedArea,
   WildfireIncident,
 } from "@/lib/incidents/types";
+import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Worker CDN : évite le MIME text/html renvoyé par Webpack/Next pour le worker local
@@ -109,6 +110,8 @@ export default function MapContainer({
   showSatelliteBurnedAreas,
   onEffisBurnedAreaSelect,
   onEffisBurnedAreaLoadingChange,
+  effisSnapshotsByIncidentId,
+  selectedWildfireId,
 }: {
   showEurozone: boolean;
   showNonEurozone: boolean;
@@ -123,6 +126,8 @@ export default function MapContainer({
   showSatelliteBurnedAreas: boolean;
   onEffisBurnedAreaSelect: (burnedArea: EffisBurnedArea | null) => void;
   onEffisBurnedAreaLoadingChange: (loading: boolean) => void;
+  effisSnapshotsByIncidentId: Record<string, EffisBurnedAreaSnapshot>;
+  selectedWildfireId: string | null;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -219,6 +224,9 @@ export default function MapContainer({
     visible: boolean,
   ) => {
     applyLayerVisibility(map, "effis-burned-areas-layer", visible);
+    applyLayerVisibility(map, "effis-burned-area-snapshots-fill", visible);
+    applyLayerVisibility(map, "effis-burned-area-snapshots-border", visible);
+    applyLayerVisibility(map, "effis-burned-area-snapshots-selected", visible);
   };
 
   useEffect(() => {
@@ -267,6 +275,43 @@ export default function MapContainer({
         ) && message.includes("REQUEST=GetMap");
 
       if (isEffisGetMapError) {
+        return;
+      }
+
+      const eventSourceId =
+        "sourceId" in event && typeof event.sourceId === "string"
+          ? event.sourceId
+          : "source" in event && typeof event.source === "string"
+            ? event.source
+            : null;
+
+      const isEffisSource =
+        eventSourceId === "effis-burned-areas" ||
+        eventSourceId === "effis-active-fires";
+
+      const isDecodeError =
+        message === "The source image could not be decoded";
+
+      if (isDecodeError && isEffisSource) {
+        return;
+      }
+
+      if (
+        isDecodeError &&
+        !eventSourceId &&
+        (
+          (map.getLayer("effis-burned-areas-layer") &&
+            map.getLayoutProperty(
+              "effis-burned-areas-layer",
+              "visibility",
+            ) === "visible") ||
+          (map.getLayer("effis-active-fires-layer") &&
+            map.getLayoutProperty(
+              "effis-active-fires-layer",
+              "visibility",
+            ) === "visible")
+        )
+      ) {
         return;
       }
 
@@ -335,6 +380,16 @@ export default function MapContainer({
       }
     };
 
+    const handleEffisSnapshotClick = (event: MapLayerMouseEvent) => {
+      const incidentId = event.features?.[0]?.properties?.incidentId;
+
+      if (typeof incidentId === "string" && incidentId.trim().length > 0) {
+        onWildfireSelectRef.current(incidentId);
+      } else if (typeof incidentId === "number") {
+        onWildfireSelectRef.current(String(incidentId));
+      }
+    };
+
     const handleEffisBurnedAreaClick = (event: MapLayerMouseEvent) => {
       if (!showSatelliteBurnedAreasRef.current) return;
       if (map.getZoom() < 6) return;
@@ -344,6 +399,13 @@ export default function MapContainer({
           layers: ["wildfire-incidents-points"],
         });
         if (wildfireHits.length > 0) return;
+      }
+
+      if (map.getLayer("effis-burned-area-snapshots-fill")) {
+        const snapshotHits = map.queryRenderedFeatures(event.point, {
+          layers: ["effis-burned-area-snapshots-fill"],
+        });
+        if (snapshotHits.length > 0) return;
       }
 
       const halfQuerySize = 32;
@@ -495,6 +557,62 @@ export default function MapContainer({
           "raster-opacity": 0.85,
           "raster-fade-duration": 0,
           "raster-resampling": "nearest",
+        },
+      });
+
+      map.addSource("effis-burned-area-snapshots", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      });
+
+      map.addLayer({
+        id: "effis-burned-area-snapshots-fill",
+        type: "fill",
+        source: "effis-burned-area-snapshots",
+        layout: {
+          visibility: showSatelliteBurnedAreasRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "fill-color": "#c2410c",
+          "fill-opacity": 0.25,
+        },
+      });
+
+      map.addLayer({
+        id: "effis-burned-area-snapshots-border",
+        type: "line",
+        source: "effis-burned-area-snapshots",
+        layout: {
+          visibility: showSatelliteBurnedAreasRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#7f1d1d",
+          "line-width": 2.5,
+          "line-opacity": 0.9,
+        },
+      });
+
+      map.addLayer({
+        id: "effis-burned-area-snapshots-selected",
+        type: "line",
+        source: "effis-burned-area-snapshots",
+        filter: ["==", ["get", "incidentId"], ""],
+        layout: {
+          visibility: showSatelliteBurnedAreasRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#facc15",
+          "line-width": 4,
+          "line-opacity": 1,
         },
       });
 
@@ -731,6 +849,13 @@ export default function MapContainer({
       map.on("click", "wildfire-incidents-points", handleWildfireClick);
       map.on("mouseenter", "wildfire-incidents-points", setPointerCursor);
       map.on("mouseleave", "wildfire-incidents-points", resetCursor);
+      map.on("click", "effis-burned-area-snapshots-fill", handleEffisSnapshotClick);
+      map.on(
+        "mouseenter",
+        "effis-burned-area-snapshots-fill",
+        setPointerCursor,
+      );
+      map.on("mouseleave", "effis-burned-area-snapshots-fill", resetCursor);
       map.on("click", handleEffisBurnedAreaClick);
     });
 
@@ -744,6 +869,17 @@ export default function MapContainer({
       map.off("click", "wildfire-incidents-points", handleWildfireClick);
       map.off("mouseenter", "wildfire-incidents-points", setPointerCursor);
       map.off("mouseleave", "wildfire-incidents-points", resetCursor);
+      map.off(
+        "click",
+        "effis-burned-area-snapshots-fill",
+        handleEffisSnapshotClick,
+      );
+      map.off(
+        "mouseenter",
+        "effis-burned-area-snapshots-fill",
+        setPointerCursor,
+      );
+      map.off("mouseleave", "effis-burned-area-snapshots-fill", resetCursor);
       map.off("click", handleEffisBurnedAreaClick);
 
       effisRequestControllerRef.current?.abort();
@@ -793,15 +929,52 @@ export default function MapContainer({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-
-    if (map.getLayer("effis-burned-areas-layer")) {
-      map.setLayoutProperty(
-        "effis-burned-areas-layer",
-        "visibility",
-        showSatelliteBurnedAreas ? "visible" : "none",
-      );
-    }
+    applySatelliteBurnedAreasVisibility(map, showSatelliteBurnedAreas);
   }, [showSatelliteBurnedAreas]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(
+      "effis-burned-area-snapshots",
+    ) as GeoJSONSource | undefined;
+    if (!source) return;
+
+    const features = Object.values(effisSnapshotsByIncidentId)
+      .filter((snapshot) => {
+        const geometryType = snapshot.geometry?.type;
+        return geometryType === "Polygon" || geometryType === "MultiPolygon";
+      })
+      .map((snapshot) => ({
+        type: "Feature" as const,
+        id: snapshot.incidentId,
+        properties: {
+          incidentId: snapshot.incidentId,
+          areaHectares: snapshot.areaHectares,
+          sourceUpdatedAt: snapshot.sourceUpdatedAt,
+          fetchedAt: snapshot.fetchedAt,
+        },
+        geometry: snapshot.geometry,
+      }));
+
+    source.setData({
+      type: "FeatureCollection",
+      features,
+    });
+  }, [effisSnapshotsByIncidentId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!map.getLayer("effis-burned-area-snapshots-selected")) return;
+
+    map.setFilter("effis-burned-area-snapshots-selected", [
+      "==",
+      ["get", "incidentId"],
+      selectedWildfireId ?? "",
+    ]);
+  }, [selectedWildfireId]);
 
   useEffect(() => {
     const map = mapRef.current;

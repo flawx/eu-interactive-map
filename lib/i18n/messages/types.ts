@@ -68,5 +68,7 @@ export type Messages = {
     satelliteLookupLoading: string;
     effisDisclaimer: string;
     calculatedArea: string;
+    satellitePerimeterUpdated: string;
+    savedSatelliteArea: string;
   };
 };

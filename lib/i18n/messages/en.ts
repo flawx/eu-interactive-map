@@ -70,5 +70,7 @@ export const en = {
     satelliteLookupLoading: "Checking satellite perimeter…",
     effisDisclaimer: "Satellite-derived perimeter. Its shape and area may be revised after further analysis.",
     calculatedArea: "Calculated from the satellite perimeter",
+    satellitePerimeterUpdated: "Satellite perimeter updated",
+    savedSatelliteArea: "Saved satellite perimeter area",
   },
 } satisfies Messages;

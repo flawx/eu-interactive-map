@@ -1,4 +1,4 @@
-import type { Messages } from "./types";
+﻿import type { Messages } from "./types";
 
 export const et = {
   legend: {
@@ -70,5 +70,7 @@ export const et = {
     satelliteLookupLoading: "Satelliidipiiri kontrollimine…",
     effisDisclaimer: "Satelliidipõhine piir. Selle kuju ja pindala võidakse pärast täiendavat analüüsi muuta.",
     calculatedArea: "Arvutatud satelliidipiiri järgi",
+    satellitePerimeterUpdated: "Satelliidi perimeeter uuendatud",
+    savedSatelliteArea: "Salvestatud satelliidi perimeetri pindala",
   },
 } satisfies Messages;
