@@ -16,6 +16,7 @@ export const et = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Sulge",
     code: "Kood",
     capital: "Pealinn",
     population: "Rahvaarv",

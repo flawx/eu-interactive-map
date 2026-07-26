@@ -16,6 +16,7 @@ export const bg = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Затвори",
     code: "Код",
     capital: "Столица",
     population: "Население",

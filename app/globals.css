@@ -4,6 +4,7 @@
   --background: #ffffff;
   --foreground: #171717;
   --app-header-height: 72px;
+  --map-panel-top-offset: calc(76px + env(safe-area-inset-top, 0px));
   --map-ui-surface: rgba(255, 255, 255, 0.97);
   --map-ui-surface-hover: rgba(232, 240, 254, 0.9);
   --map-ui-text: #202124;
@@ -17,6 +18,7 @@
 @media (max-width: 767px) {
   :root {
     --app-header-height: 64px;
+    --map-panel-top-offset: calc(68px + env(safe-area-inset-top, 0px));
   }
 }
 

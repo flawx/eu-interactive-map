@@ -16,6 +16,7 @@ export const sk = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Zavrieť",
     code: "Kód",
     capital: "Hlavné mesto",
     population: "Počet obyvateľov",

@@ -16,6 +16,7 @@ export const lv = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Aizvērt",
     code: "Kods",
     capital: "Galvaspilsēta",
     population: "Iedzīvotāji",

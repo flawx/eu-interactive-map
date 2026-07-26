@@ -16,6 +16,7 @@ export const cs = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Zavřít",
     code: "Kód",
     capital: "Hlavní město",
     population: "Počet obyvatel",

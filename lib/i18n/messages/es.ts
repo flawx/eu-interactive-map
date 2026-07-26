@@ -16,6 +16,7 @@ export const es = {
     closeLegend: "Cerrar la leyenda",
   },
   countryPanel: {
+    close: "Cerrar",
     code: "Código",
     capital: "Capital",
     population: "Población",

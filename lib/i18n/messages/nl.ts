@@ -16,6 +16,7 @@ export const nl = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Sluiten",
     code: "Code",
     capital: "Hoofdstad",
     population: "Bevolking",

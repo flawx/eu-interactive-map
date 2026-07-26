@@ -16,6 +16,7 @@ export const el = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Κλείσιμο",
     code: "Κωδικός",
     capital: "Πρωτεύουσα",
     population: "Πληθυσμός",

@@ -16,6 +16,7 @@ export const fi = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Sulje",
     code: "Koodi",
     capital: "Pääkaupunki",
     population: "Väestö",

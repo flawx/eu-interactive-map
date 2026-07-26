@@ -16,6 +16,7 @@ export const lt = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Uždaryti",
     code: "Kodas",
     capital: "Sostinė",
     population: "Gyventojai",

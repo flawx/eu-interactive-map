@@ -16,6 +16,7 @@ export const ro = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Închide",
     code: "Cod",
     capital: "Capitală",
     population: "Populație",

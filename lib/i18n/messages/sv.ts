@@ -16,6 +16,7 @@ export const sv = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Stäng",
     code: "Kod",
     capital: "Huvudstad",
     population: "Befolkning",

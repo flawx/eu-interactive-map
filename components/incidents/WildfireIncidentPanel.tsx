@@ -286,8 +286,15 @@ export default function WildfireIncidentPanel({
   ];
 
   return (
-    <aside className="absolute bottom-4 left-4 top-4 z-20 flex w-[min(100%-2rem,24rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/92 text-xs text-slate-200 shadow-2xl backdrop-blur-md">
-      <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3">
+    <aside
+      className="absolute left-4 z-20 flex w-[min(100%-2rem,24rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/92 text-xs text-slate-200 shadow-2xl backdrop-blur-md"
+      style={{
+        top: "var(--map-panel-top-offset)",
+        maxHeight:
+          "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
+      }}
+    >
+      <div className="sticky top-0 z-[5] flex shrink-0 items-start justify-between gap-3 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
         <div className="min-w-0 space-y-1">
           <p className="text-[10px] tracking-[0.14em] text-slate-400">
             {t.incidents.wildfireTitle}
@@ -299,7 +306,8 @@ export default function WildfireIncidentPanel({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-slate-300 outline-none transition hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+          aria-label={t.countryPanel.close}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 text-slate-300 outline-none transition hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-sky-400/70"
         >
           ×
         </button>

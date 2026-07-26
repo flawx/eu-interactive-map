@@ -496,28 +496,39 @@ export default function CountryInfoPanel({
     : null;
 
   return (
-    <aside className="absolute bottom-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md">
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close"
-        className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-md text-slate-300 transition hover:bg-white/10 hover:text-white"
-      >
-        ×
-      </button>
+    <aside
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      style={{
+        top: "var(--map-panel-top-offset)",
+        maxHeight:
+          "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
+      }}
+    >
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+        <div className="flex items-start gap-2.5">
+          <img
+            src={flagUrl}
+            alt={`${countryName} flag`}
+            width={48}
+            height={36}
+            className="h-9 w-12 shrink-0 rounded-sm border border-white/20 object-cover shadow-sm"
+          />
+          <p className="min-w-0 flex-1 pt-1 text-sm font-semibold leading-snug">
+            {countryName}
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.countryPanel.close}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+          >
+            ×
+          </button>
+        </div>
+      </header>
 
-      <div className="flex items-start gap-2.5 pr-8">
-        <img
-          src={flagUrl}
-          alt={`${countryName} flag`}
-          width={48}
-          height={36}
-          className="h-9 w-12 shrink-0 rounded-sm border border-white/20 object-cover shadow-sm"
-        />
-        <p className="text-sm font-semibold leading-snug">{countryName}</p>
-      </div>
-
-      <div className="mt-2.5 flex items-center gap-2">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
+      <div className="flex items-center gap-2">
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-sm"
           style={{ backgroundColor: status.color }}
@@ -874,6 +885,7 @@ export default function CountryInfoPanel({
           )}
         </div>
       )}
+      </div>
     </aside>
   );
 }

@@ -16,6 +16,7 @@ export const da = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Luk",
     code: "Kode",
     capital: "Hovedstad",
     population: "Befolkning",

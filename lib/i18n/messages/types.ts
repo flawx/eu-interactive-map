@@ -35,6 +35,7 @@ export type Messages = {
     closeLegend: string;
   };
   countryPanel: {
+    close: string;
     code: string;
     capital: string;
     population: string;

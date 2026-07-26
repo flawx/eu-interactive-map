@@ -16,6 +16,7 @@ export const ga = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Dún",
     code: "Cód",
     capital: "Príomhchathair",
     population: "Daonra",

@@ -16,6 +16,7 @@ export const hu = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Bezárás",
     code: "Kód",
     capital: "Főváros",
     population: "Népesség",

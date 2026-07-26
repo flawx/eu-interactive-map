@@ -16,6 +16,7 @@ export const mt = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Agħlaq",
     code: "Kodiċi",
     capital: "Kapitali",
     population: "Popolazzjoni",

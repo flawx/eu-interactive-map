@@ -16,6 +16,7 @@ export const pt = {
     closeLegend: "Close legend",
   },
   countryPanel: {
+    close: "Fechar",
     code: "Código",
     capital: "Capital",
     population: "População",
