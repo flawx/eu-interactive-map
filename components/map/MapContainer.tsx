@@ -983,7 +983,7 @@ export default function MapContainer({
         },
         paint: {
           "fill-color": "#92400e",
-          "fill-opacity": 0.20,
+          "fill-opacity": 0.10,
         },
       });
 
@@ -998,8 +998,8 @@ export default function MapContainer({
         },
         paint: {
           "line-color": "#78350f",
-          "line-width": 2,
-          "line-opacity": 0.9,
+          "line-width": 1.2,
+          "line-opacity": 0.50,
         },
       });
 
@@ -1015,7 +1015,7 @@ export default function MapContainer({
         },
         paint: {
           "fill-color": "#92400e",
-          "fill-opacity": 0.32,
+          "fill-opacity": 0.25,
         },
       });
 
@@ -1031,8 +1031,8 @@ export default function MapContainer({
         },
         paint: {
           "line-color": "#451a03",
-          "line-width": 4,
-          "line-opacity": 1,
+          "line-width": 3,
+          "line-opacity": 0.90,
         },
       });
 
