@@ -11,6 +11,9 @@ export const de = {
     satelliteActiveFires: "Satelliten-Detektionen aktiver Feuer",
     satelliteBurnedAreas: "Kürzlich per Satellit erkannte Gebiete — 7 Tage",
     satelliteHistoryNote: "Braune Flächen zeigen kumulative Satellitenerfassungen, keinen offiziellen Brandflächenumfang.",
+    noLayersYet: "Derzeit keine Ebenen verfügbar",
+    openLegend: "Legende öffnen",
+    closeLegend: "Legende schließen",
   },
   countryPanel: {
     code: "Code",
@@ -98,6 +101,7 @@ export const de = {
     closeMenu: "Menü schließen",
     openSearch: "Suche öffnen",
     language: "Sprache",
+    chooseLanguage: "Sprache wählen",
   },
   nav: {
     menuTitle: "Entdecken",
@@ -109,6 +113,9 @@ export const de = {
     comingSoon: "Demnächst",
     mapLegend: "Kartenlegende",
     currentWildfires: "Aktuelle Waldbrände",
+    europeOverview: "Gesamtansicht Europas",
+    displaySettings: "Anzeigeeinstellungen",
+    aboutProject: "Über das Projekt",
   },
   search: {
     placeholder: "Ort, Land oder Warnung suchen",

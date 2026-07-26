@@ -11,6 +11,9 @@ export const ro = {
     satelliteActiveFires: "Detecții satelitare de incendii active",
     satelliteBurnedAreas: "Zone detectate recent prin satelit — 7 zile",
     satelliteHistoryNote: "Zonele maro arată detecții satelitare cumulate, nu un perimetru oficial al suprafeței arse.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Cod",
@@ -98,6 +101,7 @@ export const ro = {
     closeMenu: "Închide meniul",
     openSearch: "Deschide căutarea",
     language: "Limbă",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explorează",
@@ -109,6 +113,9 @@ export const ro = {
     comingSoon: "În curând",
     mapLegend: "Legenda hărții",
     currentWildfires: "Incendii actuale",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Caută un loc, o țară sau o alertă",

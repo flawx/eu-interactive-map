@@ -11,6 +11,9 @@ export const da = {
     satelliteActiveFires: "Satellitdetektioner af aktive brande",
     satelliteBurnedAreas: "Nyligt satellitdetekterede områder — 7 dage",
     satelliteHistoryNote: "Brune områder viser kumulative satellitdetektioner, ikke en officiel brandarealperimeter.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kode",
@@ -98,6 +101,7 @@ export const da = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const da = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

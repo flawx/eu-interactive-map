@@ -3,13 +3,33 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --app-header-height: 64px;
+  --app-header-height: 72px;
+  --map-ui-surface: rgba(255, 255, 255, 0.97);
+  --map-ui-surface-hover: rgba(232, 240, 254, 0.9);
+  --map-ui-text: #202124;
+  --map-ui-muted: #5f6368;
+  --map-ui-border: rgba(60, 64, 67, 0.18);
+  --map-ui-shadow: 0 1px 2px rgba(60, 64, 67, 0.2),
+    0 2px 8px rgba(60, 64, 67, 0.14);
+  --map-ui-radius: 18px;
 }
 
 @media (max-width: 767px) {
   :root {
-    --app-header-height: 56px;
+    --app-header-height: 64px;
   }
+}
+
+.map-ui-control {
+  background: var(--map-ui-surface);
+  color: var(--map-ui-text);
+  border: 1px solid var(--map-ui-border);
+  border-radius: var(--map-ui-radius);
+  box-shadow: var(--map-ui-shadow);
+}
+
+.map-ui-control:hover {
+  background: var(--map-ui-surface-hover);
 }
 
 @theme inline {
@@ -61,4 +81,15 @@ body {
 
 *::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

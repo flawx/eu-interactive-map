@@ -11,6 +11,9 @@ export const bg = {
     satelliteActiveFires: "Сателитни откривания на активни пожари",
     satelliteBurnedAreas: "Наскоро открити от сателит зони — 7 дни",
     satelliteHistoryNote: "Кафявите зони показват кумулативни сателитни открития, а не официален периметър на изгоряла площ.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Код",
@@ -98,6 +101,7 @@ export const bg = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const bg = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

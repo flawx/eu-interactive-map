@@ -11,6 +11,9 @@ export const fi = {
     satelliteActiveFires: "Satelliittihavainnot aktiivisista tulipaloista",
     satelliteBurnedAreas: "Äskettäin satelliitilla havaitut alueet — 7 päivää",
     satelliteHistoryNote: "Ruskeat alueet näyttävät kumulatiivisia satelliittihavaintoja, eivät virallista palaneen alueen reunaa.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Koodi",
@@ -98,6 +101,7 @@ export const fi = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const fi = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

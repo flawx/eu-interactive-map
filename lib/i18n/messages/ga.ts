@@ -11,6 +11,9 @@ export const ga = {
     satelliteActiveFires: "Braite satéilite ar thinte gníomhacha",
     satelliteBurnedAreas: "Limistéir a braitheadh le déanaí ó shatailít — 7 lá",
     satelliteHistoryNote: "Taispeánann limistéir dhonn braite shatailíte charnacha, ní imlíne oifigiúil limistéir dóite.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Cód",
@@ -98,6 +101,7 @@ export const ga = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const ga = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

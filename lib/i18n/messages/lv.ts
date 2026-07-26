@@ -11,6 +11,9 @@ export const lv = {
     satelliteActiveFires: "Satelītu aktīvo ugunsgrēku noteikšana",
     satelliteBurnedAreas: "Nesen ar satelītu noteiktas zonas — 7 dienas",
     satelliteHistoryNote: "Brūnās zonas rāda kumulatīvas satelīta detekcijas, nevis oficiālu izdegušās platības perimetru.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kods",
@@ -98,6 +101,7 @@ export const lv = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const lv = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

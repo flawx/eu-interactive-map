@@ -11,6 +11,9 @@ export const es = {
     satelliteActiveFires: "Detecciones satelitales de fuegos activos",
     satelliteBurnedAreas: "Zonas detectadas recientemente por satélite — 7 días",
     satelliteHistoryNote: "Las zonas marrones muestran detecciones satelitales acumuladas, no un perímetro oficial de área quemada.",
+    noLayersYet: "No hay capas disponibles por el momento",
+    openLegend: "Abrir la leyenda",
+    closeLegend: "Cerrar la leyenda",
   },
   countryPanel: {
     code: "Código",
@@ -98,6 +101,7 @@ export const es = {
     closeMenu: "Cerrar menú",
     openSearch: "Abrir búsqueda",
     language: "Idioma",
+    chooseLanguage: "Elegir un idioma",
   },
   nav: {
     menuTitle: "Explorar",
@@ -109,6 +113,9 @@ export const es = {
     comingSoon: "Próximamente",
     mapLegend: "Leyenda del mapa",
     currentWildfires: "Incendios actuales",
+    europeOverview: "Vista general de Europa",
+    displaySettings: "Ajustes de visualización",
+    aboutProject: "Acerca del proyecto",
   },
   search: {
     placeholder: "Buscar un lugar, un país o una alerta",

@@ -11,6 +11,9 @@ export const mt = {
     satelliteActiveFires: "Skoperti satellitari ta’ nirien attivi",
     satelliteBurnedAreas: "Żoni riċenti rilevati bis-satellita — 7 ijiem",
     satelliteHistoryNote: "Iż-żoni kannella juru rilevamenti satellitari kumulattivi, mhux perimetru uffiċjali ta’ żona maħruqa.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kodiċi",
@@ -98,6 +101,7 @@ export const mt = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const mt = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

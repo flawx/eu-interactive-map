@@ -11,6 +11,9 @@ export const en = {
     satelliteActiveFires: "Satellite active-fire detections",
     satelliteBurnedAreas: "Recent satellite-detected areas — 7 days",
     satelliteHistoryNote: "Brown areas show cumulative satellite detections, not an official burned-area perimeter.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Code",
@@ -98,6 +101,7 @@ export const en = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const en = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

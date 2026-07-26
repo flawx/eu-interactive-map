@@ -112,6 +112,7 @@ export default function MapInterface() {
     null,
   );
   const [legendHighlight, setLegendHighlight] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
   const focusNonceRef = useRef(0);
   const firmsRefreshStartedRef = useRef(false);
   const firmsHistoryRefreshStartedRef = useRef(false);
@@ -121,11 +122,6 @@ export default function MapInterface() {
   const effisBannerShownAtRef = useRef<number | null>(null);
 
   const t = getMessages(locale);
-
-  const languageNames = useMemo(
-    () => new Intl.DisplayNames(["en"], { type: "language" }),
-    [],
-  );
 
   const selectedWildfire = useMemo(
     () =>
@@ -805,28 +801,10 @@ export default function MapInterface() {
     requestFocus({ kind: "europe" });
   };
 
-  const handleOpenWildfires = () => {
-    setShowWildfires(true);
-    clearTemporaryPlace();
-    const first = wildfireIncidents[0];
-    if (first) {
-      handleWildfireSelect(first.id);
-      requestFocus({
-        kind: "point",
-        longitude: first.longitude,
-        latitude: first.latitude,
-        zoom: 6,
-      });
-    }
-  };
-
   const handleFocusLegend = () => {
+    setLegendOpen(true);
     setLegendHighlight(true);
     window.setTimeout(() => setLegendHighlight(false), 1600);
-    document.getElementById("map-legend")?.scrollIntoView({
-      block: "nearest",
-      behavior: "smooth",
-    });
   };
 
   const handleSelectSearchResult = (result: MapSearchResult) => {
@@ -891,18 +869,13 @@ export default function MapInterface() {
         locale={locale}
         onLocaleChange={setLocale}
         t={t}
-        languageNames={languageNames}
         wildfires={wildfireIncidents}
         onSelectSearchResult={handleSelectSearchResult}
         onGoEurope={handleGoEurope}
-        onOpenWildfires={handleOpenWildfires}
         onFocusLegend={handleFocusLegend}
       />
 
-      <div
-        className="absolute inset-x-0 bottom-0"
-        style={{ top: "var(--app-header-height)" }}
-      >
+      <div className="absolute inset-0">
         <MapClient
           showEurozone={showEurozone}
           showNonEurozone={showNonEurozone}
@@ -949,6 +922,8 @@ export default function MapInterface() {
         <MapLegend
           locale={locale}
           highlight={legendHighlight}
+          open={legendOpen}
+          onOpenChange={setLegendOpen}
           showEurozone={showEurozone}
           onToggleEurozone={setShowEurozone}
           showNonEurozone={showNonEurozone}

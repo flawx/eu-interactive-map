@@ -11,6 +11,9 @@ export const sl = {
     satelliteActiveFires: "Satelitske zaznave aktivnih požarov",
     satelliteBurnedAreas: "Nedavno satelitsko zaznana območja — 7 dni",
     satelliteHistoryNote: "Rjave cone prikazujejo kumulativne satelitske zaznave, ne uradnega oboda požgane površine.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Koda",
@@ -98,6 +101,7 @@ export const sl = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const sl = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

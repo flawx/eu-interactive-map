@@ -11,6 +11,9 @@ export const pl = {
     satelliteActiveFires: "Detekcje satelitarne aktywnych pożarów",
     satelliteBurnedAreas: "Obszary niedawno wykryte satelitarnie — 7 dni",
     satelliteHistoryNote: "Brązowe obszary pokazują skumulowane detekcje satelitarne, a nie oficjalny obwód spalonego terenu.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kod",
@@ -98,6 +101,7 @@ export const pl = {
     closeMenu: "Zamknij menu",
     openSearch: "Otwórz wyszukiwanie",
     language: "Język",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Odkrywaj",
@@ -109,6 +113,9 @@ export const pl = {
     comingSoon: "Wkrótce",
     mapLegend: "Legenda mapy",
     currentWildfires: "Aktualne pożary",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Szukaj miejsca, kraju lub alertu",

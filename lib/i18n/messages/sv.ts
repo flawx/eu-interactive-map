@@ -11,6 +11,9 @@ export const sv = {
     satelliteActiveFires: "Satellitdetektioner av aktiva bränder",
     satelliteBurnedAreas: "Nyligen satellitdetekterade områden — 7 dagar",
     satelliteHistoryNote: "Bruna områden visar kumulativa satellitdetektioner, inte en officiell brandområdesperimeter.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kod",
@@ -98,6 +101,7 @@ export const sv = {
     closeMenu: "Stäng meny",
     openSearch: "Öppna sökning",
     language: "Språk",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Utforska",
@@ -109,6 +113,9 @@ export const sv = {
     comingSoon: "Kommer snart",
     mapLegend: "Kartlegend",
     currentWildfires: "Pågående skogsbränder",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Sök plats, land eller varning",

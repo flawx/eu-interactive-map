@@ -11,6 +11,9 @@ export const sk = {
     satelliteActiveFires: "Satelitné detekcie aktívnych požiarov",
     satelliteBurnedAreas: "Nedávno satelitne detegované oblasti — 7 dní",
     satelliteHistoryNote: "Hnedé oblasti ukazujú kumulatívne satelitné detekcie, nie oficiálny obvod spálenej plochy.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kód",
@@ -98,6 +101,7 @@ export const sk = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const sk = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

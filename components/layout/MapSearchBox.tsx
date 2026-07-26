@@ -61,15 +61,15 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
 function ResultIcon({ type }: { type: MapSearchResult["type"] }) {
   switch (type) {
     case "country":
-      return <Landmark className="h-4 w-4 text-sky-400" aria-hidden="true" />;
+      return <Landmark className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />;
     case "capital":
-      return <MapPin className="h-4 w-4 text-emerald-400" aria-hidden="true" />;
+      return <MapPin className="h-4 w-4 text-[#188038]" aria-hidden="true" />;
     case "wildfire":
-      return <Flame className="h-4 w-4 text-orange-400" aria-hidden="true" />;
+      return <Flame className="h-4 w-4 text-[#d93025]" aria-hidden="true" />;
     case "eu_institution":
-      return <Building2 className="h-4 w-4 text-indigo-300" aria-hidden="true" />;
+      return <Building2 className="h-4 w-4 text-[#9334e6]" aria-hidden="true" />;
     default:
-      return <MapPin className="h-4 w-4 text-amber-300" aria-hidden="true" />;
+      return <MapPin className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />;
   }
 }
 
@@ -94,7 +94,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
   return (
     <>
       {before}
-      <mark className="rounded-sm bg-sky-400/30 text-inherit">{match}</mark>
+      <mark className="rounded-sm bg-[#c2e7ff] text-inherit">{match}</mark>
       {after}
     </>
   );
@@ -275,16 +275,24 @@ export default function MapSearchBox({
             aria-selected={selected}
             onMouseEnter={() => setActiveIndex(absoluteIndex)}
             onClick={() => selectResult(result)}
-            className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 ${
-              selected ? "bg-white/10" : "hover:bg-white/5"
+            className={`flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 ${
+              selected
+                ? "bg-[var(--map-ui-surface-hover)]"
+                : "hover:bg-[var(--map-ui-surface-hover)]"
             }`}
           >
             <ResultIcon type={result.type} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm text-white">
+              <span
+                className="block truncate text-sm font-medium"
+                style={{ color: "var(--map-ui-text)" }}
+              >
                 <HighlightedText text={result.title} query={debouncedQuery} />
               </span>
-              <span className="block truncate text-[11px] text-slate-400">
+              <span
+                className="block truncate text-[11px]"
+                style={{ color: "var(--map-ui-muted)" }}
+              >
                 {categoryLabel(result.category, t)}
                 {result.subtitle ? ` · ${result.subtitle}` : ""}
               </span>
@@ -295,8 +303,15 @@ export default function MapSearchBox({
     });
 
     const block = (
-      <div key={group.category} className="mb-2">
-        <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+      <div
+        key={group.category}
+        className="mb-2 border-b pb-2 last:mb-0 last:border-b-0 last:pb-0"
+        style={{ borderColor: "var(--map-ui-border)" }}
+      >
+        <p
+          className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--map-ui-muted)" }}
+        >
           {categoryLabel(group.category, t)}
         </p>
         <ul className="space-y-0.5">{groupNodes}</ul>
@@ -308,9 +323,22 @@ export default function MapSearchBox({
   });
 
   return (
-    <div className={`relative ${compact ? "w-full" : "w-full max-w-xl"}`}>
-      <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/80 px-2 shadow-sm backdrop-blur-md">
-        <Search className="ml-1 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+    <div
+      className={`relative ${compact ? "w-full" : "w-full max-w-[600px] min-w-0 md:w-[min(600px,42vw)] md:min-w-[420px]"}`}
+    >
+      <div
+        className="flex h-12 items-center gap-2 rounded-[999px] border px-3"
+        style={{
+          background: "var(--map-ui-surface)",
+          borderColor: "var(--map-ui-border)",
+          boxShadow: "var(--map-ui-shadow)",
+        }}
+      >
+        <Search
+          className="h-4 w-4 shrink-0"
+          style={{ color: "var(--map-ui-muted)" }}
+          aria-hidden="true"
+        />
         <input
           ref={inputRef}
           type="search"
@@ -324,7 +352,8 @@ export default function MapSearchBox({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder={t.search.placeholder}
-          className="h-10 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-400"
+          className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--map-ui-muted)] focus-visible:outline-none"
+          style={{ color: "var(--map-ui-text)" }}
           role="combobox"
           aria-expanded={showPanel}
           aria-controls={listboxId}
@@ -344,8 +373,9 @@ export default function MapSearchBox({
               setExternalError(false);
               inputRef.current?.focus();
             }}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-300 outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
             aria-label={t.search.clearSearch}
+            style={{ color: "var(--map-ui-muted)" }}
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -357,16 +387,31 @@ export default function MapSearchBox({
           id={listboxId}
           role="listbox"
           aria-label={t.search.resultsInApp}
-          className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[70] max-h-[min(24rem,60vh)] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-md"
+          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-[70] max-h-[min(24rem,60vh)] overflow-y-auto rounded-[16px] border p-2"
+          style={{
+            background: "var(--map-ui-surface)",
+            borderColor: "var(--map-ui-border)",
+            boxShadow: "var(--map-ui-shadow)",
+          }}
         >
           {debouncedQuery.length >= 2 ? (
-            <p className="px-2 py-1 text-[10px] uppercase tracking-wide text-slate-400">
+            <p
+              className="px-2 py-1 text-[10px] uppercase tracking-wide"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
               {t.search.resultsInApp}
             </p>
           ) : null}
 
-          {debouncedQuery.length >= 2 && localGroups.length === 0 && !externalLoading ? (
-            <p className="px-2 py-2 text-xs text-slate-300">{t.search.noResults}</p>
+          {debouncedQuery.length >= 2 &&
+          localGroups.length === 0 &&
+          !externalLoading ? (
+            <p
+              className="px-2 py-2 text-xs"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.search.noResults}
+            </p>
           ) : null}
 
           {localOptionNodes}
@@ -375,10 +420,17 @@ export default function MapSearchBox({
             <button
               type="button"
               onClick={() => void runExternalSearch()}
-              className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-sky-200 outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+              className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+              style={{
+                borderColor: "var(--map-ui-border)",
+                color: "#1a73e8",
+              }}
             >
               {externalLoading ? (
-                <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                <LoaderCircle
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <Search className="h-3.5 w-3.5" aria-hidden="true" />
               )}
@@ -387,14 +439,17 @@ export default function MapSearchBox({
           ) : null}
 
           {externalError ? (
-            <p className="px-2 py-2 text-xs text-amber-200">
+            <p className="px-2 py-2 text-xs text-[#b06000]">
               {t.search.serviceUnavailable}
             </p>
           ) : null}
 
           {externalResults.length > 0 ? (
             <div className="mb-2">
-              <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <p
+                className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                style={{ color: "var(--map-ui-muted)" }}
+              >
                 {t.search.groupExternal}
               </p>
               <ul className="space-y-0.5">
@@ -410,16 +465,24 @@ export default function MapSearchBox({
                         aria-selected={selected}
                         onMouseEnter={() => setActiveIndex(absoluteIndex)}
                         onClick={() => selectResult(result)}
-                        className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 ${
-                          selected ? "bg-white/10" : "hover:bg-white/5"
+                        className={`flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 ${
+                          selected
+                            ? "bg-[var(--map-ui-surface-hover)]"
+                            : "hover:bg-[var(--map-ui-surface-hover)]"
                         }`}
                       >
                         <ResultIcon type={result.type} />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm text-white">
+                          <span
+                            className="block truncate text-sm font-medium"
+                            style={{ color: "var(--map-ui-text)" }}
+                          >
                             {result.title}
                           </span>
-                          <span className="block truncate text-[11px] text-slate-400">
+                          <span
+                            className="block truncate text-[11px]"
+                            style={{ color: "var(--map-ui-muted)" }}
+                          >
                             {String(result.metadata.address ?? result.subtitle)}
                           </span>
                         </span>
@@ -428,7 +491,10 @@ export default function MapSearchBox({
                   );
                 })}
               </ul>
-              <p className="px-2 pt-2 text-[10px] text-slate-500">
+              <p
+                className="px-2 pt-2 text-[10px]"
+                style={{ color: "var(--map-ui-muted)" }}
+              >
                 {t.search.osmAttribution}
               </p>
             </div>
@@ -436,7 +502,10 @@ export default function MapSearchBox({
 
           {history.length > 0 && debouncedQuery.length < 2 ? (
             <div>
-              <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <p
+                className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                style={{ color: "var(--map-ui-muted)" }}
+              >
                 {t.search.recentHistory}
               </p>
               <ul className="space-y-0.5">
@@ -449,7 +518,8 @@ export default function MapSearchBox({
                         setOpen(true);
                         inputRef.current?.focus();
                       }}
-                      className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-slate-200 outline-none hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+                      className="flex w-full rounded-xl px-2.5 py-2 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+                      style={{ color: "var(--map-ui-text)" }}
                     >
                       {entry.title}
                     </button>

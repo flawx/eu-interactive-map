@@ -1,5 +1,15 @@
 "use client";
 
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  Layers,
+  Plane,
+  Shield,
+  X,
+  Zap,
+} from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 
@@ -20,7 +30,16 @@ type MapLegendProps = {
   showSatelliteBurnedAreas: boolean;
   onToggleSatelliteBurnedAreas: (value: boolean) => void;
   highlight?: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
+
+type LegendCategoryId =
+  | "europe"
+  | "tourism"
+  | "security"
+  | "alerts"
+  | "energy";
 
 export default function MapLegend({
   locale,
@@ -39,160 +58,345 @@ export default function MapLegend({
   showSatelliteBurnedAreas,
   onToggleSatelliteBurnedAreas,
   highlight,
+  open,
+  onOpenChange,
 }: MapLegendProps) {
   const t = getMessages(locale);
   const isHighlighted = Boolean(highlight);
+  const [expanded, setExpanded] = useState<Record<LegendCategoryId, boolean>>({
+    europe: true,
+    tourism: false,
+    security: false,
+    alerts: true,
+    energy: false,
+  });
 
-  return (
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onOpenChange(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onOpenChange]);
+
+  const europeActive = [
+    showEurozone,
+    showNonEurozone,
+    showSchengenNonEU,
+    showCandidates,
+  ].filter(Boolean).length;
+
+  const alertsActive = [
+    showWildfires,
+    showSatelliteActiveFires,
+    showSatelliteBurnedAreas,
+  ].filter(Boolean).length;
+
+  const toggleCategory = (id: LegendCategoryId) => {
+    setExpanded((current) => ({ ...current, [id]: !current[id] }));
+  };
+
+  const panel = (
     <aside
-      id="map-legend"
-      className={`absolute right-4 top-4 z-10 w-72 max-w-[calc(100%-2rem)] rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md transition ring-offset-2 ring-offset-slate-950 ${
-        isHighlighted ? "ring-2 ring-sky-400/80" : ""
+      className={`flex max-h-[min(70vh,34rem)] w-[min(21rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[var(--map-ui-radius)] border transition ${
+        isHighlighted ? "ring-2 ring-[#1a73e8]/70" : ""
       }`}
+      style={{
+        background: "var(--map-ui-surface)",
+        borderColor: "var(--map-ui-border)",
+        boxShadow: "var(--map-ui-shadow)",
+        color: "var(--map-ui-text)",
+      }}
     >
-      <h2 className="mb-3 text-sm font-semibold">
-        {t.legend.title}
-      </h2>
+      <div
+        className="flex items-center justify-between border-b px-4 py-3"
+        style={{ borderColor: "var(--map-ui-border)" }}
+      >
+        <h2 className="text-sm font-semibold">{t.legend.title}</h2>
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
+          aria-label={t.legend.closeLegend}
+          onClick={() => onOpenChange(false)}
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
 
-      <div className="space-y-3">
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
+      <div className="overflow-y-auto px-2 py-2">
+        <Category
+          id="europe"
+          title={t.nav.europe}
+          icon={<Layers className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />}
+          activeCount={europeActive}
+          expanded={expanded.europe}
+          onToggle={() => toggleCategory("europe")}
+        >
+          <LayerToggle
             checked={showEurozone}
-            onChange={(event) => onToggleEurozone(event.target.checked)}
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ accentColor: "#2563eb" }}
+            onChange={onToggleEurozone}
+            color="#2563eb"
+            label={t.legend.eurozone}
           />
-          <span
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ backgroundColor: "#2563eb" }}
-          />
-          <span className="text-xs text-slate-200">
-            {t.legend.eurozone}
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
+          <LayerToggle
             checked={showNonEurozone}
-            onChange={(event) => onToggleNonEurozone(event.target.checked)}
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ accentColor: "#7c3aed" }}
+            onChange={onToggleNonEurozone}
+            color="#7c3aed"
+            label={t.legend.nonEurozone}
           />
-          <span
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ backgroundColor: "#7c3aed" }}
-          />
-          <span className="text-xs text-slate-200">
-            {t.legend.nonEurozone}
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
+          <LayerToggle
             checked={showSchengenNonEU}
-            onChange={(event) =>
-              onToggleSchengenNonEU(event.target.checked)
-            }
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ accentColor: "#14b8a6" }}
+            onChange={onToggleSchengenNonEU}
+            color="#14b8a6"
+            label={t.legend.schengenNonEU}
           />
-          <span
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ backgroundColor: "#14b8a6" }}
-          />
-          <span className="text-xs text-slate-200">
-            {t.legend.schengenNonEU}
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
+          <LayerToggle
             checked={showCandidates}
-            onChange={(event) => onToggleCandidates(event.target.checked)}
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ accentColor: "#f59e0b" }}
+            onChange={onToggleCandidates}
+            color="#f59e0b"
+            label={t.legend.officialCandidate}
           />
-          <span
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ backgroundColor: "#f59e0b" }}
-          />
-          <span className="text-xs text-slate-200">
-            {t.legend.officialCandidate}
-          </span>
-        </label>
+        </Category>
 
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
+        <Category
+          id="tourism"
+          title={t.nav.tourism}
+          icon={<Plane className="h-4 w-4 text-[#188038]" aria-hidden="true" />}
+          activeCount={0}
+          expanded={expanded.tourism}
+          onToggle={() => toggleCategory("tourism")}
+        >
+          <EmptyCategory t={t} />
+        </Category>
+
+        <Category
+          id="security"
+          title={t.nav.security}
+          icon={<Shield className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />}
+          activeCount={0}
+          expanded={expanded.security}
+          onToggle={() => toggleCategory("security")}
+        >
+          <EmptyCategory t={t} />
+        </Category>
+
+        <Category
+          id="alerts"
+          title={t.nav.alerts}
+          icon={
+            <AlertTriangle
+              className="h-4 w-4 text-[#d93025]"
+              aria-hidden="true"
+            />
+          }
+          activeCount={alertsActive}
+          expanded={expanded.alerts}
+          onToggle={() => toggleCategory("alerts")}
+        >
+          <LayerToggle
             checked={showWildfires}
-            onChange={(event) => onToggleWildfires(event.target.checked)}
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ accentColor: "#ef4444" }}
-          />
-          <span
-            className="h-4 w-4 shrink-0 rounded-full border border-white/20"
-            style={{
+            onChange={onToggleWildfires}
+            color="#ef4444"
+            label={t.legend.majorWildfires}
+            swatchClassName="rounded-full"
+            swatchStyle={{
               background:
                 "linear-gradient(135deg, #ef4444 0%, #ef4444 55%, #f59e0b 55%, #f59e0b 100%)",
             }}
           />
-          <span className="text-xs text-slate-200">
-            {t.legend.majorWildfires}
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
+          <LayerToggle
             checked={showSatelliteActiveFires}
-            onChange={(event) =>
-              onToggleSatelliteActiveFires(event.target.checked)
-            }
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ accentColor: "#f97316" }}
+            onChange={onToggleSatelliteActiveFires}
+            color="#f97316"
+            label={t.legend.satelliteActiveFires}
           />
-          <span
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ backgroundColor: "#f97316" }}
-          />
-          <span className="text-xs text-slate-200">
-            {t.legend.satelliteActiveFires}
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
+          <LayerToggle
             checked={showSatelliteBurnedAreas}
-            onChange={(event) =>
-              onToggleSatelliteBurnedAreas(event.target.checked)
-            }
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ accentColor: "#7c2d12" }}
+            onChange={onToggleSatelliteBurnedAreas}
+            color="#7c2d12"
+            label={t.legend.satelliteBurnedAreas}
           />
-          <span
-            className="h-4 w-4 shrink-0 rounded-sm border border-white/20"
-            style={{ backgroundColor: "#7c2d12" }}
-          />
-          <span className="text-xs text-slate-200">
-            {t.legend.satelliteBurnedAreas}
-          </span>
-        </label>
-        <p className="text-[10px] leading-snug text-slate-400">
-          {t.legend.satelliteHistoryNote}
-        </p>
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.satelliteHistoryNote}
+          </p>
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.incidents.gdacsScopeDisclaimer}
+          </p>
+          <p
+            className="px-2 pb-2 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.incidents.satelliteDetectionDisclaimer}
+          </p>
+        </Category>
 
-        <p className="text-[10px] leading-snug text-slate-400">
-          {t.incidents.gdacsScopeDisclaimer}
-        </p>
-        <p className="text-[10px] leading-snug text-slate-400">
-          {t.incidents.satelliteDetectionDisclaimer}
-        </p>
+        <Category
+          id="energy"
+          title={t.nav.energy}
+          icon={<Zap className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />}
+          activeCount={0}
+          expanded={expanded.energy}
+          onToggle={() => toggleCategory("energy")}
+        >
+          <EmptyCategory t={t} />
+        </Category>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        className="map-ui-control absolute bottom-4 left-1/2 z-20 inline-flex h-11 -translate-x-1/2 items-center gap-2 px-4 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
+        aria-label={open ? t.legend.closeLegend : t.legend.openLegend}
+        aria-expanded={open}
+        onClick={() => onOpenChange(!open)}
+      >
+        <Layers className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />
+        {t.legend.title}
+      </button>
+
+      {/* Desktop floating panel */}
+      <div className="absolute right-4 top-[4.75rem] z-20 hidden md:block">
+        {panel}
+      </div>
+
+      {/* Mobile bottom drawer */}
+      {open ? (
+        <div className="fixed inset-0 z-40 md:hidden" role="presentation">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/25"
+            aria-label={t.legend.closeLegend}
+            onClick={() => onOpenChange(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 flex justify-center p-3">
+            {panel}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function Category({
+  id,
+  title,
+  icon,
+  activeCount,
+  expanded,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  icon: ReactNode;
+  activeCount: number;
+  expanded: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mb-1 rounded-xl">
+      <button
+        type="button"
+        className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+        aria-expanded={expanded}
+        aria-controls={`legend-category-${id}`}
+        onClick={onToggle}
+      >
+        {icon}
+        <span className="min-w-0 flex-1 text-sm font-medium">{title}</span>
+        <span
+          className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+          style={{
+            background: "rgba(26, 115, 232, 0.1)",
+            color: "#1a73e8",
+          }}
+        >
+          {activeCount}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 transition ${expanded ? "rotate-180" : ""}`}
+          style={{ color: "var(--map-ui-muted)" }}
+          aria-hidden="true"
+        />
+      </button>
+      {expanded ? (
+        <div id={`legend-category-${id}`} className="space-y-1 px-1 pb-2 pt-1">
+          {children}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function LayerToggle({
+  checked,
+  onChange,
+  color,
+  label,
+  swatchClassName = "rounded-sm",
+  swatchStyle,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  color: string;
+  label: string;
+  swatchClassName?: string;
+  swatchStyle?: CSSProperties;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--map-ui-surface-hover)]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="h-4 w-4 shrink-0 rounded-sm border"
+        style={{ accentColor: color }}
+      />
+      <span
+        className={`h-3.5 w-3.5 shrink-0 border ${swatchClassName}`}
+        style={{
+          backgroundColor: color,
+          borderColor: "var(--map-ui-border)",
+          ...swatchStyle,
+        }}
+      />
+      <span className="text-xs leading-snug">{label}</span>
+    </label>
+  );
+}
+
+function EmptyCategory({
+  t,
+}: {
+  t: ReturnType<typeof getMessages>;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-lg px-2 py-2">
+      <p className="text-xs" style={{ color: "var(--map-ui-muted)" }}>
+        {t.legend.noLayersYet}
+      </p>
+      <span
+        className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide"
+        style={{
+          borderColor: "var(--map-ui-border)",
+          color: "var(--map-ui-muted)",
+        }}
+      >
+        {t.nav.comingSoon}
+      </span>
+    </div>
   );
 }

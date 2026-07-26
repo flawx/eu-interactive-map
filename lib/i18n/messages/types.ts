@@ -1,4 +1,25 @@
 export type Messages = {
+  header: {
+    openMenu: string;
+    closeMenu: string;
+    openSearch: string;
+    language: string;
+    chooseLanguage: string;
+  };
+  nav: {
+    menuTitle: string;
+    europe: string;
+    tourism: string;
+    security: string;
+    alerts: string;
+    energy: string;
+    comingSoon: string;
+    mapLegend: string;
+    currentWildfires: string;
+    europeOverview: string;
+    displaySettings: string;
+    aboutProject: string;
+  };
   legend: {
     title: string;
     eurozone: string;
@@ -9,6 +30,9 @@ export type Messages = {
     satelliteActiveFires: string;
     satelliteBurnedAreas: string;
     satelliteHistoryNote: string;
+    noLayersYet: string;
+    openLegend: string;
+    closeLegend: string;
   };
   countryPanel: {
     code: string;
@@ -90,23 +114,6 @@ export type Messages = {
     firmsHistoryUnavailable: string;
     effisUnavailableNasaShown: string;
     firmsHistoryRefreshedAt: string;
-  };
-  header: {
-    openMenu: string;
-    closeMenu: string;
-    openSearch: string;
-    language: string;
-  };
-  nav: {
-    menuTitle: string;
-    europe: string;
-    tourism: string;
-    security: string;
-    alerts: string;
-    energy: string;
-    comingSoon: string;
-    mapLegend: string;
-    currentWildfires: string;
   };
   search: {
     placeholder: string;

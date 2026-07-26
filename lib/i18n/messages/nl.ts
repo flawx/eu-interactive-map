@@ -11,6 +11,9 @@ export const nl = {
     satelliteActiveFires: "Satellietdetecties van actieve branden",
     satelliteBurnedAreas: "Recent satellietgedetecteerde gebieden — 7 dagen",
     satelliteHistoryNote: "Bruine zones tonen cumulatieve satellietdetecties, geen officiële verbrande-oppervlakteperimeter.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Code",
@@ -98,6 +101,7 @@ export const nl = {
     closeMenu: "Menu sluiten",
     openSearch: "Zoeken openen",
     language: "Taal",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Verkennen",
@@ -109,6 +113,9 @@ export const nl = {
     comingSoon: "Binnenkort",
     mapLegend: "Kaartlegenda",
     currentWildfires: "Huidige bosbranden",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Zoek een plaats, land of waarschuwing",

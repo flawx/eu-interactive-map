@@ -11,6 +11,9 @@ export const lt = {
     satelliteActiveFires: "Palydoviniai aktyvių gaisrų aptikimai",
     satelliteBurnedAreas: "Nesen palydovu aptiktos zonos — 7 dienos",
     satelliteHistoryNote: "Rudos zonos rodo kaupiamuosius palydovinius aptikimus, o ne oficialų sudegusio ploto perimetrą.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kodas",
@@ -98,6 +101,7 @@ export const lt = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const lt = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

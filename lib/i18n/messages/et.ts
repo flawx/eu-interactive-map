@@ -11,6 +11,9 @@ export const et = {
     satelliteActiveFires: "Satelliidi aktiivsete tulekahjude tuvastused",
     satelliteBurnedAreas: "Hiljuti satelliidiga tuvastatud alad — 7 päeva",
     satelliteHistoryNote: "Pruunid alad näitavad kumulatiivseid satelliittuvastusi, mitte ametlikku põlenud ala perimeetrit.",
+    noLayersYet: "No layers available yet",
+    openLegend: "Open legend",
+    closeLegend: "Close legend",
   },
   countryPanel: {
     code: "Kood",
@@ -98,6 +101,7 @@ export const et = {
     closeMenu: "Close menu",
     openSearch: "Open search",
     language: "Language",
+    chooseLanguage: "Choose a language",
   },
   nav: {
     menuTitle: "Explore",
@@ -109,6 +113,9 @@ export const et = {
     comingSoon: "Coming soon",
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
+    europeOverview: "Europe overview",
+    displaySettings: "Display settings",
+    aboutProject: "About the project",
   },
   search: {
     placeholder: "Search for a place, country or alert",

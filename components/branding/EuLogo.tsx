@@ -41,7 +41,10 @@ export default function EuLogo({
         })}
       </svg>
       {showName ? (
-        <span className="hidden truncate text-sm font-semibold tracking-tight text-white sm:inline">
+        <span
+          className="hidden truncate text-sm font-semibold tracking-tight lg:inline"
+          style={{ color: "var(--map-ui-text)" }}
+        >
           {APP_DISPLAY_NAME}
         </span>
       ) : null}
@@ -53,7 +56,7 @@ export default function EuLogo({
       <button
         type="button"
         onClick={onClick}
-        className={`inline-flex max-w-[11rem] items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 ${className}`}
+        className={`inline-flex max-w-[12rem] items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 ${className}`}
         aria-label={`${APP_DISPLAY_NAME} — Europe`}
       >
         {content}
