@@ -67,10 +67,10 @@ export default function MapLegend({
   const isHighlighted = Boolean(highlight);
   const open = !collapsed;
   const [expanded, setExpanded] = useState<Record<LegendCategoryId, boolean>>({
-    europe: true,
+    europe: false,
     tourism: false,
     security: false,
-    alerts: false,
+    alerts: true,
     energy: false,
   });
 
