@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getMessages } from "@/lib/i18n/messages";
 import type { Locale } from "@/lib/i18n/config";
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
@@ -28,6 +28,8 @@ type WildfireIncidentPanelProps = {
   onFocusGeometry?: (geometry: GeoJSON.Geometry) => void;
 };
 
+const officialRefreshDoneThisSession = new Set<string>();
+
 export default function WildfireIncidentPanel({
   incident,
   locale,
@@ -45,6 +47,20 @@ export default function WildfireIncidentPanel({
   );
   const [opsLoading, setOpsLoading] = useState(true);
   const [opsError, setOpsError] = useState(false);
+  const [officialRefreshState, setOfficialRefreshState] = useState<
+    "idle" | "checking" | "done" | "partial"
+  >("idle");
+  const [officialVerifiedAt, setOfficialVerifiedAt] = useState<string | null>(
+    null,
+  );
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -96,6 +112,70 @@ export default function WildfireIncidentPanel({
     return () => controller.abort();
   }, [incident.id]);
 
+  useEffect(() => {
+    if (officialRefreshDoneThisSession.has(incident.id)) {
+      setOfficialRefreshState("done");
+      return;
+    }
+
+    const controller = new AbortController();
+    setOfficialRefreshState("checking");
+
+    const refresh = async () => {
+      try {
+        const response = await fetch(
+          `/api/incidents/wildfires/${encodeURIComponent(incident.id)}/operational/refresh-official`,
+          {
+            method: "POST",
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          if (!controller.signal.aborted && mountedRef.current) {
+            officialRefreshDoneThisSession.add(incident.id);
+            setOfficialRefreshState("partial");
+          }
+          return;
+        }
+
+        const data: unknown = await response.json();
+        const report =
+          data && typeof data === "object" && "report" in data
+            ? (data.report as { errors?: string[] })
+            : null;
+        const hasSourceErrors = Boolean(report?.errors?.length);
+
+        if (
+          data &&
+          typeof data === "object" &&
+          "summary" in data &&
+          data.summary &&
+          typeof data.summary === "object" &&
+          !controller.signal.aborted &&
+          mountedRef.current
+        ) {
+          setOpsSummary(data.summary as WildfireOperationalSummary);
+          setOpsError(false);
+        }
+
+        if (!controller.signal.aborted && mountedRef.current) {
+          officialRefreshDoneThisSession.add(incident.id);
+          setOfficialVerifiedAt(new Date().toISOString());
+          setOfficialRefreshState(hasSourceErrors ? "partial" : "done");
+        }
+      } catch {
+        if (!controller.signal.aborted && mountedRef.current) {
+          officialRefreshDoneThisSession.add(incident.id);
+          setOfficialRefreshState("partial");
+        }
+      }
+    };
+
+    void refresh();
+    return () => controller.abort();
+  }, [incident.id]);
+
   const alertLabel =
     incident.alertLevel === "green"
       ? t.incidents.greenAlert
@@ -125,6 +205,7 @@ export default function WildfireIncidentPanel({
 
   const startedAt = formatIncidentDate(incident.startedAt, locale);
   const updatedAt = formatIncidentDate(incident.updatedAt, locale);
+  const officialVerifiedLabel = formatIncidentDate(officialVerifiedAt, locale);
 
   const firmsStatusLabel =
     firmsSnapshotStatus === "live"
@@ -218,6 +299,25 @@ export default function WildfireIncidentPanel({
           {snapshot && (
             <p className="text-[10px] leading-snug text-slate-500">
               {t.incidents.effisDisclaimer}
+            </p>
+          )}
+
+          {officialRefreshState === "checking" && (
+            <p className="text-[10px] text-slate-400">
+              {t.incidents.opsOfficialChecking}
+            </p>
+          )}
+          {officialRefreshState === "done" && officialVerifiedLabel && (
+            <p className="text-[10px] text-slate-400">
+              {t.incidents.opsOfficialVerifiedAt.replace(
+                "{time}",
+                officialVerifiedLabel,
+              )}
+            </p>
+          )}
+          {officialRefreshState === "partial" && (
+            <p className="text-[10px] text-amber-200/90">
+              {t.incidents.opsOfficialPartialUnavailable}
             </p>
           )}
         </div>

@@ -156,5 +156,8 @@ export type Messages = {
     opsFilterSafety: string;
     opsFilterResources: string;
     opsFilterAuthorities: string;
+    opsOfficialChecking: string;
+    opsOfficialVerifiedAt: string;
+    opsOfficialPartialUnavailable: string;
   };
 };

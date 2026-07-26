@@ -210,7 +210,12 @@ export function isActiveOfficialEvacuation(
   if (update.verificationStatus !== "official") return false;
 
   const status = (update.status ?? "").toLowerCase();
-  if (status === "inactive" || status === "lifted" || status === "cancelled") {
+  if (
+    status === "inactive" ||
+    status === "lifted" ||
+    status === "cancelled" ||
+    status === "completed"
+  ) {
     return false;
   }
 
