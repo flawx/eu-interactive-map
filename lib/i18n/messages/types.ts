@@ -70,5 +70,16 @@ export type Messages = {
     calculatedArea: string;
     satellitePerimeterUpdated: string;
     savedSatelliteArea: string;
+    firmsLoading: string;
+    firmsTemporarilyUnavailable: string;
+    firmsDataTitle: string;
+    firmsLastObservation: string;
+    firmsDetectionCount: string;
+    firmsSensors: string;
+    firmsApproximateArea: string;
+    firmsAreaDisclaimer: string;
+    firmsLiveData: string;
+    firmsCachedData: string;
+    effisTemporarilyUnavailable: string;
   };
 };

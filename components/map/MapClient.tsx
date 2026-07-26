@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { Locale } from "@/lib/i18n/config";
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
+import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import type {
   EffisBurnedArea,
   WildfireIncident,
@@ -27,6 +29,10 @@ type MapClientProps = {
   onEffisBurnedAreaLoadingChange: (loading: boolean) => void;
   effisSnapshotsByIncidentId: Record<string, EffisBurnedAreaSnapshot>;
   selectedWildfireId: string | null;
+  locale: Locale;
+  firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
+  onFirmsRasterAvailabilityChange?: (available: boolean) => void;
+  onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
 };
 
 export default function MapClient({
@@ -45,6 +51,10 @@ export default function MapClient({
   onEffisBurnedAreaLoadingChange,
   effisSnapshotsByIncidentId,
   selectedWildfireId,
+  locale,
+  firmsSnapshotsByIncidentId,
+  onFirmsRasterAvailabilityChange,
+  onEffisBurnedAreasAvailabilityChange,
 }: MapClientProps) {
   return (
     <MapContainer
@@ -63,6 +73,10 @@ export default function MapClient({
       onEffisBurnedAreaLoadingChange={onEffisBurnedAreaLoadingChange}
       effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
       selectedWildfireId={selectedWildfireId}
+      locale={locale}
+      firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
+      onFirmsRasterAvailabilityChange={onFirmsRasterAvailabilityChange}
+      onEffisBurnedAreasAvailabilityChange={onEffisBurnedAreasAvailabilityChange}
     />
   );
 }

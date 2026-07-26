@@ -16,15 +16,31 @@ import {
   validateEffisBurnedAreaSnapshot,
   type EffisBurnedAreaSnapshot,
 } from "@/lib/incidents/effisSnapshot";
+import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import type {
   EffisBurnedArea,
   WildfireIncident,
 } from "@/lib/incidents/types";
 
+const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
+
 async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+function isAbortError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return true;
+  }
+
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
 }
 
 export default function MapInterface() {
@@ -55,6 +71,17 @@ export default function MapInterface() {
     Record<string, EffisBurnedAreaSnapshot>
   >({});
   const refreshedSnapshotIdsRef = useRef<Set<string>>(new Set());
+  const [firmsSnapshotsByIncidentId, setFirmsSnapshotsByIncidentId] =
+    useState<Record<string, FirmsIncidentSnapshot>>({});
+  const [firmsSnapshotStatus, setFirmsSnapshotStatus] = useState<
+    "live" | "cached" | null
+  >(null);
+  const [firmsLoadingOverlay, setFirmsLoadingOverlay] = useState(false);
+  const [firmsUnavailableMessage, setFirmsUnavailableMessage] =
+    useState(false);
+  const [firmsRasterAvailable, setFirmsRasterAvailable] = useState(false);
+  const [effisUnavailable, setEffisUnavailable] = useState(false);
+  const firmsRefreshStartedRef = useRef(false);
 
   const t = getMessages(locale);
 
@@ -245,6 +272,144 @@ export default function MapInterface() {
     };
   }, [wildfireIncidents]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const applyFirmsSnapshots = (snapshots: FirmsIncidentSnapshot[]) => {
+      if (snapshots.length === 0) return;
+
+      setFirmsSnapshotsByIncidentId((previous) => {
+        const next = { ...previous };
+        for (const snapshot of snapshots) {
+          const existing = next[snapshot.incidentId];
+          if (
+            !existing ||
+            Date.parse(snapshot.fetchedAt) >= Date.parse(existing.fetchedAt)
+          ) {
+            next[snapshot.incidentId] = snapshot;
+          }
+        }
+        return next;
+      });
+    };
+
+    const loadFirmsSnapshots = async () => {
+      try {
+        const response = await fetch("/api/incidents/firms/snapshots", {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return;
+
+        const data: unknown = await response.json();
+        if (
+          data &&
+          typeof data === "object" &&
+          "snapshots" in data &&
+          Array.isArray(data.snapshots)
+        ) {
+          const snapshots = data.snapshots as FirmsIncidentSnapshot[];
+          applyFirmsSnapshots(snapshots);
+          if (snapshots.length > 0) {
+            setFirmsSnapshotStatus("cached");
+          }
+        }
+      } catch (error: unknown) {
+        if (isAbortError(error)) return;
+      }
+    };
+
+    const refreshFirmsSnapshots = async () => {
+      if (firmsRefreshStartedRef.current) return;
+      firmsRefreshStartedRef.current = true;
+
+      try {
+        const response = await fetch(
+          "/api/incidents/firms/snapshots/refresh",
+          {
+            method: "POST",
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          firmsRefreshStartedRef.current = false;
+          return;
+        }
+
+        const data: unknown = await response.json();
+        if (
+          data &&
+          typeof data === "object" &&
+          "snapshots" in data &&
+          Array.isArray(data.snapshots)
+        ) {
+          const snapshots = data.snapshots as FirmsIncidentSnapshot[];
+          applyFirmsSnapshots(snapshots);
+
+          const updated =
+            "updated" in data && data.updated === true;
+          const preservedPrevious =
+            "preservedPrevious" in data && data.preservedPrevious === true;
+
+          if (updated) {
+            setFirmsSnapshotStatus("live");
+          } else if (preservedPrevious || snapshots.length > 0) {
+            setFirmsSnapshotStatus("cached");
+          }
+        }
+      } catch (error: unknown) {
+        firmsRefreshStartedRef.current = false;
+        if (isAbortError(error)) return;
+      }
+    };
+
+    void (async () => {
+      await loadFirmsSnapshots();
+      if (controller.signal.aborted) return;
+      await refreshFirmsSnapshots();
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  const hasFirmsSnapshots = Object.keys(firmsSnapshotsByIncidentId).length > 0;
+  const firmsDataAvailable = hasFirmsSnapshots || firmsRasterAvailable;
+
+  useEffect(() => {
+    void (async () => {
+      if (!showSatelliteActiveFires) {
+        setFirmsLoadingOverlay(false);
+        setFirmsUnavailableMessage(false);
+        return;
+      }
+
+      setFirmsUnavailableMessage(false);
+
+      if (firmsDataAvailable) {
+        setFirmsLoadingOverlay(false);
+        return;
+      }
+
+      setFirmsLoadingOverlay(true);
+    })();
+  }, [showSatelliteActiveFires, firmsDataAvailable]);
+
+  useEffect(() => {
+    if (!showSatelliteActiveFires || firmsDataAvailable) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setFirmsLoadingOverlay(false);
+      setFirmsUnavailableMessage(true);
+    }, FIRMS_UNAVAILABLE_TIMEOUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [showSatelliteActiveFires, firmsDataAvailable]);
+
   void wildfiresLoading;
 
   const handleCountrySelect = (countryCode: string | null) => {
@@ -284,6 +449,10 @@ export default function MapInterface() {
         onEffisBurnedAreaLoadingChange={setEffisBurnedAreaLoading}
         effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
         selectedWildfireId={selectedWildfireId}
+        locale={locale}
+        firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
+        onFirmsRasterAvailabilityChange={setFirmsRasterAvailable}
+        onEffisBurnedAreasAvailabilityChange={setEffisUnavailable}
       />
       <MapLegend
         locale={locale}
@@ -309,6 +478,22 @@ export default function MapInterface() {
         </div>
       )}
 
+      {(firmsLoadingOverlay || firmsUnavailableMessage) && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
+          {firmsLoadingOverlay
+            ? t.incidents.firmsLoading
+            : t.incidents.firmsTemporarilyUnavailable}
+        </div>
+      )}
+
+      {showSatelliteBurnedAreas &&
+        effisUnavailable &&
+        Object.keys(effisSnapshotsByIncidentId).length === 0 && (
+          <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
+            {t.incidents.effisTemporarilyUnavailable}
+          </div>
+        )}
+
       {selectedCountryCode && !selectedWildfire && !selectedEffisBurnedArea && (
         <CountryInfoPanel
           countryCode={selectedCountryCode}
@@ -326,6 +511,12 @@ export default function MapInterface() {
               ? effisSnapshotsByIncidentId[selectedWildfireId] ?? null
               : null
           }
+          firmsSnapshot={
+            selectedWildfireId
+              ? firmsSnapshotsByIncidentId[selectedWildfireId] ?? null
+              : null
+          }
+          firmsSnapshotStatus={firmsSnapshotStatus}
           onClose={() => setSelectedWildfireId(null)}
         />
       )}

@@ -3,12 +3,15 @@
 import { getMessages } from "@/lib/i18n/messages";
 import type { Locale } from "@/lib/i18n/config";
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
+import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import type { WildfireIncident } from "@/lib/incidents/types";
 
 type WildfireIncidentPanelProps = {
   incident: WildfireIncident;
   locale: Locale;
   snapshot?: EffisBurnedAreaSnapshot | null;
+  firmsSnapshot?: FirmsIncidentSnapshot | null;
+  firmsSnapshotStatus?: "live" | "cached" | null;
   onClose: () => void;
 };
 
@@ -34,6 +37,8 @@ export default function WildfireIncidentPanel({
   incident,
   locale,
   snapshot = null,
+  firmsSnapshot = null,
+  firmsSnapshotStatus = null,
   onClose,
 }: WildfireIncidentPanelProps) {
   const t = getMessages(locale);
@@ -93,6 +98,29 @@ export default function WildfireIncidentPanel({
         locale,
       )
     : null;
+
+  const firmsLastObservation = firmsSnapshot
+    ? formatIncidentDate(
+        firmsSnapshot.sourceUpdatedAt ?? firmsSnapshot.fetchedAt,
+        locale,
+      )
+    : null;
+
+  const firmsApproximateArea =
+    firmsSnapshot &&
+    firmsSnapshot.approximateAreaHectares !== null &&
+    Number.isFinite(firmsSnapshot.approximateAreaHectares)
+      ? `${numberFormatter.format(firmsSnapshot.approximateAreaHectares)} ha`
+      : null;
+
+  const firmsSensors = firmsSnapshot?.sensors.join(", ") ?? null;
+
+  const firmsStatusLabel =
+    firmsSnapshotStatus === "live"
+      ? t.incidents.firmsLiveData
+      : firmsSnapshotStatus === "cached"
+        ? t.incidents.firmsCachedData
+        : null;
 
   return (
     <aside className="absolute bottom-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md">
@@ -213,6 +241,64 @@ export default function WildfireIncidentPanel({
           <p className="text-[10px] leading-snug text-slate-400">
             {t.incidents.effisDisclaimer}
           </p>
+        )}
+
+        {firmsSnapshot && (
+          <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold leading-snug text-slate-100">
+                {t.incidents.firmsDataTitle}
+              </p>
+              {firmsStatusLabel && (
+                <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                  {firmsStatusLabel}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">{t.incidents.source}:</span>
+              <span className="text-slate-100">NASA FIRMS / VIIRS</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.firmsLastObservation}:
+              </span>
+              <span className="text-slate-100">
+                {firmsLastObservation || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.firmsDetectionCount}:
+              </span>
+              <span className="text-slate-100">
+                {numberFormatter.format(firmsSnapshot.detectionCount)}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">{t.incidents.firmsSensors}:</span>
+              <span className="text-slate-100">
+                {firmsSensors || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.firmsApproximateArea}:
+              </span>
+              <span className="text-slate-100">
+                {firmsApproximateArea || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <p className="text-[10px] leading-snug text-slate-400">
+              {t.incidents.firmsAreaDisclaimer}
+            </p>
+          </div>
         )}
       </div>
     </aside>

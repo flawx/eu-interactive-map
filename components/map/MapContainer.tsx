@@ -3,17 +3,21 @@
 import { useEffect, useRef } from "react";
 import {
   Map as MapLibreMap,
+  Marker,
   LngLatBounds,
   setWorkerUrl,
   type ErrorEvent as MapLibreErrorEvent,
   type GeoJSONSource,
   type MapLayerMouseEvent,
+  type MapSourceDataEvent,
 } from "maplibre-gl";
 import type {
   EffisBurnedArea,
   WildfireIncident,
 } from "@/lib/incidents/types";
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
+import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
+import type { Locale } from "@/lib/i18n/config";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Worker CDN : évite le MIME text/html renvoyé par Webpack/Next pour le worker local
@@ -112,6 +116,10 @@ export default function MapContainer({
   onEffisBurnedAreaLoadingChange,
   effisSnapshotsByIncidentId,
   selectedWildfireId,
+  locale,
+  firmsSnapshotsByIncidentId,
+  onFirmsRasterAvailabilityChange,
+  onEffisBurnedAreasAvailabilityChange,
 }: {
   showEurozone: boolean;
   showNonEurozone: boolean;
@@ -128,6 +136,10 @@ export default function MapContainer({
   onEffisBurnedAreaLoadingChange: (loading: boolean) => void;
   effisSnapshotsByIncidentId: Record<string, EffisBurnedAreaSnapshot>;
   selectedWildfireId: string | null;
+  locale: Locale;
+  firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
+  onFirmsRasterAvailabilityChange?: (available: boolean) => void;
+  onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -157,7 +169,19 @@ export default function MapContainer({
   onEffisBurnedAreaLoadingChangeRef.current = onEffisBurnedAreaLoadingChange;
   const wildfireIncidentsRef = useRef(wildfireIncidents);
   wildfireIncidentsRef.current = wildfireIncidents;
+  const firmsLabelMarkersRef = useRef<Marker[]>([]);
   const effisRequestControllerRef = useRef<AbortController | null>(null);
+  const firmsSnapshotsByIncidentIdRef = useRef(firmsSnapshotsByIncidentId);
+  firmsSnapshotsByIncidentIdRef.current = firmsSnapshotsByIncidentId;
+  const onFirmsRasterAvailabilityChangeRef = useRef(
+    onFirmsRasterAvailabilityChange,
+  );
+  onFirmsRasterAvailabilityChangeRef.current = onFirmsRasterAvailabilityChange;
+  const onEffisBurnedAreasAvailabilityChangeRef = useRef(
+    onEffisBurnedAreasAvailabilityChange,
+  );
+  onEffisBurnedAreasAvailabilityChangeRef.current =
+    onEffisBurnedAreasAvailabilityChange;
 
   const toWildfireFeatureCollection = (incidents: WildfireIncident[]) => ({
     type: "FeatureCollection" as const,
@@ -217,6 +241,9 @@ export default function MapContainer({
     visible: boolean,
   ) => {
     applyLayerVisibility(map, "firms-active-fires-layer", visible);
+    applyLayerVisibility(map, "firms-incident-footprints-fill", visible);
+    applyLayerVisibility(map, "firms-incident-footprints-border", visible);
+    applyLayerVisibility(map, "firms-incident-footprints-selected", visible);
   };
 
   const applySatelliteBurnedAreasVisibility = (
@@ -275,6 +302,7 @@ export default function MapContainer({
         ) && message.includes("REQUEST=GetMap");
 
       if (isEffisGetMapError) {
+        onEffisBurnedAreasAvailabilityChangeRef.current?.(true);
         return;
       }
 
@@ -288,6 +316,14 @@ export default function MapContainer({
       const isRasterSource =
         eventSourceId === "effis-burned-areas" ||
         eventSourceId === "firms-active-fires";
+
+      const isEffisStatusFailure =
+        eventSourceId === "effis-burned-areas" &&
+        /\b(status|4\d\d|5\d\d|failed|error)\b/i.test(message);
+
+      if (isEffisStatusFailure) {
+        onEffisBurnedAreasAvailabilityChangeRef.current?.(true);
+      }
 
       const isDecodeError =
         message === "The source image could not be decoded";
@@ -319,6 +355,14 @@ export default function MapContainer({
     };
 
     map.on("error", handleMapError);
+
+    const handleFirmsSourceData = (event: MapSourceDataEvent) => {
+      if (event.sourceId === "firms-active-fires" && event.isSourceLoaded) {
+        onFirmsRasterAvailabilityChangeRef.current?.(true);
+      }
+    };
+
+    map.on("sourcedata", handleFirmsSourceData);
 
     const updateEuOpacity = () => {
       const zoom = map.getZoom();
@@ -387,6 +431,50 @@ export default function MapContainer({
         onWildfireSelectRef.current(incidentId);
       } else if (typeof incidentId === "number") {
         onWildfireSelectRef.current(String(incidentId));
+      }
+    };
+
+    const handleFirmsFootprintClick = (event: MapLayerMouseEvent) => {
+      const properties = event.features?.[0]?.properties;
+      const rawIncidentId = properties?.incidentId;
+
+      const incidentId =
+        typeof rawIncidentId === "string"
+          ? rawIncidentId
+          : typeof rawIncidentId === "number"
+            ? String(rawIncidentId)
+            : null;
+
+      if (!incidentId) return;
+
+      onWildfireSelectRef.current(incidentId);
+
+      const minLon = properties?.bboxMinLon;
+      const minLat = properties?.bboxMinLat;
+      const maxLon = properties?.bboxMaxLon;
+      const maxLat = properties?.bboxMaxLat;
+
+      const bbox: [number, number, number, number] | null =
+        typeof minLon === "number" &&
+        typeof minLat === "number" &&
+        typeof maxLon === "number" &&
+        typeof maxLat === "number"
+          ? [minLon, minLat, maxLon, maxLat]
+          : (firmsSnapshotsByIncidentIdRef.current[incidentId]?.bbox ?? null);
+
+      if (!bbox) return;
+
+      const bounds = new LngLatBounds(
+        [bbox[0], bbox[1]],
+        [bbox[2], bbox[3]],
+      );
+
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: { top: 40, bottom: 40, left: 360, right: 40 },
+          maxZoom: 12,
+          duration: 800,
+        });
       }
     };
 
@@ -496,7 +584,10 @@ export default function MapContainer({
       map.getCanvas().style.cursor = "";
     };
 
-    map.on("load", () => {
+    let layersReady = false;
+    const onMapLoad = () => {
+      if (layersReady) return;
+      layersReady = true;
       const burnedAreasTime = formatEffisTimeRange(7);
 
       // Satellite overlays (above Voyager, below country fills / GDACS markers).
@@ -553,6 +644,62 @@ export default function MapContainer({
           "raster-opacity": 0.85,
           "raster-fade-duration": 0,
           "raster-resampling": "nearest",
+        },
+      });
+
+      map.addSource("firms-incident-footprints", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      });
+
+      map.addLayer({
+        id: "firms-incident-footprints-fill",
+        type: "fill",
+        source: "firms-incident-footprints",
+        layout: {
+          visibility: showSatelliteActiveFiresRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "fill-color": "#dc2626",
+          "fill-opacity": 0.18,
+        },
+      });
+
+      map.addLayer({
+        id: "firms-incident-footprints-border",
+        type: "line",
+        source: "firms-incident-footprints",
+        layout: {
+          visibility: showSatelliteActiveFiresRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#7f1d1d",
+          "line-width": 1.5,
+          "line-opacity": 0.9,
+        },
+      });
+
+      map.addLayer({
+        id: "firms-incident-footprints-selected",
+        type: "line",
+        source: "firms-incident-footprints",
+        filter: ["==", ["get", "incidentId"], ""],
+        layout: {
+          visibility: showSatelliteActiveFiresRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#7f1d1d",
+          "line-width": 3,
+          "line-opacity": 1,
         },
       });
 
@@ -852,10 +999,24 @@ export default function MapContainer({
         setPointerCursor,
       );
       map.on("mouseleave", "effis-burned-area-snapshots-fill", resetCursor);
+      map.on("click", "firms-incident-footprints-fill", handleFirmsFootprintClick);
+      map.on(
+        "mouseenter",
+        "firms-incident-footprints-fill",
+        setPointerCursor,
+      );
+      map.on("mouseleave", "firms-incident-footprints-fill", resetCursor);
       map.on("click", handleEffisBurnedAreaClick);
-    });
+    };
+
+    if (map.loaded()) {
+      onMapLoad();
+    } else {
+      map.on("load", onMapLoad);
+    }
 
     return () => {
+      map.off("load", onMapLoad);
       for (const layerId of SELECTABLE_FILL_LAYERS) {
         map.off("click", layerId, handleCountryClick);
         map.off("mouseenter", layerId, setPointerCursor);
@@ -876,11 +1037,27 @@ export default function MapContainer({
         setPointerCursor,
       );
       map.off("mouseleave", "effis-burned-area-snapshots-fill", resetCursor);
+      map.off(
+        "click",
+        "firms-incident-footprints-fill",
+        handleFirmsFootprintClick,
+      );
+      map.off(
+        "mouseenter",
+        "firms-incident-footprints-fill",
+        setPointerCursor,
+      );
+      map.off("mouseleave", "firms-incident-footprints-fill", resetCursor);
       map.off("click", handleEffisBurnedAreaClick);
 
       effisRequestControllerRef.current?.abort();
+      for (const marker of firmsLabelMarkersRef.current) {
+        marker.remove();
+      }
+      firmsLabelMarkersRef.current = [];
       map.off("zoom", updateEuOpacity);
       map.off("error", handleMapError);
+      map.off("sourcedata", handleFirmsSourceData);
       map.remove();
       mapRef.current = null;
     };
@@ -926,6 +1103,10 @@ export default function MapContainer({
     const map = mapRef.current;
     if (!map) return;
     applySatelliteBurnedAreasVisibility(map, showSatelliteBurnedAreas);
+
+    if (!showSatelliteBurnedAreas) {
+      onEffisBurnedAreasAvailabilityChangeRef.current?.(false);
+    }
   }, [showSatelliteBurnedAreas]);
 
   useEffect(() => {
@@ -975,12 +1156,121 @@ export default function MapContainer({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+    if (!map.getLayer("firms-incident-footprints-selected")) return;
+
+    map.setFilter("firms-incident-footprints-selected", [
+      "==",
+      ["get", "incidentId"],
+      selectedWildfireId ?? "",
+    ]);
+
+    if (map.getLayer("firms-incident-footprints-fill")) {
+      map.setPaintProperty("firms-incident-footprints-fill", "fill-opacity", [
+        "case",
+        ["==", ["get", "incidentId"], selectedWildfireId ?? ""],
+        0.28,
+        0.18,
+      ]);
+    }
+  }, [selectedWildfireId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
 
     const source = map.getSource("wildfire-incidents") as GeoJSONSource | undefined;
     if (!source) return;
 
     source.setData(toWildfireFeatureCollection(wildfireIncidents));
   }, [wildfireIncidents]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const footprintsSource = map.getSource(
+      "firms-incident-footprints",
+    ) as GeoJSONSource | undefined;
+    if (!footprintsSource) return;
+
+    const incidentsById = new Map(
+      wildfireIncidents.map((incident) => [incident.id, incident]),
+    );
+
+    const snapshots = Object.values(firmsSnapshotsByIncidentId).filter(
+      (snapshot) => snapshot.geometry?.type === "MultiPolygon",
+    );
+
+    const footprintFeatures = snapshots.map((snapshot) => ({
+      type: "Feature" as const,
+      id: snapshot.incidentId,
+      properties: {
+        incidentId: snapshot.incidentId,
+        incidentName: snapshot.incidentName,
+        sourceUpdatedAt: snapshot.sourceUpdatedAt,
+        fetchedAt: snapshot.fetchedAt,
+        approximateAreaHectares: snapshot.approximateAreaHectares,
+        detectionCount: snapshot.detectionCount,
+        sensors: snapshot.sensors.join(", "),
+        bboxMinLon: snapshot.bbox[0],
+        bboxMinLat: snapshot.bbox[1],
+        bboxMaxLon: snapshot.bbox[2],
+        bboxMaxLat: snapshot.bbox[3],
+      },
+      geometry: snapshot.geometry,
+    }));
+
+    footprintsSource.setData({
+      type: "FeatureCollection",
+      features: footprintFeatures,
+    });
+
+    for (const marker of firmsLabelMarkersRef.current) {
+      marker.remove();
+    }
+    firmsLabelMarkersRef.current = [];
+
+    if (!showSatelliteActiveFires) {
+      return;
+    }
+
+    const dateFormatter = new Intl.DateTimeFormat(locale, {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    for (const snapshot of snapshots) {
+      const incident = incidentsById.get(snapshot.incidentId);
+      if (!incident) continue;
+
+      const rawDate = snapshot.sourceUpdatedAt ?? snapshot.fetchedAt;
+      const parsedDate = rawDate ? new Date(rawDate) : null;
+      const shortDate =
+        parsedDate && !Number.isNaN(parsedDate.getTime())
+          ? dateFormatter.format(parsedDate)
+          : null;
+      const label = shortDate
+        ? `${snapshot.incidentName} (${shortDate})`
+        : snapshot.incidentName;
+
+      const el = document.createElement("div");
+      el.textContent = label;
+      el.style.cssText =
+        "pointer-events:none;transform:translate(-50%,8px);white-space:nowrap;font:600 11px/1.2 system-ui,sans-serif;color:#111827;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff,0 0 4px #fff;";
+
+      const marker = new Marker({ element: el, anchor: "top" })
+        .setLngLat([incident.longitude, incident.latitude])
+        .addTo(map);
+      firmsLabelMarkersRef.current.push(marker);
+    }
+  }, [
+    firmsSnapshotsByIncidentId,
+    wildfireIncidents,
+    locale,
+    showSatelliteActiveFires,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
