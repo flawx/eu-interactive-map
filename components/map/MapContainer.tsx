@@ -26,6 +26,13 @@ import type {
   MapBaseMode,
   MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
+import {
+  EMPTY_USER_LOCATION_COLLECTION,
+  buildUserLocationCollection,
+  displayAccuracyMeters,
+  zoomForAccuracy,
+  type UserLocation,
+} from "@/lib/map/userLocation";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Worker CDN : évite le MIME text/html renvoyé par Webpack/Next pour le worker local
@@ -264,6 +271,9 @@ export default function MapContainer({
   dimensionMode = "2d",
   onCameraChange,
   onTerrainReadyChange,
+  userLocation = null,
+  focusUserLocationRef,
+  onUserMapGesture,
 }: {
   showEurozone: boolean;
   showNonEurozone: boolean;
@@ -298,6 +308,11 @@ export default function MapContainer({
     zoom: number;
   }) => void;
   onTerrainReadyChange?: (ready: boolean) => void;
+  userLocation?: UserLocation | null;
+  focusUserLocationRef?: MutableRefObject<
+    ((mode?: "fit" | "soft") => void) | null
+  >;
+  onUserMapGesture?: () => void;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -341,6 +356,12 @@ export default function MapContainer({
   onCameraChangeRef.current = onCameraChange;
   const onTerrainReadyChangeRef = useRef(onTerrainReadyChange);
   onTerrainReadyChangeRef.current = onTerrainReadyChange;
+  const onUserMapGestureRef = useRef(onUserMapGesture);
+  onUserMapGestureRef.current = onUserMapGesture;
+  const userLocationRef = useRef(userLocation);
+  userLocationRef.current = userLocation;
+  const programmaticCameraRef = useRef(false);
+  const pulseFrameRef = useRef<number | null>(null);
   const [mapSourcesReadyVersion, setMapSourcesReadyVersion] = useState(0);
 
   const applyLayerVisibility = (
@@ -518,6 +539,16 @@ export default function MapContainer({
     map.on("move", emitCameraChange);
     map.on("pitch", emitCameraChange);
     emitCameraChange();
+
+    const handleUserGesture = () => {
+      if (programmaticCameraRef.current) return;
+      onUserMapGestureRef.current?.();
+    };
+
+    map.on("dragstart", handleUserGesture);
+    map.on("zoomstart", handleUserGesture);
+    map.on("rotatestart", handleUserGesture);
+    map.on("pitchstart", handleUserGesture);
 
     if (mapCommandsRef) {
       mapCommandsRef.current = {
@@ -1280,6 +1311,70 @@ export default function MapContainer({
         },
       });
 
+      if (!map.getSource("user-location")) {
+        map.addSource("user-location", {
+          type: "geojson",
+          data: EMPTY_USER_LOCATION_COLLECTION,
+        });
+      }
+
+      if (!map.getLayer("user-location-accuracy")) {
+        map.addLayer({
+          id: "user-location-accuracy",
+          type: "fill",
+          source: "user-location",
+          filter: ["==", ["geometry-type"], "Polygon"],
+          paint: {
+            "fill-color": "#1a73e8",
+            "fill-opacity": 0.1,
+            "fill-outline-color": "#1a73e8",
+          },
+        });
+      }
+
+      if (!map.getLayer("user-location-halo")) {
+        map.addLayer({
+          id: "user-location-halo",
+          type: "circle",
+          source: "user-location",
+          filter: ["==", ["geometry-type"], "Point"],
+          paint: {
+            "circle-radius": 13,
+            "circle-color": "#ffffff",
+            "circle-opacity": 0.9,
+          },
+        });
+      }
+
+      if (!map.getLayer("user-location-pulse")) {
+        map.addLayer({
+          id: "user-location-pulse",
+          type: "circle",
+          source: "user-location",
+          filter: ["==", ["geometry-type"], "Point"],
+          paint: {
+            "circle-radius": 18,
+            "circle-color": "#1a73e8",
+            "circle-opacity": 0.18,
+          },
+        });
+      }
+
+      if (!map.getLayer("user-location-dot")) {
+        map.addLayer({
+          id: "user-location-dot",
+          type: "circle",
+          source: "user-location",
+          filter: ["==", ["geometry-type"], "Point"],
+          paint: {
+            "circle-radius": 8,
+            "circle-color": "#1a73e8",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 3,
+          },
+        });
+      }
+
       // Reorder so brown (7d history) sits below red (24h active) which sits
       // below the EFFIS layers, all stacked above the base country layers.
       const layerStackOrder = [
@@ -1295,6 +1390,10 @@ export default function MapContainer({
         "effis-burned-area-snapshots-fill",
         "effis-burned-area-snapshots-border",
         "effis-burned-area-snapshots-selected",
+        "user-location-accuracy",
+        "user-location-halo",
+        "user-location-pulse",
+        "user-location-dot",
       ];
 
       for (const layerId of layerStackOrder) {
@@ -1384,6 +1483,14 @@ export default function MapContainer({
       map.off("rotate", emitCameraChange);
       map.off("move", emitCameraChange);
       map.off("pitch", emitCameraChange);
+      map.off("dragstart", handleUserGesture);
+      map.off("zoomstart", handleUserGesture);
+      map.off("rotatestart", handleUserGesture);
+      map.off("pitchstart", handleUserGesture);
+      if (pulseFrameRef.current != null) {
+        window.cancelAnimationFrame(pulseFrameRef.current);
+        pulseFrameRef.current = null;
+      }
       if (mapCommandsRef) {
         mapCommandsRef.current = null;
       }
@@ -1392,6 +1499,9 @@ export default function MapContainer({
       mapRef.current = null;
       if (focusGeometryRef) {
         focusGeometryRef.current = null;
+      }
+      if (focusUserLocationRef) {
+        focusUserLocationRef.current = null;
       }
     };
   }, []);
@@ -1432,6 +1542,126 @@ export default function MapContainer({
       });
     }
   }, [dimensionMode, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getSource("user-location")) return;
+
+    const source = map.getSource("user-location") as GeoJSONSource;
+    source.setData(buildUserLocationCollection(userLocation));
+  }, [userLocation, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    if (!focusUserLocationRef) return;
+
+    focusUserLocationRef.current = (mode = "fit") => {
+      const map = mapRef.current;
+      const location = userLocationRef.current;
+      if (!map || !location) return;
+
+      const accuracy = displayAccuracyMeters(location.accuracyMeters);
+      programmaticCameraRef.current = true;
+      const clearProgrammatic = () => {
+        programmaticCameraRef.current = false;
+        map.off("moveend", clearProgrammatic);
+      };
+      map.once("moveend", clearProgrammatic);
+
+      if (mode === "soft") {
+        map.easeTo({
+          center: [location.longitude, location.latitude],
+          bearing: map.getBearing(),
+          pitch: map.getPitch(),
+          duration: 700,
+        });
+        return;
+      }
+
+      if (accuracy <= 2000) {
+        const collection = buildUserLocationCollection(location);
+        const accuracyFeature = collection.features[0];
+        const bounds = new LngLatBounds();
+        if (
+          accuracyFeature?.geometry.type === "Polygon"
+        ) {
+          extendBoundsWithCoordinates(
+            bounds,
+            accuracyFeature.geometry.coordinates,
+          );
+        }
+
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, {
+            padding: 72,
+            maxZoom: 16,
+            duration: 700,
+            bearing: map.getBearing(),
+            pitch: map.getPitch(),
+          });
+          return;
+        }
+      }
+
+      map.easeTo({
+        center: [location.longitude, location.latitude],
+        zoom: zoomForAccuracy(accuracy),
+        bearing: map.getBearing(),
+        pitch: map.getPitch(),
+        duration: 700,
+      });
+    };
+
+    return () => {
+      if (focusUserLocationRef.current) {
+        focusUserLocationRef.current = null;
+      }
+    };
+  }, [focusUserLocationRef, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userLocation || !map.getLayer("user-location-pulse")) {
+      if (pulseFrameRef.current != null) {
+        window.cancelAnimationFrame(pulseFrameRef.current);
+        pulseFrameRef.current = null;
+      }
+      return;
+    }
+
+    const startedAt = performance.now();
+    const tick = (now: number) => {
+      const activeMap = mapRef.current;
+      if (!activeMap?.getLayer("user-location-pulse")) {
+        pulseFrameRef.current = null;
+        return;
+      }
+
+      const phase = ((now - startedAt) % 1800) / 1800;
+      const radius = 14 + phase * 12;
+      const opacity = 0.22 * (1 - phase);
+      try {
+        activeMap.setPaintProperty("user-location-pulse", "circle-radius", radius);
+        activeMap.setPaintProperty(
+          "user-location-pulse",
+          "circle-opacity",
+          opacity,
+        );
+      } catch {
+        pulseFrameRef.current = null;
+        return;
+      }
+
+      pulseFrameRef.current = window.requestAnimationFrame(tick);
+    };
+
+    pulseFrameRef.current = window.requestAnimationFrame(tick);
+    return () => {
+      if (pulseFrameRef.current != null) {
+        window.cancelAnimationFrame(pulseFrameRef.current);
+        pulseFrameRef.current = null;
+      }
+    };
+  }, [userLocation, mapSourcesReadyVersion]);
 
   useEffect(() => {
     if (!focusGeometryRef) return;

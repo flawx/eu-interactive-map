@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   forwardRef,
+  type CSSProperties,
   type MutableRefObject,
   type ReactNode,
 } from "react";
@@ -16,6 +17,8 @@ import {
   ChevronUp,
   Compass,
   Layers,
+  LoaderCircle,
+  LocateFixed,
   Minus,
   Plus,
 } from "lucide-react";
@@ -25,6 +28,10 @@ import type {
   MapBaseMode,
   MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
+import {
+  formatAccuracyLabel,
+  type UserLocationStatus,
+} from "@/lib/map/userLocation";
 import { useAnchoredPortalRect } from "@/lib/ui/useAnchoredPortalRect";
 
 type MapControlDockProps = {
@@ -37,6 +44,17 @@ type MapControlDockProps = {
   terrainReady: boolean;
   onBaseModeChange: (mode: MapBaseMode) => void;
   onDimensionModeChange: (mode: MapDimensionMode) => void;
+  locationStatus: UserLocationStatus;
+  locationAccuracyMeters: number | null;
+  consentOpen: boolean;
+  infoOpen: boolean;
+  locationError: string | null;
+  onLocationButtonClick: () => void;
+  onAllowLocation: () => void;
+  onDismissConsent: () => void;
+  onStopLocation: () => void;
+  onDismissError: () => void;
+  onCloseInfo: () => void;
 };
 
 const cardStyle = {
@@ -55,17 +73,40 @@ export default function MapControlDock({
   terrainReady,
   onBaseModeChange,
   onDimensionModeChange,
+  locationStatus,
+  locationAccuracyMeters,
+  consentOpen,
+  infoOpen,
+  locationError,
+  onLocationButtonClick,
+  onAllowLocation,
+  onDismissConsent,
+  onStopLocation,
+  onDismissError,
+  onCloseInfo,
 }: MapControlDockProps) {
   const [layersOpen, setLayersOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const layersButtonRef = useRef<HTMLButtonElement | null>(null);
   const layersPanelRef = useRef<HTMLDivElement | null>(null);
+  const locateButtonRef = useRef<HTMLButtonElement | null>(null);
+  const locationPanelRef = useRef<HTMLDivElement | null>(null);
   const layersPanelId = useId();
-  const anchor = useAnchoredPortalRect(layersButtonRef, layersOpen);
+  const locationPanelId = useId();
+  const layersAnchor = useAnchoredPortalRect(layersButtonRef, layersOpen);
+  const locationAnchor = useAnchoredPortalRect(
+    locateButtonRef,
+    consentOpen || infoOpen || Boolean(locationError),
+  );
 
   const is3d = dimensionMode === "3d" || pitch > 0;
   const canPitchUp = pitch < 70;
   const canPitchDown = pitch > 0;
+  const locationActive =
+    locationStatus === "following" || locationStatus === "passive";
+  const locationPressed = locationStatus === "following";
+  const locationDisabled =
+    locationStatus === "unavailable" || locationStatus === "requesting";
 
   useEffect(() => {
     setMounted(true);
@@ -100,25 +141,99 @@ export default function MapControlDock({
     };
   }, [layersOpen]);
 
+  useEffect(() => {
+    if (!consentOpen && !infoOpen && !locationError) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        locateButtonRef.current?.contains(target) ||
+        locationPanelRef.current?.contains(target)
+      ) {
+        return;
+      }
+      if (consentOpen) onDismissConsent();
+      if (infoOpen) onCloseInfo();
+      if (locationError) onDismissError();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (consentOpen) onDismissConsent();
+        if (infoOpen) onCloseInfo();
+        if (locationError) onDismissError();
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [
+    consentOpen,
+    infoOpen,
+    locationError,
+    onDismissConsent,
+    onCloseInfo,
+    onDismissError,
+  ]);
+
   const run = (action: Exclude<keyof MapCameraCommands, "isReady">) => {
     const commands = commandsRef.current;
     if (!commands?.isReady()) return;
     commands[action]();
   };
 
-  const panelWidth = Math.min(272, typeof window !== "undefined" ? window.innerWidth - 32 : 272);
-  const preferredRight = anchor
-    ? Math.max(16, window.innerWidth - anchor.right)
-    : 18;
-  const preferredBottom = anchor
-    ? Math.max(16, window.innerHeight - anchor.top + 8)
-    : 110;
-  const maxRight = Math.max(16, (typeof window !== "undefined" ? window.innerWidth : 400) - panelWidth - 16);
-  const panelRight = Math.min(preferredRight, maxRight);
-  const panelBottom = Math.min(
-    preferredBottom,
-    typeof window !== "undefined" ? Math.max(16, window.innerHeight - 220) : preferredBottom,
+  const panelWidth = Math.min(
+    272,
+    typeof window !== "undefined" ? window.innerWidth - 32 : 272,
   );
+
+  const placePanel = (
+    anchor: { top: number; right: number; bottom: number; left: number } | null,
+  ) => {
+    const preferredRight = anchor
+      ? Math.max(16, window.innerWidth - anchor.right)
+      : 18;
+    const preferredBottom = anchor
+      ? Math.max(16, window.innerHeight - anchor.top + 8)
+      : 110;
+    const maxRight = Math.max(
+      16,
+      (typeof window !== "undefined" ? window.innerWidth : 400) - panelWidth - 16,
+    );
+    return {
+      right: Math.min(preferredRight, maxRight),
+      bottom: Math.min(
+        preferredBottom,
+        typeof window !== "undefined"
+          ? Math.max(16, window.innerHeight - 260)
+          : preferredBottom,
+      ),
+    };
+  };
+
+  const layersPanelPos = placePanel(layersAnchor);
+  const locationPanelPos = placePanel(locationAnchor);
+
+  const locateLabel =
+    locationStatus === "requesting"
+      ? t.location.locating
+      : locationStatus === "passive"
+        ? t.location.recenter
+        : locationStatus === "following"
+          ? t.location.following
+          : t.location.myLocation;
+
+  const locateIconColor =
+    locationStatus === "denied" || locationStatus === "error"
+      ? "#ea580c"
+      : locationStatus === "following"
+        ? "#1a73e8"
+        : "var(--map-ui-text)";
 
   return (
     <>
@@ -205,6 +320,45 @@ export default function MapControlDock({
 
             <Divider />
 
+            <DockButton
+              ref={locateButtonRef}
+              label={locateLabel}
+              pressed={locationPressed}
+              disabled={locationDisabled}
+              onClick={onLocationButtonClick}
+              ariaControls={locationPanelId}
+              style={
+                locationStatus === "following"
+                  ? { background: "rgba(26,115,232,0.12)" }
+                  : undefined
+              }
+            >
+              <span className="relative inline-flex">
+                {locationStatus === "requesting" ? (
+                  <LoaderCircle
+                    className="h-5 w-5 animate-spin"
+                    style={{ color: "#1a73e8" }}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <LocateFixed
+                    className="h-5 w-5"
+                    style={{ color: locateIconColor }}
+                    aria-hidden="true"
+                  />
+                )}
+                {locationStatus === "passive" ? (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full"
+                    style={{ background: "#1a73e8" }}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </span>
+            </DockButton>
+
+            <Divider />
+
             <DockButton label={t.mapControls.zoomIn} onClick={() => run("zoomIn")}>
               <Plus className="h-5 w-5" aria-hidden="true" />
             </DockButton>
@@ -230,8 +384,8 @@ export default function MapControlDock({
             className="fixed rounded-[18px] border p-3"
             style={{
               width: panelWidth,
-              bottom: panelBottom,
-              right: panelRight,
+              bottom: layersPanelPos.bottom,
+              right: layersPanelPos.right,
               zIndex: 1260,
               background: "var(--map-ui-surface)",
               borderColor: "var(--map-ui-border)",
@@ -275,6 +429,120 @@ export default function MapControlDock({
           </div>,
           document.body,
         )}
+
+      {mounted &&
+        consentOpen &&
+        createPortal(
+          <div
+            ref={locationPanelRef}
+            id={locationPanelId}
+            role="dialog"
+            aria-labelledby={`${locationPanelId}-title`}
+            className="fixed rounded-[18px] border p-3"
+            style={{
+              width: panelWidth,
+              bottom: locationPanelPos.bottom,
+              right: locationPanelPos.right,
+              zIndex: 1260,
+              background: "var(--map-ui-surface)",
+              borderColor: "var(--map-ui-border)",
+              boxShadow: "var(--map-ui-shadow)",
+              color: "var(--map-ui-text)",
+            }}
+          >
+            <p
+              id={`${locationPanelId}-title`}
+              className="px-1 text-sm font-semibold"
+            >
+              {t.location.promptTitle}
+            </p>
+            <p
+              className="mt-1.5 px-1 text-xs leading-relaxed"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.location.promptBody}
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={onAllowLocation}
+                className="rounded-xl px-3 py-2.5 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+                style={{ background: "#1a73e8" }}
+              >
+                {t.location.allow}
+              </button>
+              <button
+                type="button"
+                onClick={onDismissConsent}
+                className="rounded-xl px-3 py-2.5 text-sm font-medium outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+                style={{ color: "var(--map-ui-text)" }}
+              >
+                {t.location.later}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {mounted &&
+        !consentOpen &&
+        (infoOpen || locationError) &&
+        createPortal(
+          <div
+            ref={locationPanelRef}
+            id={locationPanelId}
+            role="status"
+            aria-live="polite"
+            className="fixed rounded-[18px] border p-3"
+            style={{
+              width: panelWidth,
+              bottom: locationPanelPos.bottom,
+              right: locationPanelPos.right,
+              zIndex: 1260,
+              background: "var(--map-ui-surface)",
+              borderColor: "var(--map-ui-border)",
+              boxShadow: "var(--map-ui-shadow)",
+              color: "var(--map-ui-text)",
+            }}
+          >
+            {locationError ? (
+              <p className="px-1 text-xs leading-relaxed">{locationError}</p>
+            ) : (
+              <>
+                <p className="px-1 text-sm font-semibold">{t.location.found}</p>
+                {locationAccuracyMeters != null ? (
+                  <p
+                    className="mt-1 px-1 text-xs"
+                    style={{ color: "var(--map-ui-muted)" }}
+                  >
+                    {t.location.approximateAccuracy}
+                    {": "}
+                    {formatAccuracyLabel(locationAccuracyMeters)}
+                  </p>
+                ) : null}
+                <p
+                  className="mt-1 px-1 text-xs"
+                  style={{ color: "var(--map-ui-muted)" }}
+                >
+                  {locationStatus === "passive"
+                    ? t.location.passiveHint
+                    : t.location.following}
+                </p>
+              </>
+            )}
+            {locationActive ? (
+              <button
+                type="button"
+                onClick={onStopLocation}
+                className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-semibold outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+                style={{ color: "#b91c1c" }}
+              >
+                {t.location.stop}
+              </button>
+            ) : null}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
@@ -298,9 +566,10 @@ const DockButton = forwardRef<
     disabled?: boolean;
     pressed?: boolean;
     ariaControls?: string;
+    style?: CSSProperties;
   }
 >(function DockButton(
-  { label, children, onClick, disabled, pressed, ariaControls },
+  { label, children, onClick, disabled, pressed, ariaControls, style },
   ref,
 ) {
   return (
@@ -314,7 +583,7 @@ const DockButton = forwardRef<
       disabled={disabled}
       onClick={onClick}
       className="inline-flex h-11 w-11 min-h-11 min-w-11 items-center justify-center outline-none transition hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1a73e8]/60 disabled:cursor-not-allowed disabled:opacity-40"
-      style={{ color: "var(--map-ui-text)" }}
+      style={{ color: "var(--map-ui-text)", ...style }}
     >
       {children}
     </button>

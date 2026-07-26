@@ -32,6 +32,15 @@ import {
   type MapBaseMode,
   type MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
+import {
+  hasSeenLocationPrompt,
+  isGeolocationSecureContext,
+  isGeolocationSupported,
+  markLocationPromptSeen,
+  queryGeolocationPermission,
+  type UserLocation,
+  type UserLocationStatus,
+} from "@/lib/map/userLocation";
 import type { MapSearchResult } from "@/lib/search/mapSearch";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
@@ -127,8 +136,21 @@ export default function MapInterface() {
   const [mapPitch, setMapPitch] = useState(0);
   const [mapBearing, setMapBearing] = useState(0);
   const [terrainReady, setTerrainReady] = useState(false);
+  const [locationStatus, setLocationStatus] =
+    useState<UserLocationStatus>("idle");
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationConsentOpen, setLocationConsentOpen] = useState(false);
+  const [locationInfoOpen, setLocationInfoOpen] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const mapCommandsRef = useRef<MapCameraCommands | null>(null);
   const focusNonceRef = useRef(0);
+  const locationWatchIdRef = useRef<number | null>(null);
+  const locationStatusRef = useRef<UserLocationStatus>("idle");
+  locationStatusRef.current = locationStatus;
+  const locationFocusedOnceRef = useRef(false);
+  const focusUserLocationRef = useRef<((mode?: "fit" | "soft") => void) | null>(
+    null,
+  );
   const firmsRefreshStartedRef = useRef(false);
   const firmsHistoryRefreshStartedRef = useRef(false);
   const effisServiceFailedRef = useRef(false);
@@ -153,6 +175,187 @@ export default function MapInterface() {
     setBaseMode(prefs.baseMode);
     setDimensionMode(prefs.dimensionMode);
   }, []);
+
+  useEffect(() => {
+    if (!isGeolocationSupported()) {
+      setLocationStatus("unavailable");
+      return;
+    }
+
+    if (!isGeolocationSecureContext()) {
+      setLocationStatus("unavailable");
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        if (cancelled || hasSeenLocationPrompt()) return;
+
+        const permission = await queryGeolocationPermission();
+        if (cancelled) return;
+        if (permission === "denied") return;
+
+        markLocationPromptSeen();
+        setLocationConsentOpen(true);
+      })();
+    }, 1500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (locationWatchIdRef.current != null) {
+        navigator.geolocation.clearWatch(locationWatchIdRef.current);
+        locationWatchIdRef.current = null;
+      }
+    };
+  }, []);
+
+  const stopUserLocation = () => {
+    if (locationWatchIdRef.current != null) {
+      navigator.geolocation.clearWatch(locationWatchIdRef.current);
+      locationWatchIdRef.current = null;
+    }
+    locationFocusedOnceRef.current = false;
+    setUserLocation(null);
+    setLocationStatus("idle");
+    setLocationInfoOpen(false);
+    setLocationError(null);
+  };
+
+  const startUserLocationWatch = () => {
+    if (!isGeolocationSupported()) {
+      setLocationStatus("unavailable");
+      setLocationError(t.location.unsupported);
+      return;
+    }
+
+    if (!isGeolocationSecureContext()) {
+      setLocationStatus("unavailable");
+      setLocationError(t.location.insecure);
+      return;
+    }
+
+    if (locationWatchIdRef.current != null) {
+      navigator.geolocation.clearWatch(locationWatchIdRef.current);
+      locationWatchIdRef.current = null;
+    }
+
+    setLocationConsentOpen(false);
+    setLocationError(null);
+    setLocationStatus("requesting");
+    markLocationPromptSeen();
+
+    locationWatchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        const next: UserLocation = {
+          longitude: position.coords.longitude,
+          latitude: position.coords.latitude,
+          accuracyMeters: position.coords.accuracy,
+          heading: Number.isFinite(position.coords.heading)
+            ? position.coords.heading
+            : null,
+          speedMetersPerSecond: Number.isFinite(position.coords.speed)
+            ? position.coords.speed
+            : null,
+          timestamp: position.timestamp,
+        };
+
+        setUserLocation(next);
+        setLocationError(null);
+
+        const currentStatus = locationStatusRef.current;
+        const isFirstFix = !locationFocusedOnceRef.current;
+
+        if (isFirstFix || currentStatus === "requesting") {
+          locationFocusedOnceRef.current = true;
+          setLocationStatus("following");
+          setLocationInfoOpen(true);
+          window.requestAnimationFrame(() => {
+            focusUserLocationRef.current?.("fit");
+          });
+          return;
+        }
+
+        if (currentStatus === "following") {
+          focusUserLocationRef.current?.("soft");
+        }
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          stopUserLocation();
+          setLocationStatus("denied");
+          setLocationError(t.location.denied);
+          return;
+        }
+
+        if (error.code === error.TIMEOUT) {
+          setLocationStatus((status) =>
+            status === "following" || status === "passive" ? status : "error",
+          );
+          setLocationError(t.location.timeout);
+          return;
+        }
+
+        setLocationStatus((status) =>
+          status === "following" || status === "passive" ? status : "error",
+        );
+        setLocationError(t.location.unavailable);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10_000,
+        timeout: 15_000,
+      },
+    );
+  };
+
+  const handleLocationButtonClick = async () => {
+    setLocationError(null);
+
+    if (locationStatus === "unavailable") {
+      setLocationError(
+        isGeolocationSecureContext()
+          ? t.location.unsupported
+          : t.location.insecure,
+      );
+      return;
+    }
+
+    if (locationStatus === "denied") {
+      setLocationError(t.location.denied);
+      return;
+    }
+
+    if (locationStatus === "following" || locationStatus === "passive") {
+      setLocationStatus("following");
+      setLocationInfoOpen(true);
+      focusUserLocationRef.current?.("fit");
+      return;
+    }
+
+    if (locationStatus === "requesting") return;
+
+    const permission = await queryGeolocationPermission();
+    if (permission === "denied") {
+      setLocationStatus("denied");
+      setLocationError(t.location.denied);
+      return;
+    }
+
+    if (permission === "granted") {
+      startUserLocationWatch();
+      return;
+    }
+
+    setLocationConsentOpen(true);
+    markLocationPromptSeen();
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -951,6 +1154,16 @@ export default function MapInterface() {
             setMapBearing(snapshot.bearing);
           }}
           onTerrainReadyChange={setTerrainReady}
+          userLocation={userLocation}
+          focusUserLocationRef={focusUserLocationRef}
+          onUserMapGesture={() => {
+            if (
+              locationStatusRef.current === "following" ||
+              locationStatusRef.current === "requesting"
+            ) {
+              setLocationStatus("passive");
+            }
+          }}
         />
         <MapControlDock
           t={t}
@@ -968,6 +1181,22 @@ export default function MapInterface() {
             setDimensionMode(mode);
             writeMapDimensionMode(mode);
           }}
+          locationStatus={locationStatus}
+          locationAccuracyMeters={userLocation?.accuracyMeters ?? null}
+          consentOpen={locationConsentOpen}
+          infoOpen={locationInfoOpen}
+          locationError={locationError}
+          onLocationButtonClick={() => {
+            void handleLocationButtonClick();
+          }}
+          onAllowLocation={startUserLocationWatch}
+          onDismissConsent={() => {
+            markLocationPromptSeen();
+            setLocationConsentOpen(false);
+          }}
+          onStopLocation={stopUserLocation}
+          onDismissError={() => setLocationError(null)}
+          onCloseInfo={() => setLocationInfoOpen(false)}
         />
         <MapLegend
           locale={locale}

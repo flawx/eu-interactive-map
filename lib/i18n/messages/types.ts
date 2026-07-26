@@ -220,4 +220,23 @@ export type Messages = {
     baseSatellite: string;
     satellitePending: string;
   };
+  location: {
+    myLocation: string;
+    locating: string;
+    promptTitle: string;
+    promptBody: string;
+    allow: string;
+    later: string;
+    found: string;
+    following: string;
+    recenter: string;
+    passiveHint: string;
+    approximateAccuracy: string;
+    stop: string;
+    denied: string;
+    unavailable: string;
+    timeout: string;
+    unsupported: string;
+    insecure: string;
+  };
 };

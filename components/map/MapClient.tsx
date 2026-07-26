@@ -18,6 +18,7 @@ import type {
   MapBaseMode,
   MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
+import type { UserLocation } from "@/lib/map/userLocation";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -57,6 +58,11 @@ type MapClientProps = {
     zoom: number;
   }) => void;
   onTerrainReadyChange?: (ready: boolean) => void;
+  userLocation?: UserLocation | null;
+  focusUserLocationRef?: MutableRefObject<
+    ((mode?: "fit" | "soft") => void) | null
+  >;
+  onUserMapGesture?: () => void;
 };
 
 export default function MapClient({
@@ -87,6 +93,9 @@ export default function MapClient({
   dimensionMode = "2d",
   onCameraChange,
   onTerrainReadyChange,
+  userLocation = null,
+  focusUserLocationRef,
+  onUserMapGesture,
 }: MapClientProps) {
   return (
     <MapContainer
@@ -117,6 +126,9 @@ export default function MapClient({
       dimensionMode={dimensionMode}
       onCameraChange={onCameraChange}
       onTerrainReadyChange={onTerrainReadyChange}
+      userLocation={userLocation}
+      focusUserLocationRef={focusUserLocationRef}
+      onUserMapGesture={onUserMapGesture}
     />
   );
 }
