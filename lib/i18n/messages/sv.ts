@@ -14,6 +14,10 @@ export const sv = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Fäll ihop teckenförklaring",
+    expandLegend: "Expandera teckenförklaring",
+    activeLayer: "aktivt lager",
+    activeLayers: "aktiva lager",
   },
   countryPanel: {
     close: "Stäng",

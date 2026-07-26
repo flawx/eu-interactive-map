@@ -14,6 +14,10 @@ export const da = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Skjul legenden",
+    expandLegend: "Vis legenden",
+    activeLayer: "aktivt lag",
+    activeLayers: "aktive lag",
   },
   countryPanel: {
     close: "Luk",

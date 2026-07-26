@@ -14,6 +14,10 @@ export const hr = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Sažmi legendu",
+    expandLegend: "Proširi legendu",
+    activeLayer: "aktivni sloj",
+    activeLayers: "aktivnih slojeva",
   },
   countryPanel: {
     close: "Zatvori",

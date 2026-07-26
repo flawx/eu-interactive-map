@@ -14,6 +14,10 @@ export const fr = {
     noLayersYet: "Aucun calque disponible pour le moment",
     openLegend: "Ouvrir la légende",
     closeLegend: "Fermer la légende",
+    collapseLegend: "Replier la légende",
+    expandLegend: "Déplier la légende",
+    activeLayer: "calque actif",
+    activeLayers: "calques actifs",
   },
   countryPanel: {
     close: "Fermer",

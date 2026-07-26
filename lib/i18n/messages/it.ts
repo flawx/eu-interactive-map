@@ -14,6 +14,10 @@ export const it = {
     noLayersYet: "Nessun livello disponibile al momento",
     openLegend: "Apri la legenda",
     closeLegend: "Chiudi la legenda",
+    collapseLegend: "Riduci la legenda",
+    expandLegend: "Espandi la legenda",
+    activeLayer: "livello attivo",
+    activeLayers: "livelli attivi",
   },
   countryPanel: {
     close: "Chiudi",

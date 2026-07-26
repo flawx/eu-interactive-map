@@ -14,6 +14,10 @@ export const fi = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Pienennä legenda",
+    expandLegend: "Laajenna legenda",
+    activeLayer: "aktiivinen taso",
+    activeLayers: "aktiivista tasoa",
   },
   countryPanel: {
     close: "Sulje",

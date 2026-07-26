@@ -14,6 +14,10 @@ export const ro = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Restrânge legenda",
+    expandLegend: "Extinde legenda",
+    activeLayer: "strat activ",
+    activeLayers: "straturi active",
   },
   countryPanel: {
     close: "Închide",

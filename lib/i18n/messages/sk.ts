@@ -14,6 +14,10 @@ export const sk = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Zbaliť legendu",
+    expandLegend: "Rozbaliť legendu",
+    activeLayer: "aktívna vrstva",
+    activeLayers: "aktívne vrstvy",
   },
   countryPanel: {
     close: "Zavrieť",

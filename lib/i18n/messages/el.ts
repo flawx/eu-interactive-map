@@ -14,6 +14,10 @@ export const el = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Σύμπτυξη υπομνήματος",
+    expandLegend: "Ανάπτυξη υπομνήματος",
+    activeLayer: "ενεργό επίπεδο",
+    activeLayers: "ενεργά επίπεδα",
   },
   countryPanel: {
     close: "Κλείσιμο",

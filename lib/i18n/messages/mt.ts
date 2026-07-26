@@ -14,6 +14,10 @@ export const mt = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Agħlaq il-leġenda",
+    expandLegend: "Iftaħ il-leġenda",
+    activeLayer: "saff attiv",
+    activeLayers: "saffi attivi",
   },
   countryPanel: {
     close: "Agħlaq",

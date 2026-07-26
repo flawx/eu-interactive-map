@@ -14,6 +14,10 @@ export const et = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Ahenda legend",
+    expandLegend: "Laienda legend",
+    activeLayer: "aktiivne kiht",
+    activeLayers: "aktiivset kihti",
   },
   countryPanel: {
     close: "Sulge",

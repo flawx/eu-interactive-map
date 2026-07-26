@@ -14,6 +14,10 @@ export const es = {
     noLayersYet: "No hay capas disponibles por el momento",
     openLegend: "Abrir la leyenda",
     closeLegend: "Cerrar la leyenda",
+    collapseLegend: "Replegar la leyenda",
+    expandLegend: "Desplegar la leyenda",
+    activeLayer: "capa activa",
+    activeLayers: "capas activas",
   },
   countryPanel: {
     close: "Cerrar",

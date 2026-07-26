@@ -14,6 +14,10 @@ export const pl = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Zwiń legendę",
+    expandLegend: "Rozwiń legendę",
+    activeLayer: "aktywna warstwa",
+    activeLayers: "aktywne warstwy",
   },
   countryPanel: {
     close: "Zamknij",

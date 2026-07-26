@@ -14,6 +14,10 @@ export const lv = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Sakļaut leģendu",
+    expandLegend: "Izvērst leģendu",
+    activeLayer: "aktīvs slānis",
+    activeLayers: "aktīvi slāņi",
   },
   countryPanel: {
     close: "Aizvērt",

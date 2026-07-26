@@ -14,6 +14,10 @@ export const ga = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Fill an finscéal",
+    expandLegend: "Leathnaigh an finscéal",
+    activeLayer: "ciseal gníomhach",
+    activeLayers: "ciseal gníomhacha",
   },
   countryPanel: {
     close: "Dún",

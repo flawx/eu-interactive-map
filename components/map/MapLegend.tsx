@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
   AlertTriangle,
   ChevronDown,
+  ChevronUp,
   Layers,
   Plane,
   Shield,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
+import { countActiveMapLayers } from "@/lib/map/mapLayerPreferences";
 
 type MapLegendProps = {
   locale: Locale;
@@ -30,8 +32,8 @@ type MapLegendProps = {
   showSatelliteBurnedAreas: boolean;
   onToggleSatelliteBurnedAreas: (value: boolean) => void;
   highlight?: boolean;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
 };
 
 type LegendCategoryId =
@@ -58,16 +60,17 @@ export default function MapLegend({
   showSatelliteBurnedAreas,
   onToggleSatelliteBurnedAreas,
   highlight,
-  open,
-  onOpenChange,
+  collapsed,
+  onCollapsedChange,
 }: MapLegendProps) {
   const t = getMessages(locale);
   const isHighlighted = Boolean(highlight);
+  const open = !collapsed;
   const [expanded, setExpanded] = useState<Record<LegendCategoryId, boolean>>({
     europe: true,
     tourism: false,
     security: false,
-    alerts: true,
+    alerts: false,
     energy: false,
   });
 
@@ -75,12 +78,12 @@ export default function MapLegend({
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onOpenChange(false);
+        onCollapsedChange(true);
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onOpenChange]);
+  }, [open, onCollapsedChange]);
 
   const europeActive = [
     showEurozone,
@@ -95,9 +98,45 @@ export default function MapLegend({
     showSatelliteBurnedAreas,
   ].filter(Boolean).length;
 
+  const activeLayerCount = countActiveMapLayers({
+    euroArea: showEurozone,
+    euOutsideEuroArea: showNonEurozone,
+    schengenOutsideEu: showSchengenNonEU,
+    euCandidates: showCandidates,
+    majorWildfires: showWildfires,
+    satelliteActiveFires: showSatelliteActiveFires,
+    recentSatelliteHistory: showSatelliteBurnedAreas,
+  });
+
+  const activeLayersLabel =
+    activeLayerCount === 1 ? t.legend.activeLayer : t.legend.activeLayers;
+
   const toggleCategory = (id: LegendCategoryId) => {
     setExpanded((current) => ({ ...current, [id]: !current[id] }));
   };
+
+  const compactButton = (
+    <button
+      type="button"
+      className="map-ui-control inline-flex h-11 items-center gap-2 px-3.5 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+      aria-label={t.legend.expandLegend}
+      aria-expanded={false}
+      onClick={() => onCollapsedChange(false)}
+    >
+      <Layers className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />
+      <span className="hidden sm:inline">{t.legend.title}</span>
+      <span
+        className="inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+        style={{
+          background: "rgba(26, 115, 232, 0.12)",
+          color: "#1a73e8",
+        }}
+        aria-label={`${activeLayerCount} ${activeLayersLabel}`}
+      >
+        {activeLayerCount}
+      </span>
+    </button>
+  );
 
   const panel = (
     <aside
@@ -109,24 +148,44 @@ export default function MapLegend({
         borderColor: "var(--map-ui-border)",
         boxShadow: "var(--map-ui-shadow)",
         color: "var(--map-ui-text)",
+        maxHeight:
+          "min(70vh, 34rem, calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px))))",
       }}
     >
       <div
-        className="flex items-center justify-between border-b px-4 py-3"
+        className="flex items-center justify-between gap-2 border-b px-4 py-3"
         style={{ borderColor: "var(--map-ui-border)" }}
       >
-        <h2 className="text-sm font-semibold">{t.legend.title}</h2>
-        <button
-          type="button"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
-          aria-label={t.legend.closeLegend}
-          onClick={() => onOpenChange(false)}
-        >
-          <X className="h-4 w-4" aria-hidden="true" />
-        </button>
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold">{t.legend.title}</h2>
+          <p
+            className="mt-0.5 text-[11px]"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {activeLayerCount} {activeLayersLabel}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            className="hidden h-10 w-10 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:inline-flex"
+            aria-label={t.legend.collapseLegend}
+            onClick={() => onCollapsedChange(true)}
+          >
+            <ChevronUp className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
+            aria-label={t.legend.closeLegend}
+            onClick={() => onCollapsedChange(true)}
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
-      <div className="overflow-y-auto px-2 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
         <Category
           id="europe"
           title={t.nav.europe}
@@ -255,24 +314,26 @@ export default function MapLegend({
 
   return (
     <>
-      <button
-        type="button"
-        className="map-ui-control absolute bottom-4 left-1/2 inline-flex h-11 -translate-x-1/2 items-center gap-2 px-4 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
-        style={{ zIndex: 900 }}
-        aria-label={open ? t.legend.closeLegend : t.legend.openLegend}
-        aria-expanded={open}
-        onClick={() => onOpenChange(!open)}
-      >
-        <Layers className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />
-        {t.legend.title}
-      </button>
-
-      {/* Desktop floating panel */}
+      {/* Mobile compact trigger */}
       <div
-        className="absolute right-4 top-[4.75rem] hidden md:block"
-        style={{ zIndex: 900 }}
+        className="absolute left-1/2 -translate-x-1/2 md:hidden"
+        style={{
+          zIndex: 900,
+          bottom: "max(1rem, calc(16px + env(safe-area-inset-bottom, 0px)))",
+        }}
       >
-        {panel}
+        {compactButton}
+      </div>
+
+      {/* Desktop */}
+      <div
+        className="absolute right-4 hidden md:block"
+        style={{
+          zIndex: 900,
+          top: "var(--map-panel-top-offset)",
+        }}
+      >
+        {collapsed ? compactButton : panel}
       </div>
 
       {/* Mobile bottom drawer */}
@@ -286,9 +347,15 @@ export default function MapLegend({
             type="button"
             className="absolute inset-0 bg-black/25"
             aria-label={t.legend.closeLegend}
-            onClick={() => onOpenChange(false)}
+            onClick={() => onCollapsedChange(true)}
           />
-          <div className="absolute inset-x-0 bottom-0 flex justify-center p-3">
+          <div
+            className="absolute inset-x-0 bottom-0 flex justify-center p-3"
+            style={{
+              paddingBottom:
+                "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+            }}
+          >
             {panel}
           </div>
         </div>

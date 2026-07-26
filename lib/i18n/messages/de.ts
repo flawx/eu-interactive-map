@@ -14,6 +14,10 @@ export const de = {
     noLayersYet: "Derzeit keine Ebenen verfügbar",
     openLegend: "Legende öffnen",
     closeLegend: "Legende schließen",
+    collapseLegend: "Legende einklappen",
+    expandLegend: "Legende ausklappen",
+    activeLayer: "aktive Ebene",
+    activeLayers: "aktive Ebenen",
   },
   countryPanel: {
     close: "Schließen",

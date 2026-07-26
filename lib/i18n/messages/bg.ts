@@ -14,6 +14,10 @@ export const bg = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Свий легендата",
+    expandLegend: "Разгъни легендата",
+    activeLayer: "активен слой",
+    activeLayers: "активни слоеве",
   },
   countryPanel: {
     close: "Затвори",

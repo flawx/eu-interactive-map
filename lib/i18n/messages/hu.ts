@@ -14,6 +14,10 @@ export const hu = {
     noLayersYet: "No layers available yet",
     openLegend: "Open legend",
     closeLegend: "Close legend",
+    collapseLegend: "Jelmagyarázat összecsukása",
+    expandLegend: "Jelmagyarázat kibontása",
+    activeLayer: "aktív réteg",
+    activeLayers: "aktív réteg",
   },
   countryPanel: {
     close: "Bezárás",

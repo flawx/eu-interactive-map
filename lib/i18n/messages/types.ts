@@ -33,6 +33,10 @@ export type Messages = {
     noLayersYet: string;
     openLegend: string;
     closeLegend: string;
+    collapseLegend: string;
+    expandLegend: string;
+    activeLayer: string;
+    activeLayers: string;
   };
   countryPanel: {
     close: string;

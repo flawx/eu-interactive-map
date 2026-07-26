@@ -26,6 +26,14 @@ import type {
 import type { MapCameraCommands } from "@/lib/map/mapCameraCommands";
 import type { MapFocusRequest } from "@/lib/map/focusRequest";
 import {
+  DEFAULT_MAP_LAYER_PREFERENCES,
+  defaultLegendCollapsedForViewport,
+  loadLegendCollapsed,
+  loadMapLayerPreferences,
+  saveLegendCollapsed,
+  saveMapLayerPreferences,
+} from "@/lib/map/mapLayerPreferences";
+import {
   readMapViewPreferences,
   writeMapBaseMode,
   writeMapDimensionMode,
@@ -78,21 +86,33 @@ function isAbortError(error: unknown): boolean {
 
 export default function MapInterface() {
   const [locale, setLocale] = useState<Locale>(defaultLocale);
-  const [showEurozone, setShowEurozone] = useState(true);
-  const [showNonEurozone, setShowNonEurozone] = useState(true);
-  const [showCandidates, setShowCandidates] = useState(true);
-  const [showSchengenNonEU, setShowSchengenNonEU] = useState(true);
+  const [showEurozone, setShowEurozone] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euroArea,
+  );
+  const [showNonEurozone, setShowNonEurozone] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euOutsideEuroArea,
+  );
+  const [showCandidates, setShowCandidates] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euCandidates,
+  );
+  const [showSchengenNonEU, setShowSchengenNonEU] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.schengenOutsideEu,
+  );
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(
     null,
   );
   const [wildfireIncidents, setWildfireIncidents] = useState<
     WildfireIncident[]
   >([]);
-  const [showWildfires, setShowWildfires] = useState(true);
-  const [showSatelliteActiveFires, setShowSatelliteActiveFires] =
-    useState(false);
-  const [showSatelliteBurnedAreas, setShowSatelliteBurnedAreas] =
-    useState(false);
+  const [showWildfires, setShowWildfires] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorWildfires,
+  );
+  const [showSatelliteActiveFires, setShowSatelliteActiveFires] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.satelliteActiveFires,
+  );
+  const [showSatelliteBurnedAreas, setShowSatelliteBurnedAreas] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.recentSatelliteHistory,
+  );
   const [selectedWildfireId, setSelectedWildfireId] = useState<string | null>(
     null,
   );
@@ -130,7 +150,9 @@ export default function MapInterface() {
     null,
   );
   const [legendHighlight, setLegendHighlight] = useState(false);
-  const [legendOpen, setLegendOpen] = useState(false);
+  const [legendCollapsed, setLegendCollapsed] = useState(true);
+  const [layerPrefsHydrated, setLayerPrefsHydrated] = useState(false);
+  const [legendCollapsedHydrated, setLegendCollapsedHydrated] = useState(false);
   const [baseMode, setBaseMode] = useState<MapBaseMode>("map");
   const [dimensionMode, setDimensionMode] = useState<MapDimensionMode>("2d");
   const [mapPitch, setMapPitch] = useState(0);
@@ -175,6 +197,53 @@ export default function MapInterface() {
     setBaseMode(prefs.baseMode);
     setDimensionMode(prefs.dimensionMode);
   }, []);
+
+  useEffect(() => {
+    const prefs = loadMapLayerPreferences();
+    setShowEurozone(prefs.euroArea);
+    setShowNonEurozone(prefs.euOutsideEuroArea);
+    setShowSchengenNonEU(prefs.schengenOutsideEu);
+    setShowCandidates(prefs.euCandidates);
+    setShowWildfires(prefs.majorWildfires);
+    setShowSatelliteActiveFires(prefs.satelliteActiveFires);
+    setShowSatelliteBurnedAreas(prefs.recentSatelliteHistory);
+    setLayerPrefsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const stored = loadLegendCollapsed();
+    setLegendCollapsed(
+      stored === null ? defaultLegendCollapsedForViewport() : stored,
+    );
+    setLegendCollapsedHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!layerPrefsHydrated) return;
+    saveMapLayerPreferences({
+      euroArea: showEurozone,
+      euOutsideEuroArea: showNonEurozone,
+      schengenOutsideEu: showSchengenNonEU,
+      euCandidates: showCandidates,
+      majorWildfires: showWildfires,
+      satelliteActiveFires: showSatelliteActiveFires,
+      recentSatelliteHistory: showSatelliteBurnedAreas,
+    });
+  }, [
+    layerPrefsHydrated,
+    showEurozone,
+    showNonEurozone,
+    showSchengenNonEU,
+    showCandidates,
+    showWildfires,
+    showSatelliteActiveFires,
+    showSatelliteBurnedAreas,
+  ]);
+
+  useEffect(() => {
+    if (!legendCollapsedHydrated) return;
+    saveLegendCollapsed(legendCollapsed);
+  }, [legendCollapsed, legendCollapsedHydrated]);
 
   useEffect(() => {
     if (!isGeolocationSupported()) {
@@ -1029,7 +1098,7 @@ export default function MapInterface() {
   };
 
   const handleFocusLegend = () => {
-    setLegendOpen(true);
+    setLegendCollapsed(false);
     setLegendHighlight(true);
     window.setTimeout(() => setLegendHighlight(false), 1600);
   };
@@ -1201,8 +1270,8 @@ export default function MapInterface() {
         <MapLegend
           locale={locale}
           highlight={legendHighlight}
-          open={legendOpen}
-          onOpenChange={setLegendOpen}
+          collapsed={legendCollapsed}
+          onCollapsedChange={setLegendCollapsed}
           showEurozone={showEurozone}
           onToggleEurozone={setShowEurozone}
           showNonEurozone={showNonEurozone}
