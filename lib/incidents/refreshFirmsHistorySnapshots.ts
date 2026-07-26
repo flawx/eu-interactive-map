@@ -2,7 +2,7 @@ import { buildFirmsIncidentSnapshots } from "@/lib/incidents/firmsFootprints";
 import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import {
   firmsHistorySnapshotToRow,
-  rowToFirmsHistorySnapshot,
+  normalizeFirmsHistorySnapshot,
   type FirmsHistorySnapshotRow,
 } from "@/lib/incidents/firmsHistorySnapshot";
 import { createSupabaseServiceClient } from "@/lib/supabase/client";
@@ -41,7 +41,9 @@ export async function listFirmsHistorySnapshots(): Promise<
   }
 
   return data
-    .map((row) => rowToFirmsHistorySnapshot(row as FirmsHistorySnapshotRow))
+    .map((row) =>
+      normalizeFirmsHistorySnapshot(row as FirmsHistorySnapshotRow),
+    )
     .filter((snapshot): snapshot is FirmsIncidentSnapshot => snapshot !== null);
 }
 

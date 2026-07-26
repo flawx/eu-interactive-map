@@ -424,7 +424,8 @@ export default function MapInterface() {
     const controller = new AbortController();
 
     const applyFirmsHistorySnapshots = (snapshots: FirmsIncidentSnapshot[]) => {
-      if (snapshots.length === 0) return;
+      const hasHistory = snapshots.length > 0;
+      if (!hasHistory) return;
 
       setFirmsHistorySnapshotsByIncidentId((previous) => {
         const next = { ...previous };
@@ -439,6 +440,10 @@ export default function MapInterface() {
         }
         return next;
       });
+
+      // Cache hits (updated=false / preservedPrevious=true) still count as data.
+      setFirmsHistoryLoadingOverlay(false);
+      setFirmsHistoryUnavailableMessage(false);
     };
 
     const loadFirmsHistorySnapshots = async () => {
@@ -488,8 +493,7 @@ export default function MapInterface() {
           "snapshots" in data &&
           Array.isArray(data.snapshots)
         ) {
-          // On failure the API still returns the preserved previous
-          // snapshots, so applying them here is safe either way.
+          // Apply returned snapshots even when updated=false / preservedPrevious=true.
           applyFirmsHistorySnapshots(data.snapshots as FirmsIncidentSnapshot[]);
         }
       } catch (error: unknown) {

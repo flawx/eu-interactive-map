@@ -46,6 +46,32 @@ function isValidMultiPolygon(value: unknown): value is GeoJSON.MultiPolygon {
   );
 }
 
+function isValidPolygonOrMultiPolygon(
+  value: unknown,
+): value is GeoJSON.Polygon | GeoJSON.MultiPolygon {
+  if (!value || typeof value !== "object") return false;
+  const geometry = value as { type?: unknown; coordinates?: unknown };
+  if (geometry.type === "MultiPolygon") {
+    return isValidMultiPolygon(value);
+  }
+  if (geometry.type !== "Polygon" || !Array.isArray(geometry.coordinates)) {
+    return false;
+  }
+
+  return geometry.coordinates.every(
+    (ring) =>
+      Array.isArray(ring) &&
+      ring.length >= 4 &&
+      ring.every(
+        (coord) =>
+          Array.isArray(coord) &&
+          coord.length >= 2 &&
+          typeof coord[0] === "number" &&
+          typeof coord[1] === "number",
+      ),
+  );
+}
+
 function isValidBbox(
   value: unknown,
 ): value is [number, number, number, number] {
@@ -67,7 +93,7 @@ export function validateFirmsHistorySnapshot(
     !candidate.incidentId.trim() ||
     typeof candidate.incidentName !== "string" ||
     !candidate.incidentName.trim() ||
-    !isValidMultiPolygon(candidate.geometry) ||
+    !isValidPolygonOrMultiPolygon(candidate.geometry) ||
     !isValidBbox(candidate.bbox) ||
     typeof candidate.detectionCount !== "number" ||
     !Number.isFinite(candidate.detectionCount) ||
@@ -80,6 +106,17 @@ export function validateFirmsHistorySnapshot(
   ) {
     return null;
   }
+
+  const rawGeometry = candidate.geometry as
+    | GeoJSON.Polygon
+    | GeoJSON.MultiPolygon;
+  const geometry: GeoJSON.MultiPolygon =
+    rawGeometry.type === "Polygon"
+      ? {
+          type: "MultiPolygon",
+          coordinates: [rawGeometry.coordinates],
+        }
+      : rawGeometry;
 
   const approximateAreaHectares =
     candidate.approximateAreaHectares === null ||
@@ -94,7 +131,7 @@ export function validateFirmsHistorySnapshot(
   return {
     incidentId: candidate.incidentId.trim(),
     incidentName: candidate.incidentName.trim(),
-    geometry: candidate.geometry,
+    geometry,
     bbox: candidate.bbox,
     detectionCount: candidate.detectionCount,
     sensors: candidate.sensors
@@ -148,6 +185,37 @@ export function rowToFirmsHistorySnapshot(
       row.metadata && typeof row.metadata === "object"
         ? (row.metadata as Record<string, unknown>)
         : {},
+  });
+}
+
+/**
+ * Canonical converter for FIRMS 7d history: accepts either a Supabase SQL row
+ * (`incident_id`, `geometry_geojson`, …) or an already camelCased client object.
+ */
+export function normalizeFirmsHistorySnapshot(
+  value: unknown,
+): FirmsIncidentSnapshot | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+
+  if (typeof record.incident_id === "string") {
+    return rowToFirmsHistorySnapshot(record as FirmsHistorySnapshotRow);
+  }
+
+  return validateFirmsHistorySnapshot({
+    ...(record as Partial<FirmsIncidentSnapshot>),
+    isApproximate: true,
+    source:
+      typeof record.source === "string" && record.source.trim()
+        ? record.source
+        : FIRMS_SOURCE,
+    sourceUrl:
+      typeof record.sourceUrl === "string" && record.sourceUrl.trim()
+        ? record.sourceUrl
+        : FIRMS_SOURCE_URL,
+    geometry:
+      record.geometry ??
+      record.geometry_geojson,
   });
 }
 

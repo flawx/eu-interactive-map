@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Map as MapLibreMap,
   Marker,
@@ -256,6 +256,7 @@ export default function MapContainer({
   );
   onEffisBurnedAreasAvailabilityChangeRef.current =
     onEffisBurnedAreasAvailabilityChange;
+  const [mapSourcesReadyVersion, setMapSourcesReadyVersion] = useState(0);
 
   const applyLayerVisibility = (
     map: MapLibreMap,
@@ -1150,6 +1151,10 @@ export default function MapContainer({
       map.on("mouseenter", "firms-recent-history-fill", setPointerCursor);
       map.on("mouseleave", "firms-recent-history-fill", resetCursor);
       map.on("click", handleEffisBurnedAreaClick);
+
+      // Re-run GeoJSON sync effects that may have run before sources existed
+      // (history GET from Supabase cache is often faster than map load).
+      setMapSourcesReadyVersion((version) => version + 1);
     };
 
     if (map.loaded()) {
@@ -1477,8 +1482,6 @@ export default function MapContainer({
       (snapshot) => snapshot.geometry?.type === "MultiPolygon",
     );
 
-    // Same Polygon-per-ring-group split as the red 24h layer, so click/hover
-    // handlers can reuse the same local-cluster logic.
     const historyFeatures = snapshots.flatMap((snapshot) =>
       snapshot.geometry.coordinates.map((polygonCoordinates, footprintIndex) => ({
         type: "Feature" as const,
@@ -1504,7 +1507,7 @@ export default function MapContainer({
       type: "FeatureCollection",
       features: historyFeatures,
     });
-  }, [firmsHistorySnapshotsByIncidentId]);
+  }, [firmsHistorySnapshotsByIncidentId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;
