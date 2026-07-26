@@ -6,6 +6,7 @@ import {
 } from "@/lib/incidents/firmsSnapshot";
 import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import { createSupabaseServiceClient } from "@/lib/supabase/client";
+import { recordFirmsActiveDetectionObservations } from "@/lib/incidents/wildfireObservations";
 
 const REFRESH_MAX_AGE_MS = 15 * 60 * 1000;
 
@@ -104,6 +105,7 @@ export async function refreshFirmsSnapshots(): Promise<{
     }
 
     const saved = await listFirmsSnapshots();
+    await recordFirmsActiveDetectionObservations(saved);
     return {
       snapshots: saved,
       updated: true,

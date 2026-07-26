@@ -120,6 +120,9 @@ export default function MapInterface() {
   const effisProbeStartedRef = useRef(false);
   const effisBannerHideTimeoutRef = useRef<number | null>(null);
   const effisBannerShownAtRef = useRef<number | null>(null);
+  const focusGeometryRef = useRef<((geometry: GeoJSON.Geometry) => void) | null>(
+    null,
+  );
 
   const t = getMessages(locale);
 
@@ -918,6 +921,7 @@ export default function MapInterface() {
                 }
               : null
           }
+          focusGeometryRef={focusGeometryRef}
         />
         <MapLegend
           locale={locale}
@@ -1003,6 +1007,9 @@ export default function MapInterface() {
                 : null
             }
             onClose={() => setSelectedWildfireId(null)}
+            onFocusGeometry={(geometry) => {
+              focusGeometryRef.current?.(geometry);
+            }}
           />
         )}
 

@@ -6,6 +6,7 @@ import {
   type FirmsHistorySnapshotRow,
 } from "@/lib/incidents/firmsHistorySnapshot";
 import { createSupabaseServiceClient } from "@/lib/supabase/client";
+import { recordFirmsSevenDayHistoryObservations } from "@/lib/incidents/wildfireObservations";
 
 const REFRESH_MAX_AGE_MS = 30 * 60 * 1000;
 
@@ -129,6 +130,9 @@ export async function refreshFirmsHistorySnapshots(): Promise<{
     }
 
     const saved = await listFirmsHistorySnapshots();
+    await recordFirmsSevenDayHistoryObservations(
+      saved.length > 0 ? saved : snapshots,
+    );
     return {
       snapshots: saved.length > 0 ? saved : snapshots,
       updated: true,
