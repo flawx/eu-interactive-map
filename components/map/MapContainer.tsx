@@ -216,7 +216,7 @@ export default function MapContainer({
     map: MapLibreMap,
     visible: boolean,
   ) => {
-    applyLayerVisibility(map, "effis-active-fires-layer", visible);
+    applyLayerVisibility(map, "firms-active-fires-layer", visible);
   };
 
   const applySatelliteBurnedAreasVisibility = (
@@ -285,14 +285,14 @@ export default function MapContainer({
             ? event.source
             : null;
 
-      const isEffisSource =
+      const isRasterSource =
         eventSourceId === "effis-burned-areas" ||
-        eventSourceId === "effis-active-fires";
+        eventSourceId === "firms-active-fires";
 
       const isDecodeError =
         message === "The source image could not be decoded";
 
-      if (isDecodeError && isEffisSource) {
+      if (isDecodeError && isRasterSource) {
         return;
       }
 
@@ -305,9 +305,9 @@ export default function MapContainer({
               "effis-burned-areas-layer",
               "visibility",
             ) === "visible") ||
-          (map.getLayer("effis-active-fires-layer") &&
+          (map.getLayer("firms-active-fires-layer") &&
             map.getLayoutProperty(
-              "effis-active-fires-layer",
+              "firms-active-fires-layer",
               "visibility",
             ) === "visible")
         )
@@ -497,10 +497,9 @@ export default function MapContainer({
     };
 
     map.on("load", () => {
-      const activeFiresTime = formatEffisTimeRange(1);
       const burnedAreasTime = formatEffisTimeRange(7);
 
-      // EFFIS WMS overlays (above Voyager, below country fills / GDACS markers).
+      // Satellite overlays (above Voyager, below country fills / GDACS markers).
       map.addSource("effis-burned-areas", {
         type: "raster",
         tiles: [
@@ -516,16 +515,13 @@ export default function MapContainer({
         attribution: "© EFFIS / Copernicus EMS",
       });
 
-      map.addSource("effis-active-fires", {
+      map.addSource("firms-active-fires", {
         type: "raster",
-        tiles: [
-          buildEffisWmsTileUrl("modis.hs,viirs.hs", activeFiresTime),
-        ],
+        tiles: ["/api/incidents/firms/tiles/{z}/{x}/{y}"],
         tileSize: 256,
-        bounds: [-25, 34, 45, 72],
-        minzoom: 4,
+        minzoom: 2,
         maxzoom: 12,
-        attribution: "© EFFIS / Copernicus EMS",
+        attribution: "© NASA FIRMS",
       });
 
       map.addLayer({
@@ -545,9 +541,9 @@ export default function MapContainer({
       });
 
       map.addLayer({
-        id: "effis-active-fires-layer",
+        id: "firms-active-fires-layer",
         type: "raster",
-        source: "effis-active-fires",
+        source: "firms-active-fires",
         layout: {
           visibility: showSatelliteActiveFiresRef.current
             ? "visible"
