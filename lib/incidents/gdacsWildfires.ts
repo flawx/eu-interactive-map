@@ -137,6 +137,27 @@ function parseAlertLevel(value: unknown): IncidentAlertLevel {
   return "unknown";
 }
 
+function resolveGdacsAlertLevel(
+  properties: Record<string, unknown>,
+): IncidentAlertLevel {
+  const candidates = [
+    properties.alertlevel,
+    properties.alertLevel,
+    properties.episodealertlevel,
+    properties.episodeAlertLevel,
+    properties.severityalertlevel,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = parseAlertLevel(candidate);
+    if (parsed !== "unknown") {
+      return parsed;
+    }
+  }
+
+  return "unknown";
+}
+
 function parsePositiveNumber(value: unknown): number | null {
   if (typeof value === "number") {
     return Number.isFinite(value) && value >= 0 ? value : null;
@@ -335,7 +356,7 @@ export function parseGdacsWildfireIncidents(
     incidentsById.set(id, {
       id,
       title,
-      alertLevel: parseAlertLevel(properties.alertlevel),
+      alertLevel: resolveGdacsAlertLevel(properties),
       longitude: point.longitude,
       latitude: point.latitude,
       countryCode,

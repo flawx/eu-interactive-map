@@ -23,6 +23,17 @@ import type {
 } from "@/lib/incidents/types";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
+const EFFIS_UNAVAILABLE_MESSAGE_MIN_MS = 6_000;
+
+function isEffisServiceFailureStatus(status: number): boolean {
+  return (
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    status === 408
+  );
+}
 
 async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => {
@@ -79,9 +90,14 @@ export default function MapInterface() {
   const [firmsLoadingOverlay, setFirmsLoadingOverlay] = useState(false);
   const [firmsUnavailableMessage, setFirmsUnavailableMessage] =
     useState(false);
-  const [firmsRasterAvailable, setFirmsRasterAvailable] = useState(false);
   const [effisUnavailable, setEffisUnavailable] = useState(false);
+  const [showEffisUnavailableBanner, setShowEffisUnavailableBanner] =
+    useState(false);
   const firmsRefreshStartedRef = useRef(false);
+  const effisServiceFailedRef = useRef(false);
+  const effisProbeStartedRef = useRef(false);
+  const effisBannerHideTimeoutRef = useRef<number | null>(null);
+  const effisBannerShownAtRef = useRef<number | null>(null);
 
   const t = getMessages(locale);
 
@@ -230,21 +246,36 @@ export default function MapInterface() {
             },
           );
 
-          if (response.ok) {
+          if (isEffisServiceFailureStatus(response.status)) {
+            effisServiceFailedRef.current = true;
+            setEffisUnavailable(true);
+          } else if (response.ok) {
             const data: unknown = await response.json();
-            if (
+            const preservedPrevious =
+              data &&
+              typeof data === "object" &&
+              "preservedPrevious" in data &&
+              data.preservedPrevious === true;
+            const rawSnapshot =
               data &&
               typeof data === "object" &&
               "snapshot" in data &&
               data.snapshot
-            ) {
-              const snapshot = validateEffisBurnedAreaSnapshot(data.snapshot);
-              if (snapshot) {
-                setEffisSnapshotsByIncidentId((currentSnapshots) => ({
-                  ...currentSnapshots,
-                  [incident.id]: snapshot,
-                }));
-              }
+                ? data.snapshot
+                : null;
+            const snapshot = rawSnapshot
+              ? validateEffisBurnedAreaSnapshot(rawSnapshot)
+              : null;
+
+            if (snapshot) {
+              setEffisSnapshotsByIncidentId((currentSnapshots) => ({
+                ...currentSnapshots,
+                [incident.id]: snapshot,
+              }));
+              setEffisUnavailable(false);
+            } else if (preservedPrevious) {
+              effisServiceFailedRef.current = true;
+              setEffisUnavailable(true);
             }
           }
         } catch (error: unknown) {
@@ -259,6 +290,10 @@ export default function MapInterface() {
           ) {
             return;
           }
+
+          // Network / timeout failures from the EFFIS refresh route.
+          effisServiceFailedRef.current = true;
+          setEffisUnavailable(true);
         }
 
         await sleep(1500);
@@ -376,25 +411,25 @@ export default function MapInterface() {
   }, []);
 
   const hasFirmsSnapshots = Object.keys(firmsSnapshotsByIncidentId).length > 0;
-  const firmsDataAvailable = hasFirmsSnapshots || firmsRasterAvailable;
+  const hasEffisSnapshots =
+    Object.keys(effisSnapshotsByIncidentId).length > 0;
+  const firmsDataAvailable = hasFirmsSnapshots;
 
   useEffect(() => {
-    void (async () => {
-      if (!showSatelliteActiveFires) {
-        setFirmsLoadingOverlay(false);
-        setFirmsUnavailableMessage(false);
-        return;
-      }
-
+    if (!showSatelliteActiveFires) {
+      setFirmsLoadingOverlay(false);
       setFirmsUnavailableMessage(false);
+      return;
+    }
 
-      if (firmsDataAvailable) {
-        setFirmsLoadingOverlay(false);
-        return;
-      }
+    setFirmsUnavailableMessage(false);
 
-      setFirmsLoadingOverlay(true);
-    })();
+    if (firmsDataAvailable) {
+      setFirmsLoadingOverlay(false);
+      return;
+    }
+
+    setFirmsLoadingOverlay(true);
   }, [showSatelliteActiveFires, firmsDataAvailable]);
 
   useEffect(() => {
@@ -409,6 +444,162 @@ export default function MapInterface() {
       window.clearTimeout(timeoutId);
     };
   }, [showSatelliteActiveFires, firmsDataAvailable]);
+
+  // EFFIS unavailable banner: driven by refresh HTTP status / body, not MapLibre.
+  // Stays visible at least 6 seconds once shown.
+  useEffect(() => {
+    if (effisBannerHideTimeoutRef.current !== null) {
+      window.clearTimeout(effisBannerHideTimeoutRef.current);
+      effisBannerHideTimeoutRef.current = null;
+    }
+
+    const shouldShow =
+      showSatelliteBurnedAreas &&
+      !hasEffisSnapshots &&
+      (effisUnavailable || effisServiceFailedRef.current);
+
+    if (shouldShow) {
+      setShowEffisUnavailableBanner(true);
+      if (effisBannerShownAtRef.current === null) {
+        effisBannerShownAtRef.current = Date.now();
+      }
+      return;
+    }
+
+    if (hasEffisSnapshots) {
+      setEffisUnavailable(false);
+    }
+
+    const shownAt = effisBannerShownAtRef.current;
+    if (shownAt === null || !showEffisUnavailableBanner) {
+      setShowEffisUnavailableBanner(false);
+      effisBannerShownAtRef.current = null;
+      return;
+    }
+
+    const remaining = Math.max(
+      0,
+      EFFIS_UNAVAILABLE_MESSAGE_MIN_MS - (Date.now() - shownAt),
+    );
+
+    if (remaining === 0) {
+      setShowEffisUnavailableBanner(false);
+      effisBannerShownAtRef.current = null;
+      return;
+    }
+
+    effisBannerHideTimeoutRef.current = window.setTimeout(() => {
+      setShowEffisUnavailableBanner(false);
+      effisBannerShownAtRef.current = null;
+      effisBannerHideTimeoutRef.current = null;
+    }, remaining);
+
+    return () => {
+      if (effisBannerHideTimeoutRef.current !== null) {
+        window.clearTimeout(effisBannerHideTimeoutRef.current);
+        effisBannerHideTimeoutRef.current = null;
+      }
+    };
+  }, [
+    showSatelliteBurnedAreas,
+    hasEffisSnapshots,
+    effisUnavailable,
+    showEffisUnavailableBanner,
+  ]);
+
+  // When the brown checkbox is turned on with no cache, probe one refresh.
+  useEffect(() => {
+    if (!showSatelliteBurnedAreas) {
+      effisProbeStartedRef.current = false;
+      return;
+    }
+    if (hasEffisSnapshots) return;
+    if (effisProbeStartedRef.current) return;
+    if (wildfireIncidents.length === 0) return;
+
+    effisProbeStartedRef.current = true;
+    const controller = new AbortController();
+
+    const probeEffisAvailability = async () => {
+      const incident = wildfireIncidents[0];
+      if (!incident) return;
+
+      try {
+        const response = await fetch(
+          `/api/incidents/effis/snapshots/${encodeURIComponent(incident.id)}/refresh`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              longitude: incident.longitude,
+              latitude: incident.latitude,
+              countryCode: incident.countryCode,
+            }),
+            signal: controller.signal,
+          },
+        );
+
+        if (controller.signal.aborted) return;
+
+        if (isEffisServiceFailureStatus(response.status)) {
+          effisServiceFailedRef.current = true;
+          setEffisUnavailable(true);
+          return;
+        }
+
+        if (!response.ok) {
+          effisServiceFailedRef.current = true;
+          setEffisUnavailable(true);
+          return;
+        }
+
+        const data: unknown = await response.json();
+        if (controller.signal.aborted) return;
+
+        const preservedPrevious =
+          data &&
+          typeof data === "object" &&
+          "preservedPrevious" in data &&
+          data.preservedPrevious === true;
+        const rawSnapshot =
+          data &&
+          typeof data === "object" &&
+          "snapshot" in data &&
+          data.snapshot
+            ? data.snapshot
+            : null;
+        const snapshot = rawSnapshot
+          ? validateEffisBurnedAreaSnapshot(rawSnapshot)
+          : null;
+
+        if (snapshot) {
+          setEffisSnapshotsByIncidentId((currentSnapshots) => ({
+            ...currentSnapshots,
+            [incident.id]: snapshot,
+          }));
+          setEffisUnavailable(false);
+          return;
+        }
+
+        if (preservedPrevious || !snapshot) {
+          effisServiceFailedRef.current = true;
+          setEffisUnavailable(true);
+        }
+      } catch (error: unknown) {
+        if (isAbortError(error)) return;
+        effisServiceFailedRef.current = true;
+        setEffisUnavailable(true);
+      }
+    };
+
+    void probeEffisAvailability();
+
+    return () => {
+      controller.abort();
+    };
+  }, [showSatelliteBurnedAreas, hasEffisSnapshots, wildfireIncidents]);
 
   void wildfiresLoading;
 
@@ -451,8 +642,12 @@ export default function MapInterface() {
         selectedWildfireId={selectedWildfireId}
         locale={locale}
         firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
-        onFirmsRasterAvailabilityChange={setFirmsRasterAvailable}
-        onEffisBurnedAreasAvailabilityChange={setEffisUnavailable}
+        onEffisBurnedAreasAvailabilityChange={(unavailable) => {
+          if (unavailable) {
+            effisServiceFailedRef.current = true;
+            setEffisUnavailable(true);
+          }
+        }}
       />
       <MapLegend
         locale={locale}
@@ -486,10 +681,8 @@ export default function MapInterface() {
         </div>
       )}
 
-      {showSatelliteBurnedAreas &&
-        effisUnavailable &&
-        Object.keys(effisSnapshotsByIncidentId).length === 0 && (
-          <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
+      {showEffisUnavailableBanner && (
+          <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/90 px-4 py-2 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
             {t.incidents.effisTemporarilyUnavailable}
           </div>
         )}

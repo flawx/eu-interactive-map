@@ -9,7 +9,6 @@ import {
   type ErrorEvent as MapLibreErrorEvent,
   type GeoJSONSource,
   type MapLayerMouseEvent,
-  type MapSourceDataEvent,
 } from "maplibre-gl";
 import type {
   EffisBurnedArea,
@@ -100,6 +99,90 @@ function extendBoundsWithCoordinates(
   });
 }
 
+/** Area-weighted centroid of a polygon ring, falling back to a simple average for degenerate rings. */
+function ringCentroid(ring: GeoJSON.Position[]): [number, number] {
+  let area = 0;
+  let cx = 0;
+  let cy = 0;
+
+  for (let i = 0; i < ring.length - 1; i++) {
+    const [x0, y0] = ring[i];
+    const [x1, y1] = ring[i + 1];
+    const cross = x0 * y1 - x1 * y0;
+    area += cross;
+    cx += (x0 + x1) * cross;
+    cy += (y0 + y1) * cross;
+  }
+
+  area /= 2;
+
+  if (Math.abs(area) > 1e-12) {
+    return [cx / (6 * area), cy / (6 * area)];
+  }
+
+  const sum = ring.reduce<[number, number]>(
+    (acc, [x, y]) => [acc[0] + x, acc[1] + y],
+    [0, 0],
+  );
+  return [sum[0] / ring.length, sum[1] / ring.length];
+}
+
+function haversineMeters(a: [number, number], b: [number, number]): number {
+  const radius = 6371008.8;
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRadians(b[1] - a[1]);
+  const dLon = toRadians(b[0] - a[0]);
+  const lat1 = toRadians(a[1]);
+  const lat2 = toRadians(b[1]);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * radius * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function boundsFromPolygons(polygons: GeoJSON.Position[][][]): LngLatBounds {
+  const bounds = new LngLatBounds();
+
+  for (const polygon of polygons) {
+    extendBoundsWithCoordinates(bounds, polygon);
+  }
+
+  return bounds;
+}
+
+const FLAME_ICON_PATH =
+  "M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4";
+
+function getFlameColor(alertLevel: WildfireIncident["alertLevel"]): string {
+  switch (alertLevel) {
+    case "green":
+      return "#16a34a";
+    case "orange":
+      return "#f97316";
+    case "red":
+      return "#dc2626";
+    default:
+      return "#64748b";
+  }
+}
+
+/** Inline SVG flame marker (no external image); ~30x36px with a white outline and drop shadow. */
+function createFlameMarkerElement(
+  incident: WildfireIncident,
+  isSelected: boolean,
+): HTMLDivElement {
+  const color = getFlameColor(incident.alertLevel);
+  const scale = isSelected ? 1.2 : 1;
+
+  const el = document.createElement("div");
+  el.style.cssText = `width:30px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;transform:scale(${scale});transform-origin:bottom center;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.45))${
+    isSelected ? " drop-shadow(0 0 6px rgba(220,38,38,0.85))" : ""
+  };`;
+  el.innerHTML = `<svg width="26" height="32" viewBox="0 0 24 24" fill="${color}" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="${FLAME_ICON_PATH}"/></svg>`;
+
+  return el;
+}
+
 export default function MapContainer({
   showEurozone,
   showNonEurozone,
@@ -118,7 +201,6 @@ export default function MapContainer({
   selectedWildfireId,
   locale,
   firmsSnapshotsByIncidentId,
-  onFirmsRasterAvailabilityChange,
   onEffisBurnedAreasAvailabilityChange,
 }: {
   showEurozone: boolean;
@@ -138,7 +220,6 @@ export default function MapContainer({
   selectedWildfireId: string | null;
   locale: Locale;
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
-  onFirmsRasterAvailabilityChange?: (available: boolean) => void;
   onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -153,8 +234,6 @@ export default function MapContainer({
   showSchengenNonEURef.current = showSchengenNonEU;
   const onCountrySelectRef = useRef(onCountrySelect);
   onCountrySelectRef.current = onCountrySelect;
-  const showWildfiresRef = useRef(showWildfires);
-  showWildfiresRef.current = showWildfires;
   const onWildfireSelectRef = useRef(onWildfireSelect);
   onWildfireSelectRef.current = onWildfireSelect;
   const showSatelliteActiveFiresRef = useRef(showSatelliteActiveFires);
@@ -167,37 +246,14 @@ export default function MapContainer({
     onEffisBurnedAreaLoadingChange,
   );
   onEffisBurnedAreaLoadingChangeRef.current = onEffisBurnedAreaLoadingChange;
-  const wildfireIncidentsRef = useRef(wildfireIncidents);
-  wildfireIncidentsRef.current = wildfireIncidents;
   const firmsLabelMarkersRef = useRef<Marker[]>([]);
+  const gdacsFlameMarkersRef = useRef<Marker[]>([]);
   const effisRequestControllerRef = useRef<AbortController | null>(null);
-  const firmsSnapshotsByIncidentIdRef = useRef(firmsSnapshotsByIncidentId);
-  firmsSnapshotsByIncidentIdRef.current = firmsSnapshotsByIncidentId;
-  const onFirmsRasterAvailabilityChangeRef = useRef(
-    onFirmsRasterAvailabilityChange,
-  );
-  onFirmsRasterAvailabilityChangeRef.current = onFirmsRasterAvailabilityChange;
   const onEffisBurnedAreasAvailabilityChangeRef = useRef(
     onEffisBurnedAreasAvailabilityChange,
   );
   onEffisBurnedAreasAvailabilityChangeRef.current =
     onEffisBurnedAreasAvailabilityChange;
-
-  const toWildfireFeatureCollection = (incidents: WildfireIncident[]) => ({
-    type: "FeatureCollection" as const,
-    features: incidents.map((incident) => ({
-      type: "Feature" as const,
-      geometry: {
-        type: "Point" as const,
-        coordinates: [incident.longitude, incident.latitude],
-      },
-      properties: {
-        id: incident.id,
-        title: incident.title,
-        alertLevel: incident.alertLevel,
-      },
-    })),
-  });
 
   const applyLayerVisibility = (
     map: MapLibreMap,
@@ -231,18 +287,23 @@ export default function MapContainer({
     applyLayerVisibility(map, "schengen-non-eu-border", visible);
   };
 
-  const applyWildfireVisibility = (map: MapLibreMap, visible: boolean) => {
-    applyLayerVisibility(map, "wildfire-incidents-halo", visible);
-    applyLayerVisibility(map, "wildfire-incidents-points", visible);
+  const applyWildfireVisibility = (visible: boolean) => {
+    for (const marker of gdacsFlameMarkersRef.current) {
+      marker.getElement().style.display = visible ? "" : "none";
+    }
   };
 
   const applySatelliteActiveFiresVisibility = (
     map: MapLibreMap,
     visible: boolean,
   ) => {
-    applyLayerVisibility(map, "firms-active-fires-layer", visible);
     applyLayerVisibility(map, "firms-incident-footprints-fill", visible);
     applyLayerVisibility(map, "firms-incident-footprints-border", visible);
+    applyLayerVisibility(
+      map,
+      "firms-incident-footprints-selected-fill",
+      visible,
+    );
     applyLayerVisibility(map, "firms-incident-footprints-selected", visible);
   };
 
@@ -313,9 +374,7 @@ export default function MapContainer({
             ? event.source
             : null;
 
-      const isRasterSource =
-        eventSourceId === "effis-burned-areas" ||
-        eventSourceId === "firms-active-fires";
+      const isRasterSource = eventSourceId === "effis-burned-areas";
 
       const isEffisStatusFailure =
         eventSourceId === "effis-burned-areas" &&
@@ -335,18 +394,11 @@ export default function MapContainer({
       if (
         isDecodeError &&
         !eventSourceId &&
-        (
-          (map.getLayer("effis-burned-areas-layer") &&
-            map.getLayoutProperty(
-              "effis-burned-areas-layer",
-              "visibility",
-            ) === "visible") ||
-          (map.getLayer("firms-active-fires-layer") &&
-            map.getLayoutProperty(
-              "firms-active-fires-layer",
-              "visibility",
-            ) === "visible")
-        )
+        map.getLayer("effis-burned-areas-layer") &&
+        map.getLayoutProperty(
+          "effis-burned-areas-layer",
+          "visibility",
+        ) === "visible"
       ) {
         return;
       }
@@ -355,14 +407,6 @@ export default function MapContainer({
     };
 
     map.on("error", handleMapError);
-
-    const handleFirmsSourceData = (event: MapSourceDataEvent) => {
-      if (event.sourceId === "firms-active-fires" && event.isSourceLoaded) {
-        onFirmsRasterAvailabilityChangeRef.current?.(true);
-      }
-    };
-
-    map.on("sourcedata", handleFirmsSourceData);
 
     const updateEuOpacity = () => {
       const zoom = map.getZoom();
@@ -414,16 +458,6 @@ export default function MapContainer({
       }
     };
 
-    const handleWildfireClick = (event: MapLayerMouseEvent) => {
-      const incidentId = event.features?.[0]?.properties?.id;
-
-      if (typeof incidentId === "string") {
-        onWildfireSelectRef.current(incidentId);
-      } else if (typeof incidentId === "number") {
-        onWildfireSelectRef.current(String(incidentId));
-      }
-    };
-
     const handleEffisSnapshotClick = (event: MapLayerMouseEvent) => {
       const incidentId = event.features?.[0]?.properties?.incidentId;
 
@@ -434,9 +468,11 @@ export default function MapContainer({
       }
     };
 
+    const FIRMS_LOCAL_CLUSTER_METERS = 12_000;
+
     const handleFirmsFootprintClick = (event: MapLayerMouseEvent) => {
-      const properties = event.features?.[0]?.properties;
-      const rawIncidentId = properties?.incidentId;
+      const feature = event.features?.[0];
+      const rawIncidentId = feature?.properties?.incidentId;
 
       const incidentId =
         typeof rawIncidentId === "string"
@@ -449,31 +485,44 @@ export default function MapContainer({
 
       onWildfireSelectRef.current(incidentId);
 
-      const minLon = properties?.bboxMinLon;
-      const minLat = properties?.bboxMinLat;
-      const maxLon = properties?.bboxMaxLon;
-      const maxLat = properties?.bboxMaxLat;
+      if (!feature?.geometry || feature.geometry.type !== "Polygon") return;
 
-      const bbox: [number, number, number, number] | null =
-        typeof minLon === "number" &&
-        typeof minLat === "number" &&
-        typeof maxLon === "number" &&
-        typeof maxLat === "number"
-          ? [minLon, minLat, maxLon, maxLat]
-          : (firmsSnapshotsByIncidentIdRef.current[incidentId]?.bbox ?? null);
+      const clickedPolygon = feature.geometry.coordinates;
+      const clickedCentroid = ringCentroid(clickedPolygon[0]);
 
-      if (!bbox) return;
-
-      const bounds = new LngLatBounds(
-        [bbox[0], bbox[1]],
-        [bbox[2], bbox[3]],
+      const sourceFeatures = map.querySourceFeatures(
+        "firms-incident-footprints",
+        {
+          filter: ["==", ["get", "incidentId"], incidentId],
+        },
       );
+
+      const nearbyPolygons: GeoJSON.Position[][][] = [];
+
+      for (const sourceFeature of sourceFeatures) {
+        if (sourceFeature.geometry.type !== "Polygon") continue;
+
+        const centroid = ringCentroid(sourceFeature.geometry.coordinates[0]);
+
+        if (
+          haversineMeters(clickedCentroid, centroid) <=
+          FIRMS_LOCAL_CLUSTER_METERS
+        ) {
+          nearbyPolygons.push(sourceFeature.geometry.coordinates);
+        }
+      }
+
+      if (nearbyPolygons.length === 0) {
+        nearbyPolygons.push(clickedPolygon);
+      }
+
+      const bounds = boundsFromPolygons(nearbyPolygons);
 
       if (!bounds.isEmpty()) {
         map.fitBounds(bounds, {
-          padding: { top: 40, bottom: 40, left: 360, right: 40 },
-          maxZoom: 12,
-          duration: 800,
+          padding: { top: 100, bottom: 100, left: 380, right: 80 },
+          maxZoom: 11.5,
+          duration: 900,
         });
       }
     };
@@ -482,12 +531,9 @@ export default function MapContainer({
       if (!showSatelliteBurnedAreasRef.current) return;
       if (map.getZoom() < 6) return;
 
-      if (map.getLayer("wildfire-incidents-points")) {
-        const wildfireHits = map.queryRenderedFeatures(event.point, {
-          layers: ["wildfire-incidents-points"],
-        });
-        if (wildfireHits.length > 0) return;
-      }
+      // GDACS incidents are now rendered as HTML flame markers (outside the
+      // MapLibre layer/event system); their own click handlers stopPropagation
+      // so this global handler never sees those clicks.
 
       if (map.getLayer("effis-burned-area-snapshots-fill")) {
         const snapshotHits = map.queryRenderedFeatures(event.point, {
@@ -606,15 +652,6 @@ export default function MapContainer({
         attribution: "© EFFIS / Copernicus EMS",
       });
 
-      map.addSource("firms-active-fires", {
-        type: "raster",
-        tiles: ["/api/incidents/firms/tiles/{z}/{x}/{y}"],
-        tileSize: 256,
-        minzoom: 2,
-        maxzoom: 12,
-        attribution: "© NASA FIRMS",
-      });
-
       map.addLayer({
         id: "effis-burned-areas-layer",
         type: "raster",
@@ -628,78 +665,6 @@ export default function MapContainer({
           "raster-opacity": 0.55,
           "raster-fade-duration": 0,
           "raster-resampling": "nearest",
-        },
-      });
-
-      map.addLayer({
-        id: "firms-active-fires-layer",
-        type: "raster",
-        source: "firms-active-fires",
-        layout: {
-          visibility: showSatelliteActiveFiresRef.current
-            ? "visible"
-            : "none",
-        },
-        paint: {
-          "raster-opacity": 0.85,
-          "raster-fade-duration": 0,
-          "raster-resampling": "nearest",
-        },
-      });
-
-      map.addSource("firms-incident-footprints", {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: [],
-        },
-      });
-
-      map.addLayer({
-        id: "firms-incident-footprints-fill",
-        type: "fill",
-        source: "firms-incident-footprints",
-        layout: {
-          visibility: showSatelliteActiveFiresRef.current
-            ? "visible"
-            : "none",
-        },
-        paint: {
-          "fill-color": "#dc2626",
-          "fill-opacity": 0.18,
-        },
-      });
-
-      map.addLayer({
-        id: "firms-incident-footprints-border",
-        type: "line",
-        source: "firms-incident-footprints",
-        layout: {
-          visibility: showSatelliteActiveFiresRef.current
-            ? "visible"
-            : "none",
-        },
-        paint: {
-          "line-color": "#7f1d1d",
-          "line-width": 1.5,
-          "line-opacity": 0.9,
-        },
-      });
-
-      map.addLayer({
-        id: "firms-incident-footprints-selected",
-        type: "line",
-        source: "firms-incident-footprints",
-        filter: ["==", ["get", "incidentId"], ""],
-        layout: {
-          visibility: showSatelliteActiveFiresRef.current
-            ? "visible"
-            : "none",
-        },
-        paint: {
-          "line-color": "#7f1d1d",
-          "line-width": 3,
-          "line-opacity": 1,
         },
       });
 
@@ -938,60 +903,79 @@ export default function MapContainer({
       updateEuOpacity();
       map.on("zoom", updateEuOpacity);
 
-      map.addSource("wildfire-incidents", {
+      // FIRMS footprints render above country layers and below GDACS flame markers.
+      map.addSource("firms-incident-footprints", {
         type: "geojson",
-        data: toWildfireFeatureCollection(wildfireIncidentsRef.current),
-      });
-
-      map.addLayer({
-        id: "wildfire-incidents-halo",
-        type: "circle",
-        source: "wildfire-incidents",
-        paint: {
-          "circle-radius": 14,
-          "circle-opacity": 0.18,
-          "circle-color": [
-            "match",
-            ["get", "alertLevel"],
-            "red",
-            "#ef4444",
-            "orange",
-            "#f59e0b",
-            "green",
-            "#22c55e",
-            "#64748b",
-          ],
+        data: {
+          type: "FeatureCollection",
+          features: [],
         },
       });
 
       map.addLayer({
-        id: "wildfire-incidents-points",
-        type: "circle",
-        source: "wildfire-incidents",
+        id: "firms-incident-footprints-fill",
+        type: "fill",
+        source: "firms-incident-footprints",
+        layout: {
+          visibility: showSatelliteActiveFiresRef.current
+            ? "visible"
+            : "none",
+        },
         paint: {
-          "circle-radius": 8,
-          "circle-color": [
-            "match",
-            ["get", "alertLevel"],
-            "red",
-            "#ef4444",
-            "orange",
-            "#f59e0b",
-            "green",
-            "#22c55e",
-            "#64748b",
-          ],
-          "circle-stroke-color": "#ffffff",
-          "circle-stroke-width": 1.5,
-          "circle-stroke-opacity": 0.9,
+          "fill-color": "#ef4444",
+          "fill-opacity": 0.28,
         },
       });
 
-      applyWildfireVisibility(map, showWildfiresRef.current);
+      map.addLayer({
+        id: "firms-incident-footprints-border",
+        type: "line",
+        source: "firms-incident-footprints",
+        layout: {
+          visibility: showSatelliteActiveFiresRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#991b1b",
+          "line-width": 2,
+          "line-opacity": 1,
+        },
+      });
 
-      map.on("click", "wildfire-incidents-points", handleWildfireClick);
-      map.on("mouseenter", "wildfire-incidents-points", setPointerCursor);
-      map.on("mouseleave", "wildfire-incidents-points", resetCursor);
+      map.addLayer({
+        id: "firms-incident-footprints-selected-fill",
+        type: "fill",
+        source: "firms-incident-footprints",
+        filter: ["==", ["get", "incidentId"], ""],
+        layout: {
+          visibility: showSatelliteActiveFiresRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "fill-color": "#dc2626",
+          "fill-opacity": 0.38,
+        },
+      });
+
+      map.addLayer({
+        id: "firms-incident-footprints-selected",
+        type: "line",
+        source: "firms-incident-footprints",
+        filter: ["==", ["get", "incidentId"], ""],
+        layout: {
+          visibility: showSatelliteActiveFiresRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#7f1d1d",
+          "line-width": 4,
+          "line-opacity": 1,
+        },
+      });
+
       map.on("click", "effis-burned-area-snapshots-fill", handleEffisSnapshotClick);
       map.on(
         "mouseenter",
@@ -1023,9 +1007,6 @@ export default function MapContainer({
         map.off("mouseleave", layerId, resetCursor);
       }
 
-      map.off("click", "wildfire-incidents-points", handleWildfireClick);
-      map.off("mouseenter", "wildfire-incidents-points", setPointerCursor);
-      map.off("mouseleave", "wildfire-incidents-points", resetCursor);
       map.off(
         "click",
         "effis-burned-area-snapshots-fill",
@@ -1055,9 +1036,12 @@ export default function MapContainer({
         marker.remove();
       }
       firmsLabelMarkersRef.current = [];
+      for (const marker of gdacsFlameMarkersRef.current) {
+        marker.remove();
+      }
+      gdacsFlameMarkersRef.current = [];
       map.off("zoom", updateEuOpacity);
       map.off("error", handleMapError);
-      map.off("sourcedata", handleFirmsSourceData);
       map.remove();
       mapRef.current = null;
     };
@@ -1090,7 +1074,7 @@ export default function MapContainer({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    applyWildfireVisibility(map, showWildfires);
+    applyWildfireVisibility(showWildfires);
   }, [showWildfires]);
 
   useEffect(() => {
@@ -1156,20 +1140,20 @@ export default function MapContainer({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (!map.getLayer("firms-incident-footprints-selected")) return;
 
-    map.setFilter("firms-incident-footprints-selected", [
-      "==",
-      ["get", "incidentId"],
-      selectedWildfireId ?? "",
-    ]);
+    if (map.getLayer("firms-incident-footprints-selected-fill")) {
+      map.setFilter("firms-incident-footprints-selected-fill", [
+        "==",
+        ["get", "incidentId"],
+        selectedWildfireId ?? "",
+      ]);
+    }
 
-    if (map.getLayer("firms-incident-footprints-fill")) {
-      map.setPaintProperty("firms-incident-footprints-fill", "fill-opacity", [
-        "case",
-        ["==", ["get", "incidentId"], selectedWildfireId ?? ""],
-        0.28,
-        0.18,
+    if (map.getLayer("firms-incident-footprints-selected")) {
+      map.setFilter("firms-incident-footprints-selected", [
+        "==",
+        ["get", "incidentId"],
+        selectedWildfireId ?? "",
       ]);
     }
   }, [selectedWildfireId]);
@@ -1178,11 +1162,29 @@ export default function MapContainer({
     const map = mapRef.current;
     if (!map) return;
 
-    const source = map.getSource("wildfire-incidents") as GeoJSONSource | undefined;
-    if (!source) return;
+    for (const marker of gdacsFlameMarkersRef.current) {
+      marker.remove();
+    }
+    gdacsFlameMarkersRef.current = [];
 
-    source.setData(toWildfireFeatureCollection(wildfireIncidents));
-  }, [wildfireIncidents]);
+    for (const incident of wildfireIncidents) {
+      const el = createFlameMarkerElement(
+        incident,
+        incident.id === selectedWildfireId,
+      );
+      el.style.display = showWildfires ? "" : "none";
+      el.addEventListener("click", (event) => {
+        event.stopPropagation();
+        onWildfireSelectRef.current(incident.id);
+      });
+
+      const marker = new Marker({ element: el, anchor: "bottom" })
+        .setLngLat([incident.longitude, incident.latitude])
+        .addTo(map);
+
+      gdacsFlameMarkersRef.current.push(marker);
+    }
+  }, [wildfireIncidents, showWildfires, selectedWildfireId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1201,24 +1203,26 @@ export default function MapContainer({
       (snapshot) => snapshot.geometry?.type === "MultiPolygon",
     );
 
-    const footprintFeatures = snapshots.map((snapshot) => ({
-      type: "Feature" as const,
-      id: snapshot.incidentId,
-      properties: {
-        incidentId: snapshot.incidentId,
-        incidentName: snapshot.incidentName,
-        sourceUpdatedAt: snapshot.sourceUpdatedAt,
-        fetchedAt: snapshot.fetchedAt,
-        approximateAreaHectares: snapshot.approximateAreaHectares,
-        detectionCount: snapshot.detectionCount,
-        sensors: snapshot.sensors.join(", "),
-        bboxMinLon: snapshot.bbox[0],
-        bboxMinLat: snapshot.bbox[1],
-        bboxMaxLon: snapshot.bbox[2],
-        bboxMaxLat: snapshot.bbox[3],
-      },
-      geometry: snapshot.geometry,
-    }));
+    // MapLibre feature-state / hover-friendly rendering needs one Polygon per
+    // ring-group; the Supabase snapshot itself stays an untouched MultiPolygon.
+    const footprintFeatures = snapshots.flatMap((snapshot) =>
+      snapshot.geometry.coordinates.map((polygonCoordinates, footprintIndex) => ({
+        type: "Feature" as const,
+        properties: {
+          incidentId: snapshot.incidentId,
+          incidentName: snapshot.incidentName,
+          sourceUpdatedAt: snapshot.sourceUpdatedAt,
+          approximateAreaHectares: snapshot.approximateAreaHectares,
+          detectionCount: snapshot.detectionCount,
+          sensors: snapshot.sensors.join(", "),
+          footprintIndex,
+        },
+        geometry: {
+          type: "Polygon" as const,
+          coordinates: polygonCoordinates,
+        },
+      })),
+    );
 
     footprintsSource.setData({
       type: "FeatureCollection",
@@ -1252,15 +1256,20 @@ export default function MapContainer({
           ? dateFormatter.format(parsedDate)
           : null;
       const label = shortDate
-        ? `${snapshot.incidentName} (${shortDate})`
+        ? `${snapshot.incidentName} · ${shortDate}`
         : snapshot.incidentName;
 
       const el = document.createElement("div");
       el.textContent = label;
       el.style.cssText =
-        "pointer-events:none;transform:translate(-50%,8px);white-space:nowrap;font:600 11px/1.2 system-ui,sans-serif;color:#111827;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff,0 0 4px #fff;";
+        "cursor:pointer;pointer-events:auto;white-space:nowrap;font:700 14px/1.3 system-ui,sans-serif;color:#b91c1c;background:rgba(255,255,255,0.9);border:1px solid #fca5a5;border-radius:5px;padding:3px 6px;box-shadow:0 1px 4px rgba(0,0,0,0.25);";
+      el.addEventListener("click", (event) => {
+        event.stopPropagation();
+        onWildfireSelectRef.current(snapshot.incidentId);
+      });
 
-      const marker = new Marker({ element: el, anchor: "top" })
+      // Sits to the right of the GDACS flame marker at the same coordinate.
+      const marker = new Marker({ element: el, anchor: "left", offset: [18, -18] })
         .setLngLat([incident.longitude, incident.latitude])
         .addTo(map);
       firmsLabelMarkersRef.current.push(marker);
