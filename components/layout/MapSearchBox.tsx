@@ -8,6 +8,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   Building2,
   Flame,
@@ -32,6 +33,7 @@ import {
   readSearchHistory,
   type SearchHistoryEntry,
 } from "@/lib/search/searchHistory";
+import { useAnchoredPortalRect } from "@/lib/ui/useAnchoredPortalRect";
 
 type MapSearchBoxProps = {
   locale: Locale;
@@ -111,6 +113,9 @@ export default function MapSearchBox({
 }: MapSearchBoxProps) {
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -124,6 +129,10 @@ export default function MapSearchBox({
     () => buildLocalSearchIndex(locale, wildfires),
     [locale, wildfires],
   );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setHistory(readSearchHistory());
@@ -260,6 +269,26 @@ export default function MapSearchBox({
       externalError ||
       history.length > 0);
 
+  const anchor = useAnchoredPortalRect(triggerRef, showPanel);
+
+  useEffect(() => {
+    if (!showPanel) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        triggerRef.current?.contains(target) ||
+        panelRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [showPanel]);
+
   let optionOffset = 0;
 
   const localOptionNodes = localGroups.map((group) => {
@@ -322,11 +351,173 @@ export default function MapSearchBox({
     return block;
   });
 
+  const panelTop = anchor ? anchor.bottom + 8 : 0;
+  const panelMaxHeight = anchor
+    ? `min(420px, calc(100vh - ${panelTop}px - 16px))`
+    : "420px";
+
+  const resultsPanel =
+    showPanel && anchor ? (
+      <div
+        ref={panelRef}
+        id={listboxId}
+        role="listbox"
+        aria-label={t.search.resultsInApp}
+        className="fixed overflow-x-hidden overflow-y-auto rounded-[16px] border p-2"
+        style={{
+          top: panelTop,
+          left: anchor.left,
+          width: anchor.width,
+          zIndex: 1200,
+          maxHeight: panelMaxHeight,
+          background: "var(--map-ui-surface)",
+          borderColor: "var(--map-ui-border)",
+          boxShadow: "var(--map-ui-shadow)",
+        }}
+      >
+        {debouncedQuery.length >= 2 ? (
+          <p
+            className="px-2 py-1 text-[10px] uppercase tracking-wide"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.search.resultsInApp}
+          </p>
+        ) : null}
+
+        {debouncedQuery.length >= 2 &&
+        localGroups.length === 0 &&
+        !externalLoading ? (
+          <p
+            className="px-2 py-2 text-xs"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.search.noResults}
+          </p>
+        ) : null}
+
+        {localOptionNodes}
+
+        {query.trim().length >= 3 ? (
+          <button
+            type="button"
+            onClick={() => void runExternalSearch()}
+            className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+            style={{
+              borderColor: "var(--map-ui-border)",
+              color: "#1a73e8",
+            }}
+          >
+            {externalLoading ? (
+              <LoaderCircle
+                className="h-3.5 w-3.5 animate-spin"
+                aria-hidden="true"
+              />
+            ) : (
+              <Search className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            {externalLoading ? t.search.searching : t.search.searchThisPlace}
+          </button>
+        ) : null}
+
+        {externalError ? (
+          <p className="px-2 py-2 text-xs text-[#b06000]">
+            {t.search.serviceUnavailable}
+          </p>
+        ) : null}
+
+        {externalResults.length > 0 ? (
+          <div className="mb-2">
+            <p
+              className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.search.groupExternal}
+            </p>
+            <ul className="space-y-0.5">
+              {externalResults.map((result, index) => {
+                const absoluteIndex = flatLocal.length + index;
+                const selected = absoluteIndex === activeIndex;
+                return (
+                  <li key={result.id} role="presentation">
+                    <button
+                      type="button"
+                      id={`${listboxId}-option-${absoluteIndex}`}
+                      role="option"
+                      aria-selected={selected}
+                      onMouseEnter={() => setActiveIndex(absoluteIndex)}
+                      onClick={() => selectResult(result)}
+                      className={`flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 ${
+                        selected
+                          ? "bg-[var(--map-ui-surface-hover)]"
+                          : "hover:bg-[var(--map-ui-surface-hover)]"
+                      }`}
+                    >
+                      <ResultIcon type={result.type} />
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className="block truncate text-sm font-medium"
+                          style={{ color: "var(--map-ui-text)" }}
+                        >
+                          {result.title}
+                        </span>
+                        <span
+                          className="block truncate text-[11px]"
+                          style={{ color: "var(--map-ui-muted)" }}
+                        >
+                          {String(result.metadata.address ?? result.subtitle)}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p
+              className="px-2 pt-2 text-[10px]"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.search.osmAttribution}
+            </p>
+          </div>
+        ) : null}
+
+        {history.length > 0 && debouncedQuery.length < 2 ? (
+          <div>
+            <p
+              className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.search.recentHistory}
+            </p>
+            <ul className="space-y-0.5">
+              {history.map((entry) => (
+                <li key={`${entry.query}-${entry.savedAt}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery(entry.query);
+                      setOpen(true);
+                      inputRef.current?.focus();
+                    }}
+                    className="flex w-full rounded-xl px-2.5 py-2 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+                    style={{ color: "var(--map-ui-text)" }}
+                  >
+                    {entry.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <div
-      className={`relative ${compact ? "w-full" : "w-full max-w-[600px] min-w-0 md:w-[min(600px,42vw)] md:min-w-[420px]"}`}
+      className={`${compact ? "w-full" : "w-full max-w-[600px] min-w-0 md:w-[min(600px,42vw)] md:min-w-[420px]"}`}
     >
       <div
+        ref={triggerRef}
         className="flex h-12 items-center gap-2 rounded-[999px] border px-3"
         style={{
           background: "var(--map-ui-surface)",
@@ -382,154 +573,9 @@ export default function MapSearchBox({
         ) : null}
       </div>
 
-      {showPanel ? (
-        <div
-          id={listboxId}
-          role="listbox"
-          aria-label={t.search.resultsInApp}
-          className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-[70] max-h-[min(24rem,60vh)] overflow-y-auto rounded-[16px] border p-2"
-          style={{
-            background: "var(--map-ui-surface)",
-            borderColor: "var(--map-ui-border)",
-            boxShadow: "var(--map-ui-shadow)",
-          }}
-        >
-          {debouncedQuery.length >= 2 ? (
-            <p
-              className="px-2 py-1 text-[10px] uppercase tracking-wide"
-              style={{ color: "var(--map-ui-muted)" }}
-            >
-              {t.search.resultsInApp}
-            </p>
-          ) : null}
-
-          {debouncedQuery.length >= 2 &&
-          localGroups.length === 0 &&
-          !externalLoading ? (
-            <p
-              className="px-2 py-2 text-xs"
-              style={{ color: "var(--map-ui-muted)" }}
-            >
-              {t.search.noResults}
-            </p>
-          ) : null}
-
-          {localOptionNodes}
-
-          {query.trim().length >= 3 ? (
-            <button
-              type="button"
-              onClick={() => void runExternalSearch()}
-              className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
-              style={{
-                borderColor: "var(--map-ui-border)",
-                color: "#1a73e8",
-              }}
-            >
-              {externalLoading ? (
-                <LoaderCircle
-                  className="h-3.5 w-3.5 animate-spin"
-                  aria-hidden="true"
-                />
-              ) : (
-                <Search className="h-3.5 w-3.5" aria-hidden="true" />
-              )}
-              {externalLoading ? t.search.searching : t.search.searchThisPlace}
-            </button>
-          ) : null}
-
-          {externalError ? (
-            <p className="px-2 py-2 text-xs text-[#b06000]">
-              {t.search.serviceUnavailable}
-            </p>
-          ) : null}
-
-          {externalResults.length > 0 ? (
-            <div className="mb-2">
-              <p
-                className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
-                style={{ color: "var(--map-ui-muted)" }}
-              >
-                {t.search.groupExternal}
-              </p>
-              <ul className="space-y-0.5">
-                {externalResults.map((result, index) => {
-                  const absoluteIndex = flatLocal.length + index;
-                  const selected = absoluteIndex === activeIndex;
-                  return (
-                    <li key={result.id} role="presentation">
-                      <button
-                        type="button"
-                        id={`${listboxId}-option-${absoluteIndex}`}
-                        role="option"
-                        aria-selected={selected}
-                        onMouseEnter={() => setActiveIndex(absoluteIndex)}
-                        onClick={() => selectResult(result)}
-                        className={`flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 ${
-                          selected
-                            ? "bg-[var(--map-ui-surface-hover)]"
-                            : "hover:bg-[var(--map-ui-surface-hover)]"
-                        }`}
-                      >
-                        <ResultIcon type={result.type} />
-                        <span className="min-w-0 flex-1">
-                          <span
-                            className="block truncate text-sm font-medium"
-                            style={{ color: "var(--map-ui-text)" }}
-                          >
-                            {result.title}
-                          </span>
-                          <span
-                            className="block truncate text-[11px]"
-                            style={{ color: "var(--map-ui-muted)" }}
-                          >
-                            {String(result.metadata.address ?? result.subtitle)}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p
-                className="px-2 pt-2 text-[10px]"
-                style={{ color: "var(--map-ui-muted)" }}
-              >
-                {t.search.osmAttribution}
-              </p>
-            </div>
-          ) : null}
-
-          {history.length > 0 && debouncedQuery.length < 2 ? (
-            <div>
-              <p
-                className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
-                style={{ color: "var(--map-ui-muted)" }}
-              >
-                {t.search.recentHistory}
-              </p>
-              <ul className="space-y-0.5">
-                {history.map((entry) => (
-                  <li key={`${entry.query}-${entry.savedAt}`}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setQuery(entry.query);
-                        setOpen(true);
-                        inputRef.current?.focus();
-                      }}
-                      className="flex w-full rounded-xl px-2.5 py-2 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
-                      style={{ color: "var(--map-ui-text)" }}
-                    >
-                      {entry.title}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      {mounted && resultsPanel
+        ? createPortal(resultsPanel, document.body)
+        : null}
     </div>
   );
 }

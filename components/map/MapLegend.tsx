@@ -257,7 +257,8 @@ export default function MapLegend({
     <>
       <button
         type="button"
-        className="map-ui-control absolute bottom-4 left-1/2 z-20 inline-flex h-11 -translate-x-1/2 items-center gap-2 px-4 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
+        className="map-ui-control absolute bottom-4 left-1/2 inline-flex h-11 -translate-x-1/2 items-center gap-2 px-4 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
+        style={{ zIndex: 900 }}
         aria-label={open ? t.legend.closeLegend : t.legend.openLegend}
         aria-expanded={open}
         onClick={() => onOpenChange(!open)}
@@ -267,13 +268,20 @@ export default function MapLegend({
       </button>
 
       {/* Desktop floating panel */}
-      <div className="absolute right-4 top-[4.75rem] z-20 hidden md:block">
+      <div
+        className="absolute right-4 top-[4.75rem] hidden md:block"
+        style={{ zIndex: 900 }}
+      >
         {panel}
       </div>
 
       {/* Mobile bottom drawer */}
       {open ? (
-        <div className="fixed inset-0 z-40 md:hidden" role="presentation">
+        <div
+          className="fixed inset-0 md:hidden"
+          style={{ zIndex: 950 }}
+          role="presentation"
+        >
           <button
             type="button"
             className="absolute inset-0 bg-black/25"

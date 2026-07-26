@@ -45,7 +45,7 @@ export default function AppSideNav({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60]" role="presentation">
+    <div className="fixed inset-0" style={{ zIndex: 1300 }} role="presentation">
       <button
         type="button"
         className="absolute inset-0 bg-black/25"
