@@ -9,7 +9,8 @@ export const lv = {
     officialCandidate: "Oficiālais ES kandidātvalsts statuss",
     majorWildfires: "Lieli meža ugunsgrēki",
     satelliteActiveFires: "Satelītu aktīvo ugunsgrēku noteikšana",
-    satelliteBurnedAreas: "Satelītu noteiktie apdegušo teritoriju perimetri",
+    satelliteBurnedAreas: "Nesen ar satelītu noteiktas zonas — 7 dienas",
+    satelliteHistoryNote: "Brūnās zonas rāda kumulatīvas satelīta detekcijas, nevis oficiālu izdegušās platības perimetru.",
   },
   countryPanel: {
     code: "Kods",
@@ -83,5 +84,13 @@ export const lv = {
     firmsLiveData: "Tiešsaistes atsvaidzināšana",
     firmsCachedData: "Kešatmiņā saglabāts momentuzņēmums",
     effisTemporarilyUnavailable: "EFFIS izdegušo platību perimetri īslaicīgi nav pieejami.",
+    firmsHistoryTitle: "Nesenā satelīta vēsture",
+    firmsHistoryPeriod: "Aptvertais periods",
+    firmsHistoryDetectionCount: "Vēsturiskās pēdas",
+    firmsHistoryDisclaimer: "Šī vērtība atbilst pikseļiem, kas noteikti starp 24 stundām un 7 dienām. Tā neapstiprina faktiski izdegušo platību.",
+    firmsHistoryLoading: "Ielādē satelīta vēsturi…",
+    firmsHistoryUnavailable: "Pašlaik nav pieejama satelīta vēsture.",
+    effisUnavailableNasaShown: "Oficiālais EFFIS perimetrs nav pieejams — rādīta NASA vēsture.",
+    firmsHistoryRefreshedAt: "Pēdējā atsvaidzināšana",
   },
 } satisfies Messages;

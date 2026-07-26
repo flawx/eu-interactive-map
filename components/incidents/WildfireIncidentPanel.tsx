@@ -12,6 +12,7 @@ type WildfireIncidentPanelProps = {
   snapshot?: EffisBurnedAreaSnapshot | null;
   firmsSnapshot?: FirmsIncidentSnapshot | null;
   firmsSnapshotStatus?: "live" | "cached" | null;
+  firmsHistorySnapshot?: FirmsIncidentSnapshot | null;
   onClose: () => void;
 };
 
@@ -39,6 +40,7 @@ export default function WildfireIncidentPanel({
   snapshot = null,
   firmsSnapshot = null,
   firmsSnapshotStatus = null,
+  firmsHistorySnapshot = null,
   onClose,
 }: WildfireIncidentPanelProps) {
   const t = getMessages(locale);
@@ -114,6 +116,32 @@ export default function WildfireIncidentPanel({
       : null;
 
   const firmsSensors = firmsSnapshot?.sensors.join(", ") ?? null;
+
+  const firmsHistoryPeriodStart = formatIncidentDate(
+    firmsHistorySnapshot?.periodStart ?? null,
+    locale,
+  );
+  const firmsHistoryPeriodEnd = formatIncidentDate(
+    firmsHistorySnapshot?.periodEnd ?? null,
+    locale,
+  );
+  const firmsHistoryPeriodLabel =
+    firmsHistoryPeriodStart && firmsHistoryPeriodEnd
+      ? `${firmsHistoryPeriodStart} – ${firmsHistoryPeriodEnd}`
+      : firmsHistoryPeriodStart || firmsHistoryPeriodEnd || null;
+
+  const firmsHistorySensors = firmsHistorySnapshot?.sensors.join(", ") ?? null;
+
+  const firmsHistoryApproximateArea =
+    firmsHistorySnapshot &&
+    firmsHistorySnapshot.approximateAreaHectares !== null &&
+    Number.isFinite(firmsHistorySnapshot.approximateAreaHectares)
+      ? `${numberFormatter.format(firmsHistorySnapshot.approximateAreaHectares)} ha`
+      : null;
+
+  const firmsHistoryRefreshedAt = firmsHistorySnapshot
+    ? formatIncidentDate(firmsHistorySnapshot.fetchedAt, locale)
+    : null;
 
   const firmsStatusLabel =
     firmsSnapshotStatus === "live"
@@ -297,6 +325,66 @@ export default function WildfireIncidentPanel({
 
             <p className="text-[10px] leading-snug text-slate-400">
               {t.incidents.firmsAreaDisclaimer}
+            </p>
+          </div>
+        )}
+
+        {firmsHistorySnapshot && (
+          <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+            <p className="text-xs font-semibold leading-snug text-slate-100">
+              {t.incidents.firmsHistoryTitle}
+            </p>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.firmsHistoryPeriod}:
+              </span>
+              <span className="text-slate-100">
+                {firmsHistoryPeriodLabel || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.firmsHistoryDetectionCount}:
+              </span>
+              <span className="text-slate-100">
+                {numberFormatter.format(firmsHistorySnapshot.detectionCount)}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">{t.incidents.firmsSensors}:</span>
+              <span className="text-slate-100">
+                {firmsHistorySensors || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.firmsApproximateArea}:
+              </span>
+              <span className="text-slate-100">
+                {firmsHistoryApproximateArea || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">{t.incidents.source}:</span>
+              <span className="text-slate-100">NASA FIRMS / VIIRS</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-slate-400">
+                {t.incidents.firmsHistoryRefreshedAt}:
+              </span>
+              <span className="text-slate-100">
+                {firmsHistoryRefreshedAt || t.incidents.dataUnavailable}
+              </span>
+            </div>
+
+            <p className="text-[10px] leading-snug text-slate-400">
+              {t.incidents.firmsHistoryDisclaimer}
             </p>
           </div>
         )}

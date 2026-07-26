@@ -9,7 +9,8 @@ export const lt = {
     officialCandidate: "Oficiali ES kandidatė",
     majorWildfires: "Dideli miško gaisrai",
     satelliteActiveFires: "Palydoviniai aktyvių gaisrų aptikimai",
-    satelliteBurnedAreas: "Palydoviniai sudegusių plotų perimetrai",
+    satelliteBurnedAreas: "Nesen palydovu aptiktos zonos — 7 dienos",
+    satelliteHistoryNote: "Rudos zonos rodo kaupiamuosius palydovinius aptikimus, o ne oficialų sudegusio ploto perimetrą.",
   },
   countryPanel: {
     code: "Kodas",
@@ -83,5 +84,13 @@ export const lt = {
     firmsLiveData: "Atnaujinimas realiuoju laiku",
     firmsCachedData: "Podėlyje išsaugota momentinė kopija",
     effisTemporarilyUnavailable: "EFFIS sudegusių plotų perimetrai laikinai nepasiekiami.",
+    firmsHistoryTitle: "Nesenų palydovinių duomenų istorija",
+    firmsHistoryPeriod: "Apimtas laikotarpis",
+    firmsHistoryDetectionCount: "Istoriniai pėdsakai",
+    firmsHistoryDisclaimer: "Ši vertė atitinka pikselius, aptiktus tarp 24 valandų ir 7 dienų. Ji nepatvirtina realiai sudegusio ploto.",
+    firmsHistoryLoading: "Kraunama palydovinė istorija…",
+    firmsHistoryUnavailable: "Šiuo metu nėra prieinamos palydovinės istorijos.",
+    effisUnavailableNasaShown: "Oficialus EFFIS perimetras nepasiekiamas — rodoma NASA istorija.",
+    firmsHistoryRefreshedAt: "Paskutinis atnaujinimas",
   },
 } satisfies Messages;

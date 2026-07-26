@@ -9,7 +9,8 @@ export const hu = {
     officialCandidate: "Hivatalos uniós tagjelölt",
     majorWildfires: "Nagy erdőtüzek",
     satelliteActiveFires: "Műholdas aktív tűzdetektálások",
-    satelliteBurnedAreas: "Műholdas leégett területek kerületei",
+    satelliteBurnedAreas: "Nemrég műholddal észlelt területek — 7 nap",
+    satelliteHistoryNote: "A barna területek kumulatív műholdas észleléseket mutatnak, nem hivatalos leégett-terület kerületet.",
   },
   countryPanel: {
     code: "Kód",
@@ -83,5 +84,13 @@ export const hu = {
     firmsLiveData: "Élő frissítés",
     firmsCachedData: "Gyorsítótárazott pillanatkép",
     effisTemporarilyUnavailable: "Az EFFIS leégett területek kerületei átmenetileg nem érhetők el.",
+    firmsHistoryTitle: "Friss műholdas előzmények",
+    firmsHistoryPeriod: "Lefedett időszak",
+    firmsHistoryDetectionCount: "Történelmi lábnyomok",
+    firmsHistoryDisclaimer: "Ez az érték a 24 óra és 7 nap között észlelt pixeleknek felel meg. Nem igazolja a ténylegesen leégett területet.",
+    firmsHistoryLoading: "Műholdas előzmények betöltése…",
+    firmsHistoryUnavailable: "Jelenleg nincs elérhető műholdas előzmény.",
+    effisUnavailableNasaShown: "Hivatalos EFFIS kerület nem érhető el — NASA előzmények megjelenítve.",
+    firmsHistoryRefreshedAt: "Utolsó frissítés",
   },
 } satisfies Messages;

@@ -9,7 +9,8 @@ export const ga = {
     officialCandidate: "Iarrthóir oifigiúil AE",
     majorWildfires: "Tinte móra foraoise",
     satelliteActiveFires: "Braite satéilite ar thinte gníomhacha",
-    satelliteBurnedAreas: "Imlínte limistéar dóite ó shatailít",
+    satelliteBurnedAreas: "Limistéir a braitheadh le déanaí ó shatailít — 7 lá",
+    satelliteHistoryNote: "Taispeánann limistéir dhonn braite shatailíte charnacha, ní imlíne oifigiúil limistéir dóite.",
   },
   countryPanel: {
     code: "Cód",
@@ -83,5 +84,13 @@ export const ga = {
     firmsLiveData: "Athnuachan beo",
     firmsCachedData: "Snapshot i dtaisce",
     effisTemporarilyUnavailable: "Níl imill limistéar dóite EFFIS ar fáil go sealadach.",
+    firmsHistoryTitle: "Stair shatailíte le déanaí",
+    firmsHistoryPeriod: "Tréimhse clúdaithe",
+    firmsHistoryDetectionCount: "Lorganna stairiúla",
+    firmsHistoryDisclaimer: "Freagraíonn an luach seo do phicteilíní a braitheadh idir 24 uair agus 7 lá. Ní dheimhníonn sé an limistéar a dódh i ndáiríre.",
+    firmsHistoryLoading: "Stair shatailíte á lódáil…",
+    firmsHistoryUnavailable: "Níl stair shatailíte ar fáil faoi láthair.",
+    effisUnavailableNasaShown: "Imlíne oifigiúil EFFIS gan fáil — stair NASA ar taispeáint.",
+    firmsHistoryRefreshedAt: "Nuashonrú deireanach",
   },
 } satisfies Messages;

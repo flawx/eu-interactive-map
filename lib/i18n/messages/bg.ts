@@ -9,7 +9,8 @@ export const bg = {
     officialCandidate: "Официален кандидат за ЕС",
     majorWildfires: "Големи горски пожари",
     satelliteActiveFires: "Сателитни откривания на активни пожари",
-    satelliteBurnedAreas: "Сателитни периметри на изгорели площи",
+    satelliteBurnedAreas: "Наскоро открити от сателит зони — 7 дни",
+    satelliteHistoryNote: "Кафявите зони показват кумулативни сателитни открития, а не официален периметър на изгоряла площ.",
   },
   countryPanel: {
     code: "Код",
@@ -83,5 +84,13 @@ export const bg = {
     firmsLiveData: "Обновяване на живо",
     firmsCachedData: "Кеширана снимка",
     effisTemporarilyUnavailable: "Периметрите на изгорели площи EFFIS са временно недостъпни.",
+    firmsHistoryTitle: "Скорошна сателитна история",
+    firmsHistoryPeriod: "Покрит период",
+    firmsHistoryDetectionCount: "Исторически отпечатъци",
+    firmsHistoryDisclaimer: "Тази стойност съответства на пиксели, открити между 24 часа и 7 дни. Не потвърждава реално изгорялата площ.",
+    firmsHistoryLoading: "Зареждане на сателитната история…",
+    firmsHistoryUnavailable: "В момента няма налична сателитна история.",
+    effisUnavailableNasaShown: "Официалният EFFIS периметър е недостъпен — показана е историята на NASA.",
+    firmsHistoryRefreshedAt: "Последно обновяване",
   },
 } satisfies Messages;

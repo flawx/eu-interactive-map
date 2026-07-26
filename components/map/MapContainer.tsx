@@ -201,6 +201,7 @@ export default function MapContainer({
   selectedWildfireId,
   locale,
   firmsSnapshotsByIncidentId,
+  firmsHistorySnapshotsByIncidentId,
   onEffisBurnedAreasAvailabilityChange,
 }: {
   showEurozone: boolean;
@@ -220,6 +221,7 @@ export default function MapContainer({
   selectedWildfireId: string | null;
   locale: Locale;
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
+  firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -311,6 +313,10 @@ export default function MapContainer({
     map: MapLibreMap,
     visible: boolean,
   ) => {
+    applyLayerVisibility(map, "firms-recent-history-fill", visible);
+    applyLayerVisibility(map, "firms-recent-history-border", visible);
+    applyLayerVisibility(map, "firms-recent-history-selected-fill", visible);
+    applyLayerVisibility(map, "firms-recent-history-selected", visible);
     applyLayerVisibility(map, "effis-burned-areas-layer", visible);
     applyLayerVisibility(map, "effis-burned-area-snapshots-fill", visible);
     applyLayerVisibility(map, "effis-burned-area-snapshots-border", visible);
@@ -496,6 +502,60 @@ export default function MapContainer({
           filter: ["==", ["get", "incidentId"], incidentId],
         },
       );
+
+      const nearbyPolygons: GeoJSON.Position[][][] = [];
+
+      for (const sourceFeature of sourceFeatures) {
+        if (sourceFeature.geometry.type !== "Polygon") continue;
+
+        const centroid = ringCentroid(sourceFeature.geometry.coordinates[0]);
+
+        if (
+          haversineMeters(clickedCentroid, centroid) <=
+          FIRMS_LOCAL_CLUSTER_METERS
+        ) {
+          nearbyPolygons.push(sourceFeature.geometry.coordinates);
+        }
+      }
+
+      if (nearbyPolygons.length === 0) {
+        nearbyPolygons.push(clickedPolygon);
+      }
+
+      const bounds = boundsFromPolygons(nearbyPolygons);
+
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: { top: 100, bottom: 100, left: 380, right: 80 },
+          maxZoom: 11.5,
+          duration: 900,
+        });
+      }
+    };
+
+    const handleFirmsHistoryClick = (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      const rawIncidentId = feature?.properties?.incidentId;
+
+      const incidentId =
+        typeof rawIncidentId === "string"
+          ? rawIncidentId
+          : typeof rawIncidentId === "number"
+            ? String(rawIncidentId)
+            : null;
+
+      if (!incidentId) return;
+
+      onWildfireSelectRef.current(incidentId);
+
+      if (!feature?.geometry || feature.geometry.type !== "Polygon") return;
+
+      const clickedPolygon = feature.geometry.coordinates;
+      const clickedCentroid = ringCentroid(clickedPolygon[0]);
+
+      const sourceFeatures = map.querySourceFeatures("firms-recent-history", {
+        filter: ["==", ["get", "incidentId"], incidentId],
+      });
 
       const nearbyPolygons: GeoJSON.Position[][][] = [];
 
@@ -903,6 +963,79 @@ export default function MapContainer({
       updateEuOpacity();
       map.on("zoom", updateEuOpacity);
 
+      // NASA FIRMS 7-day history (brown) renders below the 24h red layer.
+      map.addSource("firms-recent-history", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      });
+
+      map.addLayer({
+        id: "firms-recent-history-fill",
+        type: "fill",
+        source: "firms-recent-history",
+        layout: {
+          visibility: showSatelliteBurnedAreasRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "fill-color": "#92400e",
+          "fill-opacity": 0.20,
+        },
+      });
+
+      map.addLayer({
+        id: "firms-recent-history-border",
+        type: "line",
+        source: "firms-recent-history",
+        layout: {
+          visibility: showSatelliteBurnedAreasRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#78350f",
+          "line-width": 2,
+          "line-opacity": 0.9,
+        },
+      });
+
+      map.addLayer({
+        id: "firms-recent-history-selected-fill",
+        type: "fill",
+        source: "firms-recent-history",
+        filter: ["==", ["get", "incidentId"], ""],
+        layout: {
+          visibility: showSatelliteBurnedAreasRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "fill-color": "#92400e",
+          "fill-opacity": 0.32,
+        },
+      });
+
+      map.addLayer({
+        id: "firms-recent-history-selected",
+        type: "line",
+        source: "firms-recent-history",
+        filter: ["==", ["get", "incidentId"], ""],
+        layout: {
+          visibility: showSatelliteBurnedAreasRef.current
+            ? "visible"
+            : "none",
+        },
+        paint: {
+          "line-color": "#451a03",
+          "line-width": 4,
+          "line-opacity": 1,
+        },
+      });
+
       // FIRMS footprints render above country layers and below GDACS flame markers.
       map.addSource("firms-incident-footprints", {
         type: "geojson",
@@ -976,6 +1109,29 @@ export default function MapContainer({
         },
       });
 
+      // Reorder so brown (7d history) sits below red (24h active) which sits
+      // below the EFFIS layers, all stacked above the base country layers.
+      const layerStackOrder = [
+        "firms-recent-history-fill",
+        "firms-recent-history-border",
+        "firms-recent-history-selected-fill",
+        "firms-recent-history-selected",
+        "firms-incident-footprints-fill",
+        "firms-incident-footprints-border",
+        "firms-incident-footprints-selected-fill",
+        "firms-incident-footprints-selected",
+        "effis-burned-areas-layer",
+        "effis-burned-area-snapshots-fill",
+        "effis-burned-area-snapshots-border",
+        "effis-burned-area-snapshots-selected",
+      ];
+
+      for (const layerId of layerStackOrder) {
+        if (map.getLayer(layerId)) {
+          map.moveLayer(layerId);
+        }
+      }
+
       map.on("click", "effis-burned-area-snapshots-fill", handleEffisSnapshotClick);
       map.on(
         "mouseenter",
@@ -990,6 +1146,9 @@ export default function MapContainer({
         setPointerCursor,
       );
       map.on("mouseleave", "firms-incident-footprints-fill", resetCursor);
+      map.on("click", "firms-recent-history-fill", handleFirmsHistoryClick);
+      map.on("mouseenter", "firms-recent-history-fill", setPointerCursor);
+      map.on("mouseleave", "firms-recent-history-fill", resetCursor);
       map.on("click", handleEffisBurnedAreaClick);
     };
 
@@ -1029,6 +1188,9 @@ export default function MapContainer({
         setPointerCursor,
       );
       map.off("mouseleave", "firms-incident-footprints-fill", resetCursor);
+      map.off("click", "firms-recent-history-fill", handleFirmsHistoryClick);
+      map.off("mouseenter", "firms-recent-history-fill", setPointerCursor);
+      map.off("mouseleave", "firms-recent-history-fill", resetCursor);
       map.off("click", handleEffisBurnedAreaClick);
 
       effisRequestControllerRef.current?.abort();
@@ -1162,6 +1324,27 @@ export default function MapContainer({
     const map = mapRef.current;
     if (!map) return;
 
+    if (map.getLayer("firms-recent-history-selected-fill")) {
+      map.setFilter("firms-recent-history-selected-fill", [
+        "==",
+        ["get", "incidentId"],
+        selectedWildfireId ?? "",
+      ]);
+    }
+
+    if (map.getLayer("firms-recent-history-selected")) {
+      map.setFilter("firms-recent-history-selected", [
+        "==",
+        ["get", "incidentId"],
+        selectedWildfireId ?? "",
+      ]);
+    }
+  }, [selectedWildfireId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
     for (const marker of gdacsFlameMarkersRef.current) {
       marker.remove();
     }
@@ -1280,6 +1463,48 @@ export default function MapContainer({
     locale,
     showSatelliteActiveFires,
   ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const historySource = map.getSource(
+      "firms-recent-history",
+    ) as GeoJSONSource | undefined;
+    if (!historySource) return;
+
+    const snapshots = Object.values(firmsHistorySnapshotsByIncidentId).filter(
+      (snapshot) => snapshot.geometry?.type === "MultiPolygon",
+    );
+
+    // Same Polygon-per-ring-group split as the red 24h layer, so click/hover
+    // handlers can reuse the same local-cluster logic.
+    const historyFeatures = snapshots.flatMap((snapshot) =>
+      snapshot.geometry.coordinates.map((polygonCoordinates, footprintIndex) => ({
+        type: "Feature" as const,
+        properties: {
+          incidentId: snapshot.incidentId,
+          incidentName: snapshot.incidentName,
+          footprintIndex,
+          sourceUpdatedAt: snapshot.sourceUpdatedAt,
+          periodStart: snapshot.periodStart ?? null,
+          periodEnd: snapshot.periodEnd ?? null,
+          approximateAreaHectares: snapshot.approximateAreaHectares,
+          detectionCount: snapshot.detectionCount,
+          sensors: snapshot.sensors.join(", "),
+        },
+        geometry: {
+          type: "Polygon" as const,
+          coordinates: polygonCoordinates,
+        },
+      })),
+    );
+
+    historySource.setData({
+      type: "FeatureCollection",
+      features: historyFeatures,
+    });
+  }, [firmsHistorySnapshotsByIncidentId]);
 
   useEffect(() => {
     const map = mapRef.current;

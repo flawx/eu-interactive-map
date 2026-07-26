@@ -5,25 +5,53 @@ import type { WildfireIncident } from "@/lib/incidents/types";
 export const FIRMS_SOURCE = "NASA FIRMS";
 export const FIRMS_SOURCE_URL = "https://firms.modaps.eosdis.nasa.gov/";
 
-const KMZ_SOURCES = [
-  {
-    sensor: "Suomi-NPP VIIRS",
-    url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/24h/suomi-npp-viirs-c2/FirespotArea_europe_suomi-npp-viirs-c2_24h.kmz",
-  },
-  {
-    sensor: "NOAA-20 VIIRS",
-    url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/24h/noaa-20-viirs-c2/FirespotArea_europe_noaa-20-viirs-c2_24h.kmz",
-  },
-  {
-    sensor: "NOAA-21 VIIRS",
-    url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/24h/noaa-21-viirs-c2/FirespotArea_europe_noaa-21-viirs-c2_24h.kmz",
-  },
-] as const;
+export type FirmsPeriod = "24h" | "7d";
 
-const FETCH_TIMEOUT_MS = 20_000;
+/**
+ * Exact KMZ links from NASA FIRMS kml_fire_footprints API
+ * (region=europe, sensors Suomi-NPP / NOAA-20 / NOAA-21).
+ * Verified against https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/
+ */
+const KMZ_SOURCES_BY_PERIOD: Record<
+  FirmsPeriod,
+  readonly { sensor: string; url: string }[]
+> = {
+  "24h": [
+    {
+      sensor: "Suomi-NPP VIIRS",
+      url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/24h/suomi-npp-viirs-c2/FirespotArea_europe_suomi-npp-viirs-c2_24h.kmz",
+    },
+    {
+      sensor: "NOAA-20 VIIRS",
+      url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/24h/noaa-20-viirs-c2/FirespotArea_europe_noaa-20-viirs-c2_24h.kmz",
+    },
+    {
+      sensor: "NOAA-21 VIIRS",
+      url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/24h/noaa-21-viirs-c2/FirespotArea_europe_noaa-21-viirs-c2_24h.kmz",
+    },
+  ],
+  "7d": [
+    {
+      sensor: "Suomi-NPP VIIRS",
+      url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/7d/suomi-npp-viirs-c2/FirespotArea_europe_suomi-npp-viirs-c2_7d.kmz",
+    },
+    {
+      sensor: "NOAA-20 VIIRS",
+      url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/7d/noaa-20-viirs-c2/FirespotArea_europe_noaa-20-viirs-c2_7d.kmz",
+    },
+    {
+      sensor: "NOAA-21 VIIRS",
+      url: "https://firms.modaps.eosdis.nasa.gov/api/kml_fire_footprints/europe/7d/noaa-21-viirs-c2/FirespotArea_europe_noaa-21-viirs-c2_7d.kmz",
+    },
+  ],
+};
+
+const FETCH_TIMEOUT_MS = 45_000;
 const MAX_ASSOCIATION_METERS = 60_000;
 /** ~375 m grid cells for de-duplicating repeated satellite passes. */
 const CLUSTER_CELL_DEGREES = 0.0035;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const SEVEN_DAYS_MS = 7 * ONE_DAY_MS;
 
 export type FirmsFootprint = {
   sensor: string;
@@ -49,14 +77,18 @@ export type FirmsIncidentSnapshot = {
   source: typeof FIRMS_SOURCE;
   sourceUrl: typeof FIRMS_SOURCE_URL;
   metadata: Record<string, unknown>;
+  periodStart?: string | null;
+  periodEnd?: string | null;
 };
 
 export type FirmsBuildStats = {
   footprintsParsed: number;
+  footprintsAfterAgeFilter: number;
   footprintsAssociated: number;
   incidentsAssociated: number;
   sourcesSucceeded: string[];
   sourcesFailed: string[];
+  period: FirmsPeriod;
 };
 
 function toRadians(value: number): number {
@@ -271,6 +303,9 @@ async function downloadKmzFootprints(
   }
 }
 
+/**
+ * Keep the newest observation per cell and merge sensor names across passes.
+ */
 function clusterFootprints(footprints: FirmsFootprint[]): FirmsFootprint[] {
   const cells = new Map<
     string,
@@ -283,15 +318,23 @@ function clusterFootprints(footprints: FirmsFootprint[]): FirmsFootprint[] {
     const key = `${cellX}:${cellY}`;
     const existing = cells.get(key);
 
+    const sensorParts = footprint.sensor
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
     if (!existing) {
       cells.set(key, {
         footprint,
-        sensors: new Set([footprint.sensor]),
+        sensors: new Set(sensorParts),
       });
       continue;
     }
 
-    existing.sensors.add(footprint.sensor);
+    for (const sensor of sensorParts) {
+      existing.sensors.add(sensor);
+    }
+
     const existingTime = existing.footprint.acquiredAt
       ? Date.parse(existing.footprint.acquiredAt)
       : 0;
@@ -308,6 +351,38 @@ function clusterFootprints(footprints: FirmsFootprint[]): FirmsFootprint[] {
     ...footprint,
     sensor: Array.from(sensors).sort().join(", "),
   }));
+}
+
+/**
+ * Age windows:
+ * - 24h active layer: detections from the last 24 hours (inclusive)
+ * - 7d history layer: older than 24h and at most 7 days (no overlap with red)
+ */
+function filterFootprintsByPeriod(
+  footprints: FirmsFootprint[],
+  period: FirmsPeriod,
+  nowMs: number = Date.now(),
+): FirmsFootprint[] {
+  return footprints.filter((footprint) => {
+    if (!footprint.acquiredAt) {
+      // Without a timestamp we cannot safely place a detection in either window.
+      return period === "24h";
+    }
+
+    const acquiredMs = Date.parse(footprint.acquiredAt);
+    if (Number.isNaN(acquiredMs)) {
+      return period === "24h";
+    }
+
+    const ageMs = nowMs - acquiredMs;
+    if (ageMs < 0) return false;
+
+    if (period === "24h") {
+      return ageMs <= ONE_DAY_MS;
+    }
+
+    return ageMs > ONE_DAY_MS && ageMs <= SEVEN_DAYS_MS;
+  });
 }
 
 function bboxFromRings(
@@ -334,6 +409,7 @@ function associateFootprintsToIncidents(
   footprints: FirmsFootprint[],
   incidents: WildfireIncident[],
   fetchedAt: string,
+  period: FirmsPeriod,
 ): FirmsIncidentSnapshot[] {
   if (incidents.length === 0 || footprints.length === 0) return [];
 
@@ -372,6 +448,15 @@ function associateFootprintsToIncidents(
   }
 
   const snapshots: FirmsIncidentSnapshot[] = [];
+  const now = Date.parse(fetchedAt);
+  const periodStart =
+    period === "7d"
+      ? new Date(now - SEVEN_DAYS_MS).toISOString()
+      : new Date(now - ONE_DAY_MS).toISOString();
+  const periodEnd =
+    period === "7d"
+      ? new Date(now - ONE_DAY_MS).toISOString()
+      : fetchedAt;
 
   for (const { incident, footprints: assigned } of byIncident.values()) {
     const rings = assigned.map((item) => item.ring);
@@ -412,9 +497,14 @@ function associateFootprintsToIncidents(
       isApproximate: true,
       source: FIRMS_SOURCE,
       sourceUrl: FIRMS_SOURCE_URL,
+      periodStart: acquiredTimes[0] ?? periodStart,
+      periodEnd: acquiredTimes.at(-1) ?? periodEnd,
       metadata: {
         associationMaxKm: MAX_ASSOCIATION_METERS / 1000,
         clustered: true,
+        period,
+        windowStart: periodStart,
+        windowEnd: periodEnd,
       },
     });
   }
@@ -422,20 +512,30 @@ function associateFootprintsToIncidents(
   return snapshots.sort((a, b) => a.incidentId.localeCompare(b.incidentId));
 }
 
-export async function downloadAndParseFirmsFootprints(): Promise<{
+export function getFirmsKmzSources(period: FirmsPeriod) {
+  return KMZ_SOURCES_BY_PERIOD[period];
+}
+
+export async function downloadAndParseFirmsFootprints(
+  period: FirmsPeriod = "24h",
+): Promise<{
   footprints: FirmsFootprint[];
-  stats: Pick<FirmsBuildStats, "sourcesSucceeded" | "sourcesFailed" | "footprintsParsed">;
+  stats: Pick<
+    FirmsBuildStats,
+    "sourcesSucceeded" | "sourcesFailed" | "footprintsParsed" | "period"
+  >;
 }> {
   const all: FirmsFootprint[] = [];
   const sourcesSucceeded: string[] = [];
   const sourcesFailed: string[] = [];
 
-  for (const source of KMZ_SOURCES) {
+  for (const source of KMZ_SOURCES_BY_PERIOD[period]) {
     try {
       const parsed = await downloadKmzFootprints(source.url, source.sensor);
       all.push(...parsed);
       sourcesSucceeded.push(source.sensor);
     } catch {
+      // Continue when a single sensor expires or fails.
       sourcesFailed.push(source.sensor);
     }
   }
@@ -446,41 +546,48 @@ export async function downloadAndParseFirmsFootprints(): Promise<{
       footprintsParsed: all.length,
       sourcesSucceeded,
       sourcesFailed,
+      period,
     },
   };
 }
 
 export async function buildFirmsIncidentSnapshots(
   incidents?: WildfireIncident[],
+  period: FirmsPeriod = "24h",
 ): Promise<{ snapshots: FirmsIncidentSnapshot[]; stats: FirmsBuildStats }> {
   const fetchedAt = new Date().toISOString();
   const gdacsIncidents = incidents ?? (await fetchEuWildfireIncidents());
-  const { footprints, stats } = await downloadAndParseFirmsFootprints();
+  const { footprints, stats } = await downloadAndParseFirmsFootprints(period);
 
   if (footprints.length === 0) {
     return {
       snapshots: [],
       stats: {
         footprintsParsed: 0,
+        footprintsAfterAgeFilter: 0,
         footprintsAssociated: 0,
         incidentsAssociated: 0,
         sourcesSucceeded: stats.sourcesSucceeded,
         sourcesFailed: stats.sourcesFailed,
+        period,
       },
     };
   }
 
-  const clustered = clusterFootprints(footprints);
+  const ageFiltered = filterFootprintsByPeriod(footprints, period);
+  const clustered = clusterFootprints(ageFiltered);
   const snapshots = associateFootprintsToIncidents(
     clustered,
     gdacsIncidents,
     fetchedAt,
+    period,
   );
 
   return {
     snapshots,
     stats: {
       footprintsParsed: footprints.length,
+      footprintsAfterAgeFilter: ageFiltered.length,
       footprintsAssociated: snapshots.reduce(
         (sum, item) => sum + item.detectionCount,
         0,
@@ -488,6 +595,7 @@ export async function buildFirmsIncidentSnapshots(
       incidentsAssociated: snapshots.length,
       sourcesSucceeded: stats.sourcesSucceeded,
       sourcesFailed: stats.sourcesFailed,
+      period,
     },
   };
 }

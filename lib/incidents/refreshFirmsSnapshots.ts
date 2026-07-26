@@ -69,7 +69,10 @@ export async function refreshFirmsSnapshots(): Promise<{
   }
 
   try {
-    const { snapshots, stats } = await buildFirmsIncidentSnapshots();
+    const { snapshots, stats } = await buildFirmsIncidentSnapshots(
+      undefined,
+      "24h",
+    );
 
     if (snapshots.length === 0) {
       return {

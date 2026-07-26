@@ -9,7 +9,8 @@ export const el = {
     officialCandidate: "Επίσημη υποψήφια χώρα για την ΕΕ",
     majorWildfires: "Μεγάλες πυρκαγιές",
     satelliteActiveFires: "Δορυφορικές ανιχνεύσεις ενεργών πυρκαγιών",
-    satelliteBurnedAreas: "Δορυφορικές περίμετροι καμένων εκτάσεων",
+    satelliteBurnedAreas: "Πρόσφατα δορυφορικά εντοπισμένες περιοχές — 7 ημέρες",
+    satelliteHistoryNote: "Οι καφέ περιοχές δείχνουν σωρευτικές δορυφορικές ανιχνεύσεις, όχι επίσημο περίγραμμα καμένης έκτασης.",
   },
   countryPanel: {
     code: "Κωδικός",
@@ -83,5 +84,13 @@ export const el = {
     firmsLiveData: "Ζωντανή ανανέωση",
     firmsCachedData: "Αποθηκευμένο στιγμιότυπο",
     effisTemporarilyUnavailable: "Τα περιγράμματα καμένων εκτάσεων EFFIS είναι προσωρινά μη διαθέσιμα.",
+    firmsHistoryTitle: "Πρόσφατο δορυφορικό ιστορικό",
+    firmsHistoryPeriod: "Καλυπτόμενη περίοδος",
+    firmsHistoryDetectionCount: "Ιστορικά αποτυπώματα",
+    firmsHistoryDisclaimer: "Η τιμή αυτή αντιστοιχεί σε pixel που εντοπίστηκαν μεταξύ 24 ωρών και 7 ημερών. Δεν επιβεβαιώνει την πραγματικά καμένη έκταση.",
+    firmsHistoryLoading: "Φόρτωση δορυφορικού ιστορικού…",
+    firmsHistoryUnavailable: "Δεν υπάρχει διαθέσιμο δορυφορικό ιστορικό αυτή τη στιγμή.",
+    effisUnavailableNasaShown: "Επίσημο περίγραμμα EFFIS μη διαθέσιμο — εμφανίζεται ιστορικό NASA.",
+    firmsHistoryRefreshedAt: "Τελευταία ανανέωση",
   },
 } satisfies Messages;

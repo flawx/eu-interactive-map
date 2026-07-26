@@ -9,7 +9,8 @@ export const et = {
     officialCandidate: "Ametlik ELi kandidaatriik",
     majorWildfires: "Suured metsatulekahjud",
     satelliteActiveFires: "Satelliidi aktiivsete tulekahjude tuvastused",
-    satelliteBurnedAreas: "Satelliidi tuvastatud põlenud alade piirid",
+    satelliteBurnedAreas: "Hiljuti satelliidiga tuvastatud alad — 7 päeva",
+    satelliteHistoryNote: "Pruunid alad näitavad kumulatiivseid satelliittuvastusi, mitte ametlikku põlenud ala perimeetrit.",
   },
   countryPanel: {
     code: "Kood",
@@ -83,5 +84,13 @@ export const et = {
     firmsLiveData: "Reaalajas värskendus",
     firmsCachedData: "Vahemällu salvestatud hetktõmmis",
     effisTemporarilyUnavailable: "EFFIS põlenud alade perimeetrid on ajutiselt kättesaamatud.",
+    firmsHistoryTitle: "Hiljutine satelliidiajalugu",
+    firmsHistoryPeriod: "Kaetud periood",
+    firmsHistoryDetectionCount: "Ajaloolised jäljed",
+    firmsHistoryDisclaimer: "See väärtus vastab pikslitele, mis tuvastati 24 tunni ja 7 päeva vahel. See ei kinnita tegelikult põlenud pindala.",
+    firmsHistoryLoading: "Satelliidiajaloo laadimine…",
+    firmsHistoryUnavailable: "Satelliidiajalugu pole praegu saadaval.",
+    effisUnavailableNasaShown: "Ametlik EFFIS-perimeeter pole saadaval — kuvatakse NASA ajalugu.",
+    firmsHistoryRefreshedAt: "Viimane värskendus",
   },
 } satisfies Messages;

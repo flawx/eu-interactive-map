@@ -23,6 +23,7 @@ import type {
 } from "@/lib/incidents/types";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
+const FIRMS_HISTORY_UNAVAILABLE_TIMEOUT_MS = 25_000;
 const EFFIS_UNAVAILABLE_MESSAGE_MIN_MS = 6_000;
 
 function isEffisServiceFailureStatus(status: number): boolean {
@@ -90,10 +91,19 @@ export default function MapInterface() {
   const [firmsLoadingOverlay, setFirmsLoadingOverlay] = useState(false);
   const [firmsUnavailableMessage, setFirmsUnavailableMessage] =
     useState(false);
+  const [firmsHistorySnapshotsByIncidentId, setFirmsHistorySnapshotsByIncidentId] =
+    useState<Record<string, FirmsIncidentSnapshot>>({});
+  const [firmsHistoryLoadingOverlay, setFirmsHistoryLoadingOverlay] =
+    useState(false);
+  const [firmsHistoryUnavailableMessage, setFirmsHistoryUnavailableMessage] =
+    useState(false);
   const [effisUnavailable, setEffisUnavailable] = useState(false);
   const [showEffisUnavailableBanner, setShowEffisUnavailableBanner] =
     useState(false);
+  const [showEffisUnavailableNasaShown, setShowEffisUnavailableNasaShown] =
+    useState(false);
   const firmsRefreshStartedRef = useRef(false);
+  const firmsHistoryRefreshStartedRef = useRef(false);
   const effisServiceFailedRef = useRef(false);
   const effisProbeStartedRef = useRef(false);
   const effisBannerHideTimeoutRef = useRef<number | null>(null);
@@ -410,9 +420,100 @@ export default function MapInterface() {
     };
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const applyFirmsHistorySnapshots = (snapshots: FirmsIncidentSnapshot[]) => {
+      if (snapshots.length === 0) return;
+
+      setFirmsHistorySnapshotsByIncidentId((previous) => {
+        const next = { ...previous };
+        for (const snapshot of snapshots) {
+          const existing = next[snapshot.incidentId];
+          if (
+            !existing ||
+            Date.parse(snapshot.fetchedAt) >= Date.parse(existing.fetchedAt)
+          ) {
+            next[snapshot.incidentId] = snapshot;
+          }
+        }
+        return next;
+      });
+    };
+
+    const loadFirmsHistorySnapshots = async () => {
+      try {
+        const response = await fetch("/api/incidents/firms/history", {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return;
+
+        const data: unknown = await response.json();
+        if (
+          data &&
+          typeof data === "object" &&
+          "snapshots" in data &&
+          Array.isArray(data.snapshots)
+        ) {
+          applyFirmsHistorySnapshots(data.snapshots as FirmsIncidentSnapshot[]);
+        }
+      } catch (error: unknown) {
+        if (isAbortError(error)) return;
+      }
+    };
+
+    const refreshFirmsHistorySnapshots = async () => {
+      if (firmsHistoryRefreshStartedRef.current) return;
+      firmsHistoryRefreshStartedRef.current = true;
+
+      try {
+        const response = await fetch(
+          "/api/incidents/firms/history/refresh",
+          {
+            method: "POST",
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          firmsHistoryRefreshStartedRef.current = false;
+          return;
+        }
+
+        const data: unknown = await response.json();
+        if (
+          data &&
+          typeof data === "object" &&
+          "snapshots" in data &&
+          Array.isArray(data.snapshots)
+        ) {
+          // On failure the API still returns the preserved previous
+          // snapshots, so applying them here is safe either way.
+          applyFirmsHistorySnapshots(data.snapshots as FirmsIncidentSnapshot[]);
+        }
+      } catch (error: unknown) {
+        firmsHistoryRefreshStartedRef.current = false;
+        if (isAbortError(error)) return;
+      }
+    };
+
+    void (async () => {
+      await loadFirmsHistorySnapshots();
+      if (controller.signal.aborted) return;
+      await refreshFirmsHistorySnapshots();
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   const hasFirmsSnapshots = Object.keys(firmsSnapshotsByIncidentId).length > 0;
   const hasEffisSnapshots =
     Object.keys(effisSnapshotsByIncidentId).length > 0;
+  const hasFirmsHistorySnapshots =
+    Object.keys(firmsHistorySnapshotsByIncidentId).length > 0;
   const firmsDataAvailable = hasFirmsSnapshots;
 
   useEffect(() => {
@@ -445,6 +546,42 @@ export default function MapInterface() {
     };
   }, [showSatelliteActiveFires, firmsDataAvailable]);
 
+  useEffect(() => {
+    if (!showSatelliteBurnedAreas) {
+      setFirmsHistoryLoadingOverlay(false);
+      setFirmsHistoryUnavailableMessage(false);
+      return;
+    }
+
+    setFirmsHistoryUnavailableMessage(false);
+
+    if (hasFirmsHistorySnapshots || hasEffisSnapshots) {
+      setFirmsHistoryLoadingOverlay(false);
+      return;
+    }
+
+    setFirmsHistoryLoadingOverlay(true);
+  }, [showSatelliteBurnedAreas, hasFirmsHistorySnapshots, hasEffisSnapshots]);
+
+  useEffect(() => {
+    if (
+      !showSatelliteBurnedAreas ||
+      hasFirmsHistorySnapshots ||
+      hasEffisSnapshots
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFirmsHistoryLoadingOverlay(false);
+      setFirmsHistoryUnavailableMessage(true);
+    }, FIRMS_HISTORY_UNAVAILABLE_TIMEOUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [showSatelliteBurnedAreas, hasFirmsHistorySnapshots, hasEffisSnapshots]);
+
   // EFFIS unavailable banner: driven by refresh HTTP status / body, not MapLibre.
   // Stays visible at least 6 seconds once shown.
   useEffect(() => {
@@ -453,10 +590,20 @@ export default function MapInterface() {
       effisBannerHideTimeoutRef.current = null;
     }
 
+    const effisFailed = effisUnavailable || effisServiceFailedRef.current;
+
     const shouldShow =
       showSatelliteBurnedAreas &&
       !hasEffisSnapshots &&
-      (effisUnavailable || effisServiceFailedRef.current);
+      !hasFirmsHistorySnapshots &&
+      effisFailed;
+
+    setShowEffisUnavailableNasaShown(
+      showSatelliteBurnedAreas &&
+        !hasEffisSnapshots &&
+        hasFirmsHistorySnapshots &&
+        effisFailed,
+    );
 
     if (shouldShow) {
       setShowEffisUnavailableBanner(true);
@@ -503,6 +650,7 @@ export default function MapInterface() {
   }, [
     showSatelliteBurnedAreas,
     hasEffisSnapshots,
+    hasFirmsHistorySnapshots,
     effisUnavailable,
     showEffisUnavailableBanner,
   ]);
@@ -642,6 +790,7 @@ export default function MapInterface() {
         selectedWildfireId={selectedWildfireId}
         locale={locale}
         firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
+        firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}
         onEffisBurnedAreasAvailabilityChange={(unavailable) => {
           if (unavailable) {
             effisServiceFailedRef.current = true;
@@ -681,11 +830,25 @@ export default function MapInterface() {
         </div>
       )}
 
+      {(firmsHistoryLoadingOverlay || firmsHistoryUnavailableMessage) && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
+          {firmsHistoryLoadingOverlay
+            ? t.incidents.firmsHistoryLoading
+            : t.incidents.firmsHistoryUnavailable}
+        </div>
+      )}
+
       {showEffisUnavailableBanner && (
           <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/90 px-4 py-2 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
             {t.incidents.effisTemporarilyUnavailable}
           </div>
         )}
+
+      {showEffisUnavailableNasaShown && !showEffisUnavailableBanner && (
+        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/70 px-3 py-1.5 text-center text-[10px] text-slate-300 shadow-lg backdrop-blur-md">
+          {t.incidents.effisUnavailableNasaShown}
+        </div>
+      )}
 
       {selectedCountryCode && !selectedWildfire && !selectedEffisBurnedArea && (
         <CountryInfoPanel
@@ -710,6 +873,11 @@ export default function MapInterface() {
               : null
           }
           firmsSnapshotStatus={firmsSnapshotStatus}
+          firmsHistorySnapshot={
+            selectedWildfireId
+              ? firmsHistorySnapshotsByIncidentId[selectedWildfireId] ?? null
+              : null
+          }
           onClose={() => setSelectedWildfireId(null)}
         />
       )}

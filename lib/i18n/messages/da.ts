@@ -9,7 +9,8 @@ export const da = {
     officialCandidate: "Officiel EU-kandidat",
     majorWildfires: "Store skovbrande",
     satelliteActiveFires: "Satellitdetektioner af aktive brande",
-    satelliteBurnedAreas: "Satellitperimetre for brændte områder",
+    satelliteBurnedAreas: "Nyligt satellitdetekterede områder — 7 dage",
+    satelliteHistoryNote: "Brune områder viser kumulative satellitdetektioner, ikke en officiel brandarealperimeter.",
   },
   countryPanel: {
     code: "Kode",
@@ -83,5 +84,13 @@ export const da = {
     firmsLiveData: "Live-opdatering",
     firmsCachedData: "Cachelagret øjebliksbillede",
     effisTemporarilyUnavailable: "EFFIS-brændt-arealperimeter er midlertidigt utilgængelige.",
+    firmsHistoryTitle: "Seneste satellithistorik",
+    firmsHistoryPeriod: "Dækket periode",
+    firmsHistoryDetectionCount: "Historiske fodspor",
+    firmsHistoryDisclaimer: "Denne værdi svarer til pixels detekteret mellem 24 timer og 7 dage. Den bekræfter ikke det faktisk brændte areal.",
+    firmsHistoryLoading: "Indlæser satellithistorik…",
+    firmsHistoryUnavailable: "Ingen satellithistorik tilgængelig i øjeblikket.",
+    effisUnavailableNasaShown: "Officiel EFFIS-perimeter utilgængelig — NASA-historik vist.",
+    firmsHistoryRefreshedAt: "Seneste opdatering",
   },
 } satisfies Messages;

@@ -9,7 +9,8 @@ export const ro = {
     officialCandidate: "Candidat oficial la UE",
     majorWildfires: "Incendii majore",
     satelliteActiveFires: "Detecții satelitare de incendii active",
-    satelliteBurnedAreas: "Perimetre de suprafețe arse detectate prin satelit",
+    satelliteBurnedAreas: "Zone detectate recent prin satelit — 7 zile",
+    satelliteHistoryNote: "Zonele maro arată detecții satelitare cumulate, nu un perimetru oficial al suprafeței arse.",
   },
   countryPanel: {
     code: "Cod",
@@ -83,5 +84,13 @@ export const ro = {
     firmsLiveData: "Actualizare live",
     firmsCachedData: "Instantaneu din cache",
     effisTemporarilyUnavailable: "Perimetrele zonelor arse EFFIS sunt temporar indisponibile.",
+    firmsHistoryTitle: "Istoric satelitar recent",
+    firmsHistoryPeriod: "Perioada acoperită",
+    firmsHistoryDetectionCount: "Amprente istorice",
+    firmsHistoryDisclaimer: "Această valoare corespunde pixelilor detectați între 24 de ore și 7 zile. Nu confirmă suprafața efectiv arsă.",
+    firmsHistoryLoading: "Se încarcă istoricul satelitar…",
+    firmsHistoryUnavailable: "Niciun istoric satelitar disponibil momentan.",
+    effisUnavailableNasaShown: "Perimetrul oficial EFFIS indisponibil — istoric NASA afișat.",
+    firmsHistoryRefreshedAt: "Ultima actualizare",
   },
 } satisfies Messages;
