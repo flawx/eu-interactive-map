@@ -196,8 +196,11 @@ export async function importOfficialWildfireUpdates(
   }
 
   const sources: FranceWildfireOfficialSource[] = sourcesForIncidentCountryRegion({
+    incidentId: trimmedId,
     countryCode: incident.countryCode,
     regionHint: regionHintFromIncident(incident.title, incident.description),
+    longitude: incident.longitude,
+    latitude: incident.latitude,
   });
 
   for (const source of sources) {
@@ -207,7 +210,7 @@ export async function importOfficialWildfireUpdates(
       const match = matchOfficialDocumentToWildfireIncident({
         document,
         incident,
-        keywords: source.incidentKeywords,
+        source,
       });
 
       if (!match.matched) {

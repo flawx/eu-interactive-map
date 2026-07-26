@@ -28,6 +28,7 @@ type WildfireIncidentPanelProps = {
   onFocusGeometry?: (geometry: GeoJSON.Geometry) => void;
 };
 
+/** One official refresh attempt per incident id for this browser session. */
 const officialRefreshDoneThisSession = new Set<string>();
 
 export default function WildfireIncidentPanel({
@@ -54,6 +55,8 @@ export default function WildfireIncidentPanel({
     null,
   );
   const mountedRef = useRef(true);
+  const selectedIncidentIdRef = useRef(incident.id);
+  selectedIncidentIdRef.current = incident.id;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -64,23 +67,50 @@ export default function WildfireIncidentPanel({
 
   useEffect(() => {
     const controller = new AbortController();
+    const requestedIncidentId = incident.id;
+
+    // Reset only operational payload when switching incidents.
+    setOpsSummary(null);
     setOpsLoading(true);
     setOpsError(false);
+    setOfficialVerifiedAt(null);
+    setOfficialRefreshState(
+      officialRefreshDoneThisSession.has(requestedIncidentId)
+        ? "done"
+        : "idle",
+    );
 
     const load = async () => {
       try {
         const response = await fetch(
-          `/api/incidents/wildfires/${encodeURIComponent(incident.id)}/operational`,
+          `/api/incidents/wildfires/${encodeURIComponent(requestedIncidentId)}/operational`,
           { signal: controller.signal },
         );
         if (!response.ok) {
-          if (!controller.signal.aborted) {
+          if (
+            !controller.signal.aborted &&
+            selectedIncidentIdRef.current === requestedIncidentId
+          ) {
             setOpsError(true);
             setOpsSummary(null);
           }
           return;
         }
         const data: unknown = await response.json();
+        if (selectedIncidentIdRef.current !== requestedIncidentId) return;
+
+        const responseIncidentId =
+          data && typeof data === "object" && "incidentId" in data
+            ? String((data as { incidentId: unknown }).incidentId)
+            : null;
+
+        if (
+          responseIncidentId &&
+          responseIncidentId !== requestedIncidentId
+        ) {
+          return;
+        }
+
         if (
           data &&
           typeof data === "object" &&
@@ -88,8 +118,12 @@ export default function WildfireIncidentPanel({
           data.summary &&
           typeof data.summary === "object"
         ) {
+          const summary = data.summary as WildfireOperationalSummary;
+          if (summary.incidentId && summary.incidentId !== requestedIncidentId) {
+            return;
+          }
           if (!controller.signal.aborted) {
-            setOpsSummary(data.summary as WildfireOperationalSummary);
+            setOpsSummary(summary);
             setOpsError(false);
           }
         } else if (!controller.signal.aborted) {
@@ -97,12 +131,18 @@ export default function WildfireIncidentPanel({
           setOpsSummary(null);
         }
       } catch {
-        if (!controller.signal.aborted) {
+        if (
+          !controller.signal.aborted &&
+          selectedIncidentIdRef.current === requestedIncidentId
+        ) {
           setOpsError(true);
           setOpsSummary(null);
         }
       } finally {
-        if (!controller.signal.aborted) {
+        if (
+          !controller.signal.aborted &&
+          selectedIncidentIdRef.current === requestedIncidentId
+        ) {
           setOpsLoading(false);
         }
       }
@@ -113,7 +153,9 @@ export default function WildfireIncidentPanel({
   }, [incident.id]);
 
   useEffect(() => {
-    if (officialRefreshDoneThisSession.has(incident.id)) {
+    const requestedIncidentId = incident.id;
+
+    if (officialRefreshDoneThisSession.has(requestedIncidentId)) {
       setOfficialRefreshState("done");
       return;
     }
@@ -124,22 +166,37 @@ export default function WildfireIncidentPanel({
     const refresh = async () => {
       try {
         const response = await fetch(
-          `/api/incidents/wildfires/${encodeURIComponent(incident.id)}/operational/refresh-official`,
+          `/api/incidents/wildfires/${encodeURIComponent(requestedIncidentId)}/operational/refresh-official`,
           {
             method: "POST",
             signal: controller.signal,
           },
         );
 
+        if (selectedIncidentIdRef.current !== requestedIncidentId) return;
+
         if (!response.ok) {
           if (!controller.signal.aborted && mountedRef.current) {
-            officialRefreshDoneThisSession.add(incident.id);
+            officialRefreshDoneThisSession.add(requestedIncidentId);
             setOfficialRefreshState("partial");
           }
           return;
         }
 
         const data: unknown = await response.json();
+        if (selectedIncidentIdRef.current !== requestedIncidentId) return;
+
+        const responseIncidentId =
+          data && typeof data === "object" && "incidentId" in data
+            ? String((data as { incidentId: unknown }).incidentId)
+            : null;
+        if (
+          responseIncidentId &&
+          responseIncidentId !== requestedIncidentId
+        ) {
+          return;
+        }
+
         const report =
           data && typeof data === "object" && "report" in data
             ? (data.report as { errors?: string[] })
@@ -155,18 +212,25 @@ export default function WildfireIncidentPanel({
           !controller.signal.aborted &&
           mountedRef.current
         ) {
-          setOpsSummary(data.summary as WildfireOperationalSummary);
-          setOpsError(false);
+          const summary = data.summary as WildfireOperationalSummary;
+          if (!summary.incidentId || summary.incidentId === requestedIncidentId) {
+            setOpsSummary(summary);
+            setOpsError(false);
+          }
         }
 
         if (!controller.signal.aborted && mountedRef.current) {
-          officialRefreshDoneThisSession.add(incident.id);
+          officialRefreshDoneThisSession.add(requestedIncidentId);
           setOfficialVerifiedAt(new Date().toISOString());
           setOfficialRefreshState(hasSourceErrors ? "partial" : "done");
         }
       } catch {
-        if (!controller.signal.aborted && mountedRef.current) {
-          officialRefreshDoneThisSession.add(incident.id);
+        if (
+          !controller.signal.aborted &&
+          mountedRef.current &&
+          selectedIncidentIdRef.current === requestedIncidentId
+        ) {
+          officialRefreshDoneThisSession.add(requestedIncidentId);
           setOfficialRefreshState("partial");
         }
       }

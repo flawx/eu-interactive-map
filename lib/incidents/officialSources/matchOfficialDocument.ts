@@ -1,5 +1,10 @@
 import type { WildfireIncident } from "@/lib/incidents/types";
 import type { OfficialFetchedDocument } from "@/lib/incidents/officialSources/fetchOfficialDocument";
+import type { FranceWildfireOfficialSource } from "@/lib/incidents/officialSources/franceWildfireSources";
+import {
+  FRANCE_DEPARTMENT_BBOX,
+  isPointInDepartment,
+} from "@/lib/incidents/officialSources/franceWildfireSources";
 
 export type OfficialMatchResult = {
   matched: boolean;
@@ -16,6 +21,13 @@ const OTHER_DEPARTMENT_MARKERS = [
   /\bAude\b/i,
   /\bHérault\b/i,
   /\bCors(?:e|ica)\b/i,
+];
+
+const WEAK_ONLY_TERMS = [
+  /^france$/i,
+  /^nouvelle[- ]?aquitaine$/i,
+  /^feu de forêt$/i,
+  /^incendie$/i,
 ];
 
 function normalize(value: string): string {
@@ -36,6 +48,10 @@ function findKeywordHits(text: string, keywords: string[]): string[] {
     }
   }
   return hits;
+}
+
+function isWeakOnlyKeyword(keyword: string): boolean {
+  return WEAK_ONLY_TERMS.some((re) => re.test(keyword.trim()));
 }
 
 function isWithinIncidentWindow(
@@ -60,6 +76,33 @@ function isWithinIncidentWindow(
   return published >= earliest && published <= latest;
 }
 
+function incidentCompatibleWithDepartments(
+  incident: WildfireIncident,
+  departmentCodes: string[] | undefined,
+): boolean {
+  if (!departmentCodes || departmentCodes.length === 0) return true;
+  return departmentCodes.some((code) =>
+    isPointInDepartment(incident.longitude, incident.latitude, code),
+  );
+}
+
+function inferIncidentDepartments(incident: WildfireIncident): string[] {
+  return Object.entries(FRANCE_DEPARTMENT_BBOX)
+    .filter(([, bbox]) =>
+      incident.longitude >= bbox.minLon &&
+      incident.longitude <= bbox.maxLon &&
+      incident.latitude >= bbox.minLat &&
+      incident.latitude <= bbox.maxLat,
+    )
+    .map(([code]) => code);
+}
+
+function documentMentionsGirondePlaces(text: string): boolean {
+  return /(gironde|saumos|le porge|l[eè]ge[- ]?cap[- ]?ferret|cap[- ]?ferret|m[eé]doc|le temple)/i.test(
+    text,
+  );
+}
+
 /**
  * Keeps paragraphs that mention a strong incident keyword.
  * Drops blocks that only discuss other departments when Gironde/Saumos is absent.
@@ -78,20 +121,17 @@ export function isolateIncidentRelevantText(
     const hits = findKeywordHits(paragraph, keywords);
     const otherDept = OTHER_DEPARTMENT_MARKERS.some((re) => re.test(paragraph));
     if (hits.length > 0) {
-      // If Landais/Var mentioned in same paragraph as Gironde, keep only when
-      // a strong local keyword (commune) is also present.
       const strongLocal = hits.some(
-        (hit) => !/^france$/i.test(hit) && !/^gironde$/i.test(hit),
+        (hit) => !/^france$/i.test(hit) && !isWeakOnlyKeyword(hit),
       );
       if (otherDept && !strongLocal && !hits.some((h) => /gironde/i.test(h))) {
         continue;
       }
+      // Drop paragraphs that only discuss another department.
+      if (otherDept && !strongLocal) continue;
       kept.push(paragraph);
       continue;
     }
-    // Keep operational continuation sentences without place names only when
-    // they clearly continue a previously kept Saumos/Gironde block and do not
-    // introduce another department.
     if (
       kept.length > 0 &&
       !otherDept &&
@@ -104,7 +144,6 @@ export function isolateIncidentRelevantText(
   }
 
   if (kept.length === 0) {
-    // Fall back to whole body only if it has strong keyword hits overall.
     return findKeywordHits(bodyText, keywords).length > 0 ? bodyText : "";
   }
 
@@ -114,12 +153,77 @@ export function isolateIncidentRelevantText(
 export function matchOfficialDocumentToWildfireIncident(input: {
   document: OfficialFetchedDocument;
   incident: WildfireIncident;
-  keywords: string[];
+  source: FranceWildfireOfficialSource;
 }): OfficialMatchResult {
-  const { document, incident, keywords } = input;
+  const { document, incident, source } = input;
+  const keywords = source.incidentKeywords;
   const titleHits = findKeywordHits(document.title, keywords);
   const bodyHits = findKeywordHits(document.bodyText, keywords);
   const matchedKeywords = Array.from(new Set([...titleHits, ...bodyHits]));
+
+  // 1. Explicit incident allow-list
+  if (
+    source.allowedIncidentIds &&
+    source.allowedIncidentIds.length > 0 &&
+    !source.allowedIncidentIds.includes(incident.id)
+  ) {
+    return {
+      matched: false,
+      score: "insufficient",
+      matchedKeywords,
+      relevantText: "",
+      reason: "Source restricted to other incident ids",
+    };
+  }
+
+  // 2. Department constraint: country alone is never enough
+  if (source.departmentCodes && source.departmentCodes.length > 0) {
+    if (!incidentCompatibleWithDepartments(incident, source.departmentCodes)) {
+      return {
+        matched: false,
+        score: "insufficient",
+        matchedKeywords,
+        relevantText: "",
+        reason: "Incident coordinates outside source department scope",
+      };
+    }
+  }
+
+  // 5. Reject Gironde/Saumos publications for incidents in Var / other depts
+  const incidentDepartments = inferIncidentDepartments(incident);
+  if (
+    documentMentionsGirondePlaces(`${document.title} ${document.bodyText}`) &&
+    incidentDepartments.some((code) => code !== "33") &&
+    !incidentDepartments.includes("33")
+  ) {
+    return {
+      matched: false,
+      score: "insufficient",
+      matchedKeywords,
+      relevantText: "",
+      reason: "Gironde publication incompatible with incident location",
+    };
+  }
+
+  if (source.excludedPlaceNames && source.excludedPlaceNames.length > 0) {
+    // If the incident sits in an excluded department geography, reject.
+    const excludedDeptHints: Record<string, string> = {
+      Var: "83",
+      Landes: "40",
+    };
+    for (const place of source.excludedPlaceNames) {
+      const dept = excludedDeptHints[place];
+      if (dept && incidentDepartments.includes(dept) && !incidentDepartments.includes("33")) {
+        return {
+          matched: false,
+          score: "insufficient",
+          matchedKeywords,
+          relevantText: "",
+          reason: `Incident located in excluded geography (${place})`,
+        };
+      }
+    }
+  }
 
   if (!isWithinIncidentWindow(document.publishedAt, incident)) {
     return {
@@ -131,47 +235,79 @@ export function matchOfficialDocumentToWildfireIncident(input: {
     };
   }
 
-  // Country-only or region-only without a strong place keyword is insufficient.
-  const strongKeywords = matchedKeywords.filter(
-    (keyword) =>
-      !/^france$/i.test(keyword) &&
-      !/^nouvelle[- ]?aquitaine$/i.test(keyword),
-  );
+  // Required place names in document
+  if (source.requiredPlaceNames && source.requiredPlaceNames.length > 0) {
+    const requiredHits = findKeywordHits(
+      `${document.title} ${document.bodyText}`,
+      source.requiredPlaceNames,
+    );
+    if (requiredHits.length === 0) {
+      return {
+        matched: false,
+        score: "insufficient",
+        matchedKeywords,
+        relevantText: "",
+        reason: "Required place names absent from document",
+      };
+    }
+  }
 
-  if (strongKeywords.length === 0) {
+  // Precise place in document (not only France / region / wildfire wording)
+  const preciseHits = matchedKeywords.filter((keyword) => !isWeakOnlyKeyword(keyword));
+  if (preciseHits.length === 0) {
     return {
       matched: false,
       score: "insufficient",
       matchedKeywords,
       relevantText: "",
-      reason: "No strong geographic keyword for the incident",
+      reason: "No precise place keyword in document",
     };
   }
 
+  // 3. Without explicit incident id, require place + geographic compatibility
+  if (!source.allowedIncidentIds || source.allowedIncidentIds.length === 0) {
+    const geoOk =
+      !source.departmentCodes ||
+      source.departmentCodes.length === 0 ||
+      incidentCompatibleWithDepartments(incident, source.departmentCodes);
+    if (!geoOk) {
+      return {
+        matched: false,
+        score: "insufficient",
+        matchedKeywords,
+        relevantText: "",
+        reason: "No geographic compatibility with incident coordinates",
+      };
+    }
+  }
+
   const hasExactPlaceInTitle = titleHits.some(
-    (keyword) => !/^gironde$/i.test(keyword) && !/^france$/i.test(keyword),
+    (keyword) => !isWeakOnlyKeyword(keyword) && !/^gironde$/i.test(keyword),
   );
   const hasExactPlaceInBody = bodyHits.some(
-    (keyword) => !/^gironde$/i.test(keyword) && !/^france$/i.test(keyword),
+    (keyword) => !isWeakOnlyKeyword(keyword) && !/^gironde$/i.test(keyword),
   );
-  const hasDepartment =
-    matchedKeywords.some((keyword) => /gironde/i.test(keyword)) ||
-    /gironde/i.test(incident.title);
+  const hasDepartment = preciseHits.some((keyword) => /gironde/i.test(keyword));
 
   let score: OfficialMatchResult["score"] = "insufficient";
   if (hasExactPlaceInTitle || hasExactPlaceInBody) {
     score = "strong";
-  } else if (hasDepartment && document.publishedAt) {
+  } else if (
+    hasDepartment &&
+    document.publishedAt &&
+    incidentCompatibleWithDepartments(incident, source.departmentCodes ?? ["33"])
+  ) {
     score = "medium";
   }
 
+  // 4. Country / date / similar area alone are never enough
   if (score === "insufficient") {
     return {
       matched: false,
       score,
       matchedKeywords,
       relevantText: "",
-      reason: "Geographic signal too weak",
+      reason: "Geographic signal too weak (country/date insufficient)",
     };
   }
 
@@ -189,8 +325,8 @@ export function matchOfficialDocumentToWildfireIncident(input: {
   return {
     matched: true,
     score,
-    matchedKeywords: strongKeywords,
+    matchedKeywords: preciseHits,
     relevantText,
-    reason: "Matched by geographic keywords and time window",
+    reason: "Matched by allow-list/department/place and time window",
   };
 }
