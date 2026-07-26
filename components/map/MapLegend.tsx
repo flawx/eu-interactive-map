@@ -1,3 +1,5 @@
+"use client";
+
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 
@@ -36,15 +38,16 @@ export default function MapLegend({
   onToggleSatelliteActiveFires,
   showSatelliteBurnedAreas,
   onToggleSatelliteBurnedAreas,
-  highlight = false,
+  highlight,
 }: MapLegendProps) {
   const t = getMessages(locale);
+  const isHighlighted = Boolean(highlight);
 
   return (
     <aside
       id="map-legend"
       className={`absolute right-4 top-4 z-10 w-72 max-w-[calc(100%-2rem)] rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md transition ring-offset-2 ring-offset-slate-950 ${
-        highlight ? "ring-2 ring-sky-400/80" : ""
+        isHighlighted ? "ring-2 ring-sky-400/80" : ""
       }`}
     >
       <h2 className="mb-3 text-sm font-semibold">
