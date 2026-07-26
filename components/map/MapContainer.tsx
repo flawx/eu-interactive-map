@@ -17,6 +17,10 @@ import type {
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import type { Locale } from "@/lib/i18n/config";
+import type {
+  MapFocusRequest,
+  TemporaryMapMarker,
+} from "@/lib/map/focusRequest";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Worker CDN : évite le MIME text/html renvoyé par Webpack/Next pour le worker local
@@ -203,6 +207,8 @@ export default function MapContainer({
   firmsSnapshotsByIncidentId,
   firmsHistorySnapshotsByIncidentId,
   onEffisBurnedAreasAvailabilityChange,
+  focusRequest = null,
+  temporaryMarker = null,
 }: {
   showEurozone: boolean;
   showNonEurozone: boolean;
@@ -223,6 +229,8 @@ export default function MapContainer({
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
+  focusRequest?: MapFocusRequest | null;
+  temporaryMarker?: TemporaryMapMarker | null;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -250,6 +258,8 @@ export default function MapContainer({
   onEffisBurnedAreaLoadingChangeRef.current = onEffisBurnedAreaLoadingChange;
   const firmsLabelMarkersRef = useRef<Marker[]>([]);
   const gdacsFlameMarkersRef = useRef<Marker[]>([]);
+  const temporaryMarkerRef = useRef<Marker | null>(null);
+  const lastFocusNonceRef = useRef<number | null>(null);
   const effisRequestControllerRef = useRef<AbortController | null>(null);
   const onEffisBurnedAreasAvailabilityChangeRef = useRef(
     onEffisBurnedAreasAvailabilityChange,
@@ -1534,6 +1544,82 @@ export default function MapContainer({
       });
     }
   }, [selectedCountryCode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focusRequest) return;
+    if (lastFocusNonceRef.current === focusRequest.nonce) return;
+    lastFocusNonceRef.current = focusRequest.nonce;
+
+    if (focusRequest.kind === "europe") {
+      map.easeTo({
+        center: [15.2551, 54.526],
+        zoom: 4,
+        duration: 800,
+      });
+      return;
+    }
+
+    if (focusRequest.kind === "point") {
+      map.easeTo({
+        center: [focusRequest.longitude, focusRequest.latitude],
+        zoom: focusRequest.zoom,
+        duration: 800,
+      });
+      return;
+    }
+
+    if (focusRequest.kind === "country") {
+      const features = map.querySourceFeatures("europe-countries", {
+        filter: ["==", ["get", "CNTR_ID"], focusRequest.countryCode],
+      });
+
+      const bounds = new LngLatBounds();
+      for (const feature of features) {
+        if (feature.geometry && "coordinates" in feature.geometry) {
+          extendBoundsWithCoordinates(bounds, feature.geometry.coordinates);
+        }
+      }
+
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: 80,
+          maxZoom: 7,
+          duration: 800,
+        });
+      }
+    }
+  }, [focusRequest, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (temporaryMarkerRef.current) {
+      temporaryMarkerRef.current.remove();
+      temporaryMarkerRef.current = null;
+    }
+
+    if (!temporaryMarker) return;
+
+    const el = document.createElement("div");
+    el.className = "eu-temp-place-marker";
+    el.style.width = "18px";
+    el.style.height = "18px";
+    el.style.borderRadius = "9999px";
+    el.style.background = "#f59e0b";
+    el.style.border = "2px solid #fff7ed";
+    el.style.boxShadow = "0 0 0 4px rgba(245, 158, 11, 0.35)";
+
+    temporaryMarkerRef.current = new Marker({ element: el, anchor: "center" })
+      .setLngLat([temporaryMarker.longitude, temporaryMarker.latitude])
+      .addTo(map);
+
+    return () => {
+      temporaryMarkerRef.current?.remove();
+      temporaryMarkerRef.current = null;
+    };
+  }, [temporaryMarker, mapSourcesReadyVersion]);
 
   return (
     <div ref={mapContainerRef} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />

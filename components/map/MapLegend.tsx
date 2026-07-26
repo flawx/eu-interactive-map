@@ -17,6 +17,7 @@ type MapLegendProps = {
   onToggleSatelliteActiveFires: (value: boolean) => void;
   showSatelliteBurnedAreas: boolean;
   onToggleSatelliteBurnedAreas: (value: boolean) => void;
+  highlight?: boolean;
 };
 
 export default function MapLegend({
@@ -35,11 +36,17 @@ export default function MapLegend({
   onToggleSatelliteActiveFires,
   showSatelliteBurnedAreas,
   onToggleSatelliteBurnedAreas,
+  highlight = false,
 }: MapLegendProps) {
   const t = getMessages(locale);
 
   return (
-    <aside className="absolute right-4 top-4 z-10 w-72 max-w-[calc(100%-2rem)] rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md">
+    <aside
+      id="map-legend"
+      className={`absolute right-4 top-4 z-10 w-72 max-w-[calc(100%-2rem)] rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md transition ring-offset-2 ring-offset-slate-950 ${
+        highlight ? "ring-2 ring-sky-400/80" : ""
+      }`}
+    >
       <h2 className="mb-3 text-sm font-semibold">
         {t.legend.title}
       </h2>

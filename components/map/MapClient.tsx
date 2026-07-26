@@ -8,6 +8,10 @@ import type {
   EffisBurnedArea,
   WildfireIncident,
 } from "@/lib/incidents/types";
+import type {
+  MapFocusRequest,
+  TemporaryMapMarker,
+} from "@/lib/map/focusRequest";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -33,6 +37,8 @@ type MapClientProps = {
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   onEffisBurnedAreasAvailabilityChange?: (unavailable: boolean) => void;
+  focusRequest?: MapFocusRequest | null;
+  temporaryMarker?: TemporaryMapMarker | null;
 };
 
 export default function MapClient({
@@ -55,6 +61,8 @@ export default function MapClient({
   firmsSnapshotsByIncidentId,
   firmsHistorySnapshotsByIncidentId,
   onEffisBurnedAreasAvailabilityChange,
+  focusRequest = null,
+  temporaryMarker = null,
 }: MapClientProps) {
   return (
     <MapContainer
@@ -77,6 +85,8 @@ export default function MapClient({
       firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
       firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}
       onEffisBurnedAreasAvailabilityChange={onEffisBurnedAreasAvailabilityChange}
+      focusRequest={focusRequest}
+      temporaryMarker={temporaryMarker}
     />
   );
 }

@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import EffisBurnedAreaPanel from "@/components/incidents/EffisBurnedAreaPanel";
 import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel";
+import AppHeader from "@/components/layout/AppHeader";
+import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapLegend from "@/components/map/MapLegend";
 import {
   defaultLocale,
-  supportedLocales,
   type Locale,
 } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
@@ -21,6 +22,8 @@ import type {
   EffisBurnedArea,
   WildfireIncident,
 } from "@/lib/incidents/types";
+import type { MapFocusRequest } from "@/lib/map/focusRequest";
+import type { MapSearchResult } from "@/lib/search/mapSearch";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
 const FIRMS_HISTORY_UNAVAILABLE_TIMEOUT_MS = 25_000;
@@ -102,6 +105,14 @@ export default function MapInterface() {
     useState(false);
   const [showEffisUnavailableNasaShown, setShowEffisUnavailableNasaShown] =
     useState(false);
+  const [focusRequest, setFocusRequest] = useState<MapFocusRequest | null>(
+    null,
+  );
+  const [temporaryPlace, setTemporaryPlace] = useState<MapSearchResult | null>(
+    null,
+  );
+  const [legendHighlight, setLegendHighlight] = useState(false);
+  const focusNonceRef = useRef(0);
   const firmsRefreshStartedRef = useRef(false);
   const firmsHistoryRefreshStartedRef = useRef(false);
   const effisServiceFailedRef = useRef(false);
@@ -767,150 +778,275 @@ export default function MapInterface() {
     setSelectedWildfireId(incidentId);
   };
 
+  const requestFocus = (
+    request:
+      | { kind: "europe" }
+      | { kind: "country"; countryCode: string }
+      | {
+          kind: "point";
+          longitude: number;
+          latitude: number;
+          zoom: number;
+        },
+  ) => {
+    focusNonceRef.current += 1;
+    setFocusRequest({ ...request, nonce: focusNonceRef.current });
+  };
+
+  const clearTemporaryPlace = () => {
+    setTemporaryPlace(null);
+  };
+
+  const handleGoEurope = () => {
+    setSelectedCountryCode(null);
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    clearTemporaryPlace();
+    requestFocus({ kind: "europe" });
+  };
+
+  const handleOpenWildfires = () => {
+    setShowWildfires(true);
+    clearTemporaryPlace();
+    const first = wildfireIncidents[0];
+    if (first) {
+      handleWildfireSelect(first.id);
+      requestFocus({
+        kind: "point",
+        longitude: first.longitude,
+        latitude: first.latitude,
+        zoom: 6,
+      });
+    }
+  };
+
+  const handleFocusLegend = () => {
+    setLegendHighlight(true);
+    window.setTimeout(() => setLegendHighlight(false), 1600);
+    document.getElementById("map-legend")?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  };
+
+  const handleSelectSearchResult = (result: MapSearchResult) => {
+    if (result.type === "external_place") {
+      setSelectedCountryCode(null);
+      setSelectedWildfireId(null);
+      setSelectedEffisBurnedArea(null);
+      setTemporaryPlace(result);
+      requestFocus({
+        kind: "point",
+        longitude: result.longitude,
+        latitude: result.latitude,
+        zoom: 10,
+      });
+      return;
+    }
+
+    clearTemporaryPlace();
+
+    if (result.type === "country") {
+      if (result.countryCode) {
+        handleCountrySelect(result.countryCode);
+        requestFocus({
+          kind: "country",
+          countryCode: result.countryCode,
+        });
+      }
+      return;
+    }
+
+    if (result.type === "capital" || result.type === "eu_institution") {
+      if (result.countryCode) {
+        handleCountrySelect(result.countryCode);
+      } else {
+        setSelectedWildfireId(null);
+        setSelectedEffisBurnedArea(null);
+        setSelectedCountryCode(null);
+      }
+      requestFocus({
+        kind: "point",
+        longitude: result.longitude,
+        latitude: result.latitude,
+        zoom: result.type === "capital" ? 8 : 12,
+      });
+      return;
+    }
+
+    if (result.type === "wildfire" && result.incidentId) {
+      handleWildfireSelect(result.incidentId);
+      requestFocus({
+        kind: "point",
+        longitude: result.longitude,
+        latitude: result.latitude,
+        zoom: 7,
+      });
+    }
+  };
+
   return (
-    <>
-      <MapClient
-        showEurozone={showEurozone}
-        showNonEurozone={showNonEurozone}
-        showCandidates={showCandidates}
-        showSchengenNonEU={showSchengenNonEU}
-        selectedCountryCode={selectedCountryCode}
-        onCountrySelect={handleCountrySelect}
-        wildfireIncidents={wildfireIncidents}
-        showWildfires={showWildfires}
-        onWildfireSelect={handleWildfireSelect}
-        showSatelliteActiveFires={showSatelliteActiveFires}
-        showSatelliteBurnedAreas={showSatelliteBurnedAreas}
-        onEffisBurnedAreaSelect={(burnedArea) => {
-          setSelectedEffisBurnedArea(burnedArea);
-
-          if (burnedArea) {
-            setSelectedCountryCode(null);
-            setSelectedWildfireId(null);
-          }
-        }}
-        onEffisBurnedAreaLoadingChange={setEffisBurnedAreaLoading}
-        effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
-        selectedWildfireId={selectedWildfireId}
+    <div className="relative h-full w-full overflow-hidden">
+      <AppHeader
         locale={locale}
-        firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
-        firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}
-        onEffisBurnedAreasAvailabilityChange={(unavailable) => {
-          if (unavailable) {
-            effisServiceFailedRef.current = true;
-            setEffisUnavailable(true);
-          }
-        }}
-      />
-      <MapLegend
-        locale={locale}
-        showEurozone={showEurozone}
-        onToggleEurozone={setShowEurozone}
-        showNonEurozone={showNonEurozone}
-        onToggleNonEurozone={setShowNonEurozone}
-        showCandidates={showCandidates}
-        onToggleCandidates={setShowCandidates}
-        showSchengenNonEU={showSchengenNonEU}
-        onToggleSchengenNonEU={setShowSchengenNonEU}
-        showWildfires={showWildfires}
-        onToggleWildfires={setShowWildfires}
-        showSatelliteActiveFires={showSatelliteActiveFires}
-        onToggleSatelliteActiveFires={setShowSatelliteActiveFires}
-        showSatelliteBurnedAreas={showSatelliteBurnedAreas}
-        onToggleSatelliteBurnedAreas={setShowSatelliteBurnedAreas}
+        onLocaleChange={setLocale}
+        t={t}
+        languageNames={languageNames}
+        wildfires={wildfireIncidents}
+        onSelectSearchResult={handleSelectSearchResult}
+        onGoEurope={handleGoEurope}
+        onOpenWildfires={handleOpenWildfires}
+        onFocusLegend={handleFocusLegend}
       />
 
-      {effisBurnedAreaLoading && (
-        <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
-          {t.incidents.satelliteLookupLoading}
-        </div>
-      )}
+      <div
+        className="absolute inset-x-0 bottom-0"
+        style={{ top: "var(--app-header-height)" }}
+      >
+        <MapClient
+          showEurozone={showEurozone}
+          showNonEurozone={showNonEurozone}
+          showCandidates={showCandidates}
+          showSchengenNonEU={showSchengenNonEU}
+          selectedCountryCode={selectedCountryCode}
+          onCountrySelect={handleCountrySelect}
+          wildfireIncidents={wildfireIncidents}
+          showWildfires={showWildfires}
+          onWildfireSelect={handleWildfireSelect}
+          showSatelliteActiveFires={showSatelliteActiveFires}
+          showSatelliteBurnedAreas={showSatelliteBurnedAreas}
+          onEffisBurnedAreaSelect={(burnedArea) => {
+            setSelectedEffisBurnedArea(burnedArea);
 
-      {(firmsLoadingOverlay || firmsUnavailableMessage) && (
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
-          {firmsLoadingOverlay
-            ? t.incidents.firmsLoading
-            : t.incidents.firmsTemporarilyUnavailable}
-        </div>
-      )}
+            if (burnedArea) {
+              setSelectedCountryCode(null);
+              setSelectedWildfireId(null);
+              clearTemporaryPlace();
+            }
+          }}
+          onEffisBurnedAreaLoadingChange={setEffisBurnedAreaLoading}
+          effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
+          selectedWildfireId={selectedWildfireId}
+          locale={locale}
+          firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
+          firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}
+          onEffisBurnedAreasAvailabilityChange={(unavailable) => {
+            if (unavailable) {
+              effisServiceFailedRef.current = true;
+              setEffisUnavailable(true);
+            }
+          }}
+          focusRequest={focusRequest}
+          temporaryMarker={
+            temporaryPlace
+              ? {
+                  longitude: temporaryPlace.longitude,
+                  latitude: temporaryPlace.latitude,
+                }
+              : null
+          }
+        />
+        <MapLegend
+          locale={locale}
+          highlight={legendHighlight}
+          showEurozone={showEurozone}
+          onToggleEurozone={setShowEurozone}
+          showNonEurozone={showNonEurozone}
+          onToggleNonEurozone={setShowNonEurozone}
+          showCandidates={showCandidates}
+          onToggleCandidates={setShowCandidates}
+          showSchengenNonEU={showSchengenNonEU}
+          onToggleSchengenNonEU={setShowSchengenNonEU}
+          showWildfires={showWildfires}
+          onToggleWildfires={setShowWildfires}
+          showSatelliteActiveFires={showSatelliteActiveFires}
+          onToggleSatelliteActiveFires={setShowSatelliteActiveFires}
+          showSatelliteBurnedAreas={showSatelliteBurnedAreas}
+          onToggleSatelliteBurnedAreas={setShowSatelliteBurnedAreas}
+        />
 
-      {(firmsHistoryLoadingOverlay || firmsHistoryUnavailableMessage) && (
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
-          {firmsHistoryLoadingOverlay
-            ? t.incidents.firmsHistoryLoading
-            : t.incidents.firmsHistoryUnavailable}
-        </div>
-      )}
+        {effisBurnedAreaLoading && (
+          <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
+            {t.incidents.satelliteLookupLoading}
+          </div>
+        )}
 
-      {showEffisUnavailableBanner && (
+        {(firmsLoadingOverlay || firmsUnavailableMessage) && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
+            {firmsLoadingOverlay
+              ? t.incidents.firmsLoading
+              : t.incidents.firmsTemporarilyUnavailable}
+          </div>
+        )}
+
+        {(firmsHistoryLoadingOverlay || firmsHistoryUnavailableMessage) && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
+            {firmsHistoryLoadingOverlay
+              ? t.incidents.firmsHistoryLoading
+              : t.incidents.firmsHistoryUnavailable}
+          </div>
+        )}
+
+        {showEffisUnavailableBanner && (
           <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/90 px-4 py-2 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
             {t.incidents.effisTemporarilyUnavailable}
           </div>
         )}
 
-      {showEffisUnavailableNasaShown && !showEffisUnavailableBanner && (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/70 px-3 py-1.5 text-center text-[10px] text-slate-300 shadow-lg backdrop-blur-md">
-          {t.incidents.effisUnavailableNasaShown}
-        </div>
-      )}
+        {showEffisUnavailableNasaShown && !showEffisUnavailableBanner && (
+          <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/70 px-3 py-1.5 text-center text-[10px] text-slate-300 shadow-lg backdrop-blur-md">
+            {t.incidents.effisUnavailableNasaShown}
+          </div>
+        )}
 
-      {selectedCountryCode && !selectedWildfire && !selectedEffisBurnedArea && (
-        <CountryInfoPanel
-          countryCode={selectedCountryCode}
-          locale={locale}
-          onClose={() => setSelectedCountryCode(null)}
-        />
-      )}
+        {selectedCountryCode && !selectedWildfire && !selectedEffisBurnedArea && (
+          <CountryInfoPanel
+            countryCode={selectedCountryCode}
+            locale={locale}
+            onClose={() => setSelectedCountryCode(null)}
+          />
+        )}
 
-      {selectedWildfire && !selectedEffisBurnedArea && (
-        <WildfireIncidentPanel
-          incident={selectedWildfire}
-          locale={locale}
-          snapshot={
-            selectedWildfireId
-              ? effisSnapshotsByIncidentId[selectedWildfireId] ?? null
-              : null
-          }
-          firmsSnapshot={
-            selectedWildfireId
-              ? firmsSnapshotsByIncidentId[selectedWildfireId] ?? null
-              : null
-          }
-          firmsSnapshotStatus={firmsSnapshotStatus}
-          firmsHistorySnapshot={
-            selectedWildfireId
-              ? firmsHistorySnapshotsByIncidentId[selectedWildfireId] ?? null
-              : null
-          }
-          onClose={() => setSelectedWildfireId(null)}
-        />
-      )}
+        {selectedWildfire && !selectedEffisBurnedArea && (
+          <WildfireIncidentPanel
+            incident={selectedWildfire}
+            locale={locale}
+            snapshot={
+              selectedWildfireId
+                ? effisSnapshotsByIncidentId[selectedWildfireId] ?? null
+                : null
+            }
+            firmsSnapshot={
+              selectedWildfireId
+                ? firmsSnapshotsByIncidentId[selectedWildfireId] ?? null
+                : null
+            }
+            firmsSnapshotStatus={firmsSnapshotStatus}
+            firmsHistorySnapshot={
+              selectedWildfireId
+                ? firmsHistorySnapshotsByIncidentId[selectedWildfireId] ?? null
+                : null
+            }
+            onClose={() => setSelectedWildfireId(null)}
+          />
+        )}
 
-      {selectedEffisBurnedArea && (
-        <EffisBurnedAreaPanel
-          burnedArea={selectedEffisBurnedArea}
-          locale={locale}
-          onClose={() => setSelectedEffisBurnedArea(null)}
-        />
-      )}
+        {selectedEffisBurnedArea && (
+          <EffisBurnedAreaPanel
+            burnedArea={selectedEffisBurnedArea}
+            locale={locale}
+            onClose={() => setSelectedEffisBurnedArea(null)}
+          />
+        )}
 
-      <div className="absolute right-4 top-4 z-10">
-        <label className="sr-only" htmlFor="map-language">
-          Language
-        </label>
-        <select
-          id="map-language"
-          value={locale}
-          onChange={(event) => setLocale(event.target.value as Locale)}
-          className="rounded-md border border-white/10 bg-slate-950/80 px-2 py-1 text-xs text-white outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-sky-400/70"
-        >
-          {supportedLocales.map((supportedLocale) => (
-            <option key={supportedLocale} value={supportedLocale}>
-              {languageNames.of(supportedLocale) ?? supportedLocale}
-            </option>
-          ))}
-        </select>
+        {temporaryPlace ? (
+          <TemporaryPlaceCard
+            place={temporaryPlace}
+            t={t}
+            onClose={clearTemporaryPlace}
+          />
+        ) : null}
       </div>
-    </>
+    </div>
   );
 }

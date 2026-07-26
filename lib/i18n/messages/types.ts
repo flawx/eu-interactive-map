@@ -91,4 +91,41 @@ export type Messages = {
     effisUnavailableNasaShown: string;
     firmsHistoryRefreshedAt: string;
   };
+  header: {
+    openMenu: string;
+    closeMenu: string;
+    openSearch: string;
+    language: string;
+  };
+  nav: {
+    menuTitle: string;
+    europe: string;
+    tourism: string;
+    security: string;
+    alerts: string;
+    energy: string;
+    comingSoon: string;
+    mapLegend: string;
+    currentWildfires: string;
+  };
+  search: {
+    placeholder: string;
+    resultsInApp: string;
+    searchThisPlace: string;
+    searching: string;
+    noResults: string;
+    serviceUnavailable: string;
+    recentHistory: string;
+    clearSearch: string;
+    osmAttribution: string;
+    groupCountriesCapitals: string;
+    groupInstitutions: string;
+    groupAlerts: string;
+    groupAppPlaces: string;
+    groupExternal: string;
+    closePlace: string;
+    placeType: string;
+    address: string;
+    source: string;
+  };
 };
