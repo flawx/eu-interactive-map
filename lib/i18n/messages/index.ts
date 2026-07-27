@@ -24,14 +24,51 @@ import { sk } from "./sk";
 import { sl } from "./sl";
 import { sv } from "./sv";
 import type { Messages } from "./types";
+import { mountainTranslations } from "./mountainTranslations";
 
 export function getMessages(locale: Locale): Messages {
   const localized = rawMessages[locale] as Partial<Messages> & typeof en;
+  const mountain = mountainTranslations[locale];
   return {
     ...en,
     ...localized,
-    legend: { ...en.legend, ...localized.legend },
-    search: { ...en.search, ...localized.search },
+    legend: {
+      ...en.legend,
+      ...localized.legend,
+      europeanMountainPlaces: mountain.layer,
+      europeanMountainPlacesDescription: mountain.group,
+      mountainSkiResort: mountain.ski,
+      mountainDestination: mountain.destination,
+      mountainIconicPeak: mountain.peak,
+      mountainRange: mountain.range,
+    },
+    search: {
+      ...en.search,
+      ...localized.search,
+      groupMountainPlaces: mountain.group,
+    },
+    mountainPanel: {
+      ...en.mountainPanel,
+      categories: {
+        ski_resort: mountain.ski,
+        mountain_destination: mountain.destination,
+        iconic_peak: mountain.peak,
+        mountain_range: mountain.range,
+      },
+      summitElevation: mountain.summitElevation,
+      baseElevation: mountain.baseElevation,
+      topElevation: mountain.topElevation,
+      seasonal: {
+        ...en.mountainPanel.seasonal,
+        winter: mountain.winter,
+        summer: mountain.summer,
+        year_round: mountain.yearRound,
+      },
+      liftStatus: mountain.liftStatus,
+      snowReport: mountain.snowReport,
+      officialWarning: mountain.warning,
+      detailsUnavailable: mountain.unavailable,
+    },
     borderCrossingPanel:
       localized.borderCrossingPanel ?? en.borderCrossingPanel,
     temporaryBorderControlPanel:

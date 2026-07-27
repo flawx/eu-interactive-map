@@ -18,6 +18,9 @@ import {
   type EuropeanHeritageLabelSite,
 } from "@/lib/tourism/europeanHeritageLabel";
 import { MAJOR_TOURIST_PLACES } from "@/lib/tourism/majorTouristPlaces";
+import {
+  getDisplayableMountainPlaces,
+} from "@/lib/tourism/europeanMountainDestinations";
 import { EUROPEAN_AIRPORTS } from "@/lib/transport/europeanAirports";
 import { EUROSTAR_STATIONS } from "@/lib/transport/eurostarNetwork";
 import {
@@ -35,6 +38,7 @@ export type MapSearchResultType =
   | "unesco_site"
   | "european_heritage_label"
   | "tourist_place"
+  | "mountain_place"
   | "airport"
   | "eurostar_station"
   | "border_crossing"
@@ -49,6 +53,7 @@ export type MapSearchCategory =
   | "unesco_sites"
   | "european_heritage_label_sites"
   | "tourist_places"
+  | "mountain_places"
   | "airports"
   | "international_stations"
   | "borders_and_controls"
@@ -75,6 +80,7 @@ export type MapSearchResult = {
   ehlSiteId?: string;
   ehlLocationId?: string;
   touristPlaceId?: string;
+  mountainPlaceId?: string;
   airportId?: string;
   eurostarStationId?: string;
   borderCrossingId?: string;
@@ -500,6 +506,51 @@ function buildTouristPlaceSearchResults(locale: Locale): MapSearchResult[] {
   });
 }
 
+/** One search entry per curated European mountain / ski place. */
+function buildMountainPlaceSearchResults(locale: Locale): MapSearchResult[] {
+  const t = getMessages(locale);
+
+  return getDisplayableMountainPlaces().map((place) => {
+    const primaryCountry = place.countryCodes[0] ?? "";
+    const countryName = primaryCountry
+      ? countryDisplayName(
+          primaryCountry === "EL" ? "GR" : primaryCountry,
+          locale,
+        )
+      : "";
+    const categoryLabel = t.mountainPanel.categories[place.category];
+
+    return {
+      id: `mountain-place:${place.id}`,
+      type: "mountain_place",
+      category: "mountain_places",
+      title: place.canonicalName,
+      subtitle: [place.cityOrRegion, countryName, categoryLabel]
+        .filter(Boolean)
+        .join(" · "),
+      longitude: place.longitude,
+      latitude: place.latitude,
+      icon: `mountain-${place.category}`,
+      countryCode: primaryCountry || undefined,
+      mountainPlaceId: place.id,
+      source: "local",
+      metadata: {
+        category: place.category,
+        searchText: [
+          place.canonicalName,
+          place.nativeName ?? "",
+          place.cityOrRegion,
+          place.mountainRange ?? "",
+          ...place.countryCodes,
+          countryName,
+          categoryLabel,
+          ...place.aliases,
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
 function buildAirportSearchResults(locale: Locale): MapSearchResult[] {
   return EUROPEAN_AIRPORTS.map((airport) => {
     const countryName = countryDisplayName(
@@ -867,6 +918,7 @@ function buildStaticLocalIndex(
   results.push(...buildUnescoSiteSearchResults(locale));
   results.push(...buildEuropeanHeritageLabelSearchResults(locale));
   results.push(...buildTouristPlaceSearchResults(locale));
+  results.push(...buildMountainPlaceSearchResults(locale));
   results.push(...buildAirportSearchResults(locale));
   results.push(...buildEurostarStationSearchResults(locale));
   results.push(...buildBorderCrossingSearchResults(locale));
@@ -967,6 +1019,7 @@ export function searchLocalIndex(
     "unesco_sites",
     "european_heritage_label_sites",
     "tourist_places",
+    "mountain_places",
     "airports",
     "international_stations",
     "borders_and_controls",

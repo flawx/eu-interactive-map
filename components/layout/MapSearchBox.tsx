@@ -72,6 +72,8 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
       return t.search.groupEuropeanHeritageLabel;
     case "tourist_places":
       return t.search.groupTouristPlaces;
+    case "mountain_places":
+      return t.search.groupMountainPlaces;
     case "airports":
       return t.search.groupAirports;
     case "international_stations":
@@ -167,6 +169,26 @@ function ResultIcon({
         aria-hidden="true"
       >
         {pictogram}
+      </span>
+    );
+  }
+
+  if (type === "mountain_place") {
+    const category = String(metadata?.category ?? "mountain_destination");
+    const colors: Record<string, string> = {
+      ski_resort: "#0284c7",
+      mountain_destination: "#166534",
+      iconic_peak: "#64748b",
+      mountain_range: "#7c3aed",
+    };
+    const color = colors[category] ?? "#0284c7";
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white text-white shadow-sm"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      >
+        <Mountain className="h-3 w-3" strokeWidth={2.25} />
       </span>
     );
   }

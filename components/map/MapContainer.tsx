@@ -51,6 +51,20 @@ import {
   type TouristCategoryFilters,
 } from "@/components/map/touristPlacesMapLayers";
 import {
+  buildMountainPlaceCollection,
+  createMountainPlaceIcon,
+  MOUNTAIN_CLUSTER_COUNT_LAYER_ID,
+  MOUNTAIN_CLUSTER_LAYER_ID,
+  MOUNTAIN_LABEL_LAYER_ID,
+  MOUNTAIN_PLACE_CATEGORIES,
+  MOUNTAIN_SELECTED_LAYER_ID,
+  MOUNTAIN_SOURCE_ID,
+  MOUNTAIN_SYMBOL_LAYER_ID,
+  mountainPlaceIconImageId,
+  mountainPlaceSelectionCaseExpression,
+  type MountainCategoryFilters,
+} from "@/components/map/mountainMapLayers";
+import {
   airportSelectionCaseExpression,
   buildAirportCollection,
   buildEurostarNetworkCollection,
@@ -845,6 +859,15 @@ export default function MapContainer({
   showTouristMountainDestination = true,
   selectedTouristPlaceId = null,
   onTouristPlaceSelect,
+  showEuropeanMountainPlaces = false,
+  mountainCategoryFilters = {
+    ski_resort: true,
+    mountain_destination: true,
+    iconic_peak: true,
+    mountain_range: true,
+  },
+  selectedMountainPlaceId = null,
+  onMountainPlaceSelect,
   showMajorEuropeanAirports = false,
   selectedAirportId = null,
   onAirportSelect,
@@ -921,6 +944,10 @@ export default function MapContainer({
   showTouristMountainDestination?: boolean;
   selectedTouristPlaceId?: string | null;
   onTouristPlaceSelect?: (placeId: string | null) => void;
+  showEuropeanMountainPlaces?: boolean;
+  mountainCategoryFilters?: MountainCategoryFilters;
+  selectedMountainPlaceId?: string | null;
+  onMountainPlaceSelect?: (placeId: string | null) => void;
   showMajorEuropeanAirports?: boolean;
   selectedAirportId?: string | null;
   onAirportSelect?: (airportId: string | null) => void;
@@ -1040,10 +1067,19 @@ export default function MapContainer({
   selectedTouristPlaceIdRef.current = selectedTouristPlaceId;
   const onTouristPlaceSelectRef = useRef(onTouristPlaceSelect);
   onTouristPlaceSelectRef.current = onTouristPlaceSelect;
+  const showEuropeanMountainPlacesRef = useRef(showEuropeanMountainPlaces);
+  showEuropeanMountainPlacesRef.current = showEuropeanMountainPlaces;
+  const mountainCategoryFiltersRef = useRef(mountainCategoryFilters);
+  mountainCategoryFiltersRef.current = mountainCategoryFilters;
+  const selectedMountainPlaceIdRef = useRef(selectedMountainPlaceId);
+  selectedMountainPlaceIdRef.current = selectedMountainPlaceId;
+  const onMountainPlaceSelectRef = useRef(onMountainPlaceSelect);
+  onMountainPlaceSelectRef.current = onMountainPlaceSelect;
   const onUnescoSiteSelectRef = useRef(onUnescoSiteSelect);
   onUnescoSiteSelectRef.current = onUnescoSiteSelect;
   const unescoPopupRef = useRef<Popup | null>(null);
   const touristPopupRef = useRef<Popup | null>(null);
+  const mountainPopupRef = useRef<Popup | null>(null);
   const showMajorEuropeanAirportsRef = useRef(showMajorEuropeanAirports);
   showMajorEuropeanAirportsRef.current = showMajorEuropeanAirports;
   const selectedAirportIdRef = useRef(selectedAirportId);
@@ -1526,6 +1562,42 @@ export default function MapContainer({
       }
     };
 
+    const handleMountainClusterClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const clusterId = feature?.properties?.cluster_id;
+      if (typeof clusterId !== "number") return;
+
+      const source = map.getSource(MOUNTAIN_SOURCE_ID) as
+        | GeoJSONSource
+        | undefined;
+      if (!source) return;
+
+      source
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          if (!feature?.geometry || feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          map.easeTo({
+            center: [lng, lat],
+            zoom,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
+            duration: 500,
+          });
+        })
+        .catch(() => {
+          // Ignore expansion-zoom lookup failures.
+        });
+    };
+
+    const handleMountainPlaceClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const placeId = feature?.properties?.placeId;
+      if (typeof placeId === "string") {
+        onMountainPlaceSelectRef.current?.(placeId);
+      }
+    };
+
     const handleAirportClusterClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
       const clusterId = feature?.properties?.cluster_id;
@@ -1929,6 +2001,49 @@ export default function MapContainer({
     const hideTouristPopup = () => {
       resetCursor();
       touristPopupRef.current?.remove();
+    };
+
+    const showMountainPopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+
+      const { displayName, cityOrRegion } = feature.properties ?? {};
+      if (typeof displayName !== "string") return;
+
+      const coordinates = feature.geometry.coordinates.slice() as [
+        number,
+        number,
+      ];
+
+      if (!mountainPopupRef.current) {
+        mountainPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 14,
+          className: "mountain-hover-popup",
+        });
+      }
+
+      mountainPopupRef.current
+        .setLngLat(coordinates)
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:180px;">${escapeHtml(
+            String(displayName),
+          )}</div>${
+            cityOrRegion
+              ? `<div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+                  String(cityOrRegion),
+                )}</div>`
+              : ""
+          }`,
+        )
+        .addTo(map);
+    };
+
+    const hideMountainPopup = () => {
+      resetCursor();
+      mountainPopupRef.current?.remove();
     };
 
     const handleEffisSnapshotClick = (event: MapLayerMouseEvent) => {
@@ -3331,6 +3446,158 @@ export default function MapContainer({
         });
       }
 
+      const mountainFilters: MountainCategoryFilters = {
+        ski_resort: mountainCategoryFiltersRef.current.ski_resort,
+        mountain_destination: mountainCategoryFiltersRef.current.mountain_destination,
+        iconic_peak: mountainCategoryFiltersRef.current.iconic_peak,
+        mountain_range: mountainCategoryFiltersRef.current.mountain_range,
+      };
+
+      if (!map.getSource(MOUNTAIN_SOURCE_ID)) {
+        map.addSource(MOUNTAIN_SOURCE_ID, {
+          type: "geojson",
+          data: buildMountainPlaceCollection(localeRef.current, mountainFilters),
+          promoteId: "placeId",
+          cluster: true,
+          clusterMaxZoom: 7,
+          clusterRadius: 44,
+        });
+      }
+
+      for (const category of MOUNTAIN_PLACE_CATEGORIES) {
+        const imageId = mountainPlaceIconImageId(category);
+        if (!map.hasImage(imageId)) {
+          map.addImage(imageId, createMountainPlaceIcon(category), {
+            pixelRatio: 2,
+          });
+        }
+      }
+
+      if (!map.getLayer(MOUNTAIN_CLUSTER_LAYER_ID)) {
+        map.addLayer({
+          id: MOUNTAIN_CLUSTER_LAYER_ID,
+          type: "circle",
+          source: MOUNTAIN_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showEuropeanMountainPlacesRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-color": "#0284c7",
+            "circle-opacity": 0.85,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              14,
+              10,
+              18,
+              50,
+              22,
+              200,
+              26,
+            ],
+          },
+        });
+      }
+
+      if (!map.getLayer(MOUNTAIN_CLUSTER_COUNT_LAYER_ID)) {
+        map.addLayer({
+          id: MOUNTAIN_CLUSTER_COUNT_LAYER_ID,
+          type: "symbol",
+          source: MOUNTAIN_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showEuropeanMountainPlacesRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+          },
+          paint: {
+            "text-color": "#ffffff",
+          },
+        });
+      }
+
+      if (!map.getLayer(MOUNTAIN_SELECTED_LAYER_ID)) {
+        map.addLayer({
+          id: MOUNTAIN_SELECTED_LAYER_ID,
+          type: "circle",
+          source: MOUNTAIN_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showEuropeanMountainPlacesRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-radius": mountainPlaceSelectionCaseExpression(
+              selectedMountainPlaceIdRef.current,
+              22,
+              0,
+            ),
+            "circle-color": "#7dd3fc",
+            "circle-opacity": 0.38,
+          },
+        });
+      }
+
+      if (!map.getLayer(MOUNTAIN_SYMBOL_LAYER_ID)) {
+        map.addLayer({
+          id: MOUNTAIN_SYMBOL_LAYER_ID,
+          type: "symbol",
+          source: MOUNTAIN_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showEuropeanMountainPlacesRef.current
+              ? "visible"
+              : "none",
+            "icon-image": ["get", "iconImageId"],
+            "icon-size": mountainPlaceSelectionCaseExpression(
+              selectedMountainPlaceIdRef.current,
+              1.15,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+          },
+        });
+      }
+
+      if (!map.getLayer(MOUNTAIN_LABEL_LAYER_ID)) {
+        map.addLayer({
+          id: MOUNTAIN_LABEL_LAYER_ID,
+          type: "symbol",
+          source: MOUNTAIN_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 7,
+          layout: {
+            visibility: showEuropeanMountainPlacesRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "displayName"],
+            "text-size": 11,
+            "text-offset": [0, 1.4],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#0369a1",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       if (!map.getSource("eurostar-network")) {
         map.addSource("eurostar-network", {
           type: "geojson",
@@ -3923,6 +4190,11 @@ export default function MapContainer({
         "tourist-places-labels",
         "tourist-clusters",
         "tourist-cluster-count",
+        MOUNTAIN_SELECTED_LAYER_ID,
+        MOUNTAIN_SYMBOL_LAYER_ID,
+        MOUNTAIN_LABEL_LAYER_ID,
+        MOUNTAIN_CLUSTER_LAYER_ID,
+        MOUNTAIN_CLUSTER_COUNT_LAYER_ID,
         "airport-clusters",
         "airport-cluster-count",
         "major-airport-selected",
@@ -3991,6 +4263,12 @@ export default function MapContainer({
       map.on("click", "tourist-places-symbol", handleTouristPlaceClick);
       map.on("mouseenter", "tourist-places-symbol", showTouristPopup);
       map.on("mouseleave", "tourist-places-symbol", hideTouristPopup);
+      map.on("click", MOUNTAIN_CLUSTER_LAYER_ID, handleMountainClusterClick);
+      map.on("mouseenter", MOUNTAIN_CLUSTER_LAYER_ID, setPointerCursor);
+      map.on("mouseleave", MOUNTAIN_CLUSTER_LAYER_ID, resetCursor);
+      map.on("click", MOUNTAIN_SYMBOL_LAYER_ID, handleMountainPlaceClick);
+      map.on("mouseenter", MOUNTAIN_SYMBOL_LAYER_ID, showMountainPopup);
+      map.on("mouseleave", MOUNTAIN_SYMBOL_LAYER_ID, hideMountainPopup);
       map.on("click", "airport-clusters", handleAirportClusterClick);
       map.on("mouseenter", "airport-clusters", setPointerCursor);
       map.on("mouseleave", "airport-clusters", resetCursor);
@@ -4091,6 +4369,13 @@ export default function MapContainer({
       map.off("mouseenter", "tourist-places-symbol", showTouristPopup);
       map.off("mouseleave", "tourist-places-symbol", hideTouristPopup);
       touristPopupRef.current?.remove();
+      map.off("click", MOUNTAIN_CLUSTER_LAYER_ID, handleMountainClusterClick);
+      map.off("mouseenter", MOUNTAIN_CLUSTER_LAYER_ID, setPointerCursor);
+      map.off("mouseleave", MOUNTAIN_CLUSTER_LAYER_ID, resetCursor);
+      map.off("click", MOUNTAIN_SYMBOL_LAYER_ID, handleMountainPlaceClick);
+      map.off("mouseenter", MOUNTAIN_SYMBOL_LAYER_ID, showMountainPopup);
+      map.off("mouseleave", MOUNTAIN_SYMBOL_LAYER_ID, hideMountainPopup);
+      mountainPopupRef.current?.remove();
       map.off("click", "airport-clusters", handleAirportClusterClick);
       map.off("mouseenter", "airport-clusters", setPointerCursor);
       map.off("mouseleave", "airport-clusters", resetCursor);
@@ -4651,6 +4936,59 @@ export default function MapContainer({
       );
     }
   }, [selectedTouristPlaceId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showEuropeanMountainPlaces ? "visible" : "none";
+    for (const layerId of [
+      MOUNTAIN_SELECTED_LAYER_ID,
+      MOUNTAIN_SYMBOL_LAYER_ID,
+      MOUNTAIN_LABEL_LAYER_ID,
+      MOUNTAIN_CLUSTER_LAYER_ID,
+      MOUNTAIN_CLUSTER_COUNT_LAYER_ID,
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showEuropeanMountainPlaces, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(MOUNTAIN_SOURCE_ID) as
+      | GeoJSONSource
+      | undefined;
+    if (!source) return;
+
+    source.setData(
+      buildMountainPlaceCollection(locale, mountainCategoryFilters),
+    );
+  }, [locale, mountainCategoryFilters, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer(MOUNTAIN_SELECTED_LAYER_ID)) {
+      map.setPaintProperty(
+        MOUNTAIN_SELECTED_LAYER_ID,
+        "circle-radius",
+        mountainPlaceSelectionCaseExpression(selectedMountainPlaceId, 22, 0),
+      );
+    }
+
+    if (map.getLayer(MOUNTAIN_SYMBOL_LAYER_ID)) {
+      map.setLayoutProperty(
+        MOUNTAIN_SYMBOL_LAYER_ID,
+        "icon-size",
+        mountainPlaceSelectionCaseExpression(selectedMountainPlaceId, 1.15, 1),
+      );
+    }
+  }, [selectedMountainPlaceId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;

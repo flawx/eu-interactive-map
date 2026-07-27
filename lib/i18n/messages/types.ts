@@ -47,6 +47,12 @@ export type Messages = {
     touristNaturalLandscape: string;
     touristCoastalDestination: string;
     touristMountainDestination: string;
+    europeanMountainPlaces: string;
+    europeanMountainPlacesDescription: string;
+    mountainSkiResort: string;
+    mountainDestination: string;
+    mountainIconicPeak: string;
+    mountainRange: string;
     internationalTransport: string;
     majorEuropeanAirports: string;
     majorEuropeanAirportsDescription: string;
@@ -266,6 +272,7 @@ export type Messages = {
     groupUnesco: string;
     groupEuropeanHeritageLabel: string;
     groupTouristPlaces: string;
+    groupMountainPlaces: string;
     groupAirports: string;
     groupInternationalStations: string;
     groupBordersAndControls: string;
@@ -501,6 +508,45 @@ export type Messages = {
       natural_landscape: string;
       coastal_destination: string;
       mountain_destination: string;
+    };
+  };
+  mountainPanel: {
+    badge: string;
+    overview: string;
+    altitudeGeography: string;
+    seasonality: string;
+    officialInformation: string;
+    links: string;
+    sourcesCredits: string;
+    summitElevation: string;
+    resortElevation: string;
+    baseElevation: string;
+    topElevation: string;
+    mountainRange: string;
+    seasonal: Record<"winter" | "summer" | "year_round" | "unknown", string>;
+    officialWebsite: string;
+    tourismWebsite: string;
+    liftStatus: string;
+    snowReport: string;
+    officialWarning: string;
+    detailsUnavailable: string;
+    presentationUnavailable: string;
+    loadingDetails: string;
+    photoCredit: string;
+    previousPhoto: string;
+    nextPhoto: string;
+    openTouristPlace: string;
+    openUnescoSite: string;
+    openCountry: string;
+    sourceOfficial: string;
+    sourceTourism: string;
+    sourceWikipedia: string;
+    sourceCommons: string;
+    categories: {
+      ski_resort: string;
+      mountain_destination: string;
+      iconic_peak: string;
+      mountain_range: string;
     };
   };
   airportPanel: {

@@ -18,6 +18,7 @@ import type {
   MapBaseMode,
   MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
+import type { MountainCategoryFilters } from "@/components/map/mountainMapLayers";
 import type { UserLocation } from "@/lib/map/userLocation";
 import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
 
@@ -58,6 +59,10 @@ type MapClientProps = {
   showTouristMountainDestination: boolean;
   selectedTouristPlaceId: string | null;
   onTouristPlaceSelect?: (placeId: string | null) => void;
+  showEuropeanMountainPlaces: boolean;
+  mountainCategoryFilters: MountainCategoryFilters;
+  selectedMountainPlaceId: string | null;
+  onMountainPlaceSelect?: (placeId: string | null) => void;
   showMajorEuropeanAirports: boolean;
   selectedAirportId: string | null;
   onAirportSelect?: (airportId: string | null) => void;
@@ -144,6 +149,10 @@ export default function MapClient({
   showTouristMountainDestination,
   selectedTouristPlaceId,
   onTouristPlaceSelect,
+  showEuropeanMountainPlaces,
+  mountainCategoryFilters,
+  selectedMountainPlaceId,
+  onMountainPlaceSelect,
   showMajorEuropeanAirports,
   selectedAirportId,
   onAirportSelect,
@@ -222,6 +231,10 @@ export default function MapClient({
       showTouristMountainDestination={showTouristMountainDestination}
       selectedTouristPlaceId={selectedTouristPlaceId}
       onTouristPlaceSelect={onTouristPlaceSelect}
+      showEuropeanMountainPlaces={showEuropeanMountainPlaces}
+      mountainCategoryFilters={mountainCategoryFilters}
+      selectedMountainPlaceId={selectedMountainPlaceId}
+      onMountainPlaceSelect={onMountainPlaceSelect}
       showMajorEuropeanAirports={showMajorEuropeanAirports}
       selectedAirportId={selectedAirportId}
       onAirportSelect={onAirportSelect}

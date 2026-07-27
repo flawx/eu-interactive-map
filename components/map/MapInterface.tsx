@@ -14,6 +14,7 @@ import MapLegend from "@/components/map/MapLegend";
 import UnescoSitePanel from "@/components/tourism/UnescoSitePanel";
 import EuropeanHeritageLabelPanel from "@/components/tourism/EuropeanHeritageLabelPanel";
 import TouristPlacePanel from "@/components/tourism/TouristPlacePanel";
+import MountainPlacePanel from "@/components/tourism/MountainPlacePanel";
 import AirportPanel from "@/components/transport/AirportPanel";
 import EurostarStationPanel from "@/components/transport/EurostarStationPanel";
 import BorderCrossingPointPanel from "@/components/security/BorderCrossingPointPanel";
@@ -34,6 +35,10 @@ import {
   getMajorTouristPlaceById,
   type TouristPlaceCategory,
 } from "@/lib/tourism/majorTouristPlaces";
+import {
+  getEuropeanMountainPlaceById,
+  type MountainPlaceCategory,
+} from "@/lib/tourism/europeanMountainDestinations";
 import { getEuropeanAirportById } from "@/lib/transport/europeanAirports";
 import {
   getActiveTemporaryControls,
@@ -230,6 +235,24 @@ export default function MapInterface() {
   const [selectedTouristPlaceId, setSelectedTouristPlaceId] = useState<
     string | null
   >(null);
+  const [showEuropeanMountainPlaces, setShowEuropeanMountainPlaces] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.europeanMountainPlaces,
+  );
+  const [showMountainSkiResorts, setShowMountainSkiResorts] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.mountainSkiResort,
+  );
+  const [showMountainDestinations, setShowMountainDestinations] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.mountainDestination,
+  );
+  const [showMountainIconicPeaks, setShowMountainIconicPeaks] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.mountainIconicPeak,
+  );
+  const [showMountainRanges, setShowMountainRanges] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.mountainRange,
+  );
+  const [selectedMountainPlaceId, setSelectedMountainPlaceId] = useState<
+    string | null
+  >(null);
   const [showMajorEuropeanAirports, setShowMajorEuropeanAirports] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.majorEuropeanAirports,
   );
@@ -407,6 +430,11 @@ export default function MapInterface() {
     setShowTouristNaturalLandscape(prefs.touristNaturalLandscape);
     setShowTouristCoastalDestination(prefs.touristCoastalDestination);
     setShowTouristMountainDestination(prefs.touristMountainDestination);
+    setShowEuropeanMountainPlaces(prefs.europeanMountainPlaces);
+    setShowMountainSkiResorts(prefs.mountainSkiResort);
+    setShowMountainDestinations(prefs.mountainDestination);
+    setShowMountainIconicPeaks(prefs.mountainIconicPeak);
+    setShowMountainRanges(prefs.mountainRange);
     setShowMajorEuropeanAirports(prefs.majorEuropeanAirports);
     setShowEurostarStations(prefs.eurostarStations);
     setShowEurostarRoutes(prefs.eurostarRoutes);
@@ -485,6 +513,11 @@ export default function MapInterface() {
       touristNaturalLandscape: showTouristNaturalLandscape,
       touristCoastalDestination: showTouristCoastalDestination,
       touristMountainDestination: showTouristMountainDestination,
+      europeanMountainPlaces: showEuropeanMountainPlaces,
+      mountainSkiResort: showMountainSkiResorts,
+      mountainDestination: showMountainDestinations,
+      mountainIconicPeak: showMountainIconicPeaks,
+      mountainRange: showMountainRanges,
       majorEuropeanAirports: showMajorEuropeanAirports,
       eurostarStations: showEurostarStations,
       eurostarRoutes: showEurostarRoutes,
@@ -519,6 +552,11 @@ export default function MapInterface() {
     showTouristNaturalLandscape,
     showTouristCoastalDestination,
     showTouristMountainDestination,
+    showEuropeanMountainPlaces,
+    showMountainSkiResorts,
+    showMountainDestinations,
+    showMountainIconicPeaks,
+    showMountainRanges,
     showMajorEuropeanAirports,
     showEurostarStations,
     showEurostarRoutes,
@@ -554,6 +592,11 @@ export default function MapInterface() {
       touristNaturalLandscape: showTouristNaturalLandscape,
       touristCoastalDestination: showTouristCoastalDestination,
       touristMountainDestination: showTouristMountainDestination,
+      europeanMountainPlaces: showEuropeanMountainPlaces,
+      mountainSkiResort: showMountainSkiResorts,
+      mountainDestination: showMountainDestinations,
+      mountainIconicPeak: showMountainIconicPeaks,
+      mountainRange: showMountainRanges,
       majorEuropeanAirports: showMajorEuropeanAirports,
       eurostarStations: showEurostarStations,
       eurostarRoutes: showEurostarRoutes,
@@ -587,6 +630,11 @@ export default function MapInterface() {
       showTouristNaturalLandscape,
       showTouristCoastalDestination,
       showTouristMountainDestination,
+      showEuropeanMountainPlaces,
+      showMountainSkiResorts,
+      showMountainDestinations,
+      showMountainIconicPeaks,
+      showMountainRanges,
       showMajorEuropeanAirports,
       showEurostarStations,
       showEurostarRoutes,
@@ -629,6 +677,11 @@ export default function MapInterface() {
       touristNaturalLandscape: setShowTouristNaturalLandscape,
       touristCoastalDestination: setShowTouristCoastalDestination,
       touristMountainDestination: setShowTouristMountainDestination,
+      europeanMountainPlaces: setShowEuropeanMountainPlaces,
+      mountainSkiResort: setShowMountainSkiResorts,
+      mountainDestination: setShowMountainDestinations,
+      mountainIconicPeak: setShowMountainIconicPeaks,
+      mountainRange: setShowMountainRanges,
       majorEuropeanAirports: setShowMajorEuropeanAirports,
       eurostarStations: setShowEurostarStations,
       eurostarRoutes: setShowEurostarRoutes,
@@ -1517,8 +1570,13 @@ export default function MapInterface() {
     setSelectedEhlLocationId(null);
   };
 
+  const clearMountainPlaceSelection = () => {
+    setSelectedMountainPlaceId(null);
+  };
+
   const clearTouristPlaceSelection = () => {
     setSelectedTouristPlaceId(null);
+    clearMountainPlaceSelection();
   };
 
   const clearAirportSelection = () => {
@@ -1932,6 +1990,45 @@ export default function MapInterface() {
     });
   };
 
+  const enableMountainCategory = (category: MountainPlaceCategory) => {
+    if (category === "ski_resort") setShowMountainSkiResorts(true);
+    if (category === "mountain_destination") setShowMountainDestinations(true);
+    if (category === "iconic_peak") setShowMountainIconicPeaks(true);
+    if (category === "mountain_range") setShowMountainRanges(true);
+  };
+
+  const handleMountainPlaceSelect = (placeId: string | null) => {
+    if (!placeId) {
+      clearMountainPlaceSelection();
+      return;
+    }
+    const place = getEuropeanMountainPlaceById(placeId);
+    if (!place) return;
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearTemporaryPlace();
+
+    setShowEuropeanMountainPlaces(true);
+    enableMountainCategory(place.category);
+    setSelectedMountainPlaceId(placeId);
+    requestFocus({
+      kind: "point",
+      longitude: place.longitude,
+      latitude: place.latitude,
+      zoom: place.category === "mountain_range" ? 9 : 11,
+    });
+  };
+
   const handleAirportSelect = (airportId: string | null) => {
     if (!airportId) {
       clearAirportSelection();
@@ -2163,6 +2260,11 @@ export default function MapInterface() {
       return;
     }
 
+    if (result.type === "mountain_place" && result.mountainPlaceId) {
+      handleMountainPlaceSelect(result.mountainPlaceId);
+      return;
+    }
+
     if (result.type === "airport" && result.airportId) {
       handleAirportSelect(result.airportId);
       return;
@@ -2263,6 +2365,15 @@ export default function MapInterface() {
           showTouristMountainDestination={showTouristMountainDestination}
           selectedTouristPlaceId={selectedTouristPlaceId}
           onTouristPlaceSelect={handleTouristPlaceSelect}
+          showEuropeanMountainPlaces={showEuropeanMountainPlaces}
+          mountainCategoryFilters={{
+            ski_resort: showMountainSkiResorts,
+            mountain_destination: showMountainDestinations,
+            iconic_peak: showMountainIconicPeaks,
+            mountain_range: showMountainRanges,
+          }}
+          selectedMountainPlaceId={selectedMountainPlaceId}
+          onMountainPlaceSelect={handleMountainPlaceSelect}
           showMajorEuropeanAirports={showMajorEuropeanAirports}
           selectedAirportId={selectedAirportId}
           onAirportSelect={handleAirportSelect}
@@ -2517,6 +2628,7 @@ export default function MapInterface() {
           )}
 
         {selectedTouristPlaceId &&
+          !selectedMountainPlaceId &&
           !selectedCapitalId &&
           !selectedInstitutionId &&
           !selectedUnescoSiteId &&
@@ -2536,6 +2648,29 @@ export default function MapInterface() {
                 clearTouristPlaceSelection();
                 handleUnescoSiteSelect(unescoSiteId);
               }}
+            />
+          )}
+
+        {selectedMountainPlaceId &&
+          !selectedTouristPlaceId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <MountainPlacePanel
+              placeId={selectedMountainPlaceId}
+              locale={locale}
+              onClose={clearMountainPlaceSelection}
+              onOpenTouristPlace={handleTouristPlaceSelect}
+              onOpenUnescoSite={handleUnescoSiteSelect}
+              onOpenCountry={handleCountrySelect}
             />
           )}
 

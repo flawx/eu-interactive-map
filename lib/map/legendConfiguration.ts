@@ -278,6 +278,44 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
               },
             ],
           },
+          {
+            id: "european-mountain-places",
+            preferenceKey: "europeanMountainPlaces",
+            titleKey: { ns: "legend", key: "europeanMountainPlaces" },
+            descriptionKey: {
+              ns: "legend",
+              key: "europeanMountainPlacesDescription",
+            },
+            icon: "mountain",
+            color: "#0284c7",
+            swatchClassName: "rounded-full",
+            filters: [
+              {
+                id: "mountain-ski",
+                preferenceKey: "mountainSkiResort",
+                titleKey: { ns: "legend", key: "mountainSkiResort" },
+                color: "#0284c7",
+              },
+              {
+                id: "mountain-dest",
+                preferenceKey: "mountainDestination",
+                titleKey: { ns: "legend", key: "mountainDestination" },
+                color: "#166534",
+              },
+              {
+                id: "mountain-peak",
+                preferenceKey: "mountainIconicPeak",
+                titleKey: { ns: "legend", key: "mountainIconicPeak" },
+                color: "#64748b",
+              },
+              {
+                id: "mountain-range",
+                preferenceKey: "mountainRange",
+                titleKey: { ns: "legend", key: "mountainRange" },
+                color: "#7c3aed",
+              },
+            ],
+          },
         ],
       },
       {

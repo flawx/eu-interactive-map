@@ -18,6 +18,11 @@ export type MapLayerPreferences = {
   touristNaturalLandscape: boolean;
   touristCoastalDestination: boolean;
   touristMountainDestination: boolean;
+  europeanMountainPlaces: boolean;
+  mountainSkiResort: boolean;
+  mountainDestination: boolean;
+  mountainIconicPeak: boolean;
+  mountainRange: boolean;
   majorEuropeanAirports: boolean;
   eurostarStations: boolean;
   eurostarRoutes: boolean;
@@ -52,6 +57,11 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   touristNaturalLandscape: true,
   touristCoastalDestination: true,
   touristMountainDestination: true,
+  europeanMountainPlaces: false,
+  mountainSkiResort: true,
+  mountainDestination: true,
+  mountainIconicPeak: true,
+  mountainRange: true,
   majorEuropeanAirports: false,
   eurostarStations: false,
   eurostarRoutes: false,
@@ -89,6 +99,11 @@ const LAYER_KEYS = [
   "touristNaturalLandscape",
   "touristCoastalDestination",
   "touristMountainDestination",
+  "europeanMountainPlaces",
+  "mountainSkiResort",
+  "mountainDestination",
+  "mountainIconicPeak",
+  "mountainRange",
   "majorEuropeanAirports",
   "eurostarStations",
   "eurostarRoutes",
@@ -166,6 +181,11 @@ export function saveMapLayerPreferences(
       touristMountainDestination: Boolean(
         preferences.touristMountainDestination,
       ),
+      europeanMountainPlaces: Boolean(preferences.europeanMountainPlaces),
+      mountainSkiResort: Boolean(preferences.mountainSkiResort),
+      mountainDestination: Boolean(preferences.mountainDestination),
+      mountainIconicPeak: Boolean(preferences.mountainIconicPeak),
+      mountainRange: Boolean(preferences.mountainRange),
       majorEuropeanAirports: Boolean(preferences.majorEuropeanAirports),
       eurostarStations: Boolean(preferences.eurostarStations),
       eurostarRoutes: Boolean(preferences.eurostarRoutes),
