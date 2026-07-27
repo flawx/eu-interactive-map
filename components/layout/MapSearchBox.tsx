@@ -77,10 +77,14 @@ function unescoCategoryColor(category: unknown): string {
   }
 }
 
-function unescoCategoryIcon(category: unknown) {
-  if (category === "natural") return Leaf;
-  if (category === "mixed") return Mountain;
-  return Landmark;
+function UnescoCategoryPictogram({ category }: { category: unknown }) {
+  if (category === "natural") {
+    return <Leaf className="h-3 w-3" strokeWidth={2.25} />;
+  }
+  if (category === "mixed") {
+    return <Mountain className="h-3 w-3" strokeWidth={2.25} />;
+  }
+  return <Landmark className="h-3 w-3" strokeWidth={2.25} />;
 }
 
 function ResultIcon({
@@ -94,14 +98,13 @@ function ResultIcon({
 }) {
   if (type === "unesco_site") {
     const color = unescoCategoryColor(metadata?.category);
-    const Icon = unescoCategoryIcon(metadata?.category);
     return (
       <span
         className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-white text-white shadow-sm"
         style={{ backgroundColor: color }}
         aria-hidden="true"
       >
-        <Icon className="h-3 w-3" strokeWidth={2.25} />
+        <UnescoCategoryPictogram category={metadata?.category} />
       </span>
     );
   }
