@@ -36,6 +36,15 @@ export type Messages = {
     unescoNatural: string;
     unescoMixed: string;
     unescoAttribution: string;
+    majorTouristPlaces: string;
+    majorTouristPlacesDescription: string;
+    touristLandmark: string;
+    touristHistoricArea: string;
+    touristMuseum: string;
+    touristParkGarden: string;
+    touristNaturalLandscape: string;
+    touristCoastalDestination: string;
+    touristMountainDestination: string;
     internationalTransport: string;
     majorEuropeanAirports: string;
     majorEuropeanAirportsDescription: string;
@@ -220,6 +229,7 @@ export type Messages = {
     groupEuCapitals: string;
     groupInstitutions: string;
     groupUnesco: string;
+    groupTouristPlaces: string;
     groupAirports: string;
     groupInternationalStations: string;
     groupAlerts: string;
@@ -391,6 +401,41 @@ export type Messages = {
     nextPhoto: string;
     hectares: string;
     notInDanger: string;
+  };
+  touristPlacePanel: {
+    badge: string;
+    overview: string;
+    location: string;
+    category: string;
+    cityOrRegion: string;
+    country: string;
+    officialLinks: string;
+    officialWebsite: string;
+    tourismWebsite: string;
+    openUnescoSite: string;
+    officialUnescoPage: string;
+    wikipedia: string;
+    sources: string;
+    sourceOfficial: string;
+    sourceTourism: string;
+    sourceUnesco: string;
+    sourceWikipedia: string;
+    sourceCommons: string;
+    detailsUnavailable: string;
+    presentationUnavailable: string;
+    loadingDetails: string;
+    photoCredit: string;
+    previousPhoto: string;
+    nextPhoto: string;
+    categories: {
+      landmark: string;
+      historic_area: string;
+      museum: string;
+      park_garden: string;
+      natural_landscape: string;
+      coastal_destination: string;
+      mountain_destination: string;
+    };
   };
   airportPanel: {
     badge: string;

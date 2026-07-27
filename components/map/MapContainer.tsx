@@ -30,6 +30,14 @@ import {
   type UnescoSiteCategory,
 } from "@/lib/tourism/unescoWorldHeritage";
 import {
+  buildTouristPlaceCollection,
+  createTouristPlaceIcon,
+  TOURIST_PLACE_CATEGORIES,
+  touristPlaceIconImageId,
+  touristPlaceSelectionCaseExpression,
+  type TouristCategoryFilters,
+} from "@/components/map/touristPlacesMapLayers";
+import {
   airportSelectionCaseExpression,
   buildAirportCollection,
   buildEurostarNetworkCollection,
@@ -801,6 +809,16 @@ export default function MapContainer({
   showUnescoMixed = true,
   selectedUnescoSiteId = null,
   onUnescoSiteSelect,
+  showMajorTouristPlaces = false,
+  showTouristLandmark = true,
+  showTouristHistoricArea = true,
+  showTouristMuseum = true,
+  showTouristParkGarden = true,
+  showTouristNaturalLandscape = true,
+  showTouristCoastalDestination = true,
+  showTouristMountainDestination = true,
+  selectedTouristPlaceId = null,
+  onTouristPlaceSelect,
   showMajorEuropeanAirports = false,
   selectedAirportId = null,
   onAirportSelect,
@@ -852,6 +870,16 @@ export default function MapContainer({
   showUnescoMixed?: boolean;
   selectedUnescoSiteId?: string | null;
   onUnescoSiteSelect?: (siteId: string | null) => void;
+  showMajorTouristPlaces?: boolean;
+  showTouristLandmark?: boolean;
+  showTouristHistoricArea?: boolean;
+  showTouristMuseum?: boolean;
+  showTouristParkGarden?: boolean;
+  showTouristNaturalLandscape?: boolean;
+  showTouristCoastalDestination?: boolean;
+  showTouristMountainDestination?: boolean;
+  selectedTouristPlaceId?: string | null;
+  onTouristPlaceSelect?: (placeId: string | null) => void;
   showMajorEuropeanAirports?: boolean;
   selectedAirportId?: string | null;
   onAirportSelect?: (airportId: string | null) => void;
@@ -927,9 +955,34 @@ export default function MapContainer({
   showUnescoMixedRef.current = showUnescoMixed;
   const selectedUnescoSiteIdRef = useRef(selectedUnescoSiteId);
   selectedUnescoSiteIdRef.current = selectedUnescoSiteId;
+  const showMajorTouristPlacesRef = useRef(showMajorTouristPlaces);
+  showMajorTouristPlacesRef.current = showMajorTouristPlaces;
+  const showTouristLandmarkRef = useRef(showTouristLandmark);
+  showTouristLandmarkRef.current = showTouristLandmark;
+  const showTouristHistoricAreaRef = useRef(showTouristHistoricArea);
+  showTouristHistoricAreaRef.current = showTouristHistoricArea;
+  const showTouristMuseumRef = useRef(showTouristMuseum);
+  showTouristMuseumRef.current = showTouristMuseum;
+  const showTouristParkGardenRef = useRef(showTouristParkGarden);
+  showTouristParkGardenRef.current = showTouristParkGarden;
+  const showTouristNaturalLandscapeRef = useRef(showTouristNaturalLandscape);
+  showTouristNaturalLandscapeRef.current = showTouristNaturalLandscape;
+  const showTouristCoastalDestinationRef = useRef(
+    showTouristCoastalDestination,
+  );
+  showTouristCoastalDestinationRef.current = showTouristCoastalDestination;
+  const showTouristMountainDestinationRef = useRef(
+    showTouristMountainDestination,
+  );
+  showTouristMountainDestinationRef.current = showTouristMountainDestination;
+  const selectedTouristPlaceIdRef = useRef(selectedTouristPlaceId);
+  selectedTouristPlaceIdRef.current = selectedTouristPlaceId;
+  const onTouristPlaceSelectRef = useRef(onTouristPlaceSelect);
+  onTouristPlaceSelectRef.current = onTouristPlaceSelect;
   const onUnescoSiteSelectRef = useRef(onUnescoSiteSelect);
   onUnescoSiteSelectRef.current = onUnescoSiteSelect;
   const unescoPopupRef = useRef<Popup | null>(null);
+  const touristPopupRef = useRef<Popup | null>(null);
   const showMajorEuropeanAirportsRef = useRef(showMajorEuropeanAirports);
   showMajorEuropeanAirportsRef.current = showMajorEuropeanAirports;
   const selectedAirportIdRef = useRef(selectedAirportId);
@@ -1306,6 +1359,42 @@ export default function MapContainer({
       }
     };
 
+    const handleTouristClusterClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const clusterId = feature?.properties?.cluster_id;
+      if (typeof clusterId !== "number") return;
+
+      const source = map.getSource(
+        "major-tourist-places",
+      ) as GeoJSONSource | undefined;
+      if (!source) return;
+
+      source
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          if (!feature?.geometry || feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          map.easeTo({
+            center: [lng, lat],
+            zoom,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
+            duration: 500,
+          });
+        })
+        .catch(() => {
+          // Ignore expansion-zoom lookup failures.
+        });
+    };
+
+    const handleTouristPlaceClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const placeId = feature?.properties?.placeId;
+      if (typeof placeId === "string") {
+        onTouristPlaceSelectRef.current?.(placeId);
+      }
+    };
+
     const handleAirportClusterClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
       const clusterId = feature?.properties?.cluster_id;
@@ -1432,6 +1521,48 @@ export default function MapContainer({
     const hideUnescoPopup = () => {
       resetCursor();
       unescoPopupRef.current?.remove();
+    };
+
+    const showTouristPopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+
+      const { displayName, categoryLabel, cityOrRegion } =
+        feature.properties ?? {};
+      if (typeof displayName !== "string") return;
+
+      const coordinates = feature.geometry.coordinates.slice() as [
+        number,
+        number,
+      ];
+
+      if (!touristPopupRef.current) {
+        touristPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 14,
+          className: "tourist-hover-popup",
+        });
+      }
+
+      touristPopupRef.current
+        .setLngLat(coordinates)
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:180px;">${escapeHtml(
+            String(displayName),
+          )}</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+            String(categoryLabel ?? ""),
+          )}${
+            cityOrRegion ? ` · ${escapeHtml(String(cityOrRegion))}` : ""
+          }</div>`,
+        )
+        .addTo(map);
+    };
+
+    const hideTouristPopup = () => {
+      resetCursor();
+      touristPopupRef.current?.remove();
     };
 
     const handleEffisSnapshotClick = (event: MapLayerMouseEvent) => {
@@ -2517,6 +2648,151 @@ export default function MapContainer({
         });
       }
 
+      const touristFilters: TouristCategoryFilters = {
+        landmark: showTouristLandmarkRef.current,
+        historic_area: showTouristHistoricAreaRef.current,
+        museum: showTouristMuseumRef.current,
+        park_garden: showTouristParkGardenRef.current,
+        natural_landscape: showTouristNaturalLandscapeRef.current,
+        coastal_destination: showTouristCoastalDestinationRef.current,
+        mountain_destination: showTouristMountainDestinationRef.current,
+      };
+
+      if (!map.getSource("major-tourist-places")) {
+        map.addSource("major-tourist-places", {
+          type: "geojson",
+          data: buildTouristPlaceCollection(localeRef.current, touristFilters),
+          promoteId: "placeId",
+          cluster: true,
+          clusterMaxZoom: 7,
+          clusterRadius: 45,
+        });
+      }
+
+      for (const category of TOURIST_PLACE_CATEGORIES) {
+        const imageId = touristPlaceIconImageId(category);
+        if (!map.hasImage(imageId)) {
+          map.addImage(imageId, createTouristPlaceIcon(category), {
+            pixelRatio: 2,
+          });
+        }
+      }
+
+      if (!map.getLayer("tourist-clusters")) {
+        map.addLayer({
+          id: "tourist-clusters",
+          type: "circle",
+          source: "major-tourist-places",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showMajorTouristPlacesRef.current ? "visible" : "none",
+          },
+          paint: {
+            "circle-color": "#c2410c",
+            "circle-opacity": 0.85,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              14,
+              10,
+              18,
+              50,
+              22,
+              200,
+              26,
+            ],
+          },
+        });
+      }
+
+      if (!map.getLayer("tourist-cluster-count")) {
+        map.addLayer({
+          id: "tourist-cluster-count",
+          type: "symbol",
+          source: "major-tourist-places",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showMajorTouristPlacesRef.current ? "visible" : "none",
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+          },
+          paint: {
+            "text-color": "#ffffff",
+          },
+        });
+      }
+
+      if (!map.getLayer("tourist-places-halo")) {
+        map.addLayer({
+          id: "tourist-places-halo",
+          type: "circle",
+          source: "major-tourist-places",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showMajorTouristPlacesRef.current ? "visible" : "none",
+          },
+          paint: {
+            "circle-radius": touristPlaceSelectionCaseExpression(
+              selectedTouristPlaceIdRef.current,
+              22,
+              0,
+            ),
+            "circle-color": "#facc15",
+            "circle-opacity": 0.3,
+          },
+        });
+      }
+
+      if (!map.getLayer("tourist-places-symbol")) {
+        map.addLayer({
+          id: "tourist-places-symbol",
+          type: "symbol",
+          source: "major-tourist-places",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showMajorTouristPlacesRef.current ? "visible" : "none",
+            "icon-image": ["get", "iconImageId"],
+            "icon-size": touristPlaceSelectionCaseExpression(
+              selectedTouristPlaceIdRef.current,
+              1.15,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+          },
+        });
+      }
+
+      if (!map.getLayer("tourist-places-labels")) {
+        map.addLayer({
+          id: "tourist-places-labels",
+          type: "symbol",
+          source: "major-tourist-places",
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 7,
+          layout: {
+            visibility: showMajorTouristPlacesRef.current ? "visible" : "none",
+            "text-field": ["get", "displayName"],
+            "text-size": 11,
+            "text-offset": [0, 1.4],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#9a3412",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       if (!map.getSource("eurostar-network")) {
         map.addSource("eurostar-network", {
           type: "geojson",
@@ -2806,6 +3082,11 @@ export default function MapContainer({
         "unesco-world-heritage-labels",
         "unesco-clusters",
         "unesco-cluster-count",
+        "tourist-places-halo",
+        "tourist-places-symbol",
+        "tourist-places-labels",
+        "tourist-clusters",
+        "tourist-cluster-count",
         "airport-clusters",
         "airport-cluster-count",
         "major-airport-selected",
@@ -2857,6 +3138,12 @@ export default function MapContainer({
       map.on("click", "unesco-world-heritage-symbol", handleUnescoPointClick);
       map.on("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
       map.on("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
+      map.on("click", "tourist-clusters", handleTouristClusterClick);
+      map.on("mouseenter", "tourist-clusters", setPointerCursor);
+      map.on("mouseleave", "tourist-clusters", resetCursor);
+      map.on("click", "tourist-places-symbol", handleTouristPlaceClick);
+      map.on("mouseenter", "tourist-places-symbol", showTouristPopup);
+      map.on("mouseleave", "tourist-places-symbol", hideTouristPopup);
       map.on("click", "airport-clusters", handleAirportClusterClick);
       map.on("mouseenter", "airport-clusters", setPointerCursor);
       map.on("mouseleave", "airport-clusters", resetCursor);
@@ -2931,6 +3218,13 @@ export default function MapContainer({
       map.off("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
       map.off("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
       unescoPopupRef.current?.remove();
+      map.off("click", "tourist-clusters", handleTouristClusterClick);
+      map.off("mouseenter", "tourist-clusters", setPointerCursor);
+      map.off("mouseleave", "tourist-clusters", resetCursor);
+      map.off("click", "tourist-places-symbol", handleTouristPlaceClick);
+      map.off("mouseenter", "tourist-places-symbol", showTouristPopup);
+      map.off("mouseleave", "tourist-places-symbol", hideTouristPopup);
+      touristPopupRef.current?.remove();
       map.off("click", "airport-clusters", handleAirportClusterClick);
       map.off("mouseenter", "airport-clusters", setPointerCursor);
       map.off("mouseleave", "airport-clusters", resetCursor);
@@ -3347,6 +3641,77 @@ export default function MapContainer({
       );
     }
   }, [selectedUnescoSiteId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showMajorTouristPlaces ? "visible" : "none";
+    for (const layerId of [
+      "tourist-places-halo",
+      "tourist-places-symbol",
+      "tourist-places-labels",
+      "tourist-clusters",
+      "tourist-cluster-count",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showMajorTouristPlaces, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(
+      "major-tourist-places",
+    ) as GeoJSONSource | undefined;
+    if (!source) return;
+
+    source.setData(
+      buildTouristPlaceCollection(locale, {
+        landmark: showTouristLandmark,
+        historic_area: showTouristHistoricArea,
+        museum: showTouristMuseum,
+        park_garden: showTouristParkGarden,
+        natural_landscape: showTouristNaturalLandscape,
+        coastal_destination: showTouristCoastalDestination,
+        mountain_destination: showTouristMountainDestination,
+      }),
+    );
+  }, [
+    locale,
+    showTouristLandmark,
+    showTouristHistoricArea,
+    showTouristMuseum,
+    showTouristParkGarden,
+    showTouristNaturalLandscape,
+    showTouristCoastalDestination,
+    showTouristMountainDestination,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("tourist-places-halo")) {
+      map.setPaintProperty(
+        "tourist-places-halo",
+        "circle-radius",
+        touristPlaceSelectionCaseExpression(selectedTouristPlaceId, 22, 0),
+      );
+    }
+
+    if (map.getLayer("tourist-places-symbol")) {
+      map.setLayoutProperty(
+        "tourist-places-symbol",
+        "icon-size",
+        touristPlaceSelectionCaseExpression(selectedTouristPlaceId, 1.15, 1),
+      );
+    }
+  }, [selectedTouristPlaceId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;

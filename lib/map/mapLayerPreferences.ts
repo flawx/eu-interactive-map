@@ -9,6 +9,14 @@ export type MapLayerPreferences = {
   unescoCultural: boolean;
   unescoNatural: boolean;
   unescoMixed: boolean;
+  majorTouristPlaces: boolean;
+  touristLandmark: boolean;
+  touristHistoricArea: boolean;
+  touristMuseum: boolean;
+  touristParkGarden: boolean;
+  touristNaturalLandscape: boolean;
+  touristCoastalDestination: boolean;
+  touristMountainDestination: boolean;
   majorEuropeanAirports: boolean;
   eurostarStations: boolean;
   eurostarRoutes: boolean;
@@ -28,6 +36,14 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   unescoCultural: true,
   unescoNatural: true,
   unescoMixed: true,
+  majorTouristPlaces: false,
+  touristLandmark: true,
+  touristHistoricArea: true,
+  touristMuseum: true,
+  touristParkGarden: true,
+  touristNaturalLandscape: true,
+  touristCoastalDestination: true,
+  touristMountainDestination: true,
   majorEuropeanAirports: false,
   eurostarStations: false,
   eurostarRoutes: false,
@@ -50,6 +66,14 @@ const LAYER_KEYS = [
   "unescoCultural",
   "unescoNatural",
   "unescoMixed",
+  "majorTouristPlaces",
+  "touristLandmark",
+  "touristHistoricArea",
+  "touristMuseum",
+  "touristParkGarden",
+  "touristNaturalLandscape",
+  "touristCoastalDestination",
+  "touristMountainDestination",
   "majorEuropeanAirports",
   "eurostarStations",
   "eurostarRoutes",
@@ -110,6 +134,16 @@ export function saveMapLayerPreferences(
       unescoCultural: Boolean(preferences.unescoCultural),
       unescoNatural: Boolean(preferences.unescoNatural),
       unescoMixed: Boolean(preferences.unescoMixed),
+      majorTouristPlaces: Boolean(preferences.majorTouristPlaces),
+      touristLandmark: Boolean(preferences.touristLandmark),
+      touristHistoricArea: Boolean(preferences.touristHistoricArea),
+      touristMuseum: Boolean(preferences.touristMuseum),
+      touristParkGarden: Boolean(preferences.touristParkGarden),
+      touristNaturalLandscape: Boolean(preferences.touristNaturalLandscape),
+      touristCoastalDestination: Boolean(preferences.touristCoastalDestination),
+      touristMountainDestination: Boolean(
+        preferences.touristMountainDestination,
+      ),
       majorEuropeanAirports: Boolean(preferences.majorEuropeanAirports),
       eurostarStations: Boolean(preferences.eurostarStations),
       eurostarRoutes: Boolean(preferences.eurostarRoutes),

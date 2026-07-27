@@ -37,6 +37,22 @@ type MapLegendProps = {
   onToggleUnescoNatural: (value: boolean) => void;
   showUnescoMixed: boolean;
   onToggleUnescoMixed: (value: boolean) => void;
+  showMajorTouristPlaces: boolean;
+  onToggleMajorTouristPlaces: (value: boolean) => void;
+  showTouristLandmark: boolean;
+  onToggleTouristLandmark: (value: boolean) => void;
+  showTouristHistoricArea: boolean;
+  onToggleTouristHistoricArea: (value: boolean) => void;
+  showTouristMuseum: boolean;
+  onToggleTouristMuseum: (value: boolean) => void;
+  showTouristParkGarden: boolean;
+  onToggleTouristParkGarden: (value: boolean) => void;
+  showTouristNaturalLandscape: boolean;
+  onToggleTouristNaturalLandscape: (value: boolean) => void;
+  showTouristCoastalDestination: boolean;
+  onToggleTouristCoastalDestination: (value: boolean) => void;
+  showTouristMountainDestination: boolean;
+  onToggleTouristMountainDestination: (value: boolean) => void;
   showMajorEuropeanAirports: boolean;
   onToggleMajorEuropeanAirports: (value: boolean) => void;
   showEurostarStations: boolean;
@@ -83,6 +99,22 @@ export default function MapLegend({
   onToggleUnescoNatural,
   showUnescoMixed,
   onToggleUnescoMixed,
+  showMajorTouristPlaces,
+  onToggleMajorTouristPlaces,
+  showTouristLandmark,
+  onToggleTouristLandmark,
+  showTouristHistoricArea,
+  onToggleTouristHistoricArea,
+  showTouristMuseum,
+  onToggleTouristMuseum,
+  showTouristParkGarden,
+  onToggleTouristParkGarden,
+  showTouristNaturalLandscape,
+  onToggleTouristNaturalLandscape,
+  showTouristCoastalDestination,
+  onToggleTouristCoastalDestination,
+  showTouristMountainDestination,
+  onToggleTouristMountainDestination,
   showMajorEuropeanAirports,
   onToggleMajorEuropeanAirports,
   showEurostarStations,
@@ -132,6 +164,7 @@ export default function MapLegend({
 
   const tourismActive = [
     showUnescoWorldHeritage,
+    showMajorTouristPlaces,
     showMajorEuropeanAirports,
     showEurostarStations,
     showEurostarRoutes,
@@ -154,6 +187,14 @@ export default function MapLegend({
     unescoCultural: showUnescoCultural,
     unescoNatural: showUnescoNatural,
     unescoMixed: showUnescoMixed,
+    majorTouristPlaces: showMajorTouristPlaces,
+    touristLandmark: showTouristLandmark,
+    touristHistoricArea: showTouristHistoricArea,
+    touristMuseum: showTouristMuseum,
+    touristParkGarden: showTouristParkGarden,
+    touristNaturalLandscape: showTouristNaturalLandscape,
+    touristCoastalDestination: showTouristCoastalDestination,
+    touristMountainDestination: showTouristMountainDestination,
     majorEuropeanAirports: showMajorEuropeanAirports,
     eurostarStations: showEurostarStations,
     eurostarRoutes: showEurostarRoutes,
@@ -365,6 +406,74 @@ export default function MapLegend({
               {t.legend.unescoAttribution}
             </p>
           ) : null}
+
+          <LayerToggle
+            checked={showMajorTouristPlaces}
+            onChange={onToggleMajorTouristPlaces}
+            color="#c2410c"
+            label={t.legend.majorTouristPlaces}
+            swatchClassName="rounded-full"
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.majorTouristPlacesDescription}
+          </p>
+          <div
+            className="ml-2 space-y-1 border-l pl-2"
+            style={{ borderColor: "var(--map-ui-border)" }}
+          >
+            <LayerToggle
+              checked={showTouristLandmark}
+              onChange={onToggleTouristLandmark}
+              color="#c2410c"
+              label={t.legend.touristLandmark}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showTouristHistoricArea}
+              onChange={onToggleTouristHistoricArea}
+              color="#7c3aed"
+              label={t.legend.touristHistoricArea}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showTouristMuseum}
+              onChange={onToggleTouristMuseum}
+              color="#0369a1"
+              label={t.legend.touristMuseum}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showTouristParkGarden}
+              onChange={onToggleTouristParkGarden}
+              color="#15803d"
+              label={t.legend.touristParkGarden}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showTouristNaturalLandscape}
+              onChange={onToggleTouristNaturalLandscape}
+              color="#0f766e"
+              label={t.legend.touristNaturalLandscape}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showTouristCoastalDestination}
+              onChange={onToggleTouristCoastalDestination}
+              color="#0284c7"
+              label={t.legend.touristCoastalDestination}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showTouristMountainDestination}
+              onChange={onToggleTouristMountainDestination}
+              color="#57534e"
+              label={t.legend.touristMountainDestination}
+              swatchClassName="rounded-[3px]"
+            />
+          </div>
 
           <p
             className="px-2 pb-1 pt-2 text-[11px] font-medium"

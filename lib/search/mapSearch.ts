@@ -13,6 +13,7 @@ import type { WildfireIncident } from "@/lib/incidents/types";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { UNESCO_WORLD_HERITAGE_SITES } from "@/lib/tourism/unescoWorldHeritage";
+import { MAJOR_TOURIST_PLACES } from "@/lib/tourism/majorTouristPlaces";
 import { EUROPEAN_AIRPORTS } from "@/lib/transport/europeanAirports";
 import { EUROSTAR_STATIONS } from "@/lib/transport/eurostarNetwork";
 
@@ -22,6 +23,7 @@ export type MapSearchResultType =
   | "wildfire"
   | "eu_institution"
   | "unesco_site"
+  | "tourist_place"
   | "airport"
   | "eurostar_station"
   | "categorized_place"
@@ -32,6 +34,7 @@ export type MapSearchCategory =
   | "eu_capitals"
   | "eu_institutions"
   | "unesco_sites"
+  | "tourist_places"
   | "airports"
   | "international_stations"
   | "active_alerts"
@@ -54,6 +57,7 @@ export type MapSearchResult = {
   institutionId?: MainEuInstitutionId;
   siteId?: string;
   unescoSiteId?: string;
+  touristPlaceId?: string;
   airportId?: string;
   eurostarStationId?: string;
   source: "local" | "nominatim";
@@ -374,6 +378,47 @@ function buildUnescoSiteSearchResults(locale: Locale): MapSearchResult[] {
   });
 }
 
+/** One search entry per curated major tourist place. */
+function buildTouristPlaceSearchResults(locale: Locale): MapSearchResult[] {
+  const t = getMessages(locale);
+
+  return MAJOR_TOURIST_PLACES.map((place) => {
+    const countryName = countryDisplayName(
+      place.countryCode === "EL" ? "GR" : place.countryCode,
+      locale,
+    );
+    const categoryLabel = t.touristPlacePanel.categories[place.category];
+
+    return {
+      id: `tourist-place:${place.id}`,
+      type: "tourist_place",
+      category: "tourist_places",
+      title: place.canonicalName,
+      subtitle: [place.cityOrRegion, countryName, categoryLabel]
+        .filter(Boolean)
+        .join(" · "),
+      longitude: place.longitude,
+      latitude: place.latitude,
+      icon: `tourist-${place.category}`,
+      countryCode: place.countryCode,
+      touristPlaceId: place.id,
+      source: "local",
+      metadata: {
+        category: place.category,
+        searchText: [
+          place.canonicalName,
+          place.cityOrRegion,
+          place.countryCode,
+          countryName,
+          categoryLabel,
+          ...place.aliases,
+          place.unescoSiteId ?? "",
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
 function buildAirportSearchResults(locale: Locale): MapSearchResult[] {
   return EUROPEAN_AIRPORTS.map((airport) => {
     const countryName = countryDisplayName(
@@ -602,6 +647,7 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
 
   results.push(...buildMainEuInstitutionSearchResults(locale));
   results.push(...buildUnescoSiteSearchResults(locale));
+  results.push(...buildTouristPlaceSearchResults(locale));
   results.push(...buildAirportSearchResults(locale));
   results.push(...buildEurostarStationSearchResults(locale));
 
@@ -695,6 +741,7 @@ export function searchLocalIndex(
     "countries_capitals",
     "eu_institutions",
     "unesco_sites",
+    "tourist_places",
     "airports",
     "international_stations",
     "active_alerts",

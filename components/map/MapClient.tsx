@@ -43,6 +43,16 @@ type MapClientProps = {
   showUnescoMixed: boolean;
   selectedUnescoSiteId: string | null;
   onUnescoSiteSelect?: (siteId: string | null) => void;
+  showMajorTouristPlaces: boolean;
+  showTouristLandmark: boolean;
+  showTouristHistoricArea: boolean;
+  showTouristMuseum: boolean;
+  showTouristParkGarden: boolean;
+  showTouristNaturalLandscape: boolean;
+  showTouristCoastalDestination: boolean;
+  showTouristMountainDestination: boolean;
+  selectedTouristPlaceId: string | null;
+  onTouristPlaceSelect?: (placeId: string | null) => void;
   showMajorEuropeanAirports: boolean;
   selectedAirportId: string | null;
   onAirportSelect?: (airportId: string | null) => void;
@@ -104,6 +114,16 @@ export default function MapClient({
   showUnescoMixed,
   selectedUnescoSiteId,
   onUnescoSiteSelect,
+  showMajorTouristPlaces,
+  showTouristLandmark,
+  showTouristHistoricArea,
+  showTouristMuseum,
+  showTouristParkGarden,
+  showTouristNaturalLandscape,
+  showTouristCoastalDestination,
+  showTouristMountainDestination,
+  selectedTouristPlaceId,
+  onTouristPlaceSelect,
   showMajorEuropeanAirports,
   selectedAirportId,
   onAirportSelect,
@@ -157,6 +177,16 @@ export default function MapClient({
       showUnescoMixed={showUnescoMixed}
       selectedUnescoSiteId={selectedUnescoSiteId}
       onUnescoSiteSelect={onUnescoSiteSelect}
+      showMajorTouristPlaces={showMajorTouristPlaces}
+      showTouristLandmark={showTouristLandmark}
+      showTouristHistoricArea={showTouristHistoricArea}
+      showTouristMuseum={showTouristMuseum}
+      showTouristParkGarden={showTouristParkGarden}
+      showTouristNaturalLandscape={showTouristNaturalLandscape}
+      showTouristCoastalDestination={showTouristCoastalDestination}
+      showTouristMountainDestination={showTouristMountainDestination}
+      selectedTouristPlaceId={selectedTouristPlaceId}
+      onTouristPlaceSelect={onTouristPlaceSelect}
       showMajorEuropeanAirports={showMajorEuropeanAirports}
       selectedAirportId={selectedAirportId}
       onAirportSelect={onAirportSelect}

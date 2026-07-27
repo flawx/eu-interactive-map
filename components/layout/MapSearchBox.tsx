@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import {
   Building2,
+  Camera,
   Flame,
   Landmark,
   Leaf,
@@ -20,6 +21,8 @@ import {
   Plane,
   Search,
   TrainFront,
+  TreePine,
+  Waves,
   X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
@@ -59,6 +62,8 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
       return t.search.groupInstitutions;
     case "unesco_sites":
       return t.search.groupUnesco;
+    case "tourist_places":
+      return t.search.groupTouristPlaces;
     case "airports":
       return t.search.groupAirports;
     case "international_stations":
@@ -111,6 +116,36 @@ function ResultIcon({
         aria-hidden="true"
       >
         <UnescoCategoryPictogram category={metadata?.category} />
+      </span>
+    );
+  }
+
+  if (type === "tourist_place") {
+    const category = String(metadata?.category ?? "landmark");
+    const colors: Record<string, string> = {
+      landmark: "#c2410c",
+      historic_area: "#7c3aed",
+      museum: "#0369a1",
+      park_garden: "#15803d",
+      natural_landscape: "#0f766e",
+      coastal_destination: "#0284c7",
+      mountain_destination: "#57534e",
+    };
+    const color = colors[category] ?? "#c2410c";
+    let pictogram = <Landmark className="h-3 w-3" strokeWidth={2.25} />;
+    if (category === "museum") pictogram = <Camera className="h-3 w-3" strokeWidth={2.25} />;
+    if (category === "park_garden") pictogram = <Leaf className="h-3 w-3" strokeWidth={2.25} />;
+    if (category === "natural_landscape") pictogram = <TreePine className="h-3 w-3" strokeWidth={2.25} />;
+    if (category === "coastal_destination") pictogram = <Waves className="h-3 w-3" strokeWidth={2.25} />;
+    if (category === "mountain_destination") pictogram = <Mountain className="h-3 w-3" strokeWidth={2.25} />;
+    if (category === "historic_area") pictogram = <MapPin className="h-3 w-3" strokeWidth={2.25} />;
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-white text-white shadow-sm"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      >
+        {pictogram}
       </span>
     );
   }
