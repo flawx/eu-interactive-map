@@ -13,6 +13,10 @@ import {
   type Locale,
 } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
+import {
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
 
 const USER_AGENT =
   "EUInteractiveMap/0.1 (educational; contact: local-dev)";
@@ -347,45 +351,34 @@ export async function GET(
   const t = getMessages(locale).unescoPanel;
   const details = buildLocalDetails(site, locale);
 
-  const wikiTitle = site.canonicalName.replace(/ /g, "_");
-  const wikiLang = supportedLocales.includes(locale) ? locale : "en";
-
   try {
-    const [wikiPrimary, wikiEn, photosPrimary, photosEn] = await Promise.all([
-      fetchWikipediaSummary(wikiLang, wikiTitle),
-      wikiLang === "en"
-        ? Promise.resolve({
-            extract: null,
-            wikipediaUrl: null,
-            image: null,
-          })
-        : fetchWikipediaSummary("en", wikiTitle),
-      fetchWikipediaPhotos(wikiLang, wikiTitle),
-      wikiLang === "en" ? Promise.resolve([]) : fetchWikipediaPhotos("en", wikiTitle),
-    ]);
-
+    const enrichment = await resolveEntityEnrichment(
+      {
+        wikidataId: null,
+        canonicalName: site.canonicalName,
+        aliases: [site.location ?? "", ...site.stateParties],
+        countryCode: site.resolvedCountryCode ?? site.countryCodes[0] ?? null,
+        latitude: site.latitude,
+        longitude: site.longitude,
+        expectedTypes: [
+          site.category === "natural" ? "natural_landscape" : "historic_area",
+        ],
+        searchContext: `UNESCO World Heritage ${site.countryCodes.join(" ")}`,
+        distanceThresholdKm: site.serial || site.transboundary ? 150 : 60,
+      },
+      locale,
+      AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      5,
+    );
     details.description =
       (site.shortDescription
         ? truncateDescription(site.shortDescription)
         : null) ??
-      (wikiPrimary.extract
-        ? truncateDescription(wikiPrimary.extract)
-        : null) ??
-      (wikiEn.extract ? truncateDescription(wikiEn.extract) : null);
-
-    const images: UnescoSiteImage[] = [];
-    for (const photo of [...photosPrimary, ...photosEn]) {
-      if (images.some((item) => item.url === photo.url)) continue;
-      images.push(photo);
-      if (images.length >= 5) break;
-    }
-    if (images.length === 0) {
-      const fallback = wikiPrimary.image ?? wikiEn.image;
-      if (fallback) images.push(fallback);
-    }
-    details.images = images;
-
-    const wikipediaUrl = wikiPrimary.wikipediaUrl ?? wikiEn.wikipediaUrl;
+      (enrichment.entity?.extract
+        ? truncateDescription(enrichment.entity.extract)
+        : null);
+    details.images = enrichment.images;
+    const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
     details.wikipediaUrl = wikipediaUrl;
 
     const sources: UnescoSiteSource[] = [
@@ -394,7 +387,7 @@ export async function GET(
     if (wikipediaUrl) {
       sources.push({ label: t.sourceWikipedia, url: wikipediaUrl });
     }
-    if (images.some((image) => image.sourceUrl?.includes("commons"))) {
+    if (details.images.some((image) => image.sourceUrl?.includes("commons"))) {
       sources.push({
         label: t.sourceCommons,
         url: "https://commons.wikimedia.org/",
@@ -406,6 +399,9 @@ export async function GET(
   }
 
   return Response.json(details, {
-    headers: { "Cache-Control": CACHE_CONTROL },
+    headers: {
+      "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
+    },
   });
 }

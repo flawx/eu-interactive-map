@@ -30,4 +30,9 @@ export type TouristPlaceDetails = {
   images: TouristPlaceImage[];
   sources: TouristPlaceSource[];
   fetchedAt: string;
+  partial: boolean;
+  warnings: string[];
+  verified: boolean;
+  resolvedWikidataId: string | null;
+  resolverVersion: string;
 };

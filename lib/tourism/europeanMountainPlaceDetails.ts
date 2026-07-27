@@ -48,4 +48,8 @@ export type EuropeanMountainPlaceDetails = {
   fetchedAt: string;
   partial: boolean;
   warnings: string[];
+  verified: boolean;
+  resolvedWikidataId: string | null;
+  wikipediaUrl: string | null;
+  resolverVersion: string;
 };

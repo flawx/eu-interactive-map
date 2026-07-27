@@ -10,6 +10,10 @@ import {
   type Locale,
 } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
+import {
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
 
 const USER_AGENT =
   "EUInteractiveMap/0.1 (educational; contact: local-dev)";
@@ -374,44 +378,34 @@ export async function GET(
   const t = getMessages(locale).ehlPanel;
   const details = buildLocalDetails(site, locale);
 
-  const wikiTitle = site.canonicalName.replace(/ /g, "_");
-  const wikiLang = supportedLocales.includes(locale) ? locale : "en";
-
   try {
-    const [wikiPrimary, wikiEn, photosPrimary, photosEn] = await Promise.all([
-      fetchWikipediaSummary(wikiLang, wikiTitle),
-      wikiLang === "en"
-        ? Promise.resolve({
-            extract: null,
-            wikipediaUrl: null,
-            image: null,
-          })
-        : fetchWikipediaSummary("en", wikiTitle),
-      fetchWikipediaPhotos(wikiLang, wikiTitle),
-      wikiLang === "en" ? Promise.resolve([]) : fetchWikipediaPhotos("en", wikiTitle),
-    ]);
-
-    details.description =
-      (wikiPrimary.extract ? truncateDescription(wikiPrimary.extract) : null) ??
-      (wikiEn.extract ? truncateDescription(wikiEn.extract) : null);
-
-    details.europeanSignificance =
-      extractEuropeanSignificance(wikiPrimary.extract) ??
-      extractEuropeanSignificance(wikiEn.extract);
-
-    const images: EuropeanHeritageLabelImage[] = [];
-    for (const photo of [...photosPrimary, ...photosEn]) {
-      if (images.some((item) => item.url === photo.url)) continue;
-      images.push(photo);
-      if (images.length >= 5) break;
-    }
-    if (images.length === 0) {
-      const fallback = wikiPrimary.image ?? wikiEn.image;
-      if (fallback) images.push(fallback);
-    }
-    details.images = images;
-
-    const wikipediaUrl = wikiPrimary.wikipediaUrl ?? wikiEn.wikipediaUrl;
+    const representative = site.locations.find((location) => location.representativePoint) ??
+      site.locations[0] ??
+      null;
+    const enrichment = await resolveEntityEnrichment(
+      {
+        wikidataId: site.wikidataId,
+        canonicalName: site.canonicalName,
+        aliases: site.locations.map((location) => location.name),
+        countryCode: site.countryCodes.length === 1 ? site.countryCodes[0] : null,
+        latitude: representative?.latitude ?? null,
+        longitude: representative?.longitude ?? null,
+        searchContext: `European Heritage Label ${site.countryCodes.join(" ")}`,
+        expectedTypes: ["historic_area"],
+        distanceThresholdKm: site.serial || site.transnational ? 150 : 60,
+      },
+      locale,
+      AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      5,
+    );
+    details.description = enrichment.entity?.extract
+      ? truncateDescription(enrichment.entity.extract)
+      : null;
+    details.europeanSignificance = extractEuropeanSignificance(
+      enrichment.entity?.extract ?? null,
+    );
+    details.images = enrichment.images;
+    const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
     details.wikipediaUrl = wikipediaUrl;
 
     const sources: EuropeanHeritageLabelSource[] = [
@@ -420,7 +414,7 @@ export async function GET(
     if (wikipediaUrl) {
       sources.push({ label: t.wikipedia, url: wikipediaUrl });
     }
-    if (images.some((image) => image.sourceUrl?.includes("commons"))) {
+    if (details.images.some((image) => image.sourceUrl?.includes("commons"))) {
       sources.push({
         label: "Wikimedia Commons",
         url: "https://commons.wikimedia.org/",
@@ -432,6 +426,9 @@ export async function GET(
   }
 
   return Response.json(details, {
-    headers: { "Cache-Control": CACHE_CONTROL },
+    headers: {
+      "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
+    },
   });
 }

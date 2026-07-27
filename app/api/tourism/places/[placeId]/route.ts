@@ -4,10 +4,9 @@ import {
 import type { TouristPlaceDetails } from "@/lib/tourism/touristPlaceDetails";
 import { getUnescoSiteById } from "@/lib/tourism/unescoWorldHeritage";
 import {
-  fetchCommonsImagesForSearch,
-  fetchWikidataWikipediaUrl,
-  withTimeoutSignal,
-} from "@/lib/transport/transportMedia";
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
 import {
   defaultLocale,
   supportedLocales,
@@ -37,69 +36,32 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const locale = resolveLocale(searchParams.get("locale"));
   const t = getMessages(locale).touristPlacePanel;
-  const signal = withTimeoutSignal(request.signal);
+  const signal = AbortSignal.any([
+    request.signal,
+    AbortSignal.timeout(10_000),
+  ]);
 
-  let description: string | null = null;
-  let wikipediaUrl: string | null = null;
-  const images = await fetchCommonsImagesForSearch(
-    [
-      place.canonicalName,
-      `${place.canonicalName} ${place.cityOrRegion}`,
-      place.aliases[0] ?? place.canonicalName,
-    ],
+  const enrichment = await resolveEntityEnrichment(
+    {
+      wikidataId: place.wikidataId,
+      canonicalName: place.canonicalName,
+      aliases: place.aliases,
+      countryCode: place.countryCode,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      expectedTypes: [place.category],
+      wikipediaTitles: place.wikipediaTitles,
+      searchContext: `${place.category.replaceAll("_", " ")} ${place.cityOrRegion} ${place.countryCode}`,
+      distanceThresholdKm:
+        place.category === "natural_landscape" ? 150 : 60,
+    },
+    locale,
     signal,
     5,
   );
-
-  wikipediaUrl = await fetchWikidataWikipediaUrl(
-    place.wikidataId,
-    locale,
-    signal,
-  );
-
-  if (
-    !wikipediaUrl &&
-    place.wikipediaTitles?.[locale]
-  ) {
-    wikipediaUrl = `https://${locale}.wikipedia.org/wiki/${encodeURIComponent(
-      place.wikipediaTitles[locale]!,
-    )}`;
-  } else if (!wikipediaUrl && place.wikipediaTitles?.en) {
-    wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(
-      place.wikipediaTitles.en,
-    )}`;
-  }
-
-  if (wikipediaUrl) {
-    try {
-      const pageEncoded = wikipediaUrl.split("/wiki/")[1]?.split(/[?#]/)[0];
-      if (pageEncoded) {
-        const lang = wikipediaUrl.includes("://")
-          ? wikipediaUrl.split("://")[1]?.split(".")[0] ?? "en"
-          : "en";
-        const pageTitle = decodeURIComponent(pageEncoded);
-        const summaryRes = await fetch(
-          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`,
-          {
-            headers: {
-              Accept: "application/json",
-              "User-Agent": "EUInteractiveMap/0.1",
-            },
-            signal,
-            next: { revalidate: 86_400 },
-          },
-        );
-        if (summaryRes.ok) {
-          const summary = (await summaryRes.json()) as { extract?: string };
-          if (summary.extract?.trim()) {
-            description = summary.extract.trim().slice(0, 900);
-          }
-        }
-      }
-    } catch {
-      // keep local-only details
-    }
-  }
+  const description = enrichment.entity?.extract ?? null;
+  const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
+  const images = enrichment.images;
 
   const unescoSite = place.unescoSiteId
     ? getUnescoSiteById(place.unescoSiteId)
@@ -137,9 +99,17 @@ export async function GET(
       },
     ],
     fetchedAt: new Date().toISOString(),
+    partial: description === null || images.length === 0,
+    warnings: enrichment.warnings,
+    verified: enrichment.entity?.verified ?? false,
+    resolvedWikidataId: enrichment.entity?.wikidataId ?? null,
+    resolverVersion: enrichment.resolverVersion,
   };
 
   return Response.json(details, {
-    headers: { "Cache-Control": CACHE_CONTROL },
+    headers: {
+      "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
+    },
   });
 }

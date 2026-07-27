@@ -4,9 +4,11 @@ import {
 } from "@/lib/transport/europeanAirports";
 import type { EuropeanAirportDetails } from "@/lib/transport/transportDetails";
 import {
-  fetchCommonsImagesForSearch,
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
+import {
   fetchWikidataOpenedYear,
-  fetchWikidataWikipediaUrl,
   withTimeoutSignal,
 } from "@/lib/transport/transportMedia";
 import {
@@ -40,57 +42,29 @@ export async function GET(
   const t = getMessages(locale).airportPanel;
   const signal = withTimeoutSignal(request.signal);
 
-  let description: string | null = null;
-  let wikipediaUrl: string | null = null;
   let openedYear: number | null = null;
-  let images = await fetchCommonsImagesForSearch(
-    [
-      `${airport.name} airport terminal`,
-      `${airport.iataCode ?? airport.icaoCode} airport`,
-      `${airport.city} airport`,
-    ],
+  const enrichment = await resolveEntityEnrichment(
+    {
+      wikidataId: airport.wikidataId,
+      canonicalName: airport.name,
+      aliases: [airport.iataCode ?? "", airport.icaoCode],
+      countryCode: airport.countryCode,
+      latitude: airport.latitude,
+      longitude: airport.longitude,
+      expectedTypes: ["airport"],
+      searchContext: `airport ${airport.city} ${airport.countryCode}`,
+      distanceThresholdKm: 25,
+    },
+    locale,
     signal,
     5,
   );
+  const description = enrichment.entity?.extract ?? null;
+  const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
+  const images = enrichment.images;
 
   if (airport.wikidataId) {
-    wikipediaUrl = await fetchWikidataWikipediaUrl(
-      airport.wikidataId,
-      locale,
-      signal,
-    );
     openedYear = await fetchWikidataOpenedYear(airport.wikidataId, signal);
-  }
-
-  if (wikipediaUrl) {
-    try {
-      const pageEncoded = wikipediaUrl.split("/wiki/")[1]?.split(/[?#]/)[0];
-      if (pageEncoded) {
-        const lang = wikipediaUrl.includes("://")
-          ? wikipediaUrl.split("://")[1]?.split(".")[0] ?? "en"
-          : "en";
-        const pageTitle = decodeURIComponent(pageEncoded);
-        const summaryRes = await fetch(
-          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`,
-          {
-            headers: {
-              Accept: "application/json",
-              "User-Agent": "EUInteractiveMap/0.1",
-            },
-            signal,
-            next: { revalidate: 86_400 },
-          },
-        );
-        if (summaryRes.ok) {
-          const summary = (await summaryRes.json()) as { extract?: string };
-          if (summary.extract?.trim()) {
-            description = summary.extract.trim().slice(0, 900);
-          }
-        }
-      }
-    } catch {
-      // keep local-only details
-    }
   }
 
   const details: EuropeanAirportDetails = {
@@ -126,9 +100,15 @@ export async function GET(
       },
     ],
     fetchedAt: new Date().toISOString(),
+    verified: enrichment.entity?.verified ?? false,
+    resolvedWikidataId: enrichment.entity?.wikidataId ?? null,
+    resolverVersion: enrichment.resolverVersion,
   };
 
   return Response.json(details, {
-    headers: { "Cache-Control": CACHE_CONTROL },
+    headers: {
+      "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
+    },
   });
 }

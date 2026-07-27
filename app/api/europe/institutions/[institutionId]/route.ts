@@ -15,6 +15,10 @@ import {
   type Locale,
 } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
+import {
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
 
 const USER_AGENT =
   "EUInteractiveMap/0.1 (educational; contact: local-dev)";
@@ -458,26 +462,25 @@ export async function GET(
   const t = getMessages(locale).institutionPanel;
   const details = buildLocalDetails(institution, locale);
 
-  const wikiTitle = WIKIPEDIA_TITLES[institution.id];
-  const wikiLang = supportedLocales.includes(locale) ? locale : "en";
-
   try {
-    const [wikidata, wikiPrimary, wikiEn, photosPrimary, photosEn] =
-      await Promise.all([
-        fetchWikidataLabelDescription(institution.wikidataId, locale),
-        fetchWikipediaSummary(wikiLang, wikiTitle),
-        wikiLang === "en"
-          ? Promise.resolve({
-              extract: null,
-              wikipediaUrl: null,
-              image: null,
-            })
-          : fetchWikipediaSummary("en", wikiTitle),
-        fetchWikipediaPhotos(wikiLang, wikiTitle),
-        wikiLang === "en"
-          ? Promise.resolve([])
-          : fetchWikipediaPhotos("en", wikiTitle),
-      ]);
+    const [wikidata, enrichment] = await Promise.all([
+      fetchWikidataLabelDescription(institution.wikidataId, locale),
+      resolveEntityEnrichment(
+        {
+          wikidataId: institution.wikidataId,
+          canonicalName: institution.canonicalName,
+          aliases: [institution.shortName, ...institution.aliases],
+          wikipediaTitles: {
+            en: WIKIPEDIA_TITLES[institution.id],
+          },
+          searchContext: "European Union institution",
+          distanceThresholdKm: 150,
+        },
+        locale,
+        AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        5,
+      ),
+    ]);
 
     details.name = institutionDisplayName(
       institution,
@@ -485,24 +488,11 @@ export async function GET(
       wikidata.label,
     );
     details.description =
-      wikiPrimary.extract ??
-      wikiEn.extract ??
+      enrichment.entity?.extract ??
       wikidata.description ??
       null;
-    details.historySummary =
-      wikiPrimary.extract ?? wikiEn.extract ?? null;
-
-    const images: EuInstitutionImage[] = [];
-    for (const photo of [...photosPrimary, ...photosEn]) {
-      if (images.some((item) => item.url === photo.url)) continue;
-      images.push(photo);
-      if (images.length >= 5) break;
-    }
-    if (images.length === 0) {
-      const fallback = wikiPrimary.image ?? wikiEn.image;
-      if (fallback) images.push(fallback);
-    }
-    details.images = images;
+    details.historySummary = enrichment.entity?.extract ?? null;
+    details.images = enrichment.images;
 
     const sources: EuInstitutionSource[] = [
       { label: t.sourceOfficial, url: institution.officialWebsite },
@@ -512,11 +502,11 @@ export async function GET(
         url: `https://www.wikidata.org/wiki/${institution.wikidataId}`,
       },
     ];
-    const wikipediaUrl = wikiPrimary.wikipediaUrl ?? wikiEn.wikipediaUrl;
+    const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
     if (wikipediaUrl) {
       sources.push({ label: t.sourceWikipedia, url: wikipediaUrl });
     }
-    if (images.some((image) => image.sourceUrl?.includes("commons"))) {
+    if (details.images.some((image) => image.sourceUrl?.includes("commons"))) {
       sources.push({
         label: t.sourceCommons,
         url: "https://commons.wikimedia.org/",
@@ -530,6 +520,7 @@ export async function GET(
   return Response.json(details, {
     headers: {
       "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
     },
   });
 }

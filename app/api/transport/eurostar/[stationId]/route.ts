@@ -5,8 +5,10 @@ import {
 } from "@/lib/transport/eurostarNetwork";
 import type { EurostarStationDetails } from "@/lib/transport/transportDetails";
 import {
-  fetchCommonsImagesForSearch,
-  fetchWikidataWikipediaUrl,
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
+import {
   withTimeoutSignal,
 } from "@/lib/transport/transportMedia";
 import {
@@ -40,54 +42,25 @@ export async function GET(
   const t = getMessages(locale).eurostarPanel;
   const signal = withTimeoutSignal(request.signal);
 
-  let description: string | null = null;
-  let wikipediaUrl: string | null = null;
-  const images = await fetchCommonsImagesForSearch(
-    [
-      `${station.name} railway station`,
-      `${station.city} train station`,
-      `Eurostar ${station.city}`,
-    ],
+  const enrichment = await resolveEntityEnrichment(
+    {
+      wikidataId: station.wikidataId,
+      canonicalName: station.name,
+      aliases: [station.city],
+      countryCode: station.countryCode,
+      latitude: station.latitude,
+      longitude: station.longitude,
+      expectedTypes: ["railway_station"],
+      searchContext: `railway station ${station.city} ${station.countryCode}`,
+      distanceThresholdKm: 25,
+    },
+    locale,
     signal,
     5,
   );
-
-  if (station.wikidataId) {
-    wikipediaUrl = await fetchWikidataWikipediaUrl(
-      station.wikidataId,
-      locale,
-      signal,
-    );
-  }
-
-  if (wikipediaUrl) {
-    try {
-      const pageEncoded = wikipediaUrl.split("/wiki/")[1]?.split(/[?#]/)[0];
-      if (pageEncoded) {
-        const lang = wikipediaUrl.split("://")[1]?.split(".")[0] ?? "en";
-        const pageTitle = decodeURIComponent(pageEncoded);
-        const summaryRes = await fetch(
-          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`,
-          {
-            headers: {
-              Accept: "application/json",
-              "User-Agent": "EUInteractiveMap/0.1",
-            },
-            signal,
-            next: { revalidate: 86_400 },
-          },
-        );
-        if (summaryRes.ok) {
-          const summary = (await summaryRes.json()) as { extract?: string };
-          if (summary.extract?.trim()) {
-            description = summary.extract.trim().slice(0, 900);
-          }
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }
+  const description = enrichment.entity?.extract ?? null;
+  const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
+  const images = enrichment.images;
 
   const details: EurostarStationDetails = {
     stationId: station.id,
@@ -119,9 +92,15 @@ export async function GET(
       { label: t.sourceCommons, url: "https://commons.wikimedia.org/" },
     ],
     fetchedAt: new Date().toISOString(),
+    verified: enrichment.entity?.verified ?? false,
+    resolvedWikidataId: enrichment.entity?.wikidataId ?? null,
+    resolverVersion: enrichment.resolverVersion,
   };
 
   return Response.json(details, {
-    headers: { "Cache-Control": CACHE_CONTROL },
+    headers: {
+      "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
+    },
   });
 }

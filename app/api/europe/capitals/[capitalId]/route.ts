@@ -11,6 +11,10 @@ import {
   supportedLocales,
   type Locale,
 } from "@/lib/i18n/config";
+import {
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
 
 const USER_AGENT =
   "EUInteractiveMap/0.1 (educational; contact: local-dev)";
@@ -705,7 +709,6 @@ export async function GET(
       details.description = facts.description;
       details.elevationMeters = facts.elevationMeters;
       details.officialWebsite = facts.officialWebsite;
-      details.wikipediaUrl = facts.wikipediaUrl;
 
       if (facts.population !== null) {
         details.population = {
@@ -724,38 +727,28 @@ export async function GET(
       }
     }
 
-    let wikiRef =
-      (details.wikipediaUrl
-        ? parseWikipediaPageUrl(details.wikipediaUrl)
-        : null) ?? wikipediaTitleFromCapital(capital, locale);
-
-    if (wikiRef) {
-      const summary = await fetchWikipediaSummary(wikiRef.lang, wikiRef.title);
-
-      if (summary.wikipediaUrl) {
-        details.wikipediaUrl = summary.wikipediaUrl;
-        wikiRef = parseWikipediaPageUrl(summary.wikipediaUrl) ?? wikiRef;
-      }
-
-      if (summary.extract) {
-        details.description = summary.extract;
-      } else if (!details.description && summary.description) {
-        details.description = summary.description;
-      }
-
-      let images = await fetchWikipediaPhotos(wikiRef.lang, wikiRef.title);
-
-      if (images.length < 3 && summary.image) {
-        const alreadyHas = images.some(
-          (image) => image.url === summary.image?.url,
-        );
-        if (!alreadyHas) {
-          images = [summary.image, ...images].slice(0, 5);
-        }
-      }
-
-      details.images = images.slice(0, 5);
+    const enrichment = await resolveEntityEnrichment(
+      {
+        wikidataId: capital.wikidataId,
+        canonicalName: capital.canonicalName,
+        aliases: capital.aliases,
+        countryCode: capital.countryCode,
+        latitude: capital.latitude,
+        longitude: capital.longitude,
+        expectedTypes: ["city"],
+        wikipediaTitles: capital.wikipediaTitles,
+        searchContext: `capital city ${capital.countryCode}`,
+        distanceThresholdKm: 25,
+      },
+      locale,
+      AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      5,
+    );
+    details.wikipediaUrl = enrichment.entity?.pageUrl ?? null;
+    if (enrichment.entity?.extract) {
+      details.description = enrichment.entity.extract;
     }
+    details.images = enrichment.images;
   } catch {
     // Keep local fallbacks — never fail after the capital is resolved.
   }
@@ -764,6 +757,9 @@ export async function GET(
 
   return Response.json(details, {
     status: 200,
-    headers: { "Cache-Control": CACHE_CONTROL },
+    headers: {
+      "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
+    },
   });
 }

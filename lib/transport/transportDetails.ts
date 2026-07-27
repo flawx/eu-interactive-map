@@ -33,6 +33,9 @@ export type EuropeanAirportDetails = {
   images: TransportImage[];
   sources: TransportSource[];
   fetchedAt: string;
+  verified: boolean;
+  resolvedWikidataId: string | null;
+  resolverVersion: string;
 };
 
 export type EurostarStationDetails = {
@@ -57,4 +60,7 @@ export type EurostarStationDetails = {
   images: TransportImage[];
   sources: TransportSource[];
   fetchedAt: string;
+  verified: boolean;
+  resolvedWikidataId: string | null;
+  resolverVersion: string;
 };

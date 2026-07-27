@@ -9,10 +9,9 @@ import {
 } from "@/lib/tourism/europeanMountainDestinations";
 import type { EuropeanMountainPlaceDetails } from "@/lib/tourism/europeanMountainPlaceDetails";
 import {
-  fetchCommonsImagesForSearch,
-  fetchWikidataWikipediaUrl,
-  withTimeoutSignal,
-} from "@/lib/transport/transportMedia";
+  ENTITY_RESOLVER_VERSION,
+  resolveEntityEnrichment,
+} from "@/lib/enrichment/wikimediaEntityResolver";
 
 const CACHE_CONTROL = "public, s-maxage=86400, stale-while-revalidate=604800";
 
@@ -32,53 +31,30 @@ export async function GET(
 
   const locale = resolveLocale(new URL(request.url).searchParams.get("locale"));
   const t = getMessages(locale).mountainPanel;
-  const signal = withTimeoutSignal(request.signal);
-  let description: string | null = null;
-  let wikipediaUrl: string | null = null;
-  let images: EuropeanMountainPlaceDetails["images"] = [];
-  const warnings: string[] = [];
-
-  try {
-    [images, wikipediaUrl] = await Promise.all([
-      fetchCommonsImagesForSearch(
-        [
-          `${place.canonicalName} ${place.mountainRange ?? ""}`.trim(),
-          place.canonicalName,
-          place.aliases[0] ?? place.canonicalName,
-        ],
-        signal,
-        5,
-      ),
-      place.wikidataId
-        ? fetchWikidataWikipediaUrl(place.wikidataId, locale, signal)
-        : Promise.resolve(null),
-    ]);
-  } catch {
-    warnings.push(t.detailsUnavailable);
-  }
-
-  if (wikipediaUrl) {
-    try {
-      const encodedTitle = wikipediaUrl.split("/wiki/")[1]?.split(/[?#]/)[0];
-      const language = wikipediaUrl.split("://")[1]?.split(".")[0] ?? "en";
-      if (encodedTitle) {
-        const response = await fetch(
-          `https://${language}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(decodeURIComponent(encodedTitle))}`,
-          {
-            headers: { Accept: "application/json", "User-Agent": "EUInteractiveMap/0.1" },
-            signal,
-            next: { revalidate: 86_400 },
-          },
-        );
-        if (response.ok) {
-          const summary = (await response.json()) as { extract?: string };
-          description = summary.extract?.trim().slice(0, 900) ?? null;
-        }
-      }
-    } catch {
-      warnings.push(t.presentationUnavailable);
-    }
-  }
+  const signal = AbortSignal.any([
+    request.signal,
+    AbortSignal.timeout(10_000),
+  ]);
+  const enrichment = await resolveEntityEnrichment(
+    {
+      wikidataId: place.wikidataId,
+      canonicalName: place.canonicalName,
+      aliases: place.aliases,
+      countryCode: place.countryCodes[0] ?? null,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      expectedTypes: [place.category],
+      searchContext: `${place.category.replaceAll("_", " ")} ${place.countryCodes.join(" ")}`,
+      distanceThresholdKm: place.category === "mountain_range" ? 150 : 60,
+    },
+    locale,
+    signal,
+    5,
+  );
+  const description = enrichment.entity?.extract ?? null;
+  const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
+  const images: EuropeanMountainPlaceDetails["images"] = enrichment.images;
+  const warnings = [...enrichment.warnings];
 
   const sources = [
     ...(place.officialWebsite
@@ -121,9 +97,16 @@ export async function GET(
     fetchedAt: new Date().toISOString(),
     partial: description === null || images.length === 0,
     warnings,
+    verified: enrichment.entity?.verified ?? false,
+    resolvedWikidataId: enrichment.entity?.wikidataId ?? null,
+    wikipediaUrl,
+    resolverVersion: enrichment.resolverVersion,
   };
 
   return Response.json(details, {
-    headers: { "Cache-Control": CACHE_CONTROL },
+    headers: {
+      "Cache-Control": CACHE_CONTROL,
+      "X-Entity-Resolver-Version": ENTITY_RESOLVER_VERSION,
+    },
   });
 }
