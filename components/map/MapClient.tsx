@@ -19,6 +19,7 @@ import type {
   MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
 import type { UserLocation } from "@/lib/map/userLocation";
+import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -61,6 +62,17 @@ type MapClientProps = {
   selectedEurostarStationId: string | null;
   highlightedEurostarRouteIds?: readonly string[];
   onEurostarStationSelect?: (stationId: string | null) => void;
+  showSchengenExternalBorderCrossings: boolean;
+  showSchengenTemporaryInternalControls: boolean;
+  showBorderCrossingRoad: boolean;
+  showBorderCrossingRail: boolean;
+  showBorderCrossingAir: boolean;
+  showBorderCrossingSea: boolean;
+  selectedBorderCrossingId: string | null;
+  onBorderCrossingSelect?: (crossingId: string | null) => void;
+  temporaryBorderControls: readonly TemporaryInternalBorderControl[];
+  selectedTemporaryControlId: string | null;
+  onTemporaryControlSelect?: (controlId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -132,6 +144,17 @@ export default function MapClient({
   selectedEurostarStationId,
   highlightedEurostarRouteIds,
   onEurostarStationSelect,
+  showSchengenExternalBorderCrossings,
+  showSchengenTemporaryInternalControls,
+  showBorderCrossingRoad,
+  showBorderCrossingRail,
+  showBorderCrossingAir,
+  showBorderCrossingSea,
+  selectedBorderCrossingId,
+  onBorderCrossingSelect,
+  temporaryBorderControls,
+  selectedTemporaryControlId,
+  onTemporaryControlSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -195,6 +218,19 @@ export default function MapClient({
       selectedEurostarStationId={selectedEurostarStationId}
       highlightedEurostarRouteIds={highlightedEurostarRouteIds}
       onEurostarStationSelect={onEurostarStationSelect}
+      showSchengenExternalBorderCrossings={showSchengenExternalBorderCrossings}
+      showSchengenTemporaryInternalControls={
+        showSchengenTemporaryInternalControls
+      }
+      showBorderCrossingRoad={showBorderCrossingRoad}
+      showBorderCrossingRail={showBorderCrossingRail}
+      showBorderCrossingAir={showBorderCrossingAir}
+      showBorderCrossingSea={showBorderCrossingSea}
+      selectedBorderCrossingId={selectedBorderCrossingId}
+      onBorderCrossingSelect={onBorderCrossingSelect}
+      temporaryBorderControls={temporaryBorderControls}
+      selectedTemporaryControlId={selectedTemporaryControlId}
+      onTemporaryControlSelect={onTemporaryControlSelect}
       wildfireIncidents={wildfireIncidents}
       showWildfires={showWildfires}
       onWildfireSelect={onWildfireSelect}

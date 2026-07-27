@@ -65,6 +65,18 @@ type MapLegendProps = {
   onToggleSatelliteActiveFires: (value: boolean) => void;
   showSatelliteBurnedAreas: boolean;
   onToggleSatelliteBurnedAreas: (value: boolean) => void;
+  showSchengenExternalBorderCrossings: boolean;
+  onToggleSchengenExternalBorderCrossings: (value: boolean) => void;
+  showSchengenTemporaryInternalControls: boolean;
+  onToggleSchengenTemporaryInternalControls: (value: boolean) => void;
+  showBorderCrossingRoad: boolean;
+  onToggleBorderCrossingRoad: (value: boolean) => void;
+  showBorderCrossingRail: boolean;
+  onToggleBorderCrossingRail: (value: boolean) => void;
+  showBorderCrossingAir: boolean;
+  onToggleBorderCrossingAir: (value: boolean) => void;
+  showBorderCrossingSea: boolean;
+  onToggleBorderCrossingSea: (value: boolean) => void;
   highlight?: boolean;
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
@@ -127,6 +139,18 @@ export default function MapLegend({
   onToggleSatelliteActiveFires,
   showSatelliteBurnedAreas,
   onToggleSatelliteBurnedAreas,
+  showSchengenExternalBorderCrossings,
+  onToggleSchengenExternalBorderCrossings,
+  showSchengenTemporaryInternalControls,
+  onToggleSchengenTemporaryInternalControls,
+  showBorderCrossingRoad,
+  onToggleBorderCrossingRoad,
+  showBorderCrossingRail,
+  onToggleBorderCrossingRail,
+  showBorderCrossingAir,
+  onToggleBorderCrossingAir,
+  showBorderCrossingSea,
+  onToggleBorderCrossingSea,
   highlight,
   collapsed,
   onCollapsedChange,
@@ -176,6 +200,11 @@ export default function MapLegend({
     showSatelliteBurnedAreas,
   ].filter(Boolean).length;
 
+  const securityActive = [
+    showSchengenExternalBorderCrossings,
+    showSchengenTemporaryInternalControls,
+  ].filter(Boolean).length;
+
   const activeLayerCount = countActiveMapLayers({
     euroArea: showEurozone,
     euOutsideEuroArea: showNonEurozone,
@@ -201,6 +230,12 @@ export default function MapLegend({
     majorWildfires: showWildfires,
     satelliteActiveFires: showSatelliteActiveFires,
     recentSatelliteHistory: showSatelliteBurnedAreas,
+    schengenExternalBorderCrossings: showSchengenExternalBorderCrossings,
+    schengenTemporaryInternalControls: showSchengenTemporaryInternalControls,
+    borderCrossingRoad: showBorderCrossingRoad,
+    borderCrossingRail: showBorderCrossingRail,
+    borderCrossingAir: showBorderCrossingAir,
+    borderCrossingSea: showBorderCrossingSea,
   });
 
   const activeLayersLabel =
@@ -527,11 +562,75 @@ export default function MapLegend({
           id="security"
           title={t.nav.security}
           icon={<Shield className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />}
-          activeCount={0}
+          activeCount={securityActive}
           expanded={expanded.security}
           onToggle={() => toggleCategory("security")}
         >
-          <EmptyCategory t={t} />
+          <p
+            className="px-2 pb-1 pt-1 text-[11px] font-medium"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.bordersAndControls}
+          </p>
+          <LayerToggle
+            checked={showSchengenExternalBorderCrossings}
+            onChange={onToggleSchengenExternalBorderCrossings}
+            color="#1e3a8a"
+            label={t.legend.schengenExternalBorderCrossings}
+            swatchClassName="rounded-[3px]"
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.schengenExternalBorderCrossingsDescription}
+          </p>
+          <div
+            className="ml-2 space-y-1 border-l pl-2"
+            style={{ borderColor: "var(--map-ui-border)" }}
+          >
+            <LayerToggle
+              checked={showBorderCrossingRoad}
+              onChange={onToggleBorderCrossingRoad}
+              color="#1e3a8a"
+              label={t.legend.borderCrossingRoad}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showBorderCrossingRail}
+              onChange={onToggleBorderCrossingRail}
+              color="#1d4ed8"
+              label={t.legend.borderCrossingRail}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showBorderCrossingAir}
+              onChange={onToggleBorderCrossingAir}
+              color="#1e3a8a"
+              label={t.legend.borderCrossingAir}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showBorderCrossingSea}
+              onChange={onToggleBorderCrossingSea}
+              color="#0e4d8b"
+              label={t.legend.borderCrossingSea}
+              swatchClassName="rounded-[3px]"
+            />
+          </div>
+          <LayerToggle
+            checked={showSchengenTemporaryInternalControls}
+            onChange={onToggleSchengenTemporaryInternalControls}
+            color="#ea580c"
+            label={t.legend.schengenTemporaryInternalControls}
+            swatchClassName="rounded-full"
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.schengenTemporaryInternalControlsDescription}
+          </p>
         </Category>
 
         <Category

@@ -25,7 +25,21 @@ import { sl } from "./sl";
 import { sv } from "./sv";
 import type { Messages } from "./types";
 
-export const messages: Record<Locale, Messages> = {
+export function getMessages(locale: Locale): Messages {
+  const localized = rawMessages[locale] as Partial<Messages> & typeof en;
+  return {
+    ...en,
+    ...localized,
+    legend: { ...en.legend, ...localized.legend },
+    search: { ...en.search, ...localized.search },
+    borderCrossingPanel:
+      localized.borderCrossingPanel ?? en.borderCrossingPanel,
+    temporaryBorderControlPanel:
+      localized.temporaryBorderControlPanel ?? en.temporaryBorderControlPanel,
+  };
+}
+
+const rawMessages = {
   bg,
   hr,
   cs,
@@ -52,6 +66,11 @@ export const messages: Record<Locale, Messages> = {
   sv,
 };
 
-export function getMessages(locale: Locale): Messages {
-  return messages[locale];
-}
+export const messages: Record<Locale, Messages> = new Proxy(
+  {} as Record<Locale, Messages>,
+  {
+    get(_target, locale: string) {
+      return getMessages(locale as Locale);
+    },
+  },
+);

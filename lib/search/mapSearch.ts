@@ -16,6 +16,12 @@ import { UNESCO_WORLD_HERITAGE_SITES } from "@/lib/tourism/unescoWorldHeritage";
 import { MAJOR_TOURIST_PLACES } from "@/lib/tourism/majorTouristPlaces";
 import { EUROPEAN_AIRPORTS } from "@/lib/transport/europeanAirports";
 import { EUROSTAR_STATIONS } from "@/lib/transport/eurostarNetwork";
+import {
+  getActiveTemporaryControls,
+  SCHENGEN_BORDER_CROSSING_POINTS,
+  type BorderCrossingMode,
+  type TemporaryInternalBorderControl,
+} from "@/lib/security/schengenBorders";
 
 export type MapSearchResultType =
   | "country"
@@ -26,6 +32,8 @@ export type MapSearchResultType =
   | "tourist_place"
   | "airport"
   | "eurostar_station"
+  | "border_crossing"
+  | "temporary_border_control"
   | "categorized_place"
   | "external_place";
 
@@ -37,6 +45,7 @@ export type MapSearchCategory =
   | "tourist_places"
   | "airports"
   | "international_stations"
+  | "borders_and_controls"
   | "active_alerts"
   | "app_places"
   | "external";
@@ -60,6 +69,8 @@ export type MapSearchResult = {
   touristPlaceId?: string;
   airportId?: string;
   eurostarStationId?: string;
+  borderCrossingId?: string;
+  temporaryControlId?: string;
   source: "local" | "nominatim";
   metadata: Record<string, string | number | boolean | null>;
 };
@@ -460,6 +471,140 @@ function buildAirportSearchResults(locale: Locale): MapSearchResult[] {
   });
 }
 
+function borderModeSearchBucket(mode: BorderCrossingMode): string {
+  if (mode === "rail") return "rail";
+  if (mode === "air") return "air";
+  if (mode === "sea" || mode === "river") return "sea";
+  return "road";
+}
+
+function buildBorderCrossingSearchResults(locale: Locale): MapSearchResult[] {
+  const t = getMessages(locale);
+  const modeLabels = t.borderCrossingPanel.modes;
+
+  return SCHENGEN_BORDER_CROSSING_POINTS.map((point) => {
+    const countryName = countryDisplayName(
+      point.countryCode === "EL" ? "GR" : point.countryCode,
+      locale,
+    );
+    const neighbourName = point.neighbouringCountryCode
+      ? countryDisplayName(
+          point.neighbouringCountryCode === "EL"
+            ? "GR"
+            : point.neighbouringCountryCode,
+          locale,
+        )
+      : "";
+    const modeLabel = modeLabels[point.mode];
+    const subtitle = [countryName, neighbourName, modeLabel]
+      .filter(Boolean)
+      .join(" · ");
+
+    return {
+      id: `border-crossing:${point.id}`,
+      type: "border_crossing",
+      category: "borders_and_controls",
+      title: point.officialName,
+      subtitle,
+      longitude: point.longitude,
+      latitude: point.latitude,
+      icon: `border-${borderModeSearchBucket(point.mode)}`,
+      countryCode: point.countryCode,
+      borderCrossingId: point.id,
+      source: "local",
+      metadata: {
+        mode: point.mode,
+        status: point.status,
+        searchText: [
+          point.officialName,
+          point.localName ?? "",
+          point.countryCode,
+          point.neighbouringCountryCode ?? "",
+          countryName,
+          neighbourName,
+          modeLabel,
+          modeLabels[point.mode],
+          point.mode,
+          "border",
+          "frontière",
+          "grenze",
+          "schengen",
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
+function buildTemporaryControlSearchResults(
+  locale: Locale,
+  controls: readonly TemporaryInternalBorderControl[],
+): MapSearchResult[] {
+  const active = getActiveTemporaryControls(controls);
+  const centroids: Record<string, [number, number]> = {
+    AT: [14.55, 47.52],
+    BE: [4.47, 50.5],
+    DE: [10.45, 51.16],
+    DK: [10.0, 56.0],
+    ES: [-3.7, 40.4],
+    FR: [2.35, 46.6],
+    HU: [19.5, 47.16],
+    IT: [12.5, 42.5],
+    LT: [23.9, 55.17],
+    LU: [6.13, 49.75],
+    NL: [5.29, 52.13],
+    NO: [8.5, 60.5],
+    PL: [19.15, 52.1],
+    SE: [15.0, 62.0],
+    SI: [14.8, 46.15],
+    SK: [19.5, 48.7],
+    CH: [8.23, 46.82],
+    CZ: [15.47, 49.82],
+  };
+
+  return active.map((control) => {
+    const implementingName = countryDisplayName(
+      control.implementingCountryCode === "EL"
+        ? "GR"
+        : control.implementingCountryCode,
+      locale,
+    );
+    const affectedNames = control.affectedCountryCodes
+      .map((code) =>
+        countryDisplayName(code === "EL" ? "GR" : code, locale),
+      )
+      .join(" · ");
+    const center = centroids[control.implementingCountryCode] ?? [10, 50];
+
+    return {
+      id: `temporary-border-control:${control.id}`,
+      type: "temporary_border_control",
+      category: "borders_and_controls",
+      title: implementingName,
+      subtitle: affectedNames || control.scope.slice(0, 80),
+      longitude: center[0],
+      latitude: center[1],
+      icon: "temporary-border-control",
+      countryCode: control.implementingCountryCode,
+      temporaryControlId: control.id,
+      source: "local",
+      metadata: {
+        scope: control.scope,
+        searchText: [
+          implementingName,
+          control.implementingCountryCode,
+          ...control.affectedCountryCodes,
+          affectedNames,
+          control.scope,
+          control.officialReason,
+          "temporary border control",
+          "contrôle frontalier",
+          "schengen",
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
 function buildEurostarStationSearchResults(locale: Locale): MapSearchResult[] {
   return EUROSTAR_STATIONS.map((station) => {
     const countryName = countryDisplayName(
@@ -531,7 +676,10 @@ function countryDisplayName(countryCode: string, locale: Locale): string {
   }
 }
 
-function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
+function buildStaticLocalIndex(
+  locale: Locale,
+  temporaryControls: readonly TemporaryInternalBorderControl[] = getActiveTemporaryControls(),
+): MapSearchResult[] {
   const results: MapSearchResult[] = [];
   const countryCodes = Object.keys(nationalDaysByCountry);
 
@@ -650,6 +798,10 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
   results.push(...buildTouristPlaceSearchResults(locale));
   results.push(...buildAirportSearchResults(locale));
   results.push(...buildEurostarStationSearchResults(locale));
+  results.push(...buildBorderCrossingSearchResults(locale));
+  results.push(
+    ...buildTemporaryControlSearchResults(locale, temporaryControls),
+  );
 
   return results;
 }
@@ -694,9 +846,10 @@ function wildfireToResult(
 export function buildLocalSearchIndex(
   locale: Locale,
   wildfires: readonly WildfireIncident[],
+  temporaryControls: readonly TemporaryInternalBorderControl[] = getActiveTemporaryControls(),
 ): MapSearchResult[] {
   return [
-    ...buildStaticLocalIndex(locale),
+    ...buildStaticLocalIndex(locale, temporaryControls),
     ...wildfires.map((incident) => wildfireToResult(incident, locale)),
   ];
 }
@@ -744,6 +897,7 @@ export function searchLocalIndex(
     "tourist_places",
     "airports",
     "international_stations",
+    "borders_and_controls",
     "active_alerts",
     "app_places",
     "external",

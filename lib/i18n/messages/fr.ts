@@ -41,6 +41,18 @@ export const fr = {
     satelliteActiveFires: "Détections satellites de feux actifs",
     satelliteBurnedAreas: "Zones récemment détectées par satellite — 7 jours",
     satelliteHistoryNote: "Les zones marron représentent des détections satellite cumulées et non un périmètre officiel de surface brûlée.",
+    bordersAndControls: "Frontières et contrôles",
+    schengenExternalBorderCrossings: "Points de passage aux frontières extérieures",
+    schengenExternalBorderCrossingsDescription:
+      "Points de passage officiellement autorisés aux frontières extérieures de l’espace Schengen",
+    schengenTemporaryInternalControls:
+      "Contrôles temporaires aux frontières intérieures",
+    schengenTemporaryInternalControlsDescription:
+      "Contrôles réintroduits temporairement selon les notifications des États à la Commission européenne",
+    borderCrossingRoad: "Route",
+    borderCrossingRail: "Train",
+    borderCrossingAir: "Aéroport",
+    borderCrossingSea: "Port et voie navigable",
     noLayersYet: "Aucun calque disponible pour le moment",
     openLegend: "Ouvrir la légende",
     closeLegend: "Fermer la légende",
@@ -227,6 +239,8 @@ export const fr = {
     searchThisPlace: "Rechercher ce lieu sur la carte",
     searching: "Recherche en cours",
     noResults: "Aucun résultat",
+    noVerifiedBorderCrossingInArea:
+      "Aucun point de passage vérifié n’est disponible dans cette zone.",
     serviceUnavailable: "Service de recherche temporairement indisponible",
     recentHistory: "Historique récent",
     clearSearch: "Effacer la recherche",
@@ -238,6 +252,7 @@ export const fr = {
     groupTouristPlaces: "Lieux touristiques",
     groupAirports: "Aéroports",
     groupInternationalStations: "Gares internationales",
+    groupBordersAndControls: "Frontières et contrôles",
     groupAlerts: "Alertes en cours",
     groupAppPlaces: "Lieux de l’application",
     groupExternal: "Lieux sur la carte",
@@ -498,4 +513,56 @@ export const fr = {
     previousPhoto: "Photo précédente",
     nextPhoto: "Photo suivante",
   },
-} satisfies Messages;
+  borderCrossingPanel: {
+    externalBadge: "Frontière extérieure Schengen",
+    verifyBeforeTravel:
+      "Vérifiez les conditions auprès des autorités avant votre déplacement. Les horaires et restrictions peuvent évoluer.",
+    status: "Statut",
+    mode: "Mode de passage",
+    passengers: "Voyageurs",
+    freight: "Fret",
+    yes: "Oui",
+    no: "Non",
+    openingHours: "Horaires officiels",
+    location: "Localisation",
+    neighbouringCountry: "Pays voisin",
+    officialSource: "Source officielle",
+    lastVerified: "Dernière vérification",
+    modes: {
+      road: "Route",
+      motorway: "Autoroute",
+      rail: "Train",
+      air: "Aéroport",
+      sea: "Port maritime",
+      river: "Voie fluviale",
+      pedestrian: "Passage piéton",
+      other: "Autre",
+    },
+    statuses: {
+      authorised: "Autorisé",
+      "temporarily-controlled": "Temporairement contrôlé",
+      restricted: "Restreint",
+      unknown: "Inconnu",
+    },
+  },
+  temporaryBorderControlPanel: {
+    badge: "Contrôle temporaire",
+    active: "Contrôle en vigueur",
+    cachedData: "Données mises en cache",
+    notClosedWarning:
+      "Cette mesure ne signifie pas nécessairement que la frontière est fermée. Des contrôles peuvent être effectués de manière ciblée ou mobile.",
+    notifiedScopeNote:
+      "Représentation du périmètre notifié, pas de chaque contrôle effectivement réalisé.",
+    staleData: "Ces données mises en cache ont plus de 24 heures.",
+    startDate: "Date de début",
+    plannedEnd: "Fin prévue",
+    affectedBorders: "Frontières concernées",
+    modes: "Modes concernés",
+    notifiedScope: "Périmètre notifié",
+    officialReason: "Motif officiel",
+    authorisedCrossings: "Points autorisés officiellement publiés",
+    commissionLink: "Commission européenne",
+    lastFetched: "Dernière récupération",
+  },
+
+};

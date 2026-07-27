@@ -46,6 +46,15 @@ import {
   eurostarRouteHighlightExpression,
   eurostarStationSelectionCaseExpression,
 } from "@/components/map/transportMapLayers";
+import {
+  borderCrossingSelectionExpression,
+  buildSchengenBorderCrossingCollection,
+  buildTemporaryControlsCollection,
+  createSchengenBorderCrossingIcon,
+  temporaryControlSelectionExpression,
+  type BorderModeFilters,
+} from "@/components/map/schengenBorderMapLayers";
+import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
 import type {
   MapFocusRequest,
   TemporaryMapMarker,
@@ -827,6 +836,17 @@ export default function MapContainer({
   selectedEurostarStationId = null,
   highlightedEurostarRouteIds = [],
   onEurostarStationSelect,
+  showSchengenExternalBorderCrossings = false,
+  showSchengenTemporaryInternalControls = false,
+  showBorderCrossingRoad = true,
+  showBorderCrossingRail = true,
+  showBorderCrossingAir = true,
+  showBorderCrossingSea = true,
+  selectedBorderCrossingId = null,
+  onBorderCrossingSelect,
+  temporaryBorderControls = [],
+  selectedTemporaryControlId = null,
+  onTemporaryControlSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -888,6 +908,17 @@ export default function MapContainer({
   selectedEurostarStationId?: string | null;
   highlightedEurostarRouteIds?: readonly string[];
   onEurostarStationSelect?: (stationId: string | null) => void;
+  showSchengenExternalBorderCrossings?: boolean;
+  showSchengenTemporaryInternalControls?: boolean;
+  showBorderCrossingRoad?: boolean;
+  showBorderCrossingRail?: boolean;
+  showBorderCrossingAir?: boolean;
+  showBorderCrossingSea?: boolean;
+  selectedBorderCrossingId?: string | null;
+  onBorderCrossingSelect?: (crossingId: string | null) => void;
+  temporaryBorderControls?: readonly TemporaryInternalBorderControl[];
+  selectedTemporaryControlId?: string | null;
+  onTemporaryControlSelect?: (controlId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -1000,6 +1031,36 @@ export default function MapContainer({
   const onEurostarStationSelectRef = useRef(onEurostarStationSelect);
   onEurostarStationSelectRef.current = onEurostarStationSelect;
   const eurostarPopupRef = useRef<Popup | null>(null);
+  const showSchengenExternalBorderCrossingsRef = useRef(
+    showSchengenExternalBorderCrossings,
+  );
+  showSchengenExternalBorderCrossingsRef.current =
+    showSchengenExternalBorderCrossings;
+  const showSchengenTemporaryInternalControlsRef = useRef(
+    showSchengenTemporaryInternalControls,
+  );
+  showSchengenTemporaryInternalControlsRef.current =
+    showSchengenTemporaryInternalControls;
+  const showBorderCrossingRoadRef = useRef(showBorderCrossingRoad);
+  showBorderCrossingRoadRef.current = showBorderCrossingRoad;
+  const showBorderCrossingRailRef = useRef(showBorderCrossingRail);
+  showBorderCrossingRailRef.current = showBorderCrossingRail;
+  const showBorderCrossingAirRef = useRef(showBorderCrossingAir);
+  showBorderCrossingAirRef.current = showBorderCrossingAir;
+  const showBorderCrossingSeaRef = useRef(showBorderCrossingSea);
+  showBorderCrossingSeaRef.current = showBorderCrossingSea;
+  const selectedBorderCrossingIdRef = useRef(selectedBorderCrossingId);
+  selectedBorderCrossingIdRef.current = selectedBorderCrossingId;
+  const onBorderCrossingSelectRef = useRef(onBorderCrossingSelect);
+  onBorderCrossingSelectRef.current = onBorderCrossingSelect;
+  const temporaryBorderControlsRef = useRef(temporaryBorderControls);
+  temporaryBorderControlsRef.current = temporaryBorderControls;
+  const selectedTemporaryControlIdRef = useRef(selectedTemporaryControlId);
+  selectedTemporaryControlIdRef.current = selectedTemporaryControlId;
+  const onTemporaryControlSelectRef = useRef(onTemporaryControlSelect);
+  onTemporaryControlSelectRef.current = onTemporaryControlSelect;
+  const borderCrossingPopupRef = useRef<Popup | null>(null);
+  const temporaryControlPopupRef = useRef<Popup | null>(null);
   const localeRef = useRef(locale);
   localeRef.current = locale;
   const onWildfireSelectRef = useRef(onWildfireSelect);
@@ -1439,6 +1500,73 @@ export default function MapContainer({
       }
     };
 
+    const handleSchengenBorderClusterClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const clusterId = feature?.properties?.cluster_id;
+      if (typeof clusterId !== "number") return;
+
+      const source = map.getSource(
+        "schengen-border-crossing-points",
+      ) as GeoJSONSource | undefined;
+      if (!source) return;
+
+      source
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          if (!feature?.geometry || feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          map.easeTo({
+            center: [lng, lat],
+            zoom,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
+            duration: 500,
+          });
+        })
+        .catch(() => {
+          // Ignore expansion-zoom lookup failures.
+        });
+    };
+
+    const handleBorderCrossingClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const crossingId = feature?.properties?.crossingId;
+      if (typeof crossingId === "string") {
+        onBorderCrossingSelectRef.current?.(crossingId);
+      }
+    };
+
+    const fitTemporaryControlBounds = (controlId: string) => {
+      const features = map.querySourceFeatures(
+        "schengen-temporary-border-controls",
+        { filter: ["==", ["get", "controlId"], controlId] },
+      );
+      const bounds = new LngLatBounds();
+      for (const feature of features) {
+        if (feature.geometry && "coordinates" in feature.geometry) {
+          extendBoundsWithCoordinates(bounds, feature.geometry.coordinates);
+        }
+      }
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: 80,
+          maxZoom: 7,
+          duration: 800,
+          pitch: map.getPitch(),
+          bearing: map.getBearing(),
+        });
+      }
+    };
+
+    const handleTemporaryControlClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const controlId = feature?.properties?.controlId;
+      if (typeof controlId === "string") {
+        onTemporaryControlSelectRef.current?.(controlId);
+        fitTemporaryControlBounds(controlId);
+      }
+    };
+
     const showEurostarRoutePopup = (e: MapLayerMouseEvent) => {
       setPointerCursor();
       const feature = e.features?.[0];
@@ -1479,6 +1607,120 @@ export default function MapContainer({
     const hideEurostarRoutePopup = () => {
       resetCursor();
       eurostarPopupRef.current?.remove();
+    };
+
+    const showBorderCrossingPopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+
+      const {
+        displayName,
+        countryCode,
+        neighbouringCountryCode,
+        modeLabel,
+        statusLabel,
+        lastVerifiedAt,
+      } = feature.properties ?? {};
+      if (typeof displayName !== "string") return;
+
+      const coordinates = feature.geometry.coordinates.slice() as [
+        number,
+        number,
+      ];
+
+      if (!borderCrossingPopupRef.current) {
+        borderCrossingPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 14,
+          className: "schengen-border-hover-popup",
+        });
+      }
+
+      borderCrossingPopupRef.current
+        .setLngLat(coordinates)
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:200px;">${escapeHtml(
+            displayName,
+          )}</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+            String(countryCode ?? ""),
+          )}${
+            neighbouringCountryCode
+              ? ` · ${escapeHtml(String(neighbouringCountryCode))}`
+              : ""
+          }</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+            String(modeLabel ?? ""),
+          )} · ${escapeHtml(String(statusLabel ?? ""))}</div>${
+            lastVerifiedAt
+              ? `<div style="font:10px system-ui,sans-serif;color:#64748b;margin-top:2px;">${escapeHtml(
+                  String(lastVerifiedAt),
+                )}</div>`
+              : ""
+          }`,
+        )
+        .addTo(map);
+    };
+
+    const hideBorderCrossingPopup = () => {
+      resetCursor();
+      borderCrossingPopupRef.current?.remove();
+    };
+
+    const showTemporaryControlPopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature) return;
+
+      const {
+        displayName,
+        implementingCountryCode,
+        neighbouringCountryCode,
+        geometryAccuracy,
+      } = feature.properties ?? {};
+
+      let lngLat = e.lngLat;
+      if (feature.geometry.type === "Point") {
+        lngLat = {
+          lng: feature.geometry.coordinates[0],
+          lat: feature.geometry.coordinates[1],
+        } as typeof e.lngLat;
+      }
+
+      if (!temporaryControlPopupRef.current) {
+        temporaryControlPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 10,
+          className: "temporary-control-hover-popup",
+        });
+      }
+
+      temporaryControlPopupRef.current
+        .setLngLat(lngLat)
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:200px;">${escapeHtml(
+            String(displayName ?? implementingCountryCode ?? ""),
+          )}</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">Temporary internal control</div>${
+            neighbouringCountryCode
+              ? `<div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+                  String(neighbouringCountryCode),
+                )}</div>`
+              : ""
+          }${
+            geometryAccuracy
+              ? `<div style="font:10px system-ui,sans-serif;color:#64748b;margin-top:2px;">${escapeHtml(
+                  String(geometryAccuracy),
+                )}</div>`
+              : ""
+          }`,
+        )
+        .addTo(map);
+    };
+
+    const hideTemporaryControlPopup = () => {
+      resetCursor();
+      temporaryControlPopupRef.current?.remove();
     };
 
     const showUnescoPopup = (e: MapLayerMouseEvent) => {
@@ -2095,6 +2337,25 @@ export default function MapContainer({
           "line-dasharray": [2, 2],
         },
       });
+
+      if (!map.getLayer("schengen-temporary-control-country-outline")) {
+        map.addLayer({
+          id: "schengen-temporary-control-country-outline",
+          type: "line",
+          source: "europe-countries",
+          filter: ["==", ["get", "CNTR_ID"], ""],
+          layout: {
+            visibility: showSchengenTemporaryInternalControlsRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "line-color": "#f97316",
+            "line-width": 2.5,
+            "line-opacity": 0.85,
+          },
+        });
+      }
 
       updateEuOpacity();
       map.on("zoom", updateEuOpacity);
@@ -2836,6 +3097,145 @@ export default function MapContainer({
         });
       }
 
+      const borderModeFilters: BorderModeFilters = {
+        road: showBorderCrossingRoadRef.current,
+        rail: showBorderCrossingRailRef.current,
+        air: showBorderCrossingAirRef.current,
+        sea: showBorderCrossingSeaRef.current,
+      };
+
+      if (!map.getSource("schengen-temporary-border-controls")) {
+        map.addSource("schengen-temporary-border-controls", {
+          type: "geojson",
+          data: buildTemporaryControlsCollection(
+            temporaryBorderControlsRef.current,
+          ),
+        });
+      }
+
+      if (!map.hasImage("schengen-temporary-control-icon")) {
+        const size = 64;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const cx = size / 2;
+          const cy = size / 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+          ctx.fillStyle = "#ea580c";
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 22px system-ui,sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("!", cx, cy + 1);
+        }
+        const imageData = ctx?.getImageData(0, 0, size, size);
+        if (imageData) {
+          map.addImage(
+            "schengen-temporary-control-icon",
+            {
+              width: size,
+              height: size,
+              data: new Uint8Array(imageData.data.buffer),
+            },
+            { pixelRatio: 2 },
+          );
+        }
+      }
+
+      if (!map.getLayer("schengen-temporary-control-fill")) {
+        map.addLayer({
+          id: "schengen-temporary-control-fill",
+          type: "circle",
+          source: "schengen-temporary-border-controls",
+          filter: ["==", ["get", "featureKind"], "country-marker"],
+          layout: {
+            visibility: showSchengenTemporaryInternalControlsRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-radius": 18,
+            "circle-color": "#f97316",
+            "circle-opacity": 0.18,
+          },
+        });
+      }
+
+      if (!map.getLayer("schengen-temporary-control-line")) {
+        map.addLayer({
+          id: "schengen-temporary-control-line",
+          type: "line",
+          source: "schengen-temporary-border-controls",
+          filter: ["==", ["get", "featureKind"], "border-line"],
+          layout: {
+            visibility: showSchengenTemporaryInternalControlsRef.current
+              ? "visible"
+              : "none",
+            "line-cap": "round",
+          },
+          paint: {
+            "line-color": "#fb923c",
+            "line-width": 4,
+            "line-opacity": 0.75,
+          },
+        });
+      }
+
+      if (!map.getLayer("schengen-temporary-control-symbol")) {
+        map.addLayer({
+          id: "schengen-temporary-control-symbol",
+          type: "symbol",
+          source: "schengen-temporary-border-controls",
+          filter: ["==", ["get", "featureKind"], "country-marker"],
+          layout: {
+            visibility: showSchengenTemporaryInternalControlsRef.current
+              ? "visible"
+              : "none",
+            "icon-image": "schengen-temporary-control-icon",
+            "icon-size": temporaryControlSelectionExpression(
+              selectedTemporaryControlIdRef.current,
+              1.1,
+              0.95,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
+          },
+        });
+      }
+
+      if (!map.getLayer("schengen-temporary-control-selected")) {
+        map.addLayer({
+          id: "schengen-temporary-control-selected",
+          type: "line",
+          source: "schengen-temporary-border-controls",
+          filter: ["==", ["get", "featureKind"], "border-line"],
+          layout: {
+            visibility: showSchengenTemporaryInternalControlsRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "line-color": "#facc15",
+            "line-width": temporaryControlSelectionExpression(
+              selectedTemporaryControlIdRef.current,
+              7,
+              0,
+            ),
+            "line-opacity": 0.9,
+          },
+        });
+      }
+
       if (!map.hasImage("major-airport-icon")) {
         map.addImage("major-airport-icon", createMajorAirportIcon(), {
           pixelRatio: 2,
@@ -3055,6 +3455,156 @@ export default function MapContainer({
         });
       }
 
+      for (const kind of ["road", "rail", "air", "sea"] as const) {
+        const imageId = `schengen-bcp-icon-${kind}`;
+        if (!map.hasImage(imageId)) {
+          map.addImage(imageId, createSchengenBorderCrossingIcon(kind), {
+            pixelRatio: 2,
+          });
+        }
+      }
+
+      if (!map.getSource("schengen-border-crossing-points")) {
+        map.addSource("schengen-border-crossing-points", {
+          type: "geojson",
+          data: buildSchengenBorderCrossingCollection(
+            localeRef.current,
+            borderModeFilters,
+          ),
+          promoteId: "crossingId",
+          cluster: true,
+          clusterMaxZoom: 7,
+          clusterRadius: 42,
+        });
+      }
+
+      if (!map.getLayer("schengen-border-clusters")) {
+        map.addLayer({
+          id: "schengen-border-clusters",
+          type: "circle",
+          source: "schengen-border-crossing-points",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showSchengenExternalBorderCrossingsRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-color": "#1e3a8a",
+            "circle-opacity": 0.85,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              14,
+              8,
+              18,
+              20,
+              22,
+            ],
+          },
+        });
+      }
+
+      if (!map.getLayer("schengen-border-cluster-count")) {
+        map.addLayer({
+          id: "schengen-border-cluster-count",
+          type: "symbol",
+          source: "schengen-border-crossing-points",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showSchengenExternalBorderCrossingsRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-font": ["Noto Sans Bold"],
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+          },
+          paint: {
+            "text-color": "#ffffff",
+          },
+        });
+      }
+
+      if (!map.getLayer("schengen-border-crossing-selected")) {
+        map.addLayer({
+          id: "schengen-border-crossing-selected",
+          type: "circle",
+          source: "schengen-border-crossing-points",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showSchengenExternalBorderCrossingsRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-radius": borderCrossingSelectionExpression(
+              selectedBorderCrossingIdRef.current,
+              22,
+              0,
+            ),
+            "circle-color": "#facc15",
+            "circle-opacity": 0.35,
+          },
+        });
+      }
+
+      if (!map.getLayer("schengen-border-crossing-symbol")) {
+        map.addLayer({
+          id: "schengen-border-crossing-symbol",
+          type: "symbol",
+          source: "schengen-border-crossing-points",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showSchengenExternalBorderCrossingsRef.current
+              ? "visible"
+              : "none",
+            "icon-image": ["get", "iconImageId"],
+            "icon-size": borderCrossingSelectionExpression(
+              selectedBorderCrossingIdRef.current,
+              1.15,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
+          },
+        });
+      }
+
+      if (!map.getLayer("schengen-border-crossing-label")) {
+        map.addLayer({
+          id: "schengen-border-crossing-label",
+          type: "symbol",
+          source: "schengen-border-crossing-points",
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 7,
+          layout: {
+            visibility: showSchengenExternalBorderCrossingsRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "displayName"],
+            "text-size": 11,
+            "text-offset": [0, 1.4],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#1e3a8a",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       // Reorder so brown (7d history) sits below red (24h active) which sits
       // below the EFFIS layers, all stacked above the base country layers.
       const layerStackOrder = [
@@ -3071,6 +3621,10 @@ export default function MapContainer({
         "effis-burned-area-snapshots-border",
         "effis-burned-area-snapshots-selected",
         "eurostar-routes-line",
+        "schengen-temporary-control-fill",
+        "schengen-temporary-control-line",
+        "schengen-temporary-control-symbol",
+        "schengen-temporary-control-selected",
         "eu-capitals-halo",
         "eu-capitals-symbol",
         "eu-capitals-label",
@@ -3095,6 +3649,11 @@ export default function MapContainer({
         "eurostar-selected-station",
         "eurostar-stations-symbol",
         "eurostar-stations-label",
+        "schengen-border-clusters",
+        "schengen-border-cluster-count",
+        "schengen-border-crossing-selected",
+        "schengen-border-crossing-symbol",
+        "schengen-border-crossing-label",
         "user-location-accuracy",
         "user-location-halo",
         "user-location-pulse",
@@ -3155,6 +3714,18 @@ export default function MapContainer({
       map.on("mouseleave", "eurostar-stations-symbol", resetCursor);
       map.on("mouseenter", "eurostar-routes-line", showEurostarRoutePopup);
       map.on("mouseleave", "eurostar-routes-line", hideEurostarRoutePopup);
+      map.on("click", "schengen-border-clusters", handleSchengenBorderClusterClick);
+      map.on("mouseenter", "schengen-border-clusters", setPointerCursor);
+      map.on("mouseleave", "schengen-border-clusters", resetCursor);
+      map.on("click", "schengen-border-crossing-symbol", handleBorderCrossingClick);
+      map.on("mouseenter", "schengen-border-crossing-symbol", showBorderCrossingPopup);
+      map.on("mouseleave", "schengen-border-crossing-symbol", hideBorderCrossingPopup);
+      map.on("click", "schengen-temporary-control-symbol", handleTemporaryControlClick);
+      map.on("click", "schengen-temporary-control-line", handleTemporaryControlClick);
+      map.on("mouseenter", "schengen-temporary-control-symbol", showTemporaryControlPopup);
+      map.on("mouseleave", "schengen-temporary-control-symbol", hideTemporaryControlPopup);
+      map.on("mouseenter", "schengen-temporary-control-line", showTemporaryControlPopup);
+      map.on("mouseleave", "schengen-temporary-control-line", hideTemporaryControlPopup);
       map.on("click", handleEffisBurnedAreaClick);
 
       // Re-run GeoJSON sync effects that may have run before sources existed
@@ -3236,6 +3807,20 @@ export default function MapContainer({
       map.off("mouseleave", "eurostar-stations-symbol", resetCursor);
       map.off("mouseenter", "eurostar-routes-line", showEurostarRoutePopup);
       map.off("mouseleave", "eurostar-routes-line", hideEurostarRoutePopup);
+      map.off("click", "schengen-border-clusters", handleSchengenBorderClusterClick);
+      map.off("mouseenter", "schengen-border-clusters", setPointerCursor);
+      map.off("mouseleave", "schengen-border-clusters", resetCursor);
+      map.off("click", "schengen-border-crossing-symbol", handleBorderCrossingClick);
+      map.off("mouseenter", "schengen-border-crossing-symbol", showBorderCrossingPopup);
+      map.off("mouseleave", "schengen-border-crossing-symbol", hideBorderCrossingPopup);
+      borderCrossingPopupRef.current?.remove();
+      map.off("click", "schengen-temporary-control-symbol", handleTemporaryControlClick);
+      map.off("click", "schengen-temporary-control-line", handleTemporaryControlClick);
+      map.off("mouseenter", "schengen-temporary-control-symbol", showTemporaryControlPopup);
+      map.off("mouseleave", "schengen-temporary-control-symbol", hideTemporaryControlPopup);
+      map.off("mouseenter", "schengen-temporary-control-line", showTemporaryControlPopup);
+      map.off("mouseleave", "schengen-temporary-control-line", hideTemporaryControlPopup);
+      temporaryControlPopupRef.current?.remove();
       eurostarPopupRef.current?.remove();
       map.off("click", handleEffisBurnedAreaClick);
 
@@ -3807,6 +4392,154 @@ export default function MapContainer({
       );
     }
   }, [selectedEurostarStationId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showSchengenExternalBorderCrossings ? "visible" : "none";
+    for (const layerId of [
+      "schengen-border-clusters",
+      "schengen-border-cluster-count",
+      "schengen-border-crossing-selected",
+      "schengen-border-crossing-symbol",
+      "schengen-border-crossing-label",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showSchengenExternalBorderCrossings, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(
+      "schengen-border-crossing-points",
+    ) as GeoJSONSource | undefined;
+    if (!source) return;
+
+    source.setData(
+      buildSchengenBorderCrossingCollection(locale, {
+        road: showBorderCrossingRoad,
+        rail: showBorderCrossingRail,
+        air: showBorderCrossingAir,
+        sea: showBorderCrossingSea,
+      }),
+    );
+  }, [
+    locale,
+    showBorderCrossingRoad,
+    showBorderCrossingRail,
+    showBorderCrossingAir,
+    showBorderCrossingSea,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("schengen-border-crossing-selected")) {
+      map.setPaintProperty(
+        "schengen-border-crossing-selected",
+        "circle-radius",
+        borderCrossingSelectionExpression(selectedBorderCrossingId, 22, 0),
+      );
+    }
+    if (map.getLayer("schengen-border-crossing-symbol")) {
+      map.setLayoutProperty(
+        "schengen-border-crossing-symbol",
+        "icon-size",
+        borderCrossingSelectionExpression(selectedBorderCrossingId, 1.15, 1),
+      );
+    }
+  }, [selectedBorderCrossingId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showSchengenTemporaryInternalControls
+      ? "visible"
+      : "none";
+    for (const layerId of [
+      "schengen-temporary-control-fill",
+      "schengen-temporary-control-line",
+      "schengen-temporary-control-symbol",
+      "schengen-temporary-control-selected",
+      "schengen-temporary-control-country-outline",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showSchengenTemporaryInternalControls, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(
+      "schengen-temporary-border-controls",
+    ) as GeoJSONSource | undefined;
+    if (!source) return;
+
+    source.setData(buildTemporaryControlsCollection(temporaryBorderControls));
+  }, [temporaryBorderControls, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const implementingCodes = [
+      ...new Set(
+        temporaryBorderControls.map(
+          (control) => control.implementingCountryCode,
+        ),
+      ),
+    ];
+
+    if (map.getLayer("schengen-temporary-control-country-outline")) {
+      map.setFilter(
+        "schengen-temporary-control-country-outline",
+        implementingCodes.length > 0
+          ? [
+              "match",
+              ["get", "CNTR_ID"],
+              implementingCodes,
+              true,
+              false,
+            ]
+          : ["==", ["get", "CNTR_ID"], ""],
+      );
+    }
+  }, [temporaryBorderControls, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("schengen-temporary-control-selected")) {
+      map.setPaintProperty(
+        "schengen-temporary-control-selected",
+        "line-width",
+        temporaryControlSelectionExpression(selectedTemporaryControlId, 7, 0),
+      );
+    }
+    if (map.getLayer("schengen-temporary-control-symbol")) {
+      map.setLayoutProperty(
+        "schengen-temporary-control-symbol",
+        "icon-size",
+        temporaryControlSelectionExpression(
+          selectedTemporaryControlId,
+          1.1,
+          0.95,
+        ),
+      );
+    }
+  }, [selectedTemporaryControlId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;

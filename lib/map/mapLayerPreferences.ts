@@ -23,6 +23,12 @@ export type MapLayerPreferences = {
   majorWildfires: boolean;
   satelliteActiveFires: boolean;
   recentSatelliteHistory: boolean;
+  schengenExternalBorderCrossings: boolean;
+  schengenTemporaryInternalControls: boolean;
+  borderCrossingRoad: boolean;
+  borderCrossingRail: boolean;
+  borderCrossingAir: boolean;
+  borderCrossingSea: boolean;
 };
 
 export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
@@ -50,6 +56,12 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   majorWildfires: false,
   satelliteActiveFires: false,
   recentSatelliteHistory: false,
+  schengenExternalBorderCrossings: false,
+  schengenTemporaryInternalControls: false,
+  borderCrossingRoad: true,
+  borderCrossingRail: true,
+  borderCrossingAir: true,
+  borderCrossingSea: true,
 };
 
 const LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
@@ -80,6 +92,12 @@ const LAYER_KEYS = [
   "majorWildfires",
   "satelliteActiveFires",
   "recentSatelliteHistory",
+  "schengenExternalBorderCrossings",
+  "schengenTemporaryInternalControls",
+  "borderCrossingRoad",
+  "borderCrossingRail",
+  "borderCrossingAir",
+  "borderCrossingSea",
 ] as const satisfies ReadonlyArray<keyof MapLayerPreferences>;
 
 function isBoolean(value: unknown): value is boolean {
@@ -150,6 +168,16 @@ export function saveMapLayerPreferences(
       majorWildfires: Boolean(preferences.majorWildfires),
       satelliteActiveFires: Boolean(preferences.satelliteActiveFires),
       recentSatelliteHistory: Boolean(preferences.recentSatelliteHistory),
+      schengenExternalBorderCrossings: Boolean(
+        preferences.schengenExternalBorderCrossings,
+      ),
+      schengenTemporaryInternalControls: Boolean(
+        preferences.schengenTemporaryInternalControls,
+      ),
+      borderCrossingRoad: Boolean(preferences.borderCrossingRoad),
+      borderCrossingRail: Boolean(preferences.borderCrossingRail),
+      borderCrossingAir: Boolean(preferences.borderCrossingAir),
+      borderCrossingSea: Boolean(preferences.borderCrossingSea),
     };
     window.localStorage.setItem(LAYER_PREFS_KEY, JSON.stringify(payload));
   } catch {

@@ -15,6 +15,8 @@ import UnescoSitePanel from "@/components/tourism/UnescoSitePanel";
 import TouristPlacePanel from "@/components/tourism/TouristPlacePanel";
 import AirportPanel from "@/components/transport/AirportPanel";
 import EurostarStationPanel from "@/components/transport/EurostarStationPanel";
+import BorderCrossingPointPanel from "@/components/security/BorderCrossingPointPanel";
+import TemporaryBorderControlPanel from "@/components/security/TemporaryBorderControlPanel";
 import { getEuCapitalById } from "@/lib/europe/euCapitals";
 import {
   getEuInstitutionById,
@@ -27,6 +29,13 @@ import {
   type TouristPlaceCategory,
 } from "@/lib/tourism/majorTouristPlaces";
 import { getEuropeanAirportById } from "@/lib/transport/europeanAirports";
+import {
+  getActiveTemporaryControls,
+  getSchengenBorderCrossingById,
+  getTemporaryControlById,
+  type BorderCrossingMode,
+  type TemporaryInternalBorderControl,
+} from "@/lib/security/schengenBorders";
 import {
   EUROSTAR_ROUTES,
   getEurostarStationById,
@@ -103,6 +112,38 @@ function isAbortError(error: unknown): boolean {
     error !== null &&
     "name" in error &&
     error.name === "AbortError"
+  );
+}
+
+const TEMPORARY_CONTROL_CENTROIDS: Record<string, { longitude: number; latitude: number }> = {
+  AT: { longitude: 14.55, latitude: 47.52 },
+  BE: { longitude: 4.47, latitude: 50.5 },
+  DE: { longitude: 10.45, latitude: 51.16 },
+  DK: { longitude: 10.0, latitude: 56.0 },
+  ES: { longitude: -3.7, latitude: 40.4 },
+  FR: { longitude: 2.35, latitude: 46.6 },
+  HU: { longitude: 19.5, latitude: 47.16 },
+  IT: { longitude: 12.5, latitude: 42.5 },
+  LT: { longitude: 23.9, latitude: 55.17 },
+  LU: { longitude: 6.13, latitude: 49.75 },
+  NL: { longitude: 5.29, latitude: 52.13 },
+  NO: { longitude: 8.5, latitude: 60.5 },
+  PL: { longitude: 19.15, latitude: 52.1 },
+  SE: { longitude: 15.0, latitude: 62.0 },
+  SI: { longitude: 14.8, latitude: 46.15 },
+  SK: { longitude: 19.5, latitude: 48.7 },
+  CH: { longitude: 8.23, latitude: 46.82 },
+  CZ: { longitude: 15.47, latitude: 49.82 },
+};
+
+function centroidForTemporaryControl(
+  control: TemporaryInternalBorderControl,
+): { longitude: number; latitude: number } {
+  return (
+    TEMPORARY_CONTROL_CENTROIDS[control.implementingCountryCode] ?? {
+      longitude: 10,
+      latitude: 50,
+    }
   );
 }
 
@@ -185,6 +226,34 @@ export default function MapInterface() {
   const [selectedAirportId, setSelectedAirportId] = useState<string | null>(
     null,
   );
+  const [showSchengenExternalBorderCrossings, setShowSchengenExternalBorderCrossings] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.schengenExternalBorderCrossings);
+  const [showSchengenTemporaryInternalControls, setShowSchengenTemporaryInternalControls] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.schengenTemporaryInternalControls);
+  const [showBorderCrossingRoad, setShowBorderCrossingRoad] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.borderCrossingRoad,
+  );
+  const [showBorderCrossingRail, setShowBorderCrossingRail] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.borderCrossingRail,
+  );
+  const [showBorderCrossingAir, setShowBorderCrossingAir] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.borderCrossingAir,
+  );
+  const [showBorderCrossingSea, setShowBorderCrossingSea] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.borderCrossingSea,
+  );
+  const [selectedBorderCrossingId, setSelectedBorderCrossingId] = useState<
+    string | null
+  >(null);
+  const [selectedTemporaryControlId, setSelectedTemporaryControlId] = useState<
+    string | null
+  >(null);
+  const [temporaryBorderControls, setTemporaryBorderControls] = useState<
+    TemporaryInternalBorderControl[]
+  >(() => getActiveTemporaryControls());
+  const [temporaryControlsCached, setTemporaryControlsCached] = useState(false);
+  const [temporaryControlsStaleOver24h, setTemporaryControlsStaleOver24h] =
+    useState(false);
   const [selectedEurostarStationId, setSelectedEurostarStationId] = useState<
     string | null
   >(null);
@@ -284,6 +353,17 @@ export default function MapInterface() {
     [wildfireIncidents, selectedWildfireId],
   );
 
+  const selectedTemporaryControl = useMemo(
+    () =>
+      selectedTemporaryControlId
+        ? getTemporaryControlById(
+            selectedTemporaryControlId,
+            temporaryBorderControls,
+          ) ?? null
+        : null,
+    [selectedTemporaryControlId, temporaryBorderControls],
+  );
+
   useEffect(() => {
     const prefs = readMapViewPreferences();
     setBaseMode(prefs.baseMode);
@@ -313,6 +393,14 @@ export default function MapInterface() {
     setShowMajorEuropeanAirports(prefs.majorEuropeanAirports);
     setShowEurostarStations(prefs.eurostarStations);
     setShowEurostarRoutes(prefs.eurostarRoutes);
+    setShowSchengenExternalBorderCrossings(prefs.schengenExternalBorderCrossings);
+    setShowSchengenTemporaryInternalControls(
+      prefs.schengenTemporaryInternalControls,
+    );
+    setShowBorderCrossingRoad(prefs.borderCrossingRoad);
+    setShowBorderCrossingRail(prefs.borderCrossingRail);
+    setShowBorderCrossingAir(prefs.borderCrossingAir);
+    setShowBorderCrossingSea(prefs.borderCrossingSea);
     setShowWildfires(prefs.majorWildfires);
     setShowSatelliteActiveFires(prefs.satelliteActiveFires);
     setShowSatelliteBurnedAreas(prefs.recentSatelliteHistory);
@@ -326,6 +414,37 @@ export default function MapInterface() {
     );
     setLegendCollapsedHydrated(true);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTemporaryControls() {
+      try {
+        const response = await fetch("/api/security/schengen-border-controls");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = (await response.json()) as {
+          controls?: TemporaryInternalBorderControl[];
+          cached?: boolean;
+          staleOver24h?: boolean;
+        };
+        if (cancelled) return;
+        setTemporaryBorderControls(
+          data.controls ?? getActiveTemporaryControls(),
+        );
+        setTemporaryControlsCached(Boolean(data.cached));
+        setTemporaryControlsStaleOver24h(Boolean(data.staleOver24h));
+      } catch {
+        if (!cancelled) {
+          setTemporaryBorderControls(getActiveTemporaryControls());
+        }
+      }
+    }
+
+    void loadTemporaryControls();
+    return () => {
+      cancelled = true;
+    };
+  }, [showSchengenTemporaryInternalControls]);
 
   useEffect(() => {
     if (!layerPrefsHydrated) return;
@@ -351,6 +470,12 @@ export default function MapInterface() {
       majorEuropeanAirports: showMajorEuropeanAirports,
       eurostarStations: showEurostarStations,
       eurostarRoutes: showEurostarRoutes,
+      schengenExternalBorderCrossings: showSchengenExternalBorderCrossings,
+      schengenTemporaryInternalControls: showSchengenTemporaryInternalControls,
+      borderCrossingRoad: showBorderCrossingRoad,
+      borderCrossingRail: showBorderCrossingRail,
+      borderCrossingAir: showBorderCrossingAir,
+      borderCrossingSea: showBorderCrossingSea,
       majorWildfires: showWildfires,
       satelliteActiveFires: showSatelliteActiveFires,
       recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -378,6 +503,12 @@ export default function MapInterface() {
     showMajorEuropeanAirports,
     showEurostarStations,
     showEurostarRoutes,
+    showSchengenExternalBorderCrossings,
+    showSchengenTemporaryInternalControls,
+    showBorderCrossingRoad,
+    showBorderCrossingRail,
+    showBorderCrossingAir,
+    showBorderCrossingSea,
     showWildfires,
     showSatelliteActiveFires,
     showSatelliteBurnedAreas,
@@ -1223,6 +1354,19 @@ export default function MapInterface() {
     setHighlightedEurostarRouteIds([]);
   };
 
+  const clearBorderCrossingSelection = () => {
+    setSelectedBorderCrossingId(null);
+  };
+
+  const clearTemporaryControlSelection = () => {
+    setSelectedTemporaryControlId(null);
+  };
+
+  const clearBorderSelections = () => {
+    clearBorderCrossingSelection();
+    clearTemporaryControlSelection();
+  };
+
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
@@ -1232,6 +1376,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearEurostarSelection();
+    clearBorderSelections();
     setSelectedCountryCode(countryCode);
   };
 
@@ -1244,6 +1389,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearEurostarSelection();
+    clearBorderSelections();
     clearTemporaryPlace();
     setSelectedCapitalId(capitalId);
 
@@ -1270,6 +1416,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearEurostarSelection();
+    clearBorderSelections();
     setSelectedWildfireId(incidentId);
   };
 
@@ -1311,6 +1458,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearEurostarSelection();
+    clearBorderSelections();
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -1333,6 +1481,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearEurostarSelection();
+    clearBorderSelections();
     clearTemporaryPlace();
     setSelectedInstitutionId(institutionId);
     setSelectedInstitutionSiteId(siteId ?? null);
@@ -1415,6 +1564,7 @@ export default function MapInterface() {
     setSelectedCountryCode(null);
     clearUnescoSelection();
     clearTouristPlaceSelection();
+    clearBorderSelections();
     clearTemporaryPlace();
     setShowEuMainInstitutions(true);
     setSelectedInstitutionId(institutionId);
@@ -1446,6 +1596,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearEurostarSelection();
+    clearBorderSelections();
 
     setShowUnescoWorldHeritage(true);
     if (site.category === "cultural") setShowUnescoCultural(true);
@@ -1506,6 +1657,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearEurostarSelection();
+    clearBorderSelections();
     clearTemporaryPlace();
 
     setShowMajorTouristPlaces(true);
@@ -1536,6 +1688,7 @@ export default function MapInterface() {
     clearUnescoSelection();
     clearTouristPlaceSelection();
     clearEurostarSelection();
+    clearBorderSelections();
     clearTemporaryPlace();
 
     setShowMajorEuropeanAirports(true);
@@ -1564,6 +1717,7 @@ export default function MapInterface() {
     clearUnescoSelection();
     clearTouristPlaceSelection();
     clearAirportSelection();
+    clearBorderSelections();
     clearTemporaryPlace();
 
     setShowEurostarStations(true);
@@ -1580,6 +1734,93 @@ export default function MapInterface() {
       longitude: station.longitude,
       latitude: station.latitude,
       zoom: 10,
+    });
+  };
+
+  const enableBorderMode = (mode: BorderCrossingMode) => {
+    if (mode === "rail") {
+      setShowBorderCrossingRail(true);
+      return;
+    }
+    if (mode === "air") {
+      setShowBorderCrossingAir(true);
+      return;
+    }
+    if (mode === "sea" || mode === "river") {
+      setShowBorderCrossingSea(true);
+      return;
+    }
+    setShowBorderCrossingRoad(true);
+  };
+
+  const borderCrossingFocusZoom = (mode: BorderCrossingMode): number => {
+    if (mode === "air") return 11;
+    if (mode === "sea" || mode === "river") return 10;
+    return 12;
+  };
+
+  const handleBorderCrossingSelect = (crossingId: string | null) => {
+    if (!crossingId) {
+      clearBorderCrossingSelection();
+      return;
+    }
+
+    const point = getSchengenBorderCrossingById(crossingId);
+    if (!point) return;
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearTemporaryPlace();
+    clearTemporaryControlSelection();
+
+    setShowSchengenExternalBorderCrossings(true);
+    enableBorderMode(point.mode);
+    setSelectedBorderCrossingId(crossingId);
+
+    requestFocus({
+      kind: "point",
+      longitude: point.longitude,
+      latitude: point.latitude,
+      zoom: borderCrossingFocusZoom(point.mode),
+    });
+  };
+
+  const handleTemporaryControlSelect = (controlId: string | null) => {
+    if (!controlId) {
+      clearTemporaryControlSelection();
+      return;
+    }
+
+    const control = getTemporaryControlById(controlId, temporaryBorderControls);
+    if (!control) return;
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearTemporaryPlace();
+    clearBorderCrossingSelection();
+
+    setShowSchengenTemporaryInternalControls(true);
+    setSelectedTemporaryControlId(controlId);
+
+    requestFocus({
+      kind: "point",
+      longitude: centroidForTemporaryControl(control).longitude,
+      latitude: centroidForTemporaryControl(control).latitude,
+      zoom: 6,
     });
   };
 
@@ -1661,6 +1902,16 @@ export default function MapInterface() {
       return;
     }
 
+    if (result.type === "border_crossing" && result.borderCrossingId) {
+      handleBorderCrossingSelect(result.borderCrossingId);
+      return;
+    }
+
+    if (result.type === "temporary_border_control" && result.temporaryControlId) {
+      handleTemporaryControlSelect(result.temporaryControlId);
+      return;
+    }
+
     if (result.type === "capital") {
       if (result.countryCode) {
         handleCountrySelect(result.countryCode);
@@ -1700,6 +1951,7 @@ export default function MapInterface() {
         onLocaleChange={setLocale}
         t={t}
         wildfires={wildfireIncidents}
+        temporaryBorderControls={temporaryBorderControls}
         onSelectSearchResult={handleSelectSearchResult}
         onGoEurope={handleGoEurope}
         onFocusLegend={handleFocusLegend}
@@ -1743,6 +1995,19 @@ export default function MapInterface() {
           selectedEurostarStationId={selectedEurostarStationId}
           highlightedEurostarRouteIds={highlightedEurostarRouteIds}
           onEurostarStationSelect={handleEurostarStationSelect}
+          showSchengenExternalBorderCrossings={showSchengenExternalBorderCrossings}
+          showSchengenTemporaryInternalControls={
+            showSchengenTemporaryInternalControls
+          }
+          showBorderCrossingRoad={showBorderCrossingRoad}
+          showBorderCrossingRail={showBorderCrossingRail}
+          showBorderCrossingAir={showBorderCrossingAir}
+          showBorderCrossingSea={showBorderCrossingSea}
+          selectedBorderCrossingId={selectedBorderCrossingId}
+          onBorderCrossingSelect={handleBorderCrossingSelect}
+          temporaryBorderControls={temporaryBorderControls}
+          selectedTemporaryControlId={selectedTemporaryControlId}
+          onTemporaryControlSelect={handleTemporaryControlSelect}
           wildfireIncidents={wildfireIncidents}
           showWildfires={showWildfires}
           onWildfireSelect={handleWildfireSelect}
@@ -1759,6 +2024,7 @@ export default function MapInterface() {
               clearTouristPlaceSelection();
               clearAirportSelection();
               clearEurostarSelection();
+              clearBorderSelections();
               clearTemporaryPlace();
             }
           }}
@@ -1889,6 +2155,24 @@ export default function MapInterface() {
           onToggleSatelliteActiveFires={setShowSatelliteActiveFires}
           showSatelliteBurnedAreas={showSatelliteBurnedAreas}
           onToggleSatelliteBurnedAreas={setShowSatelliteBurnedAreas}
+          showSchengenExternalBorderCrossings={showSchengenExternalBorderCrossings}
+          onToggleSchengenExternalBorderCrossings={
+            setShowSchengenExternalBorderCrossings
+          }
+          showSchengenTemporaryInternalControls={
+            showSchengenTemporaryInternalControls
+          }
+          onToggleSchengenTemporaryInternalControls={
+            setShowSchengenTemporaryInternalControls
+          }
+          showBorderCrossingRoad={showBorderCrossingRoad}
+          onToggleBorderCrossingRoad={setShowBorderCrossingRoad}
+          showBorderCrossingRail={showBorderCrossingRail}
+          onToggleBorderCrossingRail={setShowBorderCrossingRail}
+          showBorderCrossingAir={showBorderCrossingAir}
+          onToggleBorderCrossingAir={setShowBorderCrossingAir}
+          showBorderCrossingSea={showBorderCrossingSea}
+          onToggleBorderCrossingSea={setShowBorderCrossingSea}
         />
 
         {effisBurnedAreaLoading && (
@@ -1931,6 +2215,8 @@ export default function MapInterface() {
           !selectedTouristPlaceId &&
           !selectedAirportId &&
           !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1951,6 +2237,8 @@ export default function MapInterface() {
           !selectedTouristPlaceId &&
           !selectedAirportId &&
           !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1972,6 +2260,8 @@ export default function MapInterface() {
           !selectedTouristPlaceId &&
           !selectedAirportId &&
           !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1988,6 +2278,8 @@ export default function MapInterface() {
           !selectedUnescoSiteId &&
           !selectedAirportId &&
           !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -2008,6 +2300,8 @@ export default function MapInterface() {
           !selectedUnescoSiteId &&
           !selectedTouristPlaceId &&
           !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -2024,6 +2318,8 @@ export default function MapInterface() {
           !selectedUnescoSiteId &&
           !selectedTouristPlaceId &&
           !selectedAirportId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -2031,6 +2327,44 @@ export default function MapInterface() {
               stationId={selectedEurostarStationId}
               locale={locale}
               onClose={clearEurostarSelection}
+            />
+          )}
+
+        {selectedBorderCrossingId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedUnescoSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedTemporaryControlId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <BorderCrossingPointPanel
+              crossingId={selectedBorderCrossingId}
+              locale={locale}
+              onClose={clearBorderCrossingSelection}
+            />
+          )}
+
+        {selectedTemporaryControl &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedUnescoSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <TemporaryBorderControlPanel
+              control={selectedTemporaryControl}
+              locale={locale}
+              cached={temporaryControlsCached}
+              staleOver24h={temporaryControlsStaleOver24h}
+              onClose={clearTemporaryControlSelection}
             />
           )}
 

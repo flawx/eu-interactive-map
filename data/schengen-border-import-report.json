@@ -1,0 +1,42 @@
+{
+  "retrievedAt": "2026-07-27T13:49:56.261Z",
+  "officialExtracted": 1876,
+  "matchedToRegistry": 67,
+  "geolocatedDisplayed": 78,
+  "unresolvedCount": 1552,
+  "byMode": {
+    "air": 29,
+    "rail": 4,
+    "road": 33,
+    "river": 2,
+    "sea": 8,
+    "pedestrian": 2
+  },
+  "byCountry": {
+    "AT": 1,
+    "BE": 2,
+    "BG": 5,
+    "CH": 2,
+    "CZ": 1,
+    "DE": 5,
+    "DK": 1,
+    "EE": 1,
+    "EL": 4,
+    "ES": 8,
+    "FI": 4,
+    "FR": 7,
+    "HR": 6,
+    "HU": 3,
+    "IT": 5,
+    "LT": 1,
+    "LV": 2,
+    "NL": 1,
+    "NO": 4,
+    "PL": 6,
+    "PT": 1,
+    "RO": 6,
+    "SE": 1,
+    "SK": 1
+  },
+  "temporaryControlsCount": 9
+}

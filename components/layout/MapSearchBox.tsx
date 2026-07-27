@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import {
   Building2,
   Camera,
+  Car,
   Flame,
   Landmark,
   Leaf,
@@ -20,6 +21,8 @@ import {
   Mountain,
   Plane,
   Search,
+  Shield,
+  ShieldAlert,
   TrainFront,
   TreePine,
   Waves,
@@ -28,6 +31,7 @@ import {
 import type { Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages/types";
 import type { WildfireIncident } from "@/lib/incidents/types";
+import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
 import {
   buildLocalSearchIndex,
   flattenSearchGroups,
@@ -46,6 +50,7 @@ type MapSearchBoxProps = {
   locale: Locale;
   t: Messages;
   wildfires: readonly WildfireIncident[];
+  temporaryBorderControls?: readonly TemporaryInternalBorderControl[];
   compact?: boolean;
   autoFocus?: boolean;
   onSelectResult: (result: MapSearchResult) => void;
@@ -68,6 +73,8 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
       return t.search.groupAirports;
     case "international_stations":
       return t.search.groupInternationalStations;
+    case "borders_and_controls":
+      return t.search.groupBordersAndControls;
     case "active_alerts":
       return t.search.groupAlerts;
     case "app_places":
@@ -172,6 +179,35 @@ function ResultIcon({
     );
   }
 
+  if (type === "border_crossing") {
+    const mode = String(metadata?.mode ?? "road");
+    let pictogram = <Car className="h-3 w-3" strokeWidth={2.25} />;
+    if (mode === "rail") pictogram = <TrainFront className="h-3 w-3" strokeWidth={2.25} />;
+    if (mode === "air") pictogram = <Plane className="h-3 w-3" strokeWidth={2.25} />;
+    if (mode === "sea" || mode === "river") {
+      pictogram = <Shield className="h-3 w-3" strokeWidth={2.25} />;
+    }
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-white bg-[#1e3a8a] text-white shadow-sm"
+        aria-hidden="true"
+      >
+        {pictogram}
+      </span>
+    );
+  }
+
+  if (type === "temporary_border_control") {
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-white bg-orange-700 text-white shadow-sm"
+        aria-hidden="true"
+      >
+        <ShieldAlert className="h-3 w-3" strokeWidth={2.25} />
+      </span>
+    );
+  }
+
   if (type === "capital" && countryCode) {
     const region = (countryCode === "EL" ? "GR" : countryCode).toLowerCase();
     return (
@@ -237,6 +273,7 @@ export default function MapSearchBox({
   locale,
   t,
   wildfires,
+  temporaryBorderControls,
   compact = false,
   autoFocus = false,
   onSelectResult,
@@ -257,8 +294,8 @@ export default function MapSearchBox({
   const [open, setOpen] = useState(false);
 
   const localIndex = useMemo(
-    () => buildLocalSearchIndex(locale, wildfires),
-    [locale, wildfires],
+    () => buildLocalSearchIndex(locale, wildfires, temporaryBorderControls),
+    [locale, wildfires, temporaryBorderControls],
   );
 
   useEffect(() => {

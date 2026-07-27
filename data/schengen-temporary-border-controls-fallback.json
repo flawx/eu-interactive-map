@@ -1,0 +1,193 @@
+{
+  "source": {
+    "name": "Temporary Reintroduction of Border Control",
+    "url": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+    "retrievedAt": "2026-07-27T13:49:56.261Z"
+  },
+  "controls": [
+    {
+      "id": "tbc-it-2026-07-24",
+      "implementingCountryCode": "IT",
+      "affectedCountryCodes": [
+        "FR"
+      ],
+      "modes": [
+        "road"
+      ],
+      "startAt": "2026-07-24",
+      "endAt": "2026-07-26",
+      "scope": "Expected public-order and internal-security threats linked to the Festival dell'Alta Felicita in Venaus (Susa Valley), including likely participation of radical activists and possible violent actions against the Turin-Lyon railway construction sites and deployed law-enforcement personnel; land borders with France.",
+      "officialReason": "Expected public-order and internal-security threats linked to the Festival dell'Alta Felicita in Venaus (Susa Valley), including likely participation of radical activists and possible violent actions against the Turin-Lyon railway construction sites and deployed law-enforcement personnel; land borders with France.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-at-2026-06-16",
+      "implementingCountryCode": "AT",
+      "affectedCountryCodes": [
+        "SI",
+        "SK",
+        "CZ",
+        "HU"
+      ],
+      "modes": [
+        "road",
+        "river"
+      ],
+      "startAt": "2026-06-16",
+      "endAt": "2026-09-15",
+      "scope": "Continuous threats to internal security posed by irregular migration along the Balkan routes (including expected migratory pressure), as well as threats associated with the burden on the asylum reception system and basic services, Russia's ongoing war of aggression against Ukraine, and the security situation in the Middle East, aggravated by terrorist groups and the US-Israeli conflict with Iran; land and river borders with the Slovak Republic, and land borders with the Czech Republic, Hungary, and the Republic of Slovenia.",
+      "officialReason": "Continuous threats to internal security posed by irregular migration along the Balkan routes (including expected migratory pressure), as well as threats associated with the burden on the asylum reception system and basic services, Russia's ongoing war of aggression against Ukraine, and the security situation in the Middle East, aggravated by terrorist groups and the US-Israeli conflict with Iran; land and river borders with the Slovak Republic, and land borders with the Czech Republic, Hungary, and the Republic of Slovenia.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-it-2026-06-19",
+      "implementingCountryCode": "IT",
+      "affectedCountryCodes": [
+        "SI"
+      ],
+      "modes": [
+        "road"
+      ],
+      "startAt": "2026-06-19",
+      "endAt": "2026-12-18",
+      "scope": "Continued threat of terrorist infiltrations into migratory flows along the Western Balkan route, ongoing crises in the Middle East and Ukraine, high level of irregular migration including a strong presence of criminal smuggling and trafficking networks; land borders with Slovenia.",
+      "officialReason": "Continued threat of terrorist infiltrations into migratory flows along the Western Balkan route, ongoing crises in the Middle East and Ukraine, high level of irregular migration including a strong presence of criminal smuggling and trafficking networks; land borders with Slovenia.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-nl-2026-06-09",
+      "implementingCountryCode": "NL",
+      "affectedCountryCodes": [
+        "DE",
+        "BE"
+      ],
+      "modes": [
+        "road",
+        "air"
+      ],
+      "startAt": "2026-06-09",
+      "endAt": "2026-09-30",
+      "scope": "Continuous serious threat to public policy caused by high levels of asylum applications, irregular migration, migrant smuggling, and secondary movements, leading to an overburdening of the migration system and the asylum system, particularly, the reception capacity; land borders with Belgium and Germany, and the intra-Schengen air borders.",
+      "officialReason": "Continuous serious threat to public policy caused by high levels of asylum applications, irregular migration, migrant smuggling, and secondary movements, leading to an overburdening of the migration system and the asylum system, particularly, the reception capacity; land borders with Belgium and Germany, and the intra-Schengen air borders.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-no-2026-05-12",
+      "implementingCountryCode": "NO",
+      "affectedCountryCodes": [],
+      "modes": [
+        "sea"
+      ],
+      "startAt": "2026-05-12",
+      "endAt": "2026-11-11",
+      "scope": "Continued general threat aimed at the energy sector, threats of sabotage posed by the Russian intelligence service, possibly targeting logistics infrastructure and civilian infrastructure; ports with ferry connections to the Schengen area.",
+      "officialReason": "Continued general threat aimed at the energy sector, threats of sabotage posed by the Russian intelligence service, possibly targeting logistics infrastructure and civilian infrastructure; ports with ferry connections to the Schengen area.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-pl-2026-04-05",
+      "implementingCountryCode": "PL",
+      "affectedCountryCodes": [
+        "LT",
+        "DE"
+      ],
+      "modes": [
+        "road"
+      ],
+      "startAt": "2026-04-05",
+      "endAt": "2026-10-01",
+      "scope": "Continued threats to public security and order posed by the persistent migratory pressure along the borders with the Republic of Lithuania and the Federal Republic of Germany; land borders with Germany and Lithuania.",
+      "officialReason": "Continued threats to public security and order posed by the persistent migratory pressure along the borders with the Republic of Lithuania and the Federal Republic of Germany; land borders with Germany and Lithuania.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-de-2026-03-16",
+      "implementingCountryCode": "DE",
+      "affectedCountryCodes": [
+        "PL",
+        "CZ",
+        "NL",
+        "CH",
+        "LU",
+        "BE",
+        "AT",
+        "DK",
+        "FR"
+      ],
+      "modes": [
+        "road"
+      ],
+      "startAt": "2026-03-16",
+      "endAt": "2026-09-15",
+      "scope": "Continued serious threats to public security and order posed by continued high levels of irregular migration and migrant smuggling, and the strain on the asylum reception system. The impact of the global security situation (including Russia's war of aggression against Ukraine and the situation in the Middle East/Central Asia) on security and migration; land borders with France, Luxembourg, Belgium, the Netherlands, Denmark, Austria, Switzerland, the Czech Republic, and the Republic of Poland.",
+      "officialReason": "Continued serious threats to public security and order posed by continued high levels of irregular migration and migrant smuggling, and the strain on the asylum reception system. The impact of the global security situation (including Russia's war of aggression against Ukraine and the situation in the Middle East/Central Asia) on security and migration; land borders with France, Luxembourg, Belgium, the Netherlands, Denmark, Austria, Switzerland, the Czech Republic, and the Republic of Poland.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-se-2026-05-12",
+      "implementingCountryCode": "SE",
+      "affectedCountryCodes": [
+        "DK"
+      ],
+      "modes": [
+        "road",
+        "air",
+        "sea"
+      ],
+      "startAt": "2026-05-12",
+      "endAt": "2026-11-11",
+      "scope": "Continued serious threats to public policy and internal security posed by organised cross-border crime and other criminal activities, including the involvement of foreign state actors leveraging criminal gangs, coupled with persistent threats from violent Islamist groups and individuals; all internal borders (land, air, and sea) and land borders with Denmark.",
+      "officialReason": "Continued serious threats to public policy and internal security posed by organised cross-border crime and other criminal activities, including the involvement of foreign state actors leveraging criminal gangs, coupled with persistent threats from violent Islamist groups and individuals; all internal borders (land, air, and sea) and land borders with Denmark.",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    },
+    {
+      "id": "tbc-fr-2026-05-01",
+      "implementingCountryCode": "FR",
+      "affectedCountryCodes": [
+        "CH",
+        "LU",
+        "DE",
+        "BE",
+        "ES",
+        "IT"
+      ],
+      "modes": [
+        "road",
+        "air",
+        "sea"
+      ],
+      "startAt": "2026-05-01",
+      "endAt": "2026-10-31",
+      "scope": "Continued serious threats to public order and internal security posed by persistent jihadist threats, a rise in antisemitic attacks, the growing criminal networks facilitating irregular migration and smuggling, and potential infiltration by radicalised individuals towards the Franco-British border, as well as the Channel and North Sea borders, along with rising violence among migrants, particularly in northern coastal areas such as Pas-de-Calais, creating dangerous conditions for migrants and law enforcement. Further threats involve, the deteriorated global security environment, including inst",
+      "officialReason": "Continued serious threats to public order and internal security posed by persistent jihadist threats, a rise in antisemitic attacks, the growing criminal networks facilitating irregular migration and smuggling, and potential infiltration by radicalised individuals towards the Franco-British border, as well as the Channel and North Sea borders, along with rising violence among migrants, particularly in northern coastal areas such as Pas-de-Calais, creating dangerous conditions for migrants and law enforcement. Further threats involve, the deteriorated global security environment, including inst",
+      "authorisedCrossingNames": [],
+      "officialSourceUrl": "https://home-affairs.ec.europa.eu/policies/schengen/schengen-area/temporary-reintroduction-border-control_en",
+      "fetchedAt": "2026-07-27T13:49:56.261Z",
+      "geometryAccuracy": "notified-scope"
+    }
+  ]
+}

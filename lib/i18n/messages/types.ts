@@ -56,6 +56,15 @@ export type Messages = {
     satelliteActiveFires: string;
     satelliteBurnedAreas: string;
     satelliteHistoryNote: string;
+    bordersAndControls: string;
+    schengenExternalBorderCrossings: string;
+    schengenExternalBorderCrossingsDescription: string;
+    schengenTemporaryInternalControls: string;
+    schengenTemporaryInternalControlsDescription: string;
+    borderCrossingRoad: string;
+    borderCrossingRail: string;
+    borderCrossingAir: string;
+    borderCrossingSea: string;
     noLayersYet: string;
     openLegend: string;
     closeLegend: string;
@@ -221,6 +230,7 @@ export type Messages = {
     searchThisPlace: string;
     searching: string;
     noResults: string;
+    noVerifiedBorderCrossingInArea: string;
     serviceUnavailable: string;
     recentHistory: string;
     clearSearch: string;
@@ -232,6 +242,7 @@ export type Messages = {
     groupTouristPlaces: string;
     groupAirports: string;
     groupInternationalStations: string;
+    groupBordersAndControls: string;
     groupAlerts: string;
     groupAppPlaces: string;
     groupExternal: string;
@@ -491,5 +502,55 @@ export type Messages = {
     photoCredit: string;
     previousPhoto: string;
     nextPhoto: string;
+  };
+  borderCrossingPanel: {
+    externalBadge: string;
+    verifyBeforeTravel: string;
+    status: string;
+    mode: string;
+    passengers: string;
+    freight: string;
+    yes: string;
+    no: string;
+    openingHours: string;
+    location: string;
+    neighbouringCountry: string;
+    officialSource: string;
+    lastVerified: string;
+    modes: Record<
+      | "road"
+      | "motorway"
+      | "rail"
+      | "air"
+      | "sea"
+      | "river"
+      | "pedestrian"
+      | "other",
+      string
+    >;
+    statuses: Record<
+      | "authorised"
+      | "temporarily-controlled"
+      | "restricted"
+      | "unknown",
+      string
+    >;
+  };
+  temporaryBorderControlPanel: {
+    badge: string;
+    active: string;
+    cachedData: string;
+    notClosedWarning: string;
+    notifiedScopeNote: string;
+    staleData: string;
+    startDate: string;
+    plannedEnd: string;
+    affectedBorders: string;
+    modes: string;
+    notifiedScope: string;
+    officialReason: string;
+    authorisedCrossings: string;
+    commissionLink: string;
+    lastFetched: string;
   };
 };
