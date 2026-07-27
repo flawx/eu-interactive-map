@@ -250,12 +250,17 @@ export default function MapLegend({
           <LayerToggle
             checked={showEuMainInstitutions}
             onChange={onToggleEuMainInstitutions}
-            color="#003399"
+            color="#5b21b6"
             label={t.legend.euMainInstitutions}
-            swatchClassName="relative overflow-hidden rounded-[3px]"
+            swatchClassName="relative overflow-hidden rounded-[3px] border-white"
             swatchStyle={{
-              background:
-                "radial-gradient(circle at 50% 50%, #facc15 0 30%, #003399 32%)",
+              backgroundColor: "#5b21b6",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23facc15' d='M8 2.2 3.5 6h9L8 2.2zm-5 4.3v1.2h10V6.5H3zm1.6 1.7v4.2h1.3V8.2H4.6zm3.05 0v4.2h1.3V8.2H7.65zm3.05 0v4.2H12V8.2h-1.3zM3 13v1.2h10V13H3z'/%3E%3C/svg%3E\")",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center",
+              backgroundSize: "11px 11px",
+              borderColor: "#ffffff",
             }}
           />
           <p

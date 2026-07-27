@@ -419,9 +419,12 @@ function buildEuMainInstitutionsCollection(
 }
 
 /**
- * Modern institutional marker: EU-blue rounded square, yellow star, white
- * stroke and a soft shadow. `badgeCount` draws a small yellow count badge
- * for shared sites (e.g. the Europa building hosting two institutions).
+ * Institutional marker distinct from capital discs: rounded square in deep
+ * violet with a golden classical-building pictogram, white stroke and soft
+ * shadow. Optional `badgeCount` draws a top-right count badge for shared
+ * sites (e.g. Europa building hosting both Councils).
+ *
+ * Canvas is 64×64 at pixelRatio 2 → ~32×32 CSS px at icon-size 1.0.
  */
 function createEuInstitutionIcon(
   badgeCount?: number,
@@ -442,84 +445,88 @@ function createEuInstitutionIcon(
     h: number,
     r: number,
   ) => {
+    const radius = Math.min(r, w / 2, h / 2);
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    ctx.lineTo(x + w, y + h - radius);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
   };
 
-  const badgeSize = 40;
-  const badgeX = (size - badgeSize) / 2;
-  const badgeY = (size - badgeSize) / 2 + 1;
+  const faceSize = 44;
+  const faceX = (size - faceSize) / 2;
+  const faceY = (size - faceSize) / 2 + 1;
+  const violet = "#5b21b6";
+  const gold = "#facc15";
 
   // soft shadow
-  roundedRect(badgeX, badgeY + 2, badgeSize, badgeSize, 12);
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  roundedRect(faceX, faceY + 2, faceSize, faceSize, 11);
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
   ctx.fill();
 
-  // white outer stroke
-  roundedRect(badgeX, badgeY, badgeSize, badgeSize, 12);
+  // white 2px outer contour (filled ring)
+  roundedRect(faceX, faceY, faceSize, faceSize, 11);
   ctx.fillStyle = "#ffffff";
   ctx.fill();
 
-  // EU blue face
-  roundedRect(badgeX + 3, badgeY + 3, badgeSize - 6, badgeSize - 6, 10);
-  ctx.fillStyle = "#003399";
+  // deep violet face
+  roundedRect(faceX + 3, faceY + 3, faceSize - 6, faceSize - 6, 9);
+  ctx.fillStyle = violet;
   ctx.fill();
 
-  // yellow star
-  const drawStar = (
-    cx: number,
-    cy: number,
-    spikes: number,
-    outer: number,
-    inner: number,
-  ) => {
-    let rot = (Math.PI / 2) * 3;
-    let x = cx;
-    let y = cy;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - outer);
-    for (let i = 0; i < spikes; i++) {
-      x = cx + Math.cos(rot) * outer;
-      y = cy + Math.sin(rot) * outer;
-      ctx.lineTo(x, y);
-      rot += Math.PI / spikes;
-      x = cx + Math.cos(rot) * inner;
-      y = cy + Math.sin(rot) * inner;
-      ctx.lineTo(x, y);
-      rot += Math.PI / spikes;
-    }
-    ctx.lineTo(cx, cy - outer);
-    ctx.closePath();
-    ctx.fillStyle = "#facc15";
+  // golden classical building / columns pictogram
+  const cx = size / 2;
+  const cy = faceY + faceSize / 2 + 1;
+  ctx.fillStyle = gold;
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  // pediment
+  ctx.beginPath();
+  ctx.moveTo(cx - 12, cy - 8);
+  ctx.lineTo(cx, cy - 15);
+  ctx.lineTo(cx + 12, cy - 8);
+  ctx.closePath();
+  ctx.fill();
+
+  // entablature
+  roundedRect(cx - 13, cy - 8, 26, 4, 1);
+  ctx.fill();
+
+  // three columns
+  for (const offset of [-8, 0, 8]) {
+    roundedRect(cx + offset - 2, cy - 4, 4, 14, 1);
     ctx.fill();
-  };
-  drawStar(size / 2, badgeY + badgeSize / 2, 5, 9, 4);
+  }
+
+  // stylobate / base
+  roundedRect(cx - 14, cy + 10, 28, 3.5, 1);
+  ctx.fill();
 
   if (badgeCount && badgeCount > 1) {
-    const bx = badgeX + badgeSize - 3;
-    const by = badgeY + 1;
-    const r = 9;
+    const bx = faceX + faceSize - 2;
+    const by = faceY + 2;
+    const r = 10;
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
-    ctx.fillStyle = "#facc15";
+    ctx.fillStyle = "#ffffff";
     ctx.fill();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = violet;
     ctx.stroke();
-    ctx.fillStyle = "#0b1f4d";
-    ctx.font = "bold 12px system-ui, sans-serif";
+    ctx.fillStyle = violet;
+    ctx.font = "bold 13px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(String(badgeCount), bx, by + 1);
+    ctx.fillText(String(badgeCount), bx, by + 0.5);
   }
 
   const imageData = ctx.getImageData(0, 0, size, size);
@@ -1852,11 +1859,11 @@ export default function MapContainer({
           paint: {
             "circle-radius": siteSelectionCaseExpression(
               selectedInstitutionSiteIdRef.current,
-              19,
-              14,
+              22,
+              16,
             ),
-            "circle-color": "#003399",
-            "circle-opacity": 0.22,
+            "circle-color": "#a78bfa",
+            "circle-opacity": 0.35,
           },
         });
       }
@@ -1872,12 +1879,13 @@ export default function MapContainer({
             "icon-image": ["get", "iconImageId"],
             "icon-size": siteSelectionCaseExpression(
               selectedInstitutionSiteIdRef.current,
-              0.65,
-              0.5,
+              1.15,
+              1,
             ),
             "icon-allow-overlap": true,
             "icon-ignore-placement": true,
             "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
           },
         });
       }
@@ -1907,9 +1915,9 @@ export default function MapContainer({
             "text-allow-overlap": false,
           },
           paint: {
-            "text-color": "#0b1f4d",
-            "text-halo-color": "#ffffff",
-            "text-halo-width": 1.5,
+            "text-color": "#4c1d95",
+            "text-halo-color": "#ede9fe",
+            "text-halo-width": 1.6,
           },
         });
       }
@@ -2357,7 +2365,7 @@ export default function MapContainer({
       map.setPaintProperty(
         "eu-main-institutions-halo",
         "circle-radius",
-        siteSelectionCaseExpression(selectedInstitutionSiteId, 19, 14),
+        siteSelectionCaseExpression(selectedInstitutionSiteId, 22, 16),
       );
     }
 
@@ -2365,7 +2373,7 @@ export default function MapContainer({
       map.setLayoutProperty(
         "eu-main-institutions-symbol",
         "icon-size",
-        siteSelectionCaseExpression(selectedInstitutionSiteId, 0.65, 0.5),
+        siteSelectionCaseExpression(selectedInstitutionSiteId, 1.15, 1),
       );
     }
   }, [selectedInstitutionSiteId, mapSourcesReadyVersion]);
