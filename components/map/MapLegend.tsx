@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertTriangle,
   ChevronDown,
@@ -73,6 +74,11 @@ export default function MapLegend({
   const isHighlighted = Boolean(highlight);
   const open = !collapsed;
   const categories = useMemo(() => getVisibleLegendCategories(), []);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [expandedCategories, setExpandedCategories] = useState<
     Record<LegendCategoryId, boolean>
@@ -230,7 +236,7 @@ export default function MapLegend({
 
   const panel = (
     <aside
-      className={`flex max-h-[min(70vh,34rem)] w-[min(21rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[var(--map-ui-radius)] border transition ${
+      className={`flex w-full flex-col overflow-hidden rounded-[var(--map-ui-radius)] border transition ${
         isHighlighted ? "ring-2 ring-[#1a73e8]/70" : ""
       }`}
       style={{
@@ -238,13 +244,18 @@ export default function MapLegend({
         borderColor: "var(--map-ui-border)",
         boxShadow: "var(--map-ui-shadow)",
         color: "var(--map-ui-text)",
+        pointerEvents: "auto",
+        width: "min(340px, calc(100vw - 32px))",
         maxHeight:
-          "min(70vh, 34rem, calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px))))",
+          "calc(100dvh - var(--map-panel-top-offset, 76px) - 24px - env(safe-area-inset-bottom, 0px))",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       <div
-        className="flex items-center justify-between gap-2 border-b px-3 py-2.5"
-        style={{ borderColor: "var(--map-ui-border)" }}
+        className="flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5"
+        style={{ borderColor: "var(--map-ui-border)", flex: "0 0 auto" }}
       >
         <div className="min-w-0">
           <h2 className="text-sm font-semibold">{t.legend.title}</h2>
@@ -335,7 +346,10 @@ export default function MapLegend({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5">
+      <div
+        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-1.5 py-1.5"
+        style={{ flex: "1 1 auto", minHeight: 0 }}
+      >
         {categories.map((category) => {
           const categoryActive = getActiveLayerCountForCategory(
             category.id,
@@ -402,12 +416,75 @@ export default function MapLegend({
     </aside>
   );
 
-  return (
-    <div className="pointer-events-auto">
-      <div className="md:hidden">{open ? panel : compactButton}</div>
-      <div className="hidden md:block">{open ? panel : compactButton}</div>
-    </div>
+  if (!mounted) return null;
+
+  const desktopAnchorStyle: CSSProperties = {
+    position: "fixed",
+    top: "calc(var(--map-panel-top-offset, 76px) - 4px)",
+    right: "16px",
+    zIndex: 920,
+    pointerEvents: "none",
+  };
+
+  const legendUi = (
+    <>
+      {/* Desktop: fixed top-right */}
+      <div className="hidden md:block" style={desktopAnchorStyle}>
+        <div style={{ pointerEvents: "auto" }}>
+          {open ? panel : compactButton}
+        </div>
+      </div>
+
+      {/* Mobile: compact trigger */}
+      <div
+        className="md:hidden"
+        style={{
+          position: "fixed",
+          left: "50%",
+          transform: "translateX(-50%)",
+          bottom: "max(1rem, calc(16px + env(safe-area-inset-bottom, 0px)))",
+          zIndex: 920,
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{ pointerEvents: "auto" }}>{compactButton}</div>
+      </div>
+
+      {/* Mobile: bottom drawer when open */}
+      {open ? (
+        <div
+          className="md:hidden"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 950,
+            pointerEvents: "none",
+          }}
+          role="presentation"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/25"
+            style={{ pointerEvents: "auto" }}
+            aria-label={t.legend.closeLegend}
+            onClick={() => onCollapsedChange(true)}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 flex justify-center p-3"
+            style={{
+              pointerEvents: "none",
+              paddingBottom:
+                "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+            }}
+          >
+            <div style={{ pointerEvents: "auto" }}>{panel}</div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
+
+  return createPortal(legendUi, document.body);
 }
 
 function getDefaultGroupsForHydration(): Record<string, boolean> {
