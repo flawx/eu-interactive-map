@@ -73,7 +73,10 @@ export async function fetchWikidataWikipediaUrl(
     entities?: Record<
       string,
       {
-        sitelinks?: Record<string, { url?: string }>;
+        sitelinks?: Record<
+          string,
+          { url?: string; title?: string; site?: string }
+        >;
         claims?: Record<string, Array<{ mainsnak?: { datavalue?: { value?: unknown } } }>>;
       }
     >;
@@ -82,11 +85,22 @@ export async function fetchWikidataWikipediaUrl(
   const entity = json.entities[wikidataId];
   const sitelinks = entity.sitelinks ?? {};
   const preferred =
-    sitelinks[`${locale}wiki`]?.url ??
-    sitelinks.enwiki?.url ??
-    sitelinks.frwiki?.url ??
+    sitelinks[`${locale}wiki`] ??
+    sitelinks.enwiki ??
+    sitelinks.frwiki ??
     null;
-  return preferred;
+  if (!preferred) return null;
+  if (typeof preferred.url === "string" && preferred.url) {
+    return preferred.url;
+  }
+  const title = typeof preferred.title === "string" ? preferred.title : null;
+  if (!title) return null;
+  const site =
+    typeof preferred.site === "string" ? preferred.site : `${locale}wiki`;
+  const lang = site.replace(/wiki$/i, "") || "en";
+  return `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(
+    title.replace(/ /g, "_"),
+  )}`;
 }
 
 export async function fetchWikidataOpenedYear(

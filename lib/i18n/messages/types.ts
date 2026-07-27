@@ -412,6 +412,7 @@ export type Messages = {
     sourceWikipedia: string;
     sourceCommons: string;
     detailsUnavailable: string;
+    presentationUnavailable: string;
     loadingDetails: string;
     photoCredit: string;
     previousPhoto: string;
@@ -440,6 +441,7 @@ export type Messages = {
     sourceWikipedia: string;
     sourceCommons: string;
     detailsUnavailable: string;
+    presentationUnavailable: string;
     loadingDetails: string;
     photoCredit: string;
     previousPhoto: string;

@@ -13,6 +13,8 @@ import { getMessages } from "@/lib/i18n/messages";
 import { getEuropeanAirportById } from "@/lib/transport/europeanAirports";
 import type { EuropeanAirportDetails } from "@/lib/transport/transportDetails";
 
+const CLIENT_FETCH_TIMEOUT_MS = 12_000;
+
 type AirportPanelProps = {
   airportId: string;
   locale: Locale;
@@ -50,7 +52,14 @@ export default function AirportPanel({
 
   useEffect(() => {
     if (!airport) return;
+
+    let active = true;
     const controller = new AbortController();
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      CLIENT_FETCH_TIMEOUT_MS,
+    );
+
     setLoading(true);
     setError(false);
     setDetails(null);
@@ -61,22 +70,30 @@ export default function AirportPanel({
           `/api/transport/airports/${encodeURIComponent(airport.id)}?locale=${locale}`,
           { signal: controller.signal },
         );
-        if (controller.signal.aborted) return;
+        if (!active) return;
         if (response.ok) {
           const data = (await response.json()) as EuropeanAirportDetails;
-          if (!controller.signal.aborted) setDetails(data);
-        } else if (!controller.signal.aborted) {
+          if (!active) return;
+          setDetails(data);
+          setError(false);
+        } else {
           setError(true);
         }
       } catch {
-        if (!controller.signal.aborted) setError(true);
+        if (!active) return;
+        setError(true);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        window.clearTimeout(timeoutId);
+        if (active) setLoading(false);
       }
     };
 
     void load();
-    return () => controller.abort();
+    return () => {
+      active = false;
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [airport, locale]);
 
   if (!airport) return null;
@@ -123,10 +140,15 @@ export default function AirportPanel({
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         {loading && (
-          <div className="space-y-3">
+          <div className="space-y-3" aria-busy="true" aria-label={tp.loadingDetails}>
             <div className="h-40 animate-pulse rounded-xl bg-white/10" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-white/10" />
+            <div className="h-3 animate-pulse rounded bg-white/10" />
+            <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
+            <div className="h-3 w-4/6 animate-pulse rounded bg-white/10" />
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="h-14 animate-pulse rounded-lg bg-white/10" />
+              <div className="h-14 animate-pulse rounded-lg bg-white/10" />
+            </div>
           </div>
         )}
 
@@ -145,7 +167,7 @@ export default function AirportPanel({
                     alt={photo.title ?? airport.name}
                     className="h-40 w-full object-cover"
                   />
-                  {images.length > 1 && (
+                  {images.length > 1 ? (
                     <div className="flex items-center justify-between gap-2 bg-black/40 px-2 py-1.5">
                       <button
                         type="button"
@@ -173,11 +195,10 @@ export default function AirportPanel({
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
-                  )}
-                  {images.length <= 1 && (
+                  ) : (
                     <p className="bg-black/40 px-2 py-1.5 text-center text-[10px] leading-snug text-slate-300">
                       {tp.photoCredit}: {photo.author} · {photo.license}
-                      {photo.sourceUrl && (
+                      {photo.sourceUrl ? (
                         <>
                           {" · "}
                           <a
@@ -189,7 +210,7 @@ export default function AirportPanel({
                             source
                           </a>
                         </>
-                      )}
+                      ) : null}
                     </p>
                   )}
                 </div>
@@ -201,8 +222,23 @@ export default function AirportPanel({
                 <Plane className="h-4 w-4 text-cyan-400" />
                 {tp.overview}
               </h3>
-              <p className="text-sm leading-relaxed text-slate-200">
-                {details?.description ?? tp.loadingDetails}
+              {details?.description ? (
+                <p className="text-sm leading-relaxed text-slate-200">
+                  {details.description}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400">
+                  {tp.presentationUnavailable}
+                </p>
+              )}
+              <p className="mt-2 text-[11px] text-slate-400">
+                {airport.city} · {countryName}
+                {details?.openedYear != null
+                  ? ` · ${tp.openedYear} ${details.openedYear}`
+                  : ""}
+                {details?.operatorName
+                  ? ` · ${tp.operator}: ${details.operatorName}`
+                  : ""}
               </p>
             </section>
 
@@ -229,7 +265,7 @@ export default function AirportPanel({
                   {airport.rank2025 != null ? `#${airport.rank2025}` : "—"}
                 </p>
               </div>
-              {details?.openedYear != null && (
+              {details?.openedYear != null ? (
                 <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
                   <p className="text-[10px] font-medium uppercase text-slate-400">
                     {tp.openedYear}
@@ -238,7 +274,7 @@ export default function AirportPanel({
                     {details.openedYear}
                   </p>
                 </div>
-              )}
+              ) : null}
             </section>
 
             {(details?.terminals?.length ||
@@ -248,21 +284,21 @@ export default function AirportPanel({
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                   {tp.practicalInfo}
                 </h3>
-                {details.operatorName && (
+                {details.operatorName ? (
                   <p className="text-sm text-slate-200">
                     {tp.operator}: {details.operatorName}
                   </p>
-                )}
+                ) : null}
                 {details.terminals?.length ? (
                   <p className="text-sm text-slate-200">
                     {tp.terminals}: {details.terminals.join(", ")}
                   </p>
                 ) : null}
-                {details.groundTransportSummary && (
+                {details.groundTransportSummary ? (
                   <p className="text-sm text-slate-200">
                     {tp.groundTransport}: {details.groundTransportSummary}
                   </p>
-                )}
+                ) : null}
               </section>
             )}
 
@@ -271,7 +307,7 @@ export default function AirportPanel({
                 {tp.officialLinks}
               </h3>
               <ul className="space-y-1.5 text-sm">
-                {airport.officialWebsite && (
+                {airport.officialWebsite ? (
                   <li>
                     <a
                       href={airport.officialWebsite}
@@ -283,8 +319,8 @@ export default function AirportPanel({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   </li>
-                )}
-                {details?.wikipediaUrl && (
+                ) : null}
+                {details?.wikipediaUrl ? (
                   <li>
                     <a
                       href={details.wikipediaUrl}
@@ -296,7 +332,7 @@ export default function AirportPanel({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   </li>
-                )}
+                ) : null}
               </ul>
             </section>
 

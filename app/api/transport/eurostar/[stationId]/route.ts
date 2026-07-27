@@ -62,11 +62,12 @@ export async function GET(
 
   if (wikipediaUrl) {
     try {
-      const page = wikipediaUrl.split("/wiki/")[1];
-      if (page) {
+      const pageEncoded = wikipediaUrl.split("/wiki/")[1]?.split(/[?#]/)[0];
+      if (pageEncoded) {
         const lang = wikipediaUrl.split("://")[1]?.split(".")[0] ?? "en";
+        const pageTitle = decodeURIComponent(pageEncoded);
         const summaryRes = await fetch(
-          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${page}`,
+          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`,
           {
             headers: {
               Accept: "application/json",

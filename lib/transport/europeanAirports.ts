@@ -48,7 +48,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LFPG",
     rank2025: 1,
     officialWebsite: "https://www.parisaeroport.fr/en/passengers/paris-charles-de-gaulle",
-    wikidataId: "Q46208",
+    wikidataId: "Q46280",
     airportType: "major-international",
   },
   {
@@ -62,7 +62,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LTFM",
     rank2025: 2,
     officialWebsite: "https://www.istairport.com/",
-    wikidataId: "Q15059457",
+    wikidataId: "Q3661908",
     airportType: "major-international",
   },
   {
@@ -90,7 +90,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LEMD",
     rank2025: 4,
     officialWebsite: "https://www.aena.es/en/adolfo-suarez-madrid-barajas.html",
-    wikidataId: "Q1430957",
+    wikidataId: "Q166276",
     airportType: "major-international",
   },
   {
@@ -104,7 +104,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EHAM",
     rank2025: 5,
     officialWebsite: "https://www.schiphol.nl/",
-    wikidataId: "Q1432629",
+    wikidataId: "Q9694",
     airportType: "major-international",
   },
   {
@@ -160,7 +160,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LIRF",
     rank2025: 10,
     officialWebsite: "https://www.adr.it/fiumicino",
-    wikidataId: "Q19142",
+    wikidataId: "Q19101",
     airportType: "major-international",
   },
   {
@@ -174,7 +174,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LEPA",
     rank2025: 11,
     officialWebsite: "https://www.aena.es/en/palma-de-mallorca.html",
-    wikidataId: "Q56956",
+    wikidataId: "Q656993",
     airportType: "major-international",
   },
   {
@@ -188,7 +188,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LOWW",
     rank2025: 12,
     officialWebsite: "https://www.viennaairport.com/",
-    wikidataId: "Q32907",
+    wikidataId: "Q32999",
     airportType: "major-international",
   },
   {
@@ -202,7 +202,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EBBR",
     rank2025: 13,
     officialWebsite: "https://www.brusselsairport.be/",
-    wikidataId: "Q73785",
+    wikidataId: "Q28934",
     airportType: "major-international",
   },
   {
@@ -216,7 +216,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LGAV",
     rank2025: 14,
     officialWebsite: "https://www.aia.gr/",
-    wikidataId: "Q211000",
+    wikidataId: "Q211734",
     airportType: "major-international",
   },
   {
@@ -244,7 +244,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "ESSA",
     rank2025: 16,
     officialWebsite: "https://www.swedavia.com/arlanda/",
-    wikidataId: "Q81896",
+    wikidataId: "Q223499",
     airportType: "major-international",
   },
   {
@@ -258,7 +258,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LSZH",
     rank2025: 17,
     officialWebsite: "https://www.flughafen-zuerich.ch/",
-    wikidataId: "Q159427",
+    wikidataId: "Q15114",
     airportType: "major-international",
   },
   {
@@ -272,7 +272,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EKCH",
     rank2025: 18,
     officialWebsite: "https://www.cph.dk/",
-    wikidataId: "Q206171",
+    wikidataId: "Q206277",
     airportType: "major-international",
   },
   {
@@ -300,7 +300,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LFPO",
     rank2025: 20,
     officialWebsite: "https://www.parisaeroport.fr/en/passengers/paris-orly",
-    wikidataId: "Q46280",
+    wikidataId: "Q223416",
     airportType: "major-international",
   },
   {
@@ -314,7 +314,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EGCC",
     rank2025: 21,
     officialWebsite: "https://www.manchesterairport.co.uk/",
-    wikidataId: "Q8709",
+    wikidataId: "Q8694",
     airportType: "major-international",
   },
   {
@@ -328,7 +328,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "ENGM",
     rank2025: 22,
     officialWebsite: "https://avinor.no/en/airport/oslo-airport/",
-    wikidataId: "Q210431",
+    wikidataId: "Q210559",
     airportType: "major-international",
   },
   {
@@ -342,7 +342,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EIDW",
     rank2025: 23,
     officialWebsite: "https://www.dublinairport.com/",
-    wikidataId: "Q178205",
+    wikidataId: "Q178021",
     airportType: "major-international",
   },
   {
@@ -356,7 +356,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EDDL",
     rank2025: 25,
     officialWebsite: "https://www.dus.com/",
-    wikidataId: "Q164998",
+    wikidataId: "Q58226",
     airportType: "major-international",
   },
   {
@@ -370,7 +370,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EDDB",
     rank2025: 26,
     officialWebsite: "https://ber.berlin-airport.de/",
-    wikidataId: "Q9687",
+    wikidataId: "Q160556",
     airportType: "major-international",
   },
   {
@@ -384,7 +384,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LFMN",
     rank2025: 27,
     officialWebsite: "https://www.nice.aeroport.fr/",
-    wikidataId: "Q6664",
+    wikidataId: "Q821557",
     airportType: "major-international",
   },
   {
@@ -398,7 +398,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EGSS",
     rank2025: 28,
     officialWebsite: "https://www.stanstedairport.com/",
-    wikidataId: "Q8710",
+    wikidataId: "Q8709",
     airportType: "major-international",
   },
   {
@@ -412,7 +412,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EFHK",
     rank2025: 30,
     officialWebsite: "https://www.finavia.fi/en/airports/helsinki-airport",
-    wikidataId: "Q210401",
+    wikidataId: "Q215327",
     airportType: "major-international",
   },
   {
@@ -426,7 +426,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LPPT",
     rank2025: 31,
     officialWebsite: "https://www.ana.pt/en/lis",
-    wikidataId: "Q82190",
+    wikidataId: "Q403671",
     airportType: "major-international",
   },
   {
@@ -440,7 +440,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LEMG",
     rank2025: 32,
     officialWebsite: "https://www.aena.es/en/malaga-costa-del-sol.html",
-    wikidataId: "Q1431124",
+    wikidataId: "Q690894",
     airportType: "major-international",
   },
   {
@@ -454,7 +454,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EPWA",
     rank2025: 33,
     officialWebsite: "https://www.lotnisko-chopina.pl/",
-    wikidataId: "Q73794",
+    wikidataId: "Q465071",
     airportType: "major-international",
   },
   {
@@ -468,7 +468,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LKPR",
     rank2025: 34,
     officialWebsite: "https://www.prg.aero/",
-    wikidataId: "Q21149",
+    wikidataId: "Q99172",
     airportType: "major-international",
   },
   {
@@ -482,7 +482,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LSGG",
     rank2025: 35,
     officialWebsite: "https://www.gva.ch/",
-    wikidataId: "Q15282",
+    wikidataId: "Q289972",
     airportType: "major-international",
   },
   {
@@ -496,7 +496,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "EGGW",
     rank2025: 37,
     officialWebsite: "https://www.london-luton.co.uk/",
-    wikidataId: "Q8708",
+    wikidataId: "Q8712",
     airportType: "major-international",
   },
   {
@@ -510,7 +510,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LHBP",
     rank2025: 38,
     officialWebsite: "https://www.bud.hu/",
-    wikidataId: "Q732576",
+    wikidataId: "Q500945",
     airportType: "major-international",
   },
   {
@@ -524,7 +524,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LEAL",
     rank2025: 39,
     officialWebsite: "https://www.aena.es/en/alicante-elche.html",
-    wikidataId: "Q1431015",
+    wikidataId: "Q849314",
     airportType: "major-international",
   },
   {
@@ -538,7 +538,7 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     icaoCode: "LROP",
     rank2025: 40,
     officialWebsite: "https://www.bucharestairports.ro/",
-    wikidataId: "Q727979",
+    wikidataId: "Q257631",
     airportType: "major-international",
   },
 ] as const;

@@ -13,6 +13,8 @@ import { getMessages } from "@/lib/i18n/messages";
 import { getEurostarStationById } from "@/lib/transport/eurostarNetwork";
 import type { EurostarStationDetails } from "@/lib/transport/transportDetails";
 
+const CLIENT_FETCH_TIMEOUT_MS = 12_000;
+
 type EurostarStationPanelProps = {
   stationId: string;
   locale: Locale;
@@ -50,7 +52,14 @@ export default function EurostarStationPanel({
 
   useEffect(() => {
     if (!station) return;
+
+    let active = true;
     const controller = new AbortController();
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      CLIENT_FETCH_TIMEOUT_MS,
+    );
+
     setLoading(true);
     setError(false);
     setDetails(null);
@@ -61,22 +70,30 @@ export default function EurostarStationPanel({
           `/api/transport/eurostar/${encodeURIComponent(station.id)}?locale=${locale}`,
           { signal: controller.signal },
         );
-        if (controller.signal.aborted) return;
+        if (!active) return;
         if (response.ok) {
           const data = (await response.json()) as EurostarStationDetails;
-          if (!controller.signal.aborted) setDetails(data);
-        } else if (!controller.signal.aborted) {
+          if (!active) return;
+          setDetails(data);
+          setError(false);
+        } else {
           setError(true);
         }
       } catch {
-        if (!controller.signal.aborted) setError(true);
+        if (!active) return;
+        setError(true);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        window.clearTimeout(timeoutId);
+        if (active) setLoading(false);
       }
     };
 
     void load();
-    return () => controller.abort();
+    return () => {
+      active = false;
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [station, locale]);
 
   if (!station) return null;
@@ -86,6 +103,7 @@ export default function EurostarStationPanel({
   const countryName =
     regionNames?.of(flagCode(station.countryCode)) ?? station.countryCode;
   const destinations = details?.directDestinations ?? [];
+  const isSeasonal = station.serviceStatus === "seasonal";
 
   return (
     <aside
@@ -117,16 +135,33 @@ export default function EurostarStationPanel({
             <X aria-hidden="true" size={22} strokeWidth={2} />
           </button>
         </div>
-        <p className="mt-2 inline-flex rounded-full border border-amber-400/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-100">
-          {tp.badge}
-        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <span className="inline-flex rounded-full border border-amber-400/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-100">
+            {tp.badge}
+          </span>
+          <span
+            className={
+              isSeasonal
+                ? "inline-flex rounded-full border border-orange-400/30 bg-orange-500/15 px-2 py-0.5 text-[10px] font-medium text-orange-100"
+                : "inline-flex rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-100"
+            }
+          >
+            {isSeasonal ? tp.seasonalService : tp.regularService}
+          </span>
+        </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         {loading && (
-          <div className="space-y-3">
+          <div className="space-y-3" aria-busy="true" aria-label={tp.loadingDetails}>
             <div className="h-40 animate-pulse rounded-xl bg-white/10" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
+            <div className="h-3 animate-pulse rounded bg-white/10" />
+            <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
+            <div className="h-3 w-4/6 animate-pulse rounded bg-white/10" />
+            <div className="mt-2 space-y-2">
+              <div className="h-8 animate-pulse rounded-lg bg-white/10" />
+              <div className="h-8 animate-pulse rounded-lg bg-white/10" />
+            </div>
           </div>
         )}
 
@@ -145,7 +180,7 @@ export default function EurostarStationPanel({
                     alt={photo.title ?? station.name}
                     className="h-40 w-full object-cover"
                   />
-                  {images.length > 1 && (
+                  {images.length > 1 ? (
                     <div className="flex items-center justify-between gap-2 bg-black/40 px-2 py-1.5">
                       <button
                         type="button"
@@ -173,8 +208,7 @@ export default function EurostarStationPanel({
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
-                  )}
-                  {images.length <= 1 && (
+                  ) : (
                     <p className="bg-black/40 px-2 py-1.5 text-center text-[10px] leading-snug text-slate-300">
                       {tp.photoCredit}: {photo.author} · {photo.license}
                     </p>
@@ -188,14 +222,15 @@ export default function EurostarStationPanel({
                 <TrainFront className="h-4 w-4 text-amber-400" />
                 {tp.presentation}
               </h3>
-              <p className="text-sm text-slate-200">
-                {station.serviceStatus === "seasonal"
-                  ? tp.seasonalService
-                  : tp.regularService}
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-200">
-                {details?.description ?? tp.loadingDetails}
-              </p>
+              {details?.description ? (
+                <p className="text-sm leading-relaxed text-slate-200">
+                  {details.description}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400">
+                  {tp.presentationUnavailable}
+                </p>
+              )}
             </section>
 
             <section>
@@ -232,21 +267,21 @@ export default function EurostarStationPanel({
                 <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                   {tp.practicalInfo}
                 </h3>
-                {details.recommendedArrivalInfo && (
+                {details.recommendedArrivalInfo ? (
                   <p className="text-sm text-slate-200">
                     {tp.recommendedArrival}: {details.recommendedArrivalInfo}
                   </p>
-                )}
-                {details.borderControlInfo && (
+                ) : null}
+                {details.borderControlInfo ? (
                   <p className="text-sm text-slate-200">
                     {tp.borderControl}: {details.borderControlInfo}
                   </p>
-                )}
-                {details.accessibilityInfo && (
+                ) : null}
+                {details.accessibilityInfo ? (
                   <p className="text-sm text-slate-200">
                     {tp.accessibility}: {details.accessibilityInfo}
                   </p>
-                )}
+                ) : null}
               </section>
             )}
 
@@ -266,7 +301,7 @@ export default function EurostarStationPanel({
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 </li>
-                {station.stationWebsite && (
+                {station.stationWebsite ? (
                   <li>
                     <a
                       href={station.stationWebsite}
@@ -278,8 +313,8 @@ export default function EurostarStationPanel({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   </li>
-                )}
-                {details?.wikipediaUrl && (
+                ) : null}
+                {details?.wikipediaUrl ? (
                   <li>
                     <a
                       href={details.wikipediaUrl}
@@ -291,7 +326,7 @@ export default function EurostarStationPanel({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   </li>
-                )}
+                ) : null}
               </ul>
             </section>
 

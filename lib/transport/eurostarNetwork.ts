@@ -50,7 +50,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: -0.1261,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/london-st-pancras-international",
     stationWebsite: "https://stpancras.com/",
-    wikidataId: "Q719530",
+    wikidataId: "Q720102",
     serviceStatus: "regular",
   },
   {
@@ -62,7 +62,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 2.3553,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/paris-gare-du-nord",
     stationWebsite: "https://www.garesetconnexions.sncf/fr/gare/paris-nord",
-    wikidataId: "Q745559",
+    wikidataId: "Q745942",
     serviceStatus: "regular",
   },
   {
@@ -74,7 +74,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 3.0757,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/lille-europe",
     stationWebsite: "https://www.garesetconnexions.sncf/fr/gare/lille-europe",
-    wikidataId: "Q801088",
+    wikidataId: "Q801099",
     serviceStatus: "regular",
   },
   {
@@ -86,7 +86,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 2.7835,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/disneyland-paris",
     stationWebsite: null,
-    wikidataId: "Q801165",
+    wikidataId: "Q801167",
     serviceStatus: "regular",
   },
   {
@@ -98,7 +98,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 2.571,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/paris-charles-de-gaulle-airport",
     stationWebsite: "https://www.parisaeroport.fr/",
-    wikidataId: "Q259983",
+    wikidataId: "Q800424",
     serviceStatus: "regular",
   },
   {
@@ -110,7 +110,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 4.3358,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/brussels-midi",
     stationWebsite: "https://www.belgiantrain.be/en/station-information/brussels-south",
-    wikidataId: "Q800598",
+    wikidataId: "Q800587",
     serviceStatus: "regular",
   },
   {
@@ -122,7 +122,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 4.4211,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/antwerp-central",
     stationWebsite: null,
-    wikidataId: "Q800414",
+    wikidataId: "Q800398",
     serviceStatus: "regular",
   },
   {
@@ -134,7 +134,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 5.5667,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/liege-guillemins",
     stationWebsite: null,
-    wikidataId: "Q800938",
+    wikidataId: "Q801116",
     serviceStatus: "regular",
   },
   {
@@ -146,7 +146,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 4.9003,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/amsterdam-central",
     stationWebsite: "https://www.ns.nl/en/stationsinformatie/amsterdam-centraal",
-    wikidataId: "Q800622",
+    wikidataId: "Q50719",
     serviceStatus: "regular",
   },
   {
@@ -158,7 +158,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 4.4694,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/rotterdam-central",
     stationWebsite: null,
-    wikidataId: "Q801357",
+    wikidataId: "Q801388",
     serviceStatus: "regular",
   },
   {
@@ -170,7 +170,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 4.762,
     officialUrl: "https://www.eurostar.com/uk-en/train-stations/schiphol-airport",
     stationWebsite: "https://www.schiphol.nl/",
-    wikidataId: "Q800455",
+    wikidataId: "Q801410",
     serviceStatus: "regular",
   },
   {
@@ -182,7 +182,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 6.0911,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/germany",
     stationWebsite: null,
-    wikidataId: "Q300671",
+    wikidataId: "Q300706",
     serviceStatus: "regular",
   },
   {
@@ -206,7 +206,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 6.7933,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/germany",
     stationWebsite: null,
-    wikidataId: "Q463249",
+    wikidataId: "Q255951",
     serviceStatus: "regular",
   },
   {
@@ -230,7 +230,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 6.7756,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/germany",
     stationWebsite: null,
-    wikidataId: "Q463331",
+    wikidataId: "Q567024",
     serviceStatus: "regular",
   },
   {
@@ -242,7 +242,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 7.0136,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/germany",
     stationWebsite: null,
-    wikidataId: "Q318719",
+    wikidataId: "Q135607",
     serviceStatus: "regular",
   },
   {
@@ -254,7 +254,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 7.4592,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/germany",
     stationWebsite: null,
-    wikidataId: "Q318781",
+    wikidataId: "Q704394",
     serviceStatus: "regular",
   },
   // Eurostar Snow (winter) — from Brussels, named on the official routemap.
@@ -267,7 +267,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 5.9194,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/french-alps",
     stationWebsite: null,
-    wikidataId: "Q2208236",
+    wikidataId: "Q3096183",
     serviceStatus: "seasonal",
   },
   {
@@ -279,7 +279,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 6.3831,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/french-alps",
     stationWebsite: null,
-    wikidataId: "Q2479405",
+    wikidataId: "Q2905334",
     serviceStatus: "seasonal",
   },
   {
@@ -291,7 +291,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 6.5308,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/french-alps",
     stationWebsite: null,
-    wikidataId: "Q2479391",
+    wikidataId: "Q3097131",
     serviceStatus: "seasonal",
   },
   {
@@ -303,7 +303,7 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
     longitude: 6.7703,
     officialUrl: "https://www.eurostar.com/uk-en/destinations/french-alps",
     stationWebsite: null,
-    wikidataId: "Q2208214",
+    wikidataId: "Q2003411",
     serviceStatus: "seasonal",
   },
 ] as const;
