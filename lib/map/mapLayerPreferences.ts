@@ -189,10 +189,14 @@ export function saveMapLayerPreferences(
   }
 }
 
+import {
+  getActiveMainLayerCount,
+} from "@/lib/map/legendConfiguration";
+
 export function countActiveMapLayers(
   preferences: MapLayerPreferences,
 ): number {
-  return LAYER_KEYS.filter((key) => preferences[key]).length;
+  return getActiveMainLayerCount(preferences);
 }
 
 /** `null` = no stored preference yet. */

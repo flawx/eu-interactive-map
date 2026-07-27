@@ -69,6 +69,7 @@ import {
   loadMapLayerPreferences,
   saveLegendCollapsed,
   saveMapLayerPreferences,
+  type MapLayerPreferences,
 } from "@/lib/map/mapLayerPreferences";
 import {
   readMapViewPreferences,
@@ -531,6 +532,158 @@ export default function MapInterface() {
     showSatelliteActiveFires,
     showSatelliteBurnedAreas,
   ]);
+
+  const legendPreferences = useMemo<MapLayerPreferences>(
+    () => ({
+      euroArea: showEurozone,
+      euOutsideEuroArea: showNonEurozone,
+      schengenOutsideEu: showSchengenNonEU,
+      euCandidates: showCandidates,
+      euCapitals: showEuCapitals,
+      euMainInstitutions: showEuMainInstitutions,
+      unescoWorldHeritage: showUnescoWorldHeritage,
+      unescoCultural: showUnescoCultural,
+      unescoNatural: showUnescoNatural,
+      unescoMixed: showUnescoMixed,
+      europeanHeritageLabel: showEuropeanHeritageLabel,
+      majorTouristPlaces: showMajorTouristPlaces,
+      touristLandmark: showTouristLandmark,
+      touristHistoricArea: showTouristHistoricArea,
+      touristMuseum: showTouristMuseum,
+      touristParkGarden: showTouristParkGarden,
+      touristNaturalLandscape: showTouristNaturalLandscape,
+      touristCoastalDestination: showTouristCoastalDestination,
+      touristMountainDestination: showTouristMountainDestination,
+      majorEuropeanAirports: showMajorEuropeanAirports,
+      eurostarStations: showEurostarStations,
+      eurostarRoutes: showEurostarRoutes,
+      schengenExternalBorderCrossings: showSchengenExternalBorderCrossings,
+      schengenTemporaryInternalControls: showSchengenTemporaryInternalControls,
+      borderCrossingRoad: showBorderCrossingRoad,
+      borderCrossingRail: showBorderCrossingRail,
+      borderCrossingAir: showBorderCrossingAir,
+      borderCrossingSea: showBorderCrossingSea,
+      majorWildfires: showWildfires,
+      satelliteActiveFires: showSatelliteActiveFires,
+      recentSatelliteHistory: showSatelliteBurnedAreas,
+    }),
+    [
+      showEurozone,
+      showNonEurozone,
+      showSchengenNonEU,
+      showCandidates,
+      showEuCapitals,
+      showEuMainInstitutions,
+      showUnescoWorldHeritage,
+      showUnescoCultural,
+      showUnescoNatural,
+      showUnescoMixed,
+      showEuropeanHeritageLabel,
+      showMajorTouristPlaces,
+      showTouristLandmark,
+      showTouristHistoricArea,
+      showTouristMuseum,
+      showTouristParkGarden,
+      showTouristNaturalLandscape,
+      showTouristCoastalDestination,
+      showTouristMountainDestination,
+      showMajorEuropeanAirports,
+      showEurostarStations,
+      showEurostarRoutes,
+      showSchengenExternalBorderCrossings,
+      showSchengenTemporaryInternalControls,
+      showBorderCrossingRoad,
+      showBorderCrossingRail,
+      showBorderCrossingAir,
+      showBorderCrossingSea,
+      showWildfires,
+      showSatelliteActiveFires,
+      showSatelliteBurnedAreas,
+    ],
+  );
+
+  const handleLegendPreferenceToggle = (
+    key: keyof MapLayerPreferences,
+    value: boolean,
+  ) => {
+    const setters: Record<
+      keyof MapLayerPreferences,
+      (next: boolean) => void
+    > = {
+      euroArea: setShowEurozone,
+      euOutsideEuroArea: setShowNonEurozone,
+      schengenOutsideEu: setShowSchengenNonEU,
+      euCandidates: setShowCandidates,
+      euCapitals: setShowEuCapitals,
+      euMainInstitutions: setShowEuMainInstitutions,
+      unescoWorldHeritage: setShowUnescoWorldHeritage,
+      unescoCultural: setShowUnescoCultural,
+      unescoNatural: setShowUnescoNatural,
+      unescoMixed: setShowUnescoMixed,
+      europeanHeritageLabel: setShowEuropeanHeritageLabel,
+      majorTouristPlaces: setShowMajorTouristPlaces,
+      touristLandmark: setShowTouristLandmark,
+      touristHistoricArea: setShowTouristHistoricArea,
+      touristMuseum: setShowTouristMuseum,
+      touristParkGarden: setShowTouristParkGarden,
+      touristNaturalLandscape: setShowTouristNaturalLandscape,
+      touristCoastalDestination: setShowTouristCoastalDestination,
+      touristMountainDestination: setShowTouristMountainDestination,
+      majorEuropeanAirports: setShowMajorEuropeanAirports,
+      eurostarStations: setShowEurostarStations,
+      eurostarRoutes: setShowEurostarRoutes,
+      majorWildfires: setShowWildfires,
+      satelliteActiveFires: setShowSatelliteActiveFires,
+      recentSatelliteHistory: setShowSatelliteBurnedAreas,
+      schengenExternalBorderCrossings: setShowSchengenExternalBorderCrossings,
+      schengenTemporaryInternalControls:
+        setShowSchengenTemporaryInternalControls,
+      borderCrossingRoad: setShowBorderCrossingRoad,
+      borderCrossingRail: setShowBorderCrossingRail,
+      borderCrossingAir: setShowBorderCrossingAir,
+      borderCrossingSea: setShowBorderCrossingSea,
+    };
+    setters[key](value);
+  };
+
+  const handleLegendLayersReset = () => {
+    const defaults = DEFAULT_MAP_LAYER_PREFERENCES;
+    setShowEurozone(defaults.euroArea);
+    setShowNonEurozone(defaults.euOutsideEuroArea);
+    setShowSchengenNonEU(defaults.schengenOutsideEu);
+    setShowCandidates(defaults.euCandidates);
+    setShowEuCapitals(defaults.euCapitals);
+    setShowEuMainInstitutions(defaults.euMainInstitutions);
+    setShowUnescoWorldHeritage(defaults.unescoWorldHeritage);
+    setShowUnescoCultural(defaults.unescoCultural);
+    setShowUnescoNatural(defaults.unescoNatural);
+    setShowUnescoMixed(defaults.unescoMixed);
+    setShowEuropeanHeritageLabel(defaults.europeanHeritageLabel);
+    setShowMajorTouristPlaces(defaults.majorTouristPlaces);
+    setShowTouristLandmark(defaults.touristLandmark);
+    setShowTouristHistoricArea(defaults.touristHistoricArea);
+    setShowTouristMuseum(defaults.touristMuseum);
+    setShowTouristParkGarden(defaults.touristParkGarden);
+    setShowTouristNaturalLandscape(defaults.touristNaturalLandscape);
+    setShowTouristCoastalDestination(defaults.touristCoastalDestination);
+    setShowTouristMountainDestination(defaults.touristMountainDestination);
+    setShowMajorEuropeanAirports(defaults.majorEuropeanAirports);
+    setShowEurostarStations(defaults.eurostarStations);
+    setShowEurostarRoutes(defaults.eurostarRoutes);
+    setShowWildfires(defaults.majorWildfires);
+    setShowSatelliteActiveFires(defaults.satelliteActiveFires);
+    setShowSatelliteBurnedAreas(defaults.recentSatelliteHistory);
+    setShowSchengenExternalBorderCrossings(
+      defaults.schengenExternalBorderCrossings,
+    );
+    setShowSchengenTemporaryInternalControls(
+      defaults.schengenTemporaryInternalControls,
+    );
+    setShowBorderCrossingRoad(defaults.borderCrossingRoad);
+    setShowBorderCrossingRail(defaults.borderCrossingRail);
+    setShowBorderCrossingAir(defaults.borderCrossingAir);
+    setShowBorderCrossingSea(defaults.borderCrossingSea);
+  };
 
   useEffect(() => {
     if (!legendCollapsedHydrated) return;
@@ -2231,74 +2384,9 @@ export default function MapInterface() {
           highlight={legendHighlight}
           collapsed={legendCollapsed}
           onCollapsedChange={setLegendCollapsed}
-          showEurozone={showEurozone}
-          onToggleEurozone={setShowEurozone}
-          showNonEurozone={showNonEurozone}
-          onToggleNonEurozone={setShowNonEurozone}
-          showCandidates={showCandidates}
-          onToggleCandidates={setShowCandidates}
-          showSchengenNonEU={showSchengenNonEU}
-          onToggleSchengenNonEU={setShowSchengenNonEU}
-          showEuCapitals={showEuCapitals}
-          onToggleEuCapitals={setShowEuCapitals}
-          showEuMainInstitutions={showEuMainInstitutions}
-          onToggleEuMainInstitutions={setShowEuMainInstitutions}
-          showUnescoWorldHeritage={showUnescoWorldHeritage}
-          onToggleUnescoWorldHeritage={setShowUnescoWorldHeritage}
-          showUnescoCultural={showUnescoCultural}
-          onToggleUnescoCultural={setShowUnescoCultural}
-          showUnescoNatural={showUnescoNatural}
-          onToggleUnescoNatural={setShowUnescoNatural}
-          showUnescoMixed={showUnescoMixed}
-          onToggleUnescoMixed={setShowUnescoMixed}
-          showEuropeanHeritageLabel={showEuropeanHeritageLabel}
-          onToggleEuropeanHeritageLabel={setShowEuropeanHeritageLabel}
-          showMajorTouristPlaces={showMajorTouristPlaces}
-          onToggleMajorTouristPlaces={setShowMajorTouristPlaces}
-          showTouristLandmark={showTouristLandmark}
-          onToggleTouristLandmark={setShowTouristLandmark}
-          showTouristHistoricArea={showTouristHistoricArea}
-          onToggleTouristHistoricArea={setShowTouristHistoricArea}
-          showTouristMuseum={showTouristMuseum}
-          onToggleTouristMuseum={setShowTouristMuseum}
-          showTouristParkGarden={showTouristParkGarden}
-          onToggleTouristParkGarden={setShowTouristParkGarden}
-          showTouristNaturalLandscape={showTouristNaturalLandscape}
-          onToggleTouristNaturalLandscape={setShowTouristNaturalLandscape}
-          showTouristCoastalDestination={showTouristCoastalDestination}
-          onToggleTouristCoastalDestination={setShowTouristCoastalDestination}
-          showTouristMountainDestination={showTouristMountainDestination}
-          onToggleTouristMountainDestination={setShowTouristMountainDestination}
-          showMajorEuropeanAirports={showMajorEuropeanAirports}
-          onToggleMajorEuropeanAirports={setShowMajorEuropeanAirports}
-          showEurostarStations={showEurostarStations}
-          onToggleEurostarStations={setShowEurostarStations}
-          showEurostarRoutes={showEurostarRoutes}
-          onToggleEurostarRoutes={setShowEurostarRoutes}
-          showWildfires={showWildfires}
-          onToggleWildfires={setShowWildfires}
-          showSatelliteActiveFires={showSatelliteActiveFires}
-          onToggleSatelliteActiveFires={setShowSatelliteActiveFires}
-          showSatelliteBurnedAreas={showSatelliteBurnedAreas}
-          onToggleSatelliteBurnedAreas={setShowSatelliteBurnedAreas}
-          showSchengenExternalBorderCrossings={showSchengenExternalBorderCrossings}
-          onToggleSchengenExternalBorderCrossings={
-            setShowSchengenExternalBorderCrossings
-          }
-          showSchengenTemporaryInternalControls={
-            showSchengenTemporaryInternalControls
-          }
-          onToggleSchengenTemporaryInternalControls={
-            setShowSchengenTemporaryInternalControls
-          }
-          showBorderCrossingRoad={showBorderCrossingRoad}
-          onToggleBorderCrossingRoad={setShowBorderCrossingRoad}
-          showBorderCrossingRail={showBorderCrossingRail}
-          onToggleBorderCrossingRail={setShowBorderCrossingRail}
-          showBorderCrossingAir={showBorderCrossingAir}
-          onToggleBorderCrossingAir={setShowBorderCrossingAir}
-          showBorderCrossingSea={showBorderCrossingSea}
-          onToggleBorderCrossingSea={setShowBorderCrossingSea}
+          preferences={legendPreferences}
+          onTogglePreference={handleLegendPreferenceToggle}
+          onResetLayers={handleLegendLayersReset}
         />
 
         {effisBurnedAreaLoading && (

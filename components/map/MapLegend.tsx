@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Info,
   Layers,
+  MoreHorizontal,
   Plane,
   Shield,
   X,
@@ -13,148 +23,48 @@ import {
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
-import { countActiveMapLayers } from "@/lib/map/mapLayerPreferences";
+import type { Messages } from "@/lib/i18n/messages/types";
+import {
+  DEFAULT_EXPANDED_CATEGORIES,
+  getActiveLayerCountForCategory,
+  getActiveMainLayerCount,
+  getFilterActiveTotal,
+  getGroupActiveTotal,
+  getVisibleLegendCategories,
+  loadLegendGroupExpanded,
+  saveLegendGroupExpanded,
+  type LegendCategoryId,
+  type LegendLayerDefinition,
+  type LegendTranslationKey,
+} from "@/lib/map/legendConfiguration";
+import type { MapLayerPreferences } from "@/lib/map/mapLayerPreferences";
 
 type MapLegendProps = {
   locale: Locale;
-  showEurozone: boolean;
-  onToggleEurozone: (value: boolean) => void;
-  showNonEurozone: boolean;
-  onToggleNonEurozone: (value: boolean) => void;
-  showCandidates: boolean;
-  onToggleCandidates: (value: boolean) => void;
-  showSchengenNonEU: boolean;
-  onToggleSchengenNonEU: (value: boolean) => void;
-  showEuCapitals: boolean;
-  onToggleEuCapitals: (value: boolean) => void;
-  showEuMainInstitutions: boolean;
-  onToggleEuMainInstitutions: (value: boolean) => void;
-  showUnescoWorldHeritage: boolean;
-  onToggleUnescoWorldHeritage: (value: boolean) => void;
-  showUnescoCultural: boolean;
-  onToggleUnescoCultural: (value: boolean) => void;
-  showUnescoNatural: boolean;
-  onToggleUnescoNatural: (value: boolean) => void;
-  showUnescoMixed: boolean;
-  onToggleUnescoMixed: (value: boolean) => void;
-  showEuropeanHeritageLabel: boolean;
-  onToggleEuropeanHeritageLabel: (value: boolean) => void;
-  showMajorTouristPlaces: boolean;
-  onToggleMajorTouristPlaces: (value: boolean) => void;
-  showTouristLandmark: boolean;
-  onToggleTouristLandmark: (value: boolean) => void;
-  showTouristHistoricArea: boolean;
-  onToggleTouristHistoricArea: (value: boolean) => void;
-  showTouristMuseum: boolean;
-  onToggleTouristMuseum: (value: boolean) => void;
-  showTouristParkGarden: boolean;
-  onToggleTouristParkGarden: (value: boolean) => void;
-  showTouristNaturalLandscape: boolean;
-  onToggleTouristNaturalLandscape: (value: boolean) => void;
-  showTouristCoastalDestination: boolean;
-  onToggleTouristCoastalDestination: (value: boolean) => void;
-  showTouristMountainDestination: boolean;
-  onToggleTouristMountainDestination: (value: boolean) => void;
-  showMajorEuropeanAirports: boolean;
-  onToggleMajorEuropeanAirports: (value: boolean) => void;
-  showEurostarStations: boolean;
-  onToggleEurostarStations: (value: boolean) => void;
-  showEurostarRoutes: boolean;
-  onToggleEurostarRoutes: (value: boolean) => void;
-  showWildfires: boolean;
-  onToggleWildfires: (value: boolean) => void;
-  showSatelliteActiveFires: boolean;
-  onToggleSatelliteActiveFires: (value: boolean) => void;
-  showSatelliteBurnedAreas: boolean;
-  onToggleSatelliteBurnedAreas: (value: boolean) => void;
-  showSchengenExternalBorderCrossings: boolean;
-  onToggleSchengenExternalBorderCrossings: (value: boolean) => void;
-  showSchengenTemporaryInternalControls: boolean;
-  onToggleSchengenTemporaryInternalControls: (value: boolean) => void;
-  showBorderCrossingRoad: boolean;
-  onToggleBorderCrossingRoad: (value: boolean) => void;
-  showBorderCrossingRail: boolean;
-  onToggleBorderCrossingRail: (value: boolean) => void;
-  showBorderCrossingAir: boolean;
-  onToggleBorderCrossingAir: (value: boolean) => void;
-  showBorderCrossingSea: boolean;
-  onToggleBorderCrossingSea: (value: boolean) => void;
+  preferences: MapLayerPreferences;
+  onTogglePreference: (
+    key: keyof MapLayerPreferences,
+    value: boolean,
+  ) => void;
+  onResetLayers: () => void;
   highlight?: boolean;
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
 };
 
-type LegendCategoryId =
-  | "europe"
-  | "tourism"
-  | "security"
-  | "alerts"
-  | "energy";
+function resolveLegendText(
+  messages: Messages,
+  key: LegendTranslationKey,
+): string {
+  if (key.ns === "nav") return messages.nav[key.key];
+  return messages.legend[key.key];
+}
 
 export default function MapLegend({
   locale,
-  showEurozone,
-  onToggleEurozone,
-  showNonEurozone,
-  onToggleNonEurozone,
-  showCandidates,
-  onToggleCandidates,
-  showSchengenNonEU,
-  onToggleSchengenNonEU,
-  showEuCapitals,
-  onToggleEuCapitals,
-  showEuMainInstitutions,
-  onToggleEuMainInstitutions,
-  showUnescoWorldHeritage,
-  onToggleUnescoWorldHeritage,
-  showUnescoCultural,
-  onToggleUnescoCultural,
-  showUnescoNatural,
-  onToggleUnescoNatural,
-  showUnescoMixed,
-  onToggleUnescoMixed,
-  showEuropeanHeritageLabel,
-  onToggleEuropeanHeritageLabel,
-  showMajorTouristPlaces,
-  onToggleMajorTouristPlaces,
-  showTouristLandmark,
-  onToggleTouristLandmark,
-  showTouristHistoricArea,
-  onToggleTouristHistoricArea,
-  showTouristMuseum,
-  onToggleTouristMuseum,
-  showTouristParkGarden,
-  onToggleTouristParkGarden,
-  showTouristNaturalLandscape,
-  onToggleTouristNaturalLandscape,
-  showTouristCoastalDestination,
-  onToggleTouristCoastalDestination,
-  showTouristMountainDestination,
-  onToggleTouristMountainDestination,
-  showMajorEuropeanAirports,
-  onToggleMajorEuropeanAirports,
-  showEurostarStations,
-  onToggleEurostarStations,
-  showEurostarRoutes,
-  onToggleEurostarRoutes,
-  showWildfires,
-  onToggleWildfires,
-  showSatelliteActiveFires,
-  onToggleSatelliteActiveFires,
-  showSatelliteBurnedAreas,
-  onToggleSatelliteBurnedAreas,
-  showSchengenExternalBorderCrossings,
-  onToggleSchengenExternalBorderCrossings,
-  showSchengenTemporaryInternalControls,
-  onToggleSchengenTemporaryInternalControls,
-  showBorderCrossingRoad,
-  onToggleBorderCrossingRoad,
-  showBorderCrossingRail,
-  onToggleBorderCrossingRail,
-  showBorderCrossingAir,
-  onToggleBorderCrossingAir,
-  showBorderCrossingSea,
-  onToggleBorderCrossingSea,
+  preferences,
+  onTogglePreference,
+  onResetLayers,
   highlight,
   collapsed,
   onCollapsedChange,
@@ -162,93 +72,137 @@ export default function MapLegend({
   const t = getMessages(locale);
   const isHighlighted = Boolean(highlight);
   const open = !collapsed;
-  const [expanded, setExpanded] = useState<Record<LegendCategoryId, boolean>>({
-    europe: false,
-    tourism: false,
-    security: false,
-    alerts: true,
-    energy: false,
-  });
+  const categories = useMemo(() => getVisibleLegendCategories(), []);
+
+  const [expandedCategories, setExpandedCategories] = useState<
+    Record<LegendCategoryId, boolean>
+  >(DEFAULT_EXPANDED_CATEGORIES);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    () => getDefaultGroupsForHydration(),
+  );
+  const [expandedFilters, setExpandedFilters] = useState<
+    Record<string, boolean>
+  >({});
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [openDescriptionId, setOpenDescriptionId] = useState<string | null>(
+    null,
+  );
+  const actionsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setExpandedGroups(loadLegendGroupExpanded());
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (openDescriptionId) {
+          setOpenDescriptionId(null);
+          return;
+        }
+        if (actionsOpen || confirmReset) {
+          setActionsOpen(false);
+          setConfirmReset(false);
+          return;
+        }
         onCollapsedChange(true);
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onCollapsedChange]);
+  }, [open, onCollapsedChange, actionsOpen, confirmReset, openDescriptionId]);
 
-  const europeActive = [
-    showEurozone,
-    showNonEurozone,
-    showSchengenNonEU,
-    showCandidates,
-    showEuCapitals,
-    showEuMainInstitutions,
-  ].filter(Boolean).length;
+  useEffect(() => {
+    if (!actionsOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!actionsRef.current?.contains(event.target as Node)) {
+        setActionsOpen(false);
+        setConfirmReset(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [actionsOpen]);
 
-  const tourismActive = [
-    showUnescoWorldHeritage,
-    showEuropeanHeritageLabel,
-    showMajorTouristPlaces,
-    showMajorEuropeanAirports,
-    showEurostarStations,
-    showEurostarRoutes,
-  ].filter(Boolean).length;
-
-  const alertsActive = [
-    showWildfires,
-    showSatelliteActiveFires,
-    showSatelliteBurnedAreas,
-  ].filter(Boolean).length;
-
-  const securityActive = [
-    showSchengenExternalBorderCrossings,
-    showSchengenTemporaryInternalControls,
-  ].filter(Boolean).length;
-
-  const activeLayerCount = countActiveMapLayers({
-    euroArea: showEurozone,
-    euOutsideEuroArea: showNonEurozone,
-    schengenOutsideEu: showSchengenNonEU,
-    euCandidates: showCandidates,
-    euCapitals: showEuCapitals,
-    euMainInstitutions: showEuMainInstitutions,
-    unescoWorldHeritage: showUnescoWorldHeritage,
-    unescoCultural: showUnescoCultural,
-    unescoNatural: showUnescoNatural,
-    unescoMixed: showUnescoMixed,
-    europeanHeritageLabel: showEuropeanHeritageLabel,
-    majorTouristPlaces: showMajorTouristPlaces,
-    touristLandmark: showTouristLandmark,
-    touristHistoricArea: showTouristHistoricArea,
-    touristMuseum: showTouristMuseum,
-    touristParkGarden: showTouristParkGarden,
-    touristNaturalLandscape: showTouristNaturalLandscape,
-    touristCoastalDestination: showTouristCoastalDestination,
-    touristMountainDestination: showTouristMountainDestination,
-    majorEuropeanAirports: showMajorEuropeanAirports,
-    eurostarStations: showEurostarStations,
-    eurostarRoutes: showEurostarRoutes,
-    majorWildfires: showWildfires,
-    satelliteActiveFires: showSatelliteActiveFires,
-    recentSatelliteHistory: showSatelliteBurnedAreas,
-    schengenExternalBorderCrossings: showSchengenExternalBorderCrossings,
-    schengenTemporaryInternalControls: showSchengenTemporaryInternalControls,
-    borderCrossingRoad: showBorderCrossingRoad,
-    borderCrossingRail: showBorderCrossingRail,
-    borderCrossingAir: showBorderCrossingAir,
-    borderCrossingSea: showBorderCrossingSea,
-  });
-
+  const activeLayerCount = getActiveMainLayerCount(preferences);
   const activeLayersLabel =
-    activeLayerCount === 1 ? t.legend.activeLayer : t.legend.activeLayers;
+    activeLayerCount === 0
+      ? t.legend.noActiveLayers
+      : activeLayerCount === 1
+        ? `1 ${t.legend.activeLayer}`
+        : `${activeLayerCount} ${t.legend.activeLayers}`;
 
   const toggleCategory = (id: LegendCategoryId) => {
-    setExpanded((current) => ({ ...current, [id]: !current[id] }));
+    setExpandedCategories((current) => ({
+      ...current,
+      [id]: !current[id],
+    }));
+  };
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((current) => {
+      const next = { ...current, [id]: !current[id] };
+      saveLegendGroupExpanded(next);
+      return next;
+    });
+  };
+
+  const toggleFilters = (layerId: string) => {
+    setExpandedFilters((current) => ({
+      ...current,
+      [layerId]: !(current[layerId] ?? false),
+    }));
+  };
+
+  const collapseAll = () => {
+    const nextCategories = { ...DEFAULT_EXPANDED_CATEGORIES };
+    for (const key of Object.keys(nextCategories) as LegendCategoryId[]) {
+      nextCategories[key] = false;
+    }
+    setExpandedCategories(nextCategories);
+    const nextGroups: Record<string, boolean> = {};
+    for (const category of categories) {
+      for (const group of category.groups) {
+        nextGroups[group.id] = false;
+      }
+    }
+    setExpandedGroups(nextGroups);
+    saveLegendGroupExpanded(nextGroups);
+    setExpandedFilters({});
+    setActionsOpen(false);
+    setConfirmReset(false);
+  };
+
+  const expandActiveCategories = () => {
+    setExpandedCategories((current) => {
+      const next = { ...current };
+      for (const category of categories) {
+        next[category.id] =
+          getActiveLayerCountForCategory(category.id, preferences) > 0;
+      }
+      return next;
+    });
+    setExpandedGroups((current) => {
+      const next = { ...current };
+      for (const category of categories) {
+        for (const group of category.groups) {
+          const { active } = getGroupActiveTotal(group, preferences);
+          if (active > 0) next[group.id] = true;
+        }
+      }
+      saveLegendGroupExpanded(next);
+      return next;
+    });
+    setActionsOpen(false);
+    setConfirmReset(false);
+  };
+
+  const handleReset = () => {
+    onResetLayers();
+    setConfirmReset(false);
+    setActionsOpen(false);
   };
 
   const compactButton = (
@@ -267,7 +221,7 @@ export default function MapLegend({
           background: "rgba(26, 115, 232, 0.12)",
           color: "#1a73e8",
         }}
-        aria-label={`${activeLayerCount} ${activeLayersLabel}`}
+        aria-label={activeLayersLabel}
       >
         {activeLayerCount}
       </span>
@@ -289,7 +243,7 @@ export default function MapLegend({
       }}
     >
       <div
-        className="flex items-center justify-between gap-2 border-b px-4 py-3"
+        className="flex items-center justify-between gap-2 border-b px-3 py-2.5"
         style={{ borderColor: "var(--map-ui-border)" }}
       >
         <div className="min-w-0">
@@ -298,10 +252,70 @@ export default function MapLegend({
             className="mt-0.5 text-[11px]"
             style={{ color: "var(--map-ui-muted)" }}
           >
-            {activeLayerCount} {activeLayersLabel}
+            {activeLayersLabel}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5">
+          <div className="relative" ref={actionsRef}>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+              aria-label={t.legend.legendActions}
+              aria-expanded={actionsOpen}
+              aria-haspopup="menu"
+              onClick={() => {
+                setActionsOpen((value) => !value);
+                setConfirmReset(false);
+              }}
+            >
+              <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+            </button>
+            {actionsOpen ? (
+              <div
+                role="menu"
+                className="absolute right-0 z-20 mt-1 w-56 overflow-hidden rounded-lg border py-1 text-sm shadow-lg"
+                style={{
+                  background: "var(--map-ui-surface)",
+                  borderColor: "var(--map-ui-border)",
+                  color: "var(--map-ui-text)",
+                }}
+              >
+                {!confirmReset ? (
+                  <>
+                    <ActionItem
+                      label={t.legend.collapseAll}
+                      onClick={collapseAll}
+                    />
+                    <ActionItem
+                      label={t.legend.expandActiveCategories}
+                      onClick={expandActiveCategories}
+                    />
+                    <ActionItem
+                      label={t.legend.resetLayers}
+                      onClick={() => setConfirmReset(true)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <p
+                      className="px-3 py-2 text-[11px] leading-snug"
+                      style={{ color: "var(--map-ui-muted)" }}
+                    >
+                      {t.legend.confirmResetLayers}
+                    </p>
+                    <ActionItem
+                      label={t.legend.confirmReset}
+                      onClick={handleReset}
+                    />
+                    <ActionItem
+                      label={t.legend.cancelReset}
+                      onClick={() => setConfirmReset(false)}
+                    />
+                  </>
+                )}
+              </div>
+            ) : null}
+          </div>
           <button
             type="button"
             className="hidden h-10 w-10 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:inline-flex"
@@ -321,461 +335,126 @@ export default function MapLegend({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-        <Category
-          id="europe"
-          title={t.nav.europe}
-          icon={<Layers className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />}
-          activeCount={europeActive}
-          expanded={expanded.europe}
-          onToggle={() => toggleCategory("europe")}
-        >
-          <LayerToggle
-            checked={showEurozone}
-            onChange={onToggleEurozone}
-            color="#2563eb"
-            label={t.legend.eurozone}
-          />
-          <LayerToggle
-            checked={showNonEurozone}
-            onChange={onToggleNonEurozone}
-            color="#7c3aed"
-            label={t.legend.nonEurozone}
-          />
-          <LayerToggle
-            checked={showSchengenNonEU}
-            onChange={onToggleSchengenNonEU}
-            color="#14b8a6"
-            label={t.legend.schengenNonEU}
-          />
-          <LayerToggle
-            checked={showCandidates}
-            onChange={onToggleCandidates}
-            color="#f59e0b"
-            label={t.legend.officialCandidate}
-          />
-          <LayerToggle
-            checked={showEuCapitals}
-            onChange={onToggleEuCapitals}
-            color="#003399"
-            label={t.legend.euCapitals}
-            swatchClassName="relative overflow-hidden rounded-full"
-            swatchStyle={{
-              background:
-                "radial-gradient(circle at 50% 50%, #facc15 0 28%, #003399 30%)",
-            }}
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.euCapitalsDescription}
-          </p>
-          <LayerToggle
-            checked={showEuMainInstitutions}
-            onChange={onToggleEuMainInstitutions}
-            color="#5b21b6"
-            label={t.legend.euMainInstitutions}
-            swatchClassName="relative overflow-hidden rounded-[3px] border-white"
-            swatchStyle={{
-              backgroundColor: "#5b21b6",
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23facc15' d='M8 2.2 3.5 6h9L8 2.2zm-5 4.3v1.2h10V6.5H3zm1.6 1.7v4.2h1.3V8.2H4.6zm3.05 0v4.2h1.3V8.2H7.65zm3.05 0v4.2H12V8.2h-1.3zM3 13v1.2h10V13H3z'/%3E%3C/svg%3E\")",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-              backgroundSize: "11px 11px",
-              borderColor: "#ffffff",
-            }}
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.euMainInstitutionsDescription}
-          </p>
-        </Category>
-
-        <Category
-          id="tourism"
-          title={t.nav.tourism}
-          icon={<Plane className="h-4 w-4 text-[#188038]" aria-hidden="true" />}
-          activeCount={tourismActive}
-          expanded={expanded.tourism}
-          onToggle={() => toggleCategory("tourism")}
-        >
-          <LayerToggle
-            checked={showUnescoWorldHeritage}
-            onChange={onToggleUnescoWorldHeritage}
-            color="#1e3a8a"
-            label={t.legend.unescoWorldHeritage}
-            swatchClassName="rounded-full"
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.unescoWorldHeritageDescription}
-          </p>
-          <div className="ml-2 space-y-1 border-l pl-2" style={{ borderColor: "var(--map-ui-border)" }}>
-            <LayerToggle
-              checked={showUnescoCultural}
-              onChange={onToggleUnescoCultural}
-              color="#7c3aed"
-              label={t.legend.unescoCultural}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showUnescoNatural}
-              onChange={onToggleUnescoNatural}
-              color="#15803d"
-              label={t.legend.unescoNatural}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showUnescoMixed}
-              onChange={onToggleUnescoMixed}
-              color="#0891b2"
-              label={t.legend.unescoMixed}
-              swatchClassName="rounded-[3px]"
-            />
-          </div>
-          {showUnescoWorldHeritage ? (
-            <p
-              className="px-2 pt-1 text-[10px] leading-snug"
-              style={{ color: "var(--map-ui-muted)" }}
+      <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5">
+        {categories.map((category) => {
+          const categoryActive = getActiveLayerCountForCategory(
+            category.id,
+            preferences,
+          );
+          const categoryExpanded = expandedCategories[category.id] ?? false;
+          return (
+            <Category
+              key={category.id}
+              id={category.id}
+              title={resolveLegendText(t, category.titleKey)}
+              icon={<CategoryIcon id={category.icon} />}
+              activeCount={categoryActive}
+              expanded={categoryExpanded}
+              onToggle={() => toggleCategory(category.id)}
             >
-              {t.legend.unescoAttribution}
-            </p>
-          ) : null}
-
-          <LayerToggle
-            checked={showEuropeanHeritageLabel}
-            onChange={onToggleEuropeanHeritageLabel}
-            color="#003399"
-            label={t.legend.europeanHeritageLabel}
-            swatchClassName="relative overflow-hidden rounded-full"
-            swatchStyle={{
-              background:
-                "radial-gradient(circle at 50% 50%, #facc15 0 28%, #003399 30%)",
-            }}
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.europeanHeritageLabelDescription}
-          </p>
-
-          <LayerToggle
-            checked={showMajorTouristPlaces}
-            onChange={onToggleMajorTouristPlaces}
-            color="#c2410c"
-            label={t.legend.majorTouristPlaces}
-            swatchClassName="rounded-full"
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.majorTouristPlacesDescription}
-          </p>
-          <div
-            className="ml-2 space-y-1 border-l pl-2"
-            style={{ borderColor: "var(--map-ui-border)" }}
-          >
-            <LayerToggle
-              checked={showTouristLandmark}
-              onChange={onToggleTouristLandmark}
-              color="#c2410c"
-              label={t.legend.touristLandmark}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showTouristHistoricArea}
-              onChange={onToggleTouristHistoricArea}
-              color="#7c3aed"
-              label={t.legend.touristHistoricArea}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showTouristMuseum}
-              onChange={onToggleTouristMuseum}
-              color="#0369a1"
-              label={t.legend.touristMuseum}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showTouristParkGarden}
-              onChange={onToggleTouristParkGarden}
-              color="#15803d"
-              label={t.legend.touristParkGarden}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showTouristNaturalLandscape}
-              onChange={onToggleTouristNaturalLandscape}
-              color="#0f766e"
-              label={t.legend.touristNaturalLandscape}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showTouristCoastalDestination}
-              onChange={onToggleTouristCoastalDestination}
-              color="#0284c7"
-              label={t.legend.touristCoastalDestination}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showTouristMountainDestination}
-              onChange={onToggleTouristMountainDestination}
-              color="#57534e"
-              label={t.legend.touristMountainDestination}
-              swatchClassName="rounded-[3px]"
-            />
-          </div>
-
-          <p
-            className="px-2 pb-1 pt-2 text-[11px] font-medium"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.internationalTransport}
-          </p>
-          <LayerToggle
-            checked={showMajorEuropeanAirports}
-            onChange={onToggleMajorEuropeanAirports}
-            color="#0e7490"
-            label={t.legend.majorEuropeanAirports}
-            swatchClassName="rounded-[3px]"
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.majorEuropeanAirportsDescription}
-          </p>
-          <LayerToggle
-            checked={showEurostarStations}
-            onChange={onToggleEurostarStations}
-            color="#f59e0b"
-            label={t.legend.eurostarStations}
-            swatchClassName="rounded-[3px]"
-          />
-          <LayerToggle
-            checked={showEurostarRoutes}
-            onChange={onToggleEurostarRoutes}
-            color="#1e3a8a"
-            label={t.legend.eurostarRoutes}
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.eurostarTransportDescription}
-          </p>
-          {showEurostarRoutes ? (
-            <p
-              className="px-2 pb-1 text-[10px] leading-snug"
-              style={{ color: "var(--map-ui-muted)" }}
-            >
-              {t.legend.eurostarSchematicNote}
-            </p>
-          ) : null}
-        </Category>
-
-        <Category
-          id="security"
-          title={t.nav.security}
-          icon={<Shield className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />}
-          activeCount={securityActive}
-          expanded={expanded.security}
-          onToggle={() => toggleCategory("security")}
-        >
-          <p
-            className="px-2 pb-1 pt-1 text-[11px] font-medium"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.bordersAndControls}
-          </p>
-          <LayerToggle
-            checked={showSchengenExternalBorderCrossings}
-            onChange={onToggleSchengenExternalBorderCrossings}
-            color="#1e3a8a"
-            label={t.legend.schengenExternalBorderCrossings}
-            swatchClassName="rounded-[3px]"
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.schengenExternalBorderCrossingsDescription}
-          </p>
-          <div
-            className="ml-2 space-y-1 border-l pl-2"
-            style={{ borderColor: "var(--map-ui-border)" }}
-          >
-            <LayerToggle
-              checked={showBorderCrossingRoad}
-              onChange={onToggleBorderCrossingRoad}
-              color="#1e3a8a"
-              label={t.legend.borderCrossingRoad}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showBorderCrossingRail}
-              onChange={onToggleBorderCrossingRail}
-              color="#1d4ed8"
-              label={t.legend.borderCrossingRail}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showBorderCrossingAir}
-              onChange={onToggleBorderCrossingAir}
-              color="#1e3a8a"
-              label={t.legend.borderCrossingAir}
-              swatchClassName="rounded-[3px]"
-            />
-            <LayerToggle
-              checked={showBorderCrossingSea}
-              onChange={onToggleBorderCrossingSea}
-              color="#0e4d8b"
-              label={t.legend.borderCrossingSea}
-              swatchClassName="rounded-[3px]"
-            />
-          </div>
-          <LayerToggle
-            checked={showSchengenTemporaryInternalControls}
-            onChange={onToggleSchengenTemporaryInternalControls}
-            color="#ea580c"
-            label={t.legend.schengenTemporaryInternalControls}
-            swatchClassName="rounded-full"
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.schengenTemporaryInternalControlsDescription}
-          </p>
-        </Category>
-
-        <Category
-          id="alerts"
-          title={t.nav.alerts}
-          icon={
-            <AlertTriangle
-              className="h-4 w-4 text-[#d93025]"
-              aria-hidden="true"
-            />
-          }
-          activeCount={alertsActive}
-          expanded={expanded.alerts}
-          onToggle={() => toggleCategory("alerts")}
-        >
-          <LayerToggle
-            checked={showWildfires}
-            onChange={onToggleWildfires}
-            color="#ef4444"
-            label={t.legend.majorWildfires}
-            swatchClassName="rounded-full"
-            swatchStyle={{
-              background:
-                "linear-gradient(135deg, #ef4444 0%, #ef4444 55%, #f59e0b 55%, #f59e0b 100%)",
-            }}
-          />
-          <LayerToggle
-            checked={showSatelliteActiveFires}
-            onChange={onToggleSatelliteActiveFires}
-            color="#f97316"
-            label={t.legend.satelliteActiveFires}
-          />
-          <LayerToggle
-            checked={showSatelliteBurnedAreas}
-            onChange={onToggleSatelliteBurnedAreas}
-            color="#7c2d12"
-            label={t.legend.satelliteBurnedAreas}
-          />
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.legend.satelliteHistoryNote}
-          </p>
-          <p
-            className="px-2 pb-1 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.incidents.gdacsScopeDisclaimer}
-          </p>
-          <p
-            className="px-2 pb-2 text-[10px] leading-snug"
-            style={{ color: "var(--map-ui-muted)" }}
-          >
-            {t.incidents.satelliteDetectionDisclaimer}
-          </p>
-        </Category>
-
-        <Category
-          id="energy"
-          title={t.nav.energy}
-          icon={<Zap className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />}
-          activeCount={0}
-          expanded={expanded.energy}
-          onToggle={() => toggleCategory("energy")}
-        >
-          <EmptyCategory t={t} />
-        </Category>
+              {category.groups.map((group) => {
+                const groupExpanded = expandedGroups[group.id] ?? false;
+                const groupCounts = getGroupActiveTotal(group, preferences);
+                return (
+                  <Group
+                    key={group.id}
+                    id={group.id}
+                    title={resolveLegendText(t, group.titleKey)}
+                    active={groupCounts.active}
+                    total={groupCounts.total}
+                    expanded={groupExpanded}
+                    onToggle={() => toggleGroup(group.id)}
+                    activeLabel={t.legend.activeLayers}
+                  >
+                    {group.layers.map((layer) => (
+                      <LayerRow
+                        key={layer.id}
+                        layer={layer}
+                        preferences={preferences}
+                        messages={t}
+                        filtersExpanded={expandedFilters[layer.id] ?? false}
+                        onToggleFilters={() => toggleFilters(layer.id)}
+                        onTogglePreference={onTogglePreference}
+                        descriptionOpen={openDescriptionId === layer.id}
+                        onToggleDescription={() =>
+                          setOpenDescriptionId((current) =>
+                            current === layer.id ? null : layer.id,
+                          )
+                        }
+                      />
+                    ))}
+                    {group.footerNoteKeys?.map((noteKey) => (
+                      <p
+                        key={`${group.id}-${noteKey.key}`}
+                        className="px-2 pb-1 pt-0.5 text-[10px] leading-snug"
+                        style={{ color: "var(--map-ui-muted)" }}
+                      >
+                        {resolveLegendText(t, noteKey)}
+                      </p>
+                    ))}
+                  </Group>
+                );
+              })}
+            </Category>
+          );
+        })}
       </div>
     </aside>
   );
 
   return (
-    <>
-      {/* Mobile compact trigger */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 md:hidden"
-        style={{
-          zIndex: 900,
-          bottom: "max(1rem, calc(16px + env(safe-area-inset-bottom, 0px)))",
-        }}
-      >
-        {compactButton}
-      </div>
+    <div className="pointer-events-auto">
+      <div className="md:hidden">{open ? panel : compactButton}</div>
+      <div className="hidden md:block">{open ? panel : compactButton}</div>
+    </div>
+  );
+}
 
-      {/* Desktop */}
-      <div
-        className="absolute right-4 hidden md:block"
-        style={{
-          zIndex: 900,
-          top: "var(--map-panel-top-offset)",
-        }}
-      >
-        {collapsed ? compactButton : panel}
-      </div>
+function getDefaultGroupsForHydration(): Record<string, boolean> {
+  // Avoid SSR/client mismatch: start with defaults, hydrate from localStorage.
+  const result: Record<string, boolean> = {};
+  for (const category of getVisibleLegendCategories()) {
+    for (const group of category.groups) {
+      result[group.id] = group.defaultExpanded;
+    }
+  }
+  return result;
+}
 
-      {/* Mobile bottom drawer */}
-      {open ? (
-        <div
-          className="fixed inset-0 md:hidden"
-          style={{ zIndex: 950 }}
-          role="presentation"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/25"
-            aria-label={t.legend.closeLegend}
-            onClick={() => onCollapsedChange(true)}
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 flex justify-center p-3"
-            style={{
-              paddingBottom:
-                "max(0.75rem, env(safe-area-inset-bottom, 0px))",
-            }}
-          >
-            {panel}
-          </div>
-        </div>
-      ) : null}
-    </>
+function CategoryIcon({ id }: { id: string }) {
+  if (id === "plane") {
+    return <Plane className="h-4 w-4 text-[#188038]" aria-hidden="true" />;
+  }
+  if (id === "shield") {
+    return <Shield className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />;
+  }
+  if (id === "alert") {
+    return (
+      <AlertTriangle className="h-4 w-4 text-[#d93025]" aria-hidden="true" />
+    );
+  }
+  if (id === "energy") {
+    return <Zap className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />;
+  }
+  return <Layers className="h-4 w-4 text-[#1a73e8]" aria-hidden="true" />;
+}
+
+function ActionItem({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      className="flex w-full px-3 py-2.5 text-left text-[13px] outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:bg-[var(--map-ui-surface-hover)]"
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -796,34 +475,38 @@ function Category({
   onToggle: () => void;
   children: ReactNode;
 }) {
+  const panelId = `legend-category-${id}`;
   return (
-    <section className="mb-1 rounded-xl">
+    <section className="mb-1">
       <button
         type="button"
-        className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+        className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-2 text-left outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
         aria-expanded={expanded}
-        aria-controls={`legend-category-${id}`}
+        aria-controls={panelId}
         onClick={onToggle}
       >
-        {icon}
-        <span className="min-w-0 flex-1 text-sm font-medium">{title}</span>
-        <span
-          className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
-          style={{
-            background: "rgba(26, 115, 232, 0.1)",
-            color: "#1a73e8",
-          }}
-        >
-          {activeCount}
-        </span>
+        <span className="shrink-0">{icon}</span>
+        <span className="min-w-0 flex-1 text-sm font-semibold">{title}</span>
+        {activeCount > 0 ? (
+          <span
+            className="inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+            style={{
+              background: "rgba(26, 115, 232, 0.12)",
+              color: "#1a73e8",
+            }}
+            aria-label={`${activeCount}`}
+          >
+            {activeCount}
+          </span>
+        ) : null}
         <ChevronDown
-          className={`h-4 w-4 transition ${expanded ? "rotate-180" : ""}`}
-          style={{ color: "var(--map-ui-muted)" }}
+          className={`h-4 w-4 shrink-0 transition ${expanded ? "rotate-180" : ""}`}
           aria-hidden="true"
+          style={{ color: "var(--map-ui-muted)" }}
         />
       </button>
       {expanded ? (
-        <div id={`legend-category-${id}`} className="space-y-1 px-1 pb-2 pt-1">
+        <div id={panelId} className="pb-1 pl-1">
           {children}
         </div>
       ) : null}
@@ -831,62 +514,205 @@ function Category({
   );
 }
 
-function LayerToggle({
-  checked,
-  onChange,
-  color,
-  label,
-  swatchClassName = "rounded-sm",
-  swatchStyle,
+function Group({
+  id,
+  title,
+  active,
+  total,
+  expanded,
+  onToggle,
+  activeLabel,
+  children,
 }: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  color: string;
-  label: string;
-  swatchClassName?: string;
-  swatchStyle?: CSSProperties;
+  id: string;
+  title: string;
+  active: number;
+  total: number;
+  expanded: boolean;
+  onToggle: () => void;
+  activeLabel: string;
+  children: ReactNode;
 }) {
+  const panelId = `legend-group-${id}`;
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[var(--map-ui-surface-hover)]">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 shrink-0 rounded-sm border"
-        style={{ accentColor: color }}
-      />
-      <span
-        className={`h-3.5 w-3.5 shrink-0 border ${swatchClassName}`}
-        style={{
-          backgroundColor: color,
-          borderColor: "var(--map-ui-border)",
-          ...swatchStyle,
-        }}
-      />
-      <span className="text-xs leading-snug">{label}</span>
-    </label>
+    <div className="mb-1">
+      <button
+        type="button"
+        className="flex min-h-10 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        onClick={onToggle}
+      >
+        <span
+          className="min-w-0 flex-1 text-[11px] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--map-ui-muted)" }}
+        >
+          {title}
+        </span>
+        <span
+          className="text-[10px] font-medium tabular-nums"
+          style={{ color: "var(--map-ui-muted)" }}
+          aria-label={`${active} / ${total} ${activeLabel}`}
+        >
+          {active}/{total}
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 transition ${expanded ? "rotate-180" : ""}`}
+          aria-hidden="true"
+          style={{ color: "var(--map-ui-muted)" }}
+        />
+      </button>
+      {expanded ? (
+        <div id={panelId} className="space-y-0.5 pb-1">
+          {children}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
-function EmptyCategory({
-  t,
+function LayerRow({
+  layer,
+  preferences,
+  messages,
+  filtersExpanded,
+  onToggleFilters,
+  onTogglePreference,
+  descriptionOpen,
+  onToggleDescription,
 }: {
-  t: ReturnType<typeof getMessages>;
+  layer: LegendLayerDefinition;
+  preferences: MapLayerPreferences;
+  messages: Messages;
+  filtersExpanded: boolean;
+  onToggleFilters: () => void;
+  onTogglePreference: (
+    key: keyof MapLayerPreferences,
+    value: boolean,
+  ) => void;
+  descriptionOpen: boolean;
+  onToggleDescription: () => void;
 }) {
+  const checked = preferences[layer.preferenceKey];
+  const title = resolveLegendText(messages, layer.titleKey);
+  const description = layer.descriptionKey
+    ? resolveLegendText(messages, layer.descriptionKey)
+    : null;
+  const filters = layer.filters ?? [];
+  const filterCounts = getFilterActiveTotal(layer, preferences);
+  const filtersPanelId = `legend-filters-${layer.id}`;
+  const descriptionId = useId();
+
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg px-2 py-2">
-      <p className="text-xs" style={{ color: "var(--map-ui-muted)" }}>
-        {t.legend.noLayersYet}
-      </p>
-      <span
-        className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide"
-        style={{
-          borderColor: "var(--map-ui-border)",
-          color: "var(--map-ui-muted)",
-        }}
-      >
-        {t.nav.comingSoon}
-      </span>
+    <div className="rounded-md">
+      <div className="flex min-h-11 items-center gap-1.5 px-1.5">
+        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1">
+          <input
+            type="checkbox"
+            className="h-4 w-4 shrink-0 accent-[#1a73e8]"
+            checked={checked}
+            onChange={(event) =>
+              onTogglePreference(layer.preferenceKey, event.target.checked)
+            }
+          />
+          <span
+            className={`h-3.5 w-3.5 shrink-0 border border-white/70 shadow-sm ${layer.swatchClassName ?? "rounded-[2px]"}`}
+            style={{
+              backgroundColor: layer.color,
+              ...(layer.swatchStyle as CSSProperties | undefined),
+            }}
+            aria-hidden="true"
+          />
+          <span className="min-w-0 flex-1 truncate text-[13px] leading-snug">
+            {title}
+          </span>
+        </label>
+        {description ? (
+          <button
+            type="button"
+            className="inline-flex h-10 w-8 shrink-0 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+            aria-label={
+              descriptionOpen
+                ? messages.legend.hideDescription
+                : messages.legend.showDescription
+            }
+            aria-expanded={descriptionOpen}
+            aria-controls={descriptionId}
+            onClick={onToggleDescription}
+          >
+            <Info
+              className="h-3.5 w-3.5"
+              aria-hidden="true"
+              style={{ color: "var(--map-ui-muted)" }}
+            />
+          </button>
+        ) : null}
+        {filters.length > 0 ? (
+          <button
+            type="button"
+            className="inline-flex h-10 min-w-[3.25rem] shrink-0 items-center justify-end gap-1 rounded-md px-1 outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+            aria-expanded={filtersExpanded}
+            aria-controls={filtersPanelId}
+            aria-label={`${messages.legend.filters}: ${filterCounts.active}/${filterCounts.total}`}
+            onClick={onToggleFilters}
+          >
+            <span
+              className="text-[10px] font-semibold tabular-nums"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {filterCounts.active}/{filterCounts.total}
+            </span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition ${filtersExpanded ? "rotate-180" : ""}`}
+              aria-hidden="true"
+              style={{ color: "var(--map-ui-muted)" }}
+            />
+          </button>
+        ) : null}
+      </div>
+      {description && descriptionOpen ? (
+        <p
+          id={descriptionId}
+          className="px-8 pb-1.5 text-[10px] leading-snug"
+          style={{ color: "var(--map-ui-muted)" }}
+        >
+          {description}
+        </p>
+      ) : null}
+      {filters.length > 0 && filtersExpanded ? (
+        <div
+          id={filtersPanelId}
+          className={`ml-6 space-y-0.5 border-l py-0.5 pl-2 ${checked ? "" : "opacity-50"}`}
+          style={{ borderColor: "var(--map-ui-border)" }}
+        >
+          {filters.map((filter) => (
+            <label
+              key={filter.id}
+              className="flex min-h-10 cursor-pointer items-center gap-2 px-1 py-1"
+            >
+              <input
+                type="checkbox"
+                className="h-4 w-4 shrink-0 accent-[#1a73e8]"
+                checked={preferences[filter.preferenceKey]}
+                onChange={(event) =>
+                  onTogglePreference(
+                    filter.preferenceKey,
+                    event.target.checked,
+                  )
+                }
+              />
+              <span
+                className="h-3 w-3 shrink-0 rounded-[2px] border border-white/70"
+                style={{ backgroundColor: filter.color }}
+                aria-hidden="true"
+              />
+              <span className="text-[12px] leading-snug">
+                {resolveLegendText(messages, filter.titleKey)}
+              </span>
+            </label>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
