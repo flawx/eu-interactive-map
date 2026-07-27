@@ -17,6 +17,9 @@ export const ro = {
     unescoNatural: "Natural sites",
     unescoMixed: "Mixed sites",
     unescoAttribution: "Data: UNESCO World Heritage Centre",
+    europeanHeritageLabel: "Marca patrimoniului european",
+    europeanHeritageLabelDescription:
+      "Situri recunoscute de Uniunea Europeană pentru valoarea lor simbolică și rolul în istoria și integrarea europene",
     majorTouristPlaces: "Major tourist places",
     majorTouristPlacesDescription:
       "Iconic landmarks, historic centres, museums, parks, coasts and mountain destinations across Europe",
@@ -241,6 +244,7 @@ export const ro = {
     groupEuCapitals: "Capitale europene",
     groupInstitutions: "Instituții europene",
     groupUnesco: "UNESCO World Heritage",
+    groupEuropeanHeritageLabel: "Marca patrimoniului european",
     groupTouristPlaces: "Tourist places",
     groupAirports: "Airports",
     groupInternationalStations: "International stations",

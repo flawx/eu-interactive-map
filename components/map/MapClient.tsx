@@ -44,6 +44,10 @@ type MapClientProps = {
   showUnescoMixed: boolean;
   selectedUnescoSiteId: string | null;
   onUnescoSiteSelect?: (siteId: string | null) => void;
+  showEuropeanHeritageLabel: boolean;
+  selectedEhlSiteId: string | null;
+  selectedEhlLocationId: string | null;
+  onEhlSiteSelect?: (siteId: string | null, locationId: string | null) => void;
   showMajorTouristPlaces: boolean;
   showTouristLandmark: boolean;
   showTouristHistoricArea: boolean;
@@ -126,6 +130,10 @@ export default function MapClient({
   showUnescoMixed,
   selectedUnescoSiteId,
   onUnescoSiteSelect,
+  showEuropeanHeritageLabel,
+  selectedEhlSiteId,
+  selectedEhlLocationId,
+  onEhlSiteSelect,
   showMajorTouristPlaces,
   showTouristLandmark,
   showTouristHistoricArea,
@@ -200,6 +208,10 @@ export default function MapClient({
       showUnescoMixed={showUnescoMixed}
       selectedUnescoSiteId={selectedUnescoSiteId}
       onUnescoSiteSelect={onUnescoSiteSelect}
+      showEuropeanHeritageLabel={showEuropeanHeritageLabel}
+      selectedEhlSiteId={selectedEhlSiteId}
+      selectedEhlLocationId={selectedEhlLocationId}
+      onEhlSiteSelect={onEhlSiteSelect}
       showMajorTouristPlaces={showMajorTouristPlaces}
       showTouristLandmark={showTouristLandmark}
       showTouristHistoricArea={showTouristHistoricArea}

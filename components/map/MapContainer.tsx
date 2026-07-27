@@ -30,6 +30,19 @@ import {
   type UnescoSiteCategory,
 } from "@/lib/tourism/unescoWorldHeritage";
 import {
+  buildEhlLocationsCollection,
+  createEhlSiteIcon,
+  EHL_CLUSTER_COUNT_LAYER_ID,
+  EHL_CLUSTER_LAYER_ID,
+  EHL_LABEL_LAYER_ID,
+  EHL_SELECTED_LAYER_ID,
+  EHL_SITE_ICON_ID,
+  EHL_SITE_ICON_SERIAL_ID,
+  EHL_SOURCE_ID,
+  EHL_SYMBOL_LAYER_ID,
+  ehlSelectionCaseExpression,
+} from "@/components/map/ehlMapLayers";
+import {
   buildTouristPlaceCollection,
   createTouristPlaceIcon,
   TOURIST_PLACE_CATEGORIES,
@@ -818,6 +831,10 @@ export default function MapContainer({
   showUnescoMixed = true,
   selectedUnescoSiteId = null,
   onUnescoSiteSelect,
+  showEuropeanHeritageLabel = false,
+  selectedEhlSiteId = null,
+  selectedEhlLocationId = null,
+  onEhlSiteSelect,
   showMajorTouristPlaces = false,
   showTouristLandmark = true,
   showTouristHistoricArea = true,
@@ -890,6 +907,10 @@ export default function MapContainer({
   showUnescoMixed?: boolean;
   selectedUnescoSiteId?: string | null;
   onUnescoSiteSelect?: (siteId: string | null) => void;
+  showEuropeanHeritageLabel?: boolean;
+  selectedEhlSiteId?: string | null;
+  selectedEhlLocationId?: string | null;
+  onEhlSiteSelect?: (siteId: string | null, locationId: string | null) => void;
   showMajorTouristPlaces?: boolean;
   showTouristLandmark?: boolean;
   showTouristHistoricArea?: boolean;
@@ -986,6 +1007,15 @@ export default function MapContainer({
   showUnescoMixedRef.current = showUnescoMixed;
   const selectedUnescoSiteIdRef = useRef(selectedUnescoSiteId);
   selectedUnescoSiteIdRef.current = selectedUnescoSiteId;
+  const showEuropeanHeritageLabelRef = useRef(showEuropeanHeritageLabel);
+  showEuropeanHeritageLabelRef.current = showEuropeanHeritageLabel;
+  const selectedEhlSiteIdRef = useRef(selectedEhlSiteId);
+  selectedEhlSiteIdRef.current = selectedEhlSiteId;
+  const selectedEhlLocationIdRef = useRef(selectedEhlLocationId);
+  selectedEhlLocationIdRef.current = selectedEhlLocationId;
+  const onEhlSiteSelectRef = useRef(onEhlSiteSelect);
+  onEhlSiteSelectRef.current = onEhlSiteSelect;
+  const ehlPopupRef = useRef<Popup | null>(null);
   const showMajorTouristPlacesRef = useRef(showMajorTouristPlaces);
   showMajorTouristPlacesRef.current = showMajorTouristPlaces;
   const showTouristLandmarkRef = useRef(showTouristLandmark);
@@ -1420,6 +1450,46 @@ export default function MapContainer({
       }
     };
 
+    const handleEhlClusterClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const clusterId = feature?.properties?.cluster_id;
+      if (typeof clusterId !== "number") return;
+
+      const source = map.getSource(EHL_SOURCE_ID) as
+        | GeoJSONSource
+        | undefined;
+      if (!source) return;
+
+      source
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          if (!feature?.geometry || feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          map.easeTo({
+            center: [lng, lat],
+            zoom,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
+            duration: 500,
+          });
+        })
+        .catch(() => {
+          // Ignore expansion-zoom lookup failures.
+        });
+    };
+
+    const handleEhlPointClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const siteId = feature?.properties?.siteId;
+      const locationId = feature?.properties?.locationId;
+      if (typeof siteId === "string") {
+        onEhlSiteSelectRef.current?.(
+          siteId,
+          typeof locationId === "string" ? locationId : null,
+        );
+      }
+    };
+
     const handleTouristClusterClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
       const clusterId = feature?.properties?.cluster_id;
@@ -1763,6 +1833,60 @@ export default function MapContainer({
     const hideUnescoPopup = () => {
       resetCursor();
       unescoPopupRef.current?.remove();
+    };
+
+    const showEhlPopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+
+      const { displayName, countryCode, awardYear, transnational, serial } =
+        feature.properties ?? {};
+      if (typeof displayName !== "string") return;
+
+      const ehlPanelMessages = getMessages(localeRef.current).ehlPanel;
+      const coordinates = feature.geometry.coordinates.slice() as [
+        number,
+        number,
+      ];
+
+      if (!ehlPopupRef.current) {
+        ehlPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 14,
+          className: "ehl-hover-popup",
+        });
+      }
+
+      const badges = [
+        transnational ? ehlPanelMessages.transnational : null,
+        serial ? ehlPanelMessages.serial : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+
+      ehlPopupRef.current
+        .setLngLat(coordinates)
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:200px;">${escapeHtml(
+            String(displayName),
+          )}</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+            String(countryCode ?? ""),
+          )}${awardYear ? ` · ${escapeHtml(String(awardYear))}` : ""}</div>${
+            badges
+              ? `<div style="font:10px system-ui,sans-serif;color:#1d4ed8;margin-top:2px;">${escapeHtml(
+                  badges,
+                )}</div>`
+              : ""
+          }`,
+        )
+        .addTo(map);
+    };
+
+    const hideEhlPopup = () => {
+      resetCursor();
+      ehlPopupRef.current?.remove();
     };
 
     const showTouristPopup = (e: MapLayerMouseEvent) => {
@@ -2909,6 +3033,159 @@ export default function MapContainer({
         });
       }
 
+      if (!map.getSource(EHL_SOURCE_ID)) {
+        map.addSource(EHL_SOURCE_ID, {
+          type: "geojson",
+          data: buildEhlLocationsCollection(localeRef.current),
+          promoteId: "locationId",
+          cluster: true,
+          clusterMaxZoom: 7,
+          clusterRadius: 42,
+        });
+      }
+
+      if (!map.hasImage(EHL_SITE_ICON_ID)) {
+        map.addImage(EHL_SITE_ICON_ID, createEhlSiteIcon(false), {
+          pixelRatio: 2,
+        });
+      }
+      if (!map.hasImage(EHL_SITE_ICON_SERIAL_ID)) {
+        map.addImage(EHL_SITE_ICON_SERIAL_ID, createEhlSiteIcon(true), {
+          pixelRatio: 2,
+        });
+      }
+
+      if (!map.getLayer(EHL_CLUSTER_LAYER_ID)) {
+        map.addLayer({
+          id: EHL_CLUSTER_LAYER_ID,
+          type: "circle",
+          source: EHL_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showEuropeanHeritageLabelRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-color": "#003399",
+            "circle-opacity": 0.85,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              14,
+              10,
+              18,
+              50,
+              22,
+              200,
+              26,
+            ],
+          },
+        });
+      }
+
+      if (!map.getLayer(EHL_CLUSTER_COUNT_LAYER_ID)) {
+        map.addLayer({
+          id: EHL_CLUSTER_COUNT_LAYER_ID,
+          type: "symbol",
+          source: EHL_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showEuropeanHeritageLabelRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-font": ["Noto Sans Bold"],
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+          },
+          paint: {
+            "text-color": "#facc15",
+          },
+        });
+      }
+
+      if (!map.getLayer(EHL_SELECTED_LAYER_ID)) {
+        map.addLayer({
+          id: EHL_SELECTED_LAYER_ID,
+          type: "circle",
+          source: EHL_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showEuropeanHeritageLabelRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-radius": ehlSelectionCaseExpression(
+              selectedEhlSiteIdRef.current,
+              selectedEhlLocationIdRef.current,
+              22,
+              0,
+            ),
+            "circle-color": "#facc15",
+            "circle-opacity": 0.35,
+          },
+        });
+      }
+
+      if (!map.getLayer(EHL_SYMBOL_LAYER_ID)) {
+        map.addLayer({
+          id: EHL_SYMBOL_LAYER_ID,
+          type: "symbol",
+          source: EHL_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showEuropeanHeritageLabelRef.current
+              ? "visible"
+              : "none",
+            "icon-image": ["get", "iconImageId"],
+            "icon-size": ehlSelectionCaseExpression(
+              selectedEhlSiteIdRef.current,
+              selectedEhlLocationIdRef.current,
+              1.15,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
+          },
+        });
+      }
+
+      if (!map.getLayer(EHL_LABEL_LAYER_ID)) {
+        map.addLayer({
+          id: EHL_LABEL_LAYER_ID,
+          type: "symbol",
+          source: EHL_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 7,
+          layout: {
+            visibility: showEuropeanHeritageLabelRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "displayName"],
+            "text-size": 11,
+            "text-offset": [0, 1.4],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#003399",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       const touristFilters: TouristCategoryFilters = {
         landmark: showTouristLandmarkRef.current,
         historic_area: showTouristHistoricAreaRef.current,
@@ -3636,6 +3913,11 @@ export default function MapContainer({
         "unesco-world-heritage-labels",
         "unesco-clusters",
         "unesco-cluster-count",
+        EHL_SELECTED_LAYER_ID,
+        EHL_SYMBOL_LAYER_ID,
+        EHL_LABEL_LAYER_ID,
+        EHL_CLUSTER_LAYER_ID,
+        EHL_CLUSTER_COUNT_LAYER_ID,
         "tourist-places-halo",
         "tourist-places-symbol",
         "tourist-places-labels",
@@ -3697,6 +3979,12 @@ export default function MapContainer({
       map.on("click", "unesco-world-heritage-symbol", handleUnescoPointClick);
       map.on("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
       map.on("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
+      map.on("click", EHL_CLUSTER_LAYER_ID, handleEhlClusterClick);
+      map.on("mouseenter", EHL_CLUSTER_LAYER_ID, setPointerCursor);
+      map.on("mouseleave", EHL_CLUSTER_LAYER_ID, resetCursor);
+      map.on("click", EHL_SYMBOL_LAYER_ID, handleEhlPointClick);
+      map.on("mouseenter", EHL_SYMBOL_LAYER_ID, showEhlPopup);
+      map.on("mouseleave", EHL_SYMBOL_LAYER_ID, hideEhlPopup);
       map.on("click", "tourist-clusters", handleTouristClusterClick);
       map.on("mouseenter", "tourist-clusters", setPointerCursor);
       map.on("mouseleave", "tourist-clusters", resetCursor);
@@ -3789,6 +4077,13 @@ export default function MapContainer({
       map.off("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
       map.off("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
       unescoPopupRef.current?.remove();
+      map.off("click", EHL_CLUSTER_LAYER_ID, handleEhlClusterClick);
+      map.off("mouseenter", EHL_CLUSTER_LAYER_ID, setPointerCursor);
+      map.off("mouseleave", EHL_CLUSTER_LAYER_ID, resetCursor);
+      map.off("click", EHL_SYMBOL_LAYER_ID, handleEhlPointClick);
+      map.off("mouseenter", EHL_SYMBOL_LAYER_ID, showEhlPopup);
+      map.off("mouseleave", EHL_SYMBOL_LAYER_ID, hideEhlPopup);
+      ehlPopupRef.current?.remove();
       map.off("click", "tourist-clusters", handleTouristClusterClick);
       map.off("mouseenter", "tourist-clusters", setPointerCursor);
       map.off("mouseleave", "tourist-clusters", resetCursor);
@@ -4226,6 +4521,65 @@ export default function MapContainer({
       );
     }
   }, [selectedUnescoSiteId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showEuropeanHeritageLabel ? "visible" : "none";
+    for (const layerId of [
+      EHL_SELECTED_LAYER_ID,
+      EHL_SYMBOL_LAYER_ID,
+      EHL_LABEL_LAYER_ID,
+      EHL_CLUSTER_LAYER_ID,
+      EHL_CLUSTER_COUNT_LAYER_ID,
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showEuropeanHeritageLabel, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(EHL_SOURCE_ID) as GeoJSONSource | undefined;
+    if (!source) return;
+
+    source.setData(buildEhlLocationsCollection(locale));
+  }, [locale, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer(EHL_SELECTED_LAYER_ID)) {
+      map.setPaintProperty(
+        EHL_SELECTED_LAYER_ID,
+        "circle-radius",
+        ehlSelectionCaseExpression(
+          selectedEhlSiteId,
+          selectedEhlLocationId,
+          22,
+          0,
+        ),
+      );
+    }
+
+    if (map.getLayer(EHL_SYMBOL_LAYER_ID)) {
+      map.setLayoutProperty(
+        EHL_SYMBOL_LAYER_ID,
+        "icon-size",
+        ehlSelectionCaseExpression(
+          selectedEhlSiteId,
+          selectedEhlLocationId,
+          1.15,
+          1,
+        ),
+      );
+    }
+  }, [selectedEhlSiteId, selectedEhlLocationId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;

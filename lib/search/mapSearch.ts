@@ -13,6 +13,10 @@ import type { WildfireIncident } from "@/lib/incidents/types";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { UNESCO_WORLD_HERITAGE_SITES } from "@/lib/tourism/unescoWorldHeritage";
+import {
+  EUROPEAN_HERITAGE_LABEL_SITES,
+  type EuropeanHeritageLabelSite,
+} from "@/lib/tourism/europeanHeritageLabel";
 import { MAJOR_TOURIST_PLACES } from "@/lib/tourism/majorTouristPlaces";
 import { EUROPEAN_AIRPORTS } from "@/lib/transport/europeanAirports";
 import { EUROSTAR_STATIONS } from "@/lib/transport/eurostarNetwork";
@@ -29,6 +33,7 @@ export type MapSearchResultType =
   | "wildfire"
   | "eu_institution"
   | "unesco_site"
+  | "european_heritage_label"
   | "tourist_place"
   | "airport"
   | "eurostar_station"
@@ -42,6 +47,7 @@ export type MapSearchCategory =
   | "eu_capitals"
   | "eu_institutions"
   | "unesco_sites"
+  | "european_heritage_label_sites"
   | "tourist_places"
   | "airports"
   | "international_stations"
@@ -66,6 +72,8 @@ export type MapSearchResult = {
   institutionId?: MainEuInstitutionId;
   siteId?: string;
   unescoSiteId?: string;
+  ehlSiteId?: string;
+  ehlLocationId?: string;
   touristPlaceId?: string;
   airportId?: string;
   eurostarStationId?: string;
@@ -383,6 +391,68 @@ function buildUnescoSiteSearchResults(locale: Locale): MapSearchResult[] {
           site.category,
           ...site.countryCodes,
           ...countryNames,
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
+function representativeEhlLocation(
+  site: EuropeanHeritageLabelSite,
+): EuropeanHeritageLabelSite["locations"][number] | null {
+  return (
+    site.locations.find((location) => location.representativePoint) ??
+    site.locations[0] ??
+    null
+  );
+}
+
+/**
+ * One search entry per logical European Heritage Label site (not per
+ * location) — serial/transnational properties still resolve to a single
+ * result, focused on their representative location.
+ */
+function buildEuropeanHeritageLabelSearchResults(
+  locale: Locale,
+): MapSearchResult[] {
+  const t = getMessages(locale);
+
+  return EUROPEAN_HERITAGE_LABEL_SITES.filter(
+    (site) => site.locations.length > 0,
+  ).map((site) => {
+    const representative = representativeEhlLocation(site)!;
+    const countryNames = site.countryCodes.map((code) =>
+      countryDisplayName(code === "EL" ? "GR" : code, locale),
+    );
+    const countriesLabel = countryNames.join(" · ");
+    const subtitleParts = [countriesLabel, String(site.awardYear)];
+    if (site.serial) {
+      subtitleParts.push(t.ehlPanel.serial);
+    }
+
+    return {
+      id: `ehl-site:${site.id}`,
+      type: "european_heritage_label",
+      category: "european_heritage_label_sites",
+      title: site.canonicalName,
+      subtitle: subtitleParts.join(" · "),
+      longitude: representative.longitude,
+      latitude: representative.latitude,
+      icon: site.serial ? "ehl-serial" : "ehl",
+      countryCode: site.countryCodes[0],
+      ehlSiteId: site.id,
+      ehlLocationId: representative.id,
+      source: "local",
+      metadata: {
+        serial: site.serial,
+        transnational: site.transnational,
+        searchText: [
+          site.canonicalName,
+          String(site.awardYear),
+          ...site.countryCodes,
+          ...countryNames,
+          ...site.locations.map((location) => location.name),
+          ...site.locations.map((location) => location.cityOrRegion),
         ].join(" "),
       },
     } satisfies MapSearchResult;
@@ -795,6 +865,7 @@ function buildStaticLocalIndex(
 
   results.push(...buildMainEuInstitutionSearchResults(locale));
   results.push(...buildUnescoSiteSearchResults(locale));
+  results.push(...buildEuropeanHeritageLabelSearchResults(locale));
   results.push(...buildTouristPlaceSearchResults(locale));
   results.push(...buildAirportSearchResults(locale));
   results.push(...buildEurostarStationSearchResults(locale));
@@ -894,6 +965,7 @@ export function searchLocalIndex(
     "countries_capitals",
     "eu_institutions",
     "unesco_sites",
+    "european_heritage_label_sites",
     "tourist_places",
     "airports",
     "international_stations",

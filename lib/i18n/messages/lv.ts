@@ -17,6 +17,9 @@ export const lv = {
     unescoNatural: "Natural sites",
     unescoMixed: "Mixed sites",
     unescoAttribution: "Data: UNESCO World Heritage Centre",
+    europeanHeritageLabel: "Eiropas mantojuma zīme",
+    europeanHeritageLabelDescription:
+      "Vietas, ko Eiropas Savienība atzinusi to simboliskās vērtības un lomas dēļ Eiropas vēsturē un integrācijā",
     majorTouristPlaces: "Major tourist places",
     majorTouristPlacesDescription:
       "Iconic landmarks, historic centres, museums, parks, coasts and mountain destinations across Europe",
@@ -241,6 +244,7 @@ export const lv = {
     groupEuCapitals: "Eiropas galvaspilsētas",
     groupInstitutions: "European institutions",
     groupUnesco: "UNESCO World Heritage",
+    groupEuropeanHeritageLabel: "Eiropas mantojuma zīme",
     groupTouristPlaces: "Tourist places",
     groupAirports: "Airports",
     groupInternationalStations: "International stations",

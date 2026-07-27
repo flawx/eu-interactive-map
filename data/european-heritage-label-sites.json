@@ -1,0 +1,2575 @@
+{
+  "source": {
+    "url": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+    "retrievedAt": "2026-07-27T14:46:47.593Z",
+    "officialExtractedCount": 80
+  },
+  "sites": [
+    {
+      "id": "ehl-great-guild-hall-tallinn-estonia",
+      "canonicalName": "Great Guild Hall, Tallinn",
+      "awardYear": 2013,
+      "countryCodes": [
+        "EE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/great-guild-hall-tallinn-estonia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-great-guild-hall-tallinn-estonia-loc-1",
+          "siteId": "ehl-great-guild-hall-tallinn-estonia",
+          "name": "Great Guild Hall",
+          "cityOrRegion": "Tallinn",
+          "countryCode": "EE",
+          "latitude": 59.4372,
+          "longitude": 24.7454,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-peace-palace-the-hague-the-netherlands",
+      "canonicalName": "Peace Palace, The Hague, the Netherlands",
+      "awardYear": 2013,
+      "countryCodes": [
+        "NL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/peace-palace-the-hague-the-netherlands",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-peace-palace-the-hague-the-netherlands-loc-1",
+          "siteId": "ehl-peace-palace-the-hague-the-netherlands",
+          "name": "Peace Palace",
+          "cityOrRegion": "The Hague",
+          "countryCode": "NL",
+          "latitude": 52.0851,
+          "longitude": 4.2896,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-camp-westerbork-the-netherlands",
+      "canonicalName": "Camp Westerbork, the Netherlands",
+      "awardYear": 2013,
+      "countryCodes": [
+        "NL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/camp-westerbork-the-netherlands",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-camp-westerbork-the-netherlands-loc-1",
+          "siteId": "ehl-camp-westerbork-the-netherlands",
+          "name": "Camp Westerbork",
+          "cityOrRegion": "Hooghalen",
+          "countryCode": "NL",
+          "latitude": 52.9146,
+          "longitude": 6.6122,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-archaeological-park-carnuntum-austria",
+      "canonicalName": "Archaeological Park Carnuntum, Austria",
+      "awardYear": 2013,
+      "countryCodes": [
+        "AT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/archaeological-park-carnuntum-austria",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-archaeological-park-carnuntum-austria-loc-1",
+          "siteId": "ehl-archaeological-park-carnuntum-austria",
+          "name": "Archaeological Park Carnuntum",
+          "cityOrRegion": "Petronell-Carnuntum",
+          "countryCode": "AT",
+          "latitude": 48.1172,
+          "longitude": 16.8664,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-hambach-castle-germany",
+      "canonicalName": "Hambach Castle, Germany",
+      "awardYear": 2014,
+      "countryCodes": [
+        "DE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/hambach-castle-germany",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-hambach-castle-germany-loc-1",
+          "siteId": "ehl-hambach-castle-germany",
+          "name": "Hambach Castle",
+          "cityOrRegion": "Neustadt an der Weinstraße",
+          "countryCode": "DE",
+          "latitude": 49.3313,
+          "longitude": 8.1152,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany",
+      "canonicalName": "Münster and Osnabrück – Sites of the Peace of Westphalia, Germany",
+      "awardYear": 2014,
+      "countryCodes": [
+        "DE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany-loc-1",
+          "siteId": "ehl-munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany",
+          "name": "Peace Hall, Münster Historical City Hall",
+          "cityOrRegion": "Münster",
+          "countryCode": "DE",
+          "latitude": 51.9607,
+          "longitude": 7.6261,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany-loc-2",
+          "siteId": "ehl-munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany",
+          "name": "Osnabrück Town Hall",
+          "cityOrRegion": "Osnabrück",
+          "countryCode": "DE",
+          "latitude": 52.2799,
+          "longitude": 8.0472,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-heart-of-ancient-athens-greece",
+      "canonicalName": "The Heart of Ancient Athens, Greece",
+      "awardYear": 2014,
+      "countryCodes": [
+        "EL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-heart-of-ancient-athens-greece",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-heart-of-ancient-athens-greece-loc-1",
+          "siteId": "ehl-the-heart-of-ancient-athens-greece",
+          "name": "The Heart of Ancient Athens (Acropolis)",
+          "cityOrRegion": "Athens",
+          "countryCode": "EL",
+          "latitude": 37.9715,
+          "longitude": 23.7267,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-archive-of-the-crown-of-aragon-barcelona-spain",
+      "canonicalName": "Archive of the Crown of Aragon, Barcelona, Spain",
+      "awardYear": 2014,
+      "countryCodes": [
+        "ES"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/archive-of-the-crown-of-aragon-barcelona-spain",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-archive-of-the-crown-of-aragon-barcelona-spain-loc-1",
+          "siteId": "ehl-archive-of-the-crown-of-aragon-barcelona-spain",
+          "name": "Archive of the Crown of Aragon",
+          "cityOrRegion": "Barcelona",
+          "countryCode": "ES",
+          "latitude": 41.3979,
+          "longitude": 2.1925,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-residencia-de-estudiantes-madrid-spain",
+      "canonicalName": "Residencia de Estudiantes, Madrid, Spain",
+      "awardYear": 2014,
+      "countryCodes": [
+        "ES"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/residencia-de-estudiantes-madrid-spain",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-residencia-de-estudiantes-madrid-spain-loc-1",
+          "siteId": "ehl-residencia-de-estudiantes-madrid-spain",
+          "name": "Residencia de Estudiantes",
+          "cityOrRegion": "Madrid",
+          "countryCode": "ES",
+          "latitude": 40.4383,
+          "longitude": -3.6866,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-abbey-of-cluny-france",
+      "canonicalName": "Abbey of Cluny, France",
+      "awardYear": 2014,
+      "countryCodes": [
+        "FR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/abbey-of-cluny-france",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-abbey-of-cluny-france-loc-1",
+          "siteId": "ehl-abbey-of-cluny-france",
+          "name": "Abbey of Cluny",
+          "cityOrRegion": "Cluny",
+          "countryCode": "FR",
+          "latitude": 46.4342,
+          "longitude": 4.6588,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-robert-schumans-house-scy-chazelles-france",
+      "canonicalName": "Robert Schuman's House, Scy-Chazelles, France",
+      "awardYear": 2014,
+      "countryCodes": [
+        "FR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/robert-schumans-house-scy-chazelles-france",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-robert-schumans-house-scy-chazelles-france-loc-1",
+          "siteId": "ehl-robert-schumans-house-scy-chazelles-france",
+          "name": "Robert Schuman's House",
+          "cityOrRegion": "Scy-Chazelles",
+          "countryCode": "FR",
+          "latitude": 49.1225,
+          "longitude": 6.1064,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-pan-european-picnic-memorial-park-sopron-hungary",
+      "canonicalName": "Pan-European Picnic Memorial Park, Sopron, Hungary",
+      "awardYear": 2014,
+      "countryCodes": [
+        "HU"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/pan-european-picnic-memorial-park-sopron-hungary",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-pan-european-picnic-memorial-park-sopron-hungary-loc-1",
+          "siteId": "ehl-pan-european-picnic-memorial-park-sopron-hungary",
+          "name": "Pan-European Picnic Memorial Park",
+          "cityOrRegion": "Sopron",
+          "countryCode": "HU",
+          "latitude": 47.6717,
+          "longitude": 16.5892,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-museo-casa-alcide-de-gasperi-pieve-tesino-italy",
+      "canonicalName": "Museo Casa Alcide De Gasperi, Pieve Tesino, Italy",
+      "awardYear": 2014,
+      "countryCodes": [
+        "IT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/museo-casa-alcide-de-gasperi-pieve-tesino-italy",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-museo-casa-alcide-de-gasperi-pieve-tesino-italy-loc-1",
+          "siteId": "ehl-museo-casa-alcide-de-gasperi-pieve-tesino-italy",
+          "name": "Museo Casa Alcide De Gasperi",
+          "cityOrRegion": "Pieve Tesino",
+          "countryCode": "IT",
+          "latitude": 46.0954,
+          "longitude": 11.6841,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-kaunas-of-1919-1940-lithuania",
+      "canonicalName": "Kaunas of 1919-1940, Lithuania",
+      "awardYear": 2014,
+      "countryCodes": [
+        "LT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/kaunas-of-1919-1940-lithuania",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-kaunas-of-1919-1940-lithuania-loc-1",
+          "siteId": "ehl-kaunas-of-1919-1940-lithuania",
+          "name": "Kaunas of 1919-1940",
+          "cityOrRegion": "Kaunas",
+          "countryCode": "LT",
+          "latitude": 54.8985,
+          "longitude": 23.9036,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-historic-gdansk-shipyard-poland",
+      "canonicalName": "The historic Gdańsk Shipyard, Poland",
+      "awardYear": 2014,
+      "countryCodes": [
+        "PL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-historic-gdansk-shipyard-poland",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-historic-gdansk-shipyard-poland-loc-1",
+          "siteId": "ehl-the-historic-gdansk-shipyard-poland",
+          "name": "The Historic Gdańsk Shipyard",
+          "cityOrRegion": "Gdańsk",
+          "countryCode": "PL",
+          "latitude": 54.3639,
+          "longitude": 18.6564,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-union-of-lublin-poland",
+      "canonicalName": "Union of Lublin, Poland",
+      "awardYear": 2014,
+      "countryCodes": [
+        "PL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/union-of-lublin-poland",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-union-of-lublin-poland-loc-1",
+          "siteId": "ehl-union-of-lublin-poland",
+          "name": "Union of Lublin (Lublin Castle)",
+          "cityOrRegion": "Lublin",
+          "countryCode": "PL",
+          "latitude": 51.2489,
+          "longitude": 22.5684,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-may-3-1791-constitution-warsaw-poland",
+      "canonicalName": "May 3, 1791 Constitution, Warsaw, Poland",
+      "awardYear": 2014,
+      "countryCodes": [
+        "PL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-may-3-1791-constitution-warsaw-poland",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-may-3-1791-constitution-warsaw-poland-loc-1",
+          "siteId": "ehl-the-may-3-1791-constitution-warsaw-poland",
+          "name": "May 3, 1791 Constitution (Royal Castle)",
+          "cityOrRegion": "Warsaw",
+          "countryCode": "PL",
+          "latitude": 52.248,
+          "longitude": 21.0141,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-charter-of-law-of-abolition-of-the-death-penalty-lisbon-portugal",
+      "canonicalName": "Charter of Law of Abolition of the Death Penalty, Lisbon, Portugal",
+      "awardYear": 2014,
+      "countryCodes": [
+        "PT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/charter-of-law-of-abolition-of-the-death-penalty-lisbon-portugal",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-charter-of-law-of-abolition-of-the-death-penalty-lisbon-portugal-loc-1",
+          "siteId": "ehl-charter-of-law-of-abolition-of-the-death-penalty-lisbon-portugal",
+          "name": "Charter of Law of Abolition of the Death Penalty (Palácio de São Bento)",
+          "cityOrRegion": "Lisbon",
+          "countryCode": "PT",
+          "latitude": 38.7127,
+          "longitude": -9.1607,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-general-library-of-the-university-of-coimbra-portugal",
+      "canonicalName": "General Library of the University of Coimbra, Portugal",
+      "awardYear": 2014,
+      "countryCodes": [
+        "PT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/general-library-of-the-university-of-coimbra-portugal",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-general-library-of-the-university-of-coimbra-portugal-loc-1",
+          "siteId": "ehl-general-library-of-the-university-of-coimbra-portugal",
+          "name": "General Library of the University of Coimbra (Biblioteca Joanina)",
+          "cityOrRegion": "Coimbra",
+          "countryCode": "PT",
+          "latitude": 40.2075,
+          "longitude": -8.4257,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-franja-partisan-hospital-slovenia",
+      "canonicalName": "Franja Partisan Hospital, Slovenia",
+      "awardYear": 2014,
+      "countryCodes": [
+        "SI"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/franja-partisan-hospital-slovenia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-franja-partisan-hospital-slovenia-loc-1",
+          "siteId": "ehl-franja-partisan-hospital-slovenia",
+          "name": "Franja Partisan Hospital",
+          "cityOrRegion": "Cerkno",
+          "countryCode": "SI",
+          "latitude": 46.1499,
+          "longitude": 13.8944,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-krapina-neanderthal-site",
+      "canonicalName": "Krapina Neanderthal Site, Croatia",
+      "awardYear": 2015,
+      "countryCodes": [
+        "HR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/european-heritage-label/krapina-neanderthal-site",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-krapina-neanderthal-site-loc-1",
+          "siteId": "ehl-krapina-neanderthal-site",
+          "name": "Krapina Neanderthal Site (Hušnjakovo)",
+          "cityOrRegion": "Krapina",
+          "countryCode": "HR",
+          "latitude": 46.1611,
+          "longitude": 15.8747,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-olomouc-premyslid-castle-and-archdiocesan-museum-olomouc-czech-republic",
+      "canonicalName": "Olomouc Premyslid Castle and Archdiocesan Museum, Czech Republic",
+      "awardYear": 2015,
+      "countryCodes": [
+        "CZ"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/olomouc-premyslid-castle-and-archdiocesan-museum-olomouc-czech-republic",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-olomouc-premyslid-castle-and-archdiocesan-museum-olomouc-czech-republic-loc-1",
+          "siteId": "ehl-olomouc-premyslid-castle-and-archdiocesan-museum-olomouc-czech-republic",
+          "name": "Olomouc Přemyslid Castle and Archdiocesan Museum",
+          "cityOrRegion": "Olomouc",
+          "countryCode": "CZ",
+          "latitude": 49.5955,
+          "longitude": 17.2517,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-sagres-promontory-portugal",
+      "canonicalName": "Sagres Promontory, Portugal",
+      "awardYear": 2015,
+      "countryCodes": [
+        "PT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/sagres-promontory-portugal",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-sagres-promontory-portugal-loc-1",
+          "siteId": "ehl-sagres-promontory-portugal",
+          "name": "Sagres Promontory",
+          "cityOrRegion": "Sagres",
+          "countryCode": "PT",
+          "latitude": 37.0089,
+          "longitude": -8.9438,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-imperial-palace-vienna-austria",
+      "canonicalName": "The Imperial Palace, Vienna, Austria",
+      "awardYear": 2015,
+      "countryCodes": [
+        "AT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-imperial-palace-vienna-austria",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-imperial-palace-vienna-austria-loc-1",
+          "siteId": "ehl-the-imperial-palace-vienna-austria",
+          "name": "The Imperial Palace (Hofburg)",
+          "cityOrRegion": "Vienna",
+          "countryCode": "AT",
+          "latitude": 48.2065,
+          "longitude": 16.3657,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-historic-ensemble-of-the-university-of-tartu-tartu-estonia",
+      "canonicalName": "Historic Ensemble of the University of Tartu, Estonia",
+      "awardYear": 2015,
+      "countryCodes": [
+        "EE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/historic-ensemble-of-the-university-of-tartu-tartu-estonia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-historic-ensemble-of-the-university-of-tartu-tartu-estonia-loc-1",
+          "siteId": "ehl-historic-ensemble-of-the-university-of-tartu-tartu-estonia",
+          "name": "Historic Ensemble of the University of Tartu",
+          "cityOrRegion": "Tartu",
+          "countryCode": "EE",
+          "latitude": 58.3797,
+          "longitude": 26.7228,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-liszt-ferenc-academy-of-music-budapest-hungary",
+      "canonicalName": "Liszt Ferenc Academy of Music, Budapest, Hungary",
+      "awardYear": 2015,
+      "countryCodes": [
+        "HU"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/liszt-ferenc-academy-of-music-budapest-hungary",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-liszt-ferenc-academy-of-music-budapest-hungary-loc-1",
+          "siteId": "ehl-liszt-ferenc-academy-of-music-budapest-hungary",
+          "name": "Liszt Ferenc Academy of Music",
+          "cityOrRegion": "Budapest",
+          "countryCode": "HU",
+          "latitude": 47.5019,
+          "longitude": 19.0634,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-mundaneum-mons-belgium",
+      "canonicalName": "Mundaneum, Mons, Belgium",
+      "awardYear": 2015,
+      "countryCodes": [
+        "BE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/mundaneum-mons-belgium",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-mundaneum-mons-belgium-loc-1",
+          "siteId": "ehl-mundaneum-mons-belgium",
+          "name": "Mundaneum",
+          "cityOrRegion": "Mons",
+          "countryCode": "BE",
+          "latitude": 50.4548,
+          "longitude": 3.9558,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-world-war-i-eastern-front-cemetery-no-123-luzna-pustki-poland",
+      "canonicalName": "World War I Eastern Front Cemetery No. 123, Łużna – Pustki, Poland",
+      "awardYear": 2015,
+      "countryCodes": [
+        "PL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/world-war-i-eastern-front-cemetery-no-123-luzna-pustki-poland",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-world-war-i-eastern-front-cemetery-no-123-luzna-pustki-poland-loc-1",
+          "siteId": "ehl-world-war-i-eastern-front-cemetery-no-123-luzna-pustki-poland",
+          "name": "World War I Eastern Front Cemetery No. 123",
+          "cityOrRegion": "Łużna – Pustki",
+          "countryCode": "PL",
+          "latitude": 49.7211,
+          "longitude": 21.1225,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-european-district-of-strasbourg-strasbourg-france",
+      "canonicalName": "European District of Strasbourg, France",
+      "awardYear": 2015,
+      "countryCodes": [
+        "FR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/european-district-of-strasbourg-strasbourg-france",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-european-district-of-strasbourg-strasbourg-france-loc-1",
+          "siteId": "ehl-european-district-of-strasbourg-strasbourg-france",
+          "name": "European District of Strasbourg",
+          "cityOrRegion": "Strasbourg",
+          "countryCode": "FR",
+          "latitude": 48.5952,
+          "longitude": 7.7683,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-leipzigs-musical-heritage-sites-germany",
+      "canonicalName": "Leipzig’s Musical Heritage Sites, Germany",
+      "awardYear": 2017,
+      "countryCodes": [
+        "DE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/leipzigs-musical-heritage-sites-germany",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-leipzigs-musical-heritage-sites-germany-loc-1",
+          "siteId": "ehl-leipzigs-musical-heritage-sites-germany",
+          "name": "Thomaskirche (St. Thomas Church)",
+          "cityOrRegion": "Leipzig",
+          "countryCode": "DE",
+          "latitude": 51.3406,
+          "longitude": 12.3745,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-leipzigs-musical-heritage-sites-germany-loc-2",
+          "siteId": "ehl-leipzigs-musical-heritage-sites-germany",
+          "name": "Gewandhaus Leipzig",
+          "cityOrRegion": "Leipzig",
+          "countryCode": "DE",
+          "latitude": 51.3396,
+          "longitude": 12.3803,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-leipzigs-musical-heritage-sites-germany-loc-3",
+          "siteId": "ehl-leipzigs-musical-heritage-sites-germany",
+          "name": "Bach-Archiv / Bosehaus",
+          "cityOrRegion": "Leipzig",
+          "countryCode": "DE",
+          "latitude": 51.3403,
+          "longitude": 12.3742,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-leipzigs-musical-heritage-sites-germany-loc-4",
+          "siteId": "ehl-leipzigs-musical-heritage-sites-germany",
+          "name": "Mendelssohn-Haus",
+          "cityOrRegion": "Leipzig",
+          "countryCode": "DE",
+          "latitude": 51.3363,
+          "longitude": 12.3839,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-dohany-street-synagogue-complex-hungary",
+      "canonicalName": "Dohány Street Synagogue Complex, Budapest, Hungary",
+      "awardYear": 2017,
+      "countryCodes": [
+        "HU"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/dohany-street-synagogue-complex-hungary",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-dohany-street-synagogue-complex-hungary-loc-1",
+          "siteId": "ehl-dohany-street-synagogue-complex-hungary",
+          "name": "Dohány Street Synagogue Complex",
+          "cityOrRegion": "Budapest",
+          "countryCode": "HU",
+          "latitude": 47.4952,
+          "longitude": 19.0625,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-fort-cadine-italy",
+      "canonicalName": "Fort Cadine, Trento, Italy",
+      "awardYear": 2017,
+      "countryCodes": [
+        "IT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/fort-cadine-italy",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-fort-cadine-italy-loc-1",
+          "siteId": "ehl-fort-cadine-italy",
+          "name": "Fort Cadine",
+          "cityOrRegion": "Trento",
+          "countryCode": "IT",
+          "latitude": 46.0432,
+          "longitude": 11.0872,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-javorca-memorial-church-and-its-cultural-landscape-slovenia",
+      "canonicalName": "Javorca Memorial Church and its cultural landscape, Tolmin, Slovenia",
+      "awardYear": 2017,
+      "countryCodes": [
+        "SI"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/javorca-memorial-church-and-its-cultural-landscape-slovenia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-javorca-memorial-church-and-its-cultural-landscape-slovenia-loc-1",
+          "siteId": "ehl-javorca-memorial-church-and-its-cultural-landscape-slovenia",
+          "name": "Javorca Memorial Church",
+          "cityOrRegion": "Tolmin",
+          "countryCode": "SI",
+          "latitude": 46.2318,
+          "longitude": 13.7672,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-memorial-of-the-natzweiler-struthof-concentration-camp",
+      "canonicalName": "Memorial of the Natzweiler-Struthof Concentration Camp",
+      "awardYear": 2017,
+      "countryCodes": [
+        "FR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/memorial-of-the-natzweiler-struthof-concentration-camp",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-memorial-of-the-natzweiler-struthof-concentration-camp-loc-1",
+          "siteId": "ehl-memorial-of-the-natzweiler-struthof-concentration-camp",
+          "name": "Memorial of the Natzweiler-Struthof Concentration Camp",
+          "cityOrRegion": "Natzwiller",
+          "countryCode": "FR",
+          "latitude": 48.4652,
+          "longitude": 7.1256,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-sighet-memorial-romania",
+      "canonicalName": "Sighet Memorial, Romania",
+      "awardYear": 2017,
+      "countryCodes": [
+        "RO"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/sighet-memorial-romania",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-sighet-memorial-romania-loc-1",
+          "siteId": "ehl-sighet-memorial-romania",
+          "name": "Sighet Memorial",
+          "cityOrRegion": "Sighetu Marmației",
+          "countryCode": "RO",
+          "latitude": 47.9257,
+          "longitude": 23.8887,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-bois-du-cazier-belgium",
+      "canonicalName": "Bois du Cazier, Marcinelle, Belgium",
+      "awardYear": 2017,
+      "countryCodes": [
+        "BE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/bois-du-cazier-belgium",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-bois-du-cazier-belgium-loc-1",
+          "siteId": "ehl-bois-du-cazier-belgium",
+          "name": "Bois du Cazier",
+          "cityOrRegion": "Marcinelle",
+          "countryCode": "BE",
+          "latitude": 50.3959,
+          "longitude": 4.4661,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-village-of-schengen-luxembourg",
+      "canonicalName": "Village of Schengen, Schengen, Luxembourg",
+      "awardYear": 2017,
+      "countryCodes": [
+        "LU"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/village-of-schengen-luxembourg",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-village-of-schengen-luxembourg-loc-1",
+          "siteId": "ehl-village-of-schengen-luxembourg",
+          "name": "Village of Schengen",
+          "cityOrRegion": "Schengen",
+          "countryCode": "LU",
+          "latitude": 49.4669,
+          "longitude": 6.3633,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-maastricht-treaty-the-netherlands",
+      "canonicalName": "Maastricht Treaty, Netherlands",
+      "awardYear": 2017,
+      "countryCodes": [
+        "NL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/maastricht-treaty-the-netherlands",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-maastricht-treaty-the-netherlands-loc-1",
+          "siteId": "ehl-maastricht-treaty-the-netherlands",
+          "name": "Maastricht Treaty (Government building)",
+          "cityOrRegion": "Maastricht",
+          "countryCode": "NL",
+          "latitude": 50.8496,
+          "longitude": 5.6881,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-archaeological-area-of-ostia-antica-italy",
+      "canonicalName": "Archaeological Area of Ostia Antica (Italy)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "IT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/archaeological-area-of-ostia-antica-italy",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-archaeological-area-of-ostia-antica-italy-loc-1",
+          "siteId": "ehl-archaeological-area-of-ostia-antica-italy",
+          "name": "Archaeological Area of Ostia Antica",
+          "cityOrRegion": "Rome",
+          "countryCode": "IT",
+          "latitude": 41.7554,
+          "longitude": 12.2892,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-underwater-cultural-heritage-of-the-azores-portugal",
+      "canonicalName": "Underwater Cultural Heritage of the Azores (Portugal)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "PT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/underwater-cultural-heritage-of-the-azores-portugal",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-underwater-cultural-heritage-of-the-azores-portugal-loc-1",
+          "siteId": "ehl-underwater-cultural-heritage-of-the-azores-portugal",
+          "name": "Underwater Cultural Heritage of the Azores",
+          "cityOrRegion": "Angra do Heroísmo",
+          "countryCode": "PT",
+          "latitude": 38.6553,
+          "longitude": -27.2166,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-colonies-of-benevolence-belgium-the-netherlands",
+      "canonicalName": "Colonies of Benevolence (Belgium, the Netherlands)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "BE",
+        "NL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
+      "officialWebsite": "https://www.coloniesofbenevolence.com/",
+      "wikidataId": null,
+      "transnational": true,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-1",
+          "siteId": "ehl-colonies-of-benevolence-belgium-the-netherlands",
+          "name": "Frederiksoord Colony",
+          "cityOrRegion": "Frederiksoord",
+          "countryCode": "NL",
+          "latitude": 52.8628,
+          "longitude": 6.2144,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-2",
+          "siteId": "ehl-colonies-of-benevolence-belgium-the-netherlands",
+          "name": "Wilhelminaoord Colony",
+          "cityOrRegion": "Wilhelminaoord",
+          "countryCode": "NL",
+          "latitude": 52.8558,
+          "longitude": 6.2306,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-3",
+          "siteId": "ehl-colonies-of-benevolence-belgium-the-netherlands",
+          "name": "Veenhuizen Colony",
+          "cityOrRegion": "Veenhuizen",
+          "countryCode": "NL",
+          "latitude": 52.9856,
+          "longitude": 6.5386,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-4",
+          "siteId": "ehl-colonies-of-benevolence-belgium-the-netherlands",
+          "name": "Wortel Colony",
+          "cityOrRegion": "Wortel",
+          "countryCode": "BE",
+          "latitude": 51.3985,
+          "longitude": 4.8886,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-5",
+          "siteId": "ehl-colonies-of-benevolence-belgium-the-netherlands",
+          "name": "Merksplas Colony",
+          "cityOrRegion": "Merksplas",
+          "countryCode": "BE",
+          "latitude": 51.3556,
+          "longitude": 4.85,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-living-heritage-of-szentendre-hungary",
+      "canonicalName": "Living Heritage of Szentendre (Hungary)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "HU"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/living-heritage-of-szentendre-hungary",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-living-heritage-of-szentendre-hungary-loc-1",
+          "siteId": "ehl-living-heritage-of-szentendre-hungary",
+          "name": "Living Heritage of Szentendre",
+          "cityOrRegion": "Szentendre",
+          "countryCode": "HU",
+          "latitude": 47.6631,
+          "longitude": 19.0779,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-kynzvart-castle-place-of-diplomatic-meetings-czech-republic",
+      "canonicalName": "Kynžvart Castle – Place of diplomatic meetings (Czech Republic)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "CZ"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/kynzvart-castle-place-of-diplomatic-meetings-czech-republic",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-kynzvart-castle-place-of-diplomatic-meetings-czech-republic-loc-1",
+          "siteId": "ehl-kynzvart-castle-place-of-diplomatic-meetings-czech-republic",
+          "name": "Kynžvart Castle",
+          "cityOrRegion": "Kynžvart",
+          "countryCode": "CZ",
+          "latitude": 49.9527,
+          "longitude": 12.5661,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-site-of-remembrance-in-lambinowice-poland",
+      "canonicalName": "Site of Remembrance in Łambinowice (Poland)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "PL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/site-of-remembrance-in-lambinowice-poland",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-site-of-remembrance-in-lambinowice-poland-loc-1",
+          "siteId": "ehl-site-of-remembrance-in-lambinowice-poland",
+          "name": "Site of Remembrance in Łambinowice",
+          "cityOrRegion": "Łambinowice",
+          "countryCode": "PL",
+          "latitude": 50.5211,
+          "longitude": 17.7269,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-zdravljica-the-message-of-the-european-spring-of-nations-slovenia",
+      "canonicalName": "Zdravljica - the Message of the European Spring of Nations (Slovenia)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "SI"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/zdravljica-the-message-of-the-european-spring-of-nations-slovenia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-zdravljica-the-message-of-the-european-spring-of-nations-slovenia-loc-1",
+          "siteId": "ehl-zdravljica-the-message-of-the-european-spring-of-nations-slovenia",
+          "name": "National and University Library (Prešeren Zdravljica memorial site)",
+          "cityOrRegion": "Ljubljana",
+          "countryCode": "SI",
+          "latitude": 46.0511,
+          "longitude": 14.5051,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "official",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+      "canonicalName": "Werkbund Estates in Europe",
+      "awardYear": 2019,
+      "countryCodes": [
+        "AT",
+        "CZ",
+        "DE",
+        "PL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+      "officialWebsite": "https://werkbundestates.eu/",
+      "wikidataId": null,
+      "transnational": true,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-1",
+          "siteId": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "name": "Werkbundsiedlung Wien",
+          "cityOrRegion": "Vienna",
+          "countryCode": "AT",
+          "latitude": 48.1794,
+          "longitude": 16.2794,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-2",
+          "siteId": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "name": "Baba Estate",
+          "cityOrRegion": "Prague",
+          "countryCode": "CZ",
+          "latitude": 50.1128,
+          "longitude": 14.3903,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-3",
+          "siteId": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "name": "Nový dům Estate",
+          "cityOrRegion": "Brno",
+          "countryCode": "CZ",
+          "latitude": 49.2103,
+          "longitude": 16.5847,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-4",
+          "siteId": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "name": "Weissenhofsiedlung",
+          "cityOrRegion": "Stuttgart",
+          "countryCode": "DE",
+          "latitude": 48.789,
+          "longitude": 9.166,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-5",
+          "siteId": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "name": "WuWA Estate",
+          "cityOrRegion": "Wrocław",
+          "countryCode": "PL",
+          "latitude": 51.1225,
+          "longitude": 17.0885,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-lieu-de-memoire-au-chambon-sur-lignon-france",
+      "canonicalName": "Lieu de Mémoire du Chambon-sur-Lignon (France)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "FR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/lieu-de-memoire-au-chambon-sur-lignon-france",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-lieu-de-memoire-au-chambon-sur-lignon-france-loc-1",
+          "siteId": "ehl-lieu-de-memoire-au-chambon-sur-lignon-france",
+          "name": "Lieu de Mémoire du Chambon-sur-Lignon",
+          "cityOrRegion": "Le Chambon-sur-Lignon",
+          "countryCode": "FR",
+          "latitude": 45.0561,
+          "longitude": 4.2947,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-three-brothers-latvia",
+      "canonicalName": "The Three Brothers (Latvia)",
+      "awardYear": 2019,
+      "countryCodes": [
+        "LV"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-three-brothers-latvia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-three-brothers-latvia-loc-1",
+          "siteId": "ehl-the-three-brothers-latvia",
+          "name": "The Three Brothers",
+          "cityOrRegion": "Riga",
+          "countryCode": "LV",
+          "latitude": 56.9496,
+          "longitude": 24.0972,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-vucedol-culture-museum-and-archaeological-site",
+      "canonicalName": "Vučedol Culture Museum and Archaeological Site (Croatia)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "HR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/vucedol-culture-museum-and-archaeological-site",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-vucedol-culture-museum-and-archaeological-site-loc-1",
+          "siteId": "ehl-vucedol-culture-museum-and-archaeological-site",
+          "name": "Vučedol Culture Museum and Archaeological Site",
+          "cityOrRegion": "Vukovar",
+          "countryCode": "HR",
+          "latitude": 45.3181,
+          "longitude": 19.0233,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-archaeological-site-of-nemea",
+      "canonicalName": "Archaeological Site of Nemea (Greece)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "EL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/archaeological-site-of-nemea",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-archaeological-site-of-nemea-loc-1",
+          "siteId": "ehl-archaeological-site-of-nemea",
+          "name": "Archaeological Site of Nemea",
+          "cityOrRegion": "Nemea",
+          "countryCode": "EL",
+          "latitude": 37.8025,
+          "longitude": 22.7136,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-thracian-art-in-eastern-rhodopes-aleksandrovo-tomb-bulgaria",
+      "canonicalName": "Thracian Art in Eastern Rhodopes: Aleksandrovo Tomb (Bulgaria)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "BG"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/thracian-art-in-eastern-rhodopes-aleksandrovo-tomb-bulgaria",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-thracian-art-in-eastern-rhodopes-aleksandrovo-tomb-bulgaria-loc-1",
+          "siteId": "ehl-thracian-art-in-eastern-rhodopes-aleksandrovo-tomb-bulgaria",
+          "name": "Aleksandrovo Tomb",
+          "cityOrRegion": "Aleksandrovo, Haskovo Province",
+          "countryCode": "BG",
+          "latitude": 42.0086,
+          "longitude": 25.6803,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-almaden-mining-park-spain",
+      "canonicalName": "Almadén Mining Park (Spain)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "ES"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/almaden-mining-park-spain",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-almaden-mining-park-spain-loc-1",
+          "siteId": "ehl-almaden-mining-park-spain",
+          "name": "Almadén Mining Park",
+          "cityOrRegion": "Almadén",
+          "countryCode": "ES",
+          "latitude": 38.7761,
+          "longitude": -4.8297,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-echternach-saint-willibrord-heritage-luxembourg",
+      "canonicalName": "Echternach Saint Willibrord Heritage (Luxembourg)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "LU"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/echternach-saint-willibrord-heritage-luxembourg",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-echternach-saint-willibrord-heritage-luxembourg-loc-1",
+          "siteId": "ehl-echternach-saint-willibrord-heritage-luxembourg",
+          "name": "Echternach Saint Willibrord Heritage",
+          "cityOrRegion": "Echternach",
+          "countryCode": "LU",
+          "latitude": 49.8114,
+          "longitude": 6.4211,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-historic-centre-of-turaida-latvia",
+      "canonicalName": "Historic Centre of Turaida (Latvia)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "LV"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/historic-centre-of-turaida-latvia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-historic-centre-of-turaida-latvia-loc-1",
+          "siteId": "ehl-historic-centre-of-turaida-latvia",
+          "name": "Historic Centre of Turaida",
+          "cityOrRegion": "Turaida, Sigulda",
+          "countryCode": "LV",
+          "latitude": 57.1942,
+          "longitude": 24.8497,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia",
+      "canonicalName": "Medieval wall painting in the Gemer and Malohont regions (Slovakia)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "SK"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/medieval-wall-painting-in-gemer-and-malohont-regions-slovakia",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia-loc-1",
+          "siteId": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia",
+          "name": "Church of St Ladislaus, Štítnik",
+          "cityOrRegion": "Štítnik",
+          "countryCode": "SK",
+          "latitude": 48.7169,
+          "longitude": 20.2669,
+          "coordinateSourceUrl": "https://gotickacesta.sk/en/medieval-murals-awarded-european-heritage-label/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia-loc-2",
+          "siteId": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia",
+          "name": "Reformed Christian Church, Plešivec",
+          "cityOrRegion": "Plešivec",
+          "countryCode": "SK",
+          "latitude": 48.5972,
+          "longitude": 20.3903,
+          "coordinateSourceUrl": "https://gotickacesta.sk/en/medieval-murals-awarded-european-heritage-label/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia-loc-3",
+          "siteId": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia",
+          "name": "Evangelical Church, Rimavská Baňa",
+          "cityOrRegion": "Rimavská Baňa",
+          "countryCode": "SK",
+          "latitude": 48.3492,
+          "longitude": 19.8967,
+          "coordinateSourceUrl": "https://gotickacesta.sk/en/medieval-murals-awarded-european-heritage-label/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-oderbruch-germany",
+      "canonicalName": "The Oderbruch (Germany)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "DE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-oderbruch-germany",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-oderbruch-germany-loc-1",
+          "siteId": "ehl-the-oderbruch-germany",
+          "name": "The Oderbruch",
+          "cityOrRegion": "Wriezen",
+          "countryCode": "DE",
+          "latitude": 52.7167,
+          "longitude": 14.1333,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-palace-of-the-european-commission-of-the-danube-romania",
+      "canonicalName": "Palace of the European Commission of the Danube (Romania)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "RO"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/palace-of-the-european-commission-of-the-danube-romania",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-palace-of-the-european-commission-of-the-danube-romania-loc-1",
+          "siteId": "ehl-palace-of-the-european-commission-of-the-danube-romania",
+          "name": "Palace of the European Commission of the Danube",
+          "cityOrRegion": "Galați",
+          "countryCode": "RO",
+          "latitude": 45.4353,
+          "longitude": 28.0475,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-seminaarinmaki-campus-finland",
+      "canonicalName": "Seminaarinmäki Campus (Finland)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "FI"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/seminaarinmaki-campus-finland",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-seminaarinmaki-campus-finland-loc-1",
+          "siteId": "ehl-seminaarinmaki-campus-finland",
+          "name": "Seminaarinmäki Campus",
+          "cityOrRegion": "Jyväskylä",
+          "countryCode": "FI",
+          "latitude": 62.2434,
+          "longitude": 25.7472,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-ventotene-italy",
+      "canonicalName": "Ventotene (Italy)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "IT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/ventotene-italy",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-ventotene-italy-loc-1",
+          "siteId": "ehl-ventotene-italy",
+          "name": "Ventotene",
+          "cityOrRegion": "Ventotene",
+          "countryCode": "IT",
+          "latitude": 40.7958,
+          "longitude": 13.4306,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-migratiemuseummigration-mmm-belgium",
+      "canonicalName": "MigratieMuseumMigration (MMM) (Belgium)",
+      "awardYear": 2021,
+      "countryCodes": [
+        "BE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/migratiemuseummigration-mmm-belgium",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-migratiemuseummigration-mmm-belgium-loc-1",
+          "siteId": "ehl-migratiemuseummigration-mmm-belgium",
+          "name": "MigratieMuseumMigration (MMM)",
+          "cityOrRegion": "Molenbeek-Saint-Jean, Brussels",
+          "countryCode": "BE",
+          "latitude": 50.8576,
+          "longitude": 4.3437,
+          "coordinateSourceUrl": "https://en.wikipedia.org/wiki/MigratieMuseumMigration",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-cisterscapes",
+      "canonicalName": "Cisterscapes – Cistercian Landscapes Connecting Europe (Austria, Czechia, Germany, Poland, Slovenia)",
+      "awardYear": 2023,
+      "countryCodes": [
+        "AT",
+        "CZ",
+        "DE",
+        "PL",
+        "SI"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/cisterscapes",
+      "officialWebsite": "https://cisterscapes.eu/en/",
+      "wikidataId": null,
+      "transnational": true,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-cisterscapes-loc-1",
+          "siteId": "ehl-cisterscapes",
+          "name": "Ebrach Monastery Landscape",
+          "cityOrRegion": "Ebrach",
+          "countryCode": "DE",
+          "latitude": 49.8408,
+          "longitude": 10.4919,
+          "coordinateSourceUrl": "https://cisterscapes.eu/en/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-cisterscapes-loc-2",
+          "siteId": "ehl-cisterscapes",
+          "name": "Rein Abbey",
+          "cityOrRegion": "Gratwein-Straßengel",
+          "countryCode": "AT",
+          "latitude": 47.1597,
+          "longitude": 15.3389,
+          "coordinateSourceUrl": "https://cisterscapes.eu/en/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-cisterscapes-loc-3",
+          "siteId": "ehl-cisterscapes",
+          "name": "Vyšší Brod Monastery",
+          "cityOrRegion": "Vyšší Brod",
+          "countryCode": "CZ",
+          "latitude": 48.6167,
+          "longitude": 14.3167,
+          "coordinateSourceUrl": "https://cisterscapes.eu/en/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-cisterscapes-loc-4",
+          "siteId": "ehl-cisterscapes",
+          "name": "Wągrowiec / Łekno Monastery Landscape",
+          "cityOrRegion": "Wągrowiec",
+          "countryCode": "PL",
+          "latitude": 52.8103,
+          "longitude": 17.1958,
+          "coordinateSourceUrl": "https://cisterscapes.eu/en/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-cisterscapes-loc-5",
+          "siteId": "ehl-cisterscapes",
+          "name": "Stična Abbey",
+          "cityOrRegion": "Ivančna Gorica",
+          "countryCode": "SI",
+          "latitude": 45.9631,
+          "longitude": 14.8083,
+          "coordinateSourceUrl": "https://cisterscapes.eu/en/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-monastery-of-san-jeronimo-de-yuste",
+      "canonicalName": "Monastery of San Jerónimo de Yuste, Cuacos de Yuste (Spain)",
+      "awardYear": 2023,
+      "countryCodes": [
+        "ES"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/monastery-of-san-jeronimo-de-yuste",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-monastery-of-san-jeronimo-de-yuste-loc-1",
+          "siteId": "ehl-monastery-of-san-jeronimo-de-yuste",
+          "name": "Monastery of San Jerónimo de Yuste",
+          "cityOrRegion": "Cuacos de Yuste",
+          "countryCode": "ES",
+          "latitude": 40.1444,
+          "longitude": -5.7889,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-our-lord-in-the-attic-museum",
+      "canonicalName": "Our Lord in the Attic Museum, Amsterdam (The Netherlands)",
+      "awardYear": 2023,
+      "countryCodes": [
+        "NL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/our-lord-in-the-attic-museum",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-our-lord-in-the-attic-museum-loc-1",
+          "siteId": "ehl-our-lord-in-the-attic-museum",
+          "name": "Our Lord in the Attic Museum",
+          "cityOrRegion": "Amsterdam",
+          "countryCode": "NL",
+          "latitude": 52.3745,
+          "longitude": 4.8975,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-royal-theatre-toone",
+      "canonicalName": "Royal Theatre Toone, Brussels (Belgium)",
+      "awardYear": 2023,
+      "countryCodes": [
+        "BE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/royal-theatre-toone",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-royal-theatre-toone-loc-1",
+          "siteId": "ehl-royal-theatre-toone",
+          "name": "Royal Theatre Toone",
+          "cityOrRegion": "Brussels",
+          "countryCode": "BE",
+          "latitude": 50.8481,
+          "longitude": 4.3542,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-kalevala-living-epic-heritage",
+      "canonicalName": "The Kalevala - Living Epic Heritage (Finland)",
+      "awardYear": 2023,
+      "countryCodes": [
+        "FI"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-kalevala-living-epic-heritage",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-kalevala-living-epic-heritage-loc-1",
+          "siteId": "ehl-the-kalevala-living-epic-heritage",
+          "name": "The Kalevala – Living Epic Heritage (Juminkeko)",
+          "cityOrRegion": "Kuhmo",
+          "countryCode": "FI",
+          "latitude": 64.1136,
+          "longitude": 29.5158,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-romanian-athenaeum",
+      "canonicalName": "Romanian Athenaeum, Bucharest (Romania)",
+      "awardYear": 2023,
+      "countryCodes": [
+        "RO"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/romanian-athenaeum",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-romanian-athenaeum-loc-1",
+          "siteId": "ehl-romanian-athenaeum",
+          "name": "Romanian Athenaeum",
+          "cityOrRegion": "Bucharest",
+          "countryCode": "RO",
+          "latitude": 44.4413,
+          "longitude": 26.0973,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-santanna-di-stazzema",
+      "canonicalName": "Sant’Anna di Stazzema, Stazzema (Italy)",
+      "awardYear": 2023,
+      "countryCodes": [
+        "IT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/santanna-di-stazzema",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-santanna-di-stazzema-loc-1",
+          "siteId": "ehl-santanna-di-stazzema",
+          "name": "Sant'Anna di Stazzema",
+          "cityOrRegion": "Stazzema",
+          "countryCode": "IT",
+          "latitude": 43.9944,
+          "longitude": 10.3222,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-landeszeughaus",
+      "canonicalName": "The Landeszeughaus (Austria)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "AT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-landeszeughaus",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-landeszeughaus-loc-1",
+          "siteId": "ehl-the-landeszeughaus",
+          "name": "The Landeszeughaus",
+          "cityOrRegion": "Graz",
+          "countryCode": "AT",
+          "latitude": 47.0708,
+          "longitude": 15.4383,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-domain-royal-museum-of-mariemont",
+      "canonicalName": "Domain & Royal Museum of Mariemont (Belgium)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "BE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/domain-royal-museum-of-mariemont",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-domain-royal-museum-of-mariemont-loc-1",
+          "siteId": "ehl-domain-royal-museum-of-mariemont",
+          "name": "Domain & Royal Museum of Mariemont",
+          "cityOrRegion": "Morlanwelz",
+          "countryCode": "BE",
+          "latitude": 50.4106,
+          "longitude": 4.2461,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-provadia-salt-production-and-urban-centre",
+      "canonicalName": "Provadia Salt-Production and Urban Centre (Bulgaria)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "BG"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/provadia-salt-production-and-urban-centre",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-provadia-salt-production-and-urban-centre-loc-1",
+          "siteId": "ehl-provadia-salt-production-and-urban-centre",
+          "name": "Provadia Salt-Production and Urban Centre",
+          "cityOrRegion": "Provadia",
+          "countryCode": "BG",
+          "latitude": 43.1811,
+          "longitude": 27.4361,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-free-speech-space",
+      "canonicalName": "Free Speech Space (Czechia)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "CZ"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/free-speech-space",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-free-speech-space-loc-1",
+          "siteId": "ehl-free-speech-space",
+          "name": "Czech Radio Headquarters",
+          "cityOrRegion": "Prague",
+          "countryCode": "CZ",
+          "latitude": 50.0755,
+          "longitude": 14.4378,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/free-speech-space",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-free-speech-space-loc-2",
+          "siteId": "ehl-free-speech-space",
+          "name": "Ještěd Transmitter",
+          "cityOrRegion": "Liberec",
+          "countryCode": "CZ",
+          "latitude": 50.7304,
+          "longitude": 14.9875,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/free-speech-space",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-pader-urban-river-landscape",
+      "canonicalName": "Pader Urban River Landscape (Germany)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "DE"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/pader-urban-river-landscape",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-pader-urban-river-landscape-loc-1",
+          "siteId": "ehl-pader-urban-river-landscape",
+          "name": "Pader Urban River Landscape",
+          "cityOrRegion": "Paderborn",
+          "countryCode": "DE",
+          "latitude": 51.7169,
+          "longitude": 8.7619,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": true
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-la-nau-cultural-centre",
+      "canonicalName": "La Nau Cultural Centre (Spain)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "ES"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/la-nau-cultural-centre",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-la-nau-cultural-centre-loc-1",
+          "siteId": "ehl-la-nau-cultural-centre",
+          "name": "La Nau Cultural Centre",
+          "cityOrRegion": "Valencia",
+          "countryCode": "ES",
+          "latitude": 39.4744,
+          "longitude": -0.3763,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-the-industrial-heritage-of-varkaus",
+      "canonicalName": "The industrial heritage of Varkaus (Finland)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "FI"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-industrial-heritage-of-varkaus",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-the-industrial-heritage-of-varkaus-loc-1",
+          "siteId": "ehl-the-industrial-heritage-of-varkaus",
+          "name": "The Industrial Heritage of Varkaus",
+          "cityOrRegion": "Varkaus",
+          "countryCode": "FI",
+          "latitude": 62.3167,
+          "longitude": 27.8833,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-rashi-of-troyes-places-of-remembrance",
+      "canonicalName": "Rashi of Troyes – Places of Remembrance (France)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "FR"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/rashi-of-troyes-places-of-remembrance",
+      "officialWebsite": "https://gip-rachi.eu/en/",
+      "wikidataId": null,
+      "transnational": false,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-rashi-of-troyes-places-of-remembrance-loc-1",
+          "siteId": "ehl-rashi-of-troyes-places-of-remembrance",
+          "name": "Maison Rachi & Old Jewish Quarter",
+          "cityOrRegion": "Troyes",
+          "countryCode": "FR",
+          "latitude": 48.2973,
+          "longitude": 4.0744,
+          "coordinateSourceUrl": "https://gip-rachi.eu/en/european-heritage-label-award/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-rashi-of-troyes-places-of-remembrance-loc-2",
+          "siteId": "ehl-rashi-of-troyes-places-of-remembrance",
+          "name": "Rashi Trail Mural, Lhuître",
+          "cityOrRegion": "Lhuître",
+          "countryCode": "FR",
+          "latitude": 48.4964,
+          "longitude": 4.2681,
+          "coordinateSourceUrl": "https://gip-rachi.eu/en/european-heritage-label-award/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-places-of-peace",
+      "canonicalName": "Places of Peace (Portugal, Spain, Hungary, Slovakia, Croatia and Bulgaria)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "PT",
+        "ES",
+        "HU",
+        "SK",
+        "HR",
+        "BG"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/places-of-peace",
+      "officialWebsite": "https://placesofpeace.eu/",
+      "wikidataId": null,
+      "transnational": true,
+      "serial": true,
+      "locations": [
+        {
+          "id": "ehl-places-of-peace-loc-1",
+          "siteId": "ehl-places-of-peace",
+          "name": "Monastery of St. Francis",
+          "cityOrRegion": "Zadar",
+          "countryCode": "HR",
+          "latitude": 44.1197,
+          "longitude": 15.2313,
+          "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-places-of-peace-loc-2",
+          "siteId": "ehl-places-of-peace",
+          "name": "Kaynardzha Historical Fountain Park",
+          "cityOrRegion": "Kaynardzha",
+          "countryCode": "BG",
+          "latitude": 44.0342,
+          "longitude": 27.0308,
+          "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-places-of-peace-loc-3",
+          "siteId": "ehl-places-of-peace",
+          "name": "Paço dos Henriques",
+          "cityOrRegion": "Alcáçovas",
+          "countryCode": "PT",
+          "latitude": 38.3917,
+          "longitude": -8.1544,
+          "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-places-of-peace-loc-4",
+          "siteId": "ehl-places-of-peace",
+          "name": "Évoramonte Convention House",
+          "cityOrRegion": "Évoramonte",
+          "countryCode": "PT",
+          "latitude": 38.7828,
+          "longitude": -7.6669,
+          "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-places-of-peace-loc-5",
+          "siteId": "ehl-places-of-peace",
+          "name": "Convent of São Francisco / Historic Complex of Alcañices",
+          "cityOrRegion": "Alcañices",
+          "countryCode": "ES",
+          "latitude": 41.6978,
+          "longitude": -6.3897,
+          "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-places-of-peace-loc-6",
+          "siteId": "ehl-places-of-peace",
+          "name": "House of Peace",
+          "cityOrRegion": "Vasvár",
+          "countryCode": "HU",
+          "latitude": 47.0586,
+          "longitude": 16.7911,
+          "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        },
+        {
+          "id": "ehl-places-of-peace-loc-7",
+          "siteId": "ehl-places-of-peace",
+          "name": "Trenčín Castle",
+          "cityOrRegion": "Trenčín",
+          "countryCode": "SK",
+          "latitude": 48.8945,
+          "longitude": 18.0367,
+          "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-bosco-delle-querce",
+      "canonicalName": "Bosco delle Querce (Italy)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "IT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/bosco-delle-querce",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-bosco-delle-querce-loc-1",
+          "siteId": "ehl-bosco-delle-querce",
+          "name": "Bosco delle Querce",
+          "cityOrRegion": "Seveso",
+          "countryCode": "IT",
+          "latitude": 45.6511,
+          "longitude": 9.1428,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-saint-pauls-catacombs",
+      "canonicalName": "St. Paul's Catacombs (Malta)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "MT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/saint-pauls-catacombs",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-saint-pauls-catacombs-loc-1",
+          "siteId": "ehl-saint-pauls-catacombs",
+          "name": "St. Paul's Catacombs",
+          "cityOrRegion": "Rabat",
+          "countryCode": "MT",
+          "latitude": 35.8814,
+          "longitude": 14.4014,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-krzysztof-penderecki-european-centre-for-music",
+      "canonicalName": "Krzysztof Penderecki European Centre for Music (Poland)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "PL"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/krzysztof-penderecki-european-centre-for-music",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-krzysztof-penderecki-european-centre-for-music-loc-1",
+          "siteId": "ehl-krzysztof-penderecki-european-centre-for-music",
+          "name": "Krzysztof Penderecki European Centre for Music",
+          "cityOrRegion": "Lusławice",
+          "countryCode": "PL",
+          "latitude": 49.9333,
+          "longitude": 20.6167,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    },
+    {
+      "id": "ehl-lagar-velho-rockshelter",
+      "canonicalName": "Lagar Velho Rockshelter (Portugal)",
+      "awardYear": 2025,
+      "countryCodes": [
+        "PT"
+      ],
+      "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/lagar-velho-rockshelter",
+      "officialWebsite": null,
+      "wikidataId": null,
+      "transnational": false,
+      "serial": false,
+      "locations": [
+        {
+          "id": "ehl-lagar-velho-rockshelter-loc-1",
+          "siteId": "ehl-lagar-velho-rockshelter",
+          "name": "Lagar Velho Rockshelter",
+          "cityOrRegion": "Lapedo Valley, Leiria",
+          "countryCode": "PT",
+          "latitude": 39.7328,
+          "longitude": -8.7972,
+          "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
+          "coordinateConfidence": "verified",
+          "representativePoint": false
+        }
+      ],
+      "importedAt": "2026-07-27T14:46:47.593Z"
+    }
+  ],
+  "unresolved": []
+}

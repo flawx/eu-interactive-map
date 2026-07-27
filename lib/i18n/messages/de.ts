@@ -17,6 +17,9 @@ export const de = {
     unescoNatural: "Naturstätten",
     unescoMixed: "Gemischte Stätten",
     unescoAttribution: "Daten: UNESCO-Welterbezentrum",
+    europeanHeritageLabel: "Europäisches Kulturerbe-Siegel",
+    europeanHeritageLabelDescription:
+      "Von der Europäischen Union anerkannte Stätten für ihren symbolischen Wert und ihre Rolle in der europäischen Geschichte und Integration",
     majorTouristPlaces: "Major tourist places",
     majorTouristPlacesDescription:
       "Iconic landmarks, historic centres, museums, parks, coasts and mountain destinations across Europe",
@@ -241,6 +244,7 @@ export const de = {
     groupEuCapitals: "Europäische Hauptstädte",
     groupInstitutions: "Europäische Institutionen",
     groupUnesco: "UNESCO-Welterbe",
+    groupEuropeanHeritageLabel: "Europäisches Kulturerbe-Siegel",
     groupTouristPlaces: "Tourist places",
     groupAirports: "Airports",
     groupInternationalStations: "International stations",

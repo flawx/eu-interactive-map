@@ -17,6 +17,9 @@ export const da = {
     unescoNatural: "Natural sites",
     unescoMixed: "Mixed sites",
     unescoAttribution: "Data: UNESCO World Heritage Centre",
+    europeanHeritageLabel: "Det europæiske kulturarvsmærke",
+    europeanHeritageLabelDescription:
+      "Steder anerkendt af Den Europæiske Union for deres symbolske værdi og rolle i europæisk historie og integration",
     majorTouristPlaces: "Major tourist places",
     majorTouristPlacesDescription:
       "Iconic landmarks, historic centres, museums, parks, coasts and mountain destinations across Europe",
@@ -241,6 +244,7 @@ export const da = {
     groupEuCapitals: "Europæiske hovedstæder",
     groupInstitutions: "European institutions",
     groupUnesco: "UNESCO World Heritage",
+    groupEuropeanHeritageLabel: "Det europæiske kulturarvsmærke",
     groupTouristPlaces: "Tourist places",
     groupAirports: "Airports",
     groupInternationalStations: "International stations",

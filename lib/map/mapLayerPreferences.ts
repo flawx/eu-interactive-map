@@ -9,6 +9,7 @@ export type MapLayerPreferences = {
   unescoCultural: boolean;
   unescoNatural: boolean;
   unescoMixed: boolean;
+  europeanHeritageLabel: boolean;
   majorTouristPlaces: boolean;
   touristLandmark: boolean;
   touristHistoricArea: boolean;
@@ -42,6 +43,7 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   unescoCultural: true,
   unescoNatural: true,
   unescoMixed: true,
+  europeanHeritageLabel: false,
   majorTouristPlaces: false,
   touristLandmark: true,
   touristHistoricArea: true,
@@ -78,6 +80,7 @@ const LAYER_KEYS = [
   "unescoCultural",
   "unescoNatural",
   "unescoMixed",
+  "europeanHeritageLabel",
   "majorTouristPlaces",
   "touristLandmark",
   "touristHistoricArea",
@@ -152,6 +155,7 @@ export function saveMapLayerPreferences(
       unescoCultural: Boolean(preferences.unescoCultural),
       unescoNatural: Boolean(preferences.unescoNatural),
       unescoMixed: Boolean(preferences.unescoMixed),
+      europeanHeritageLabel: Boolean(preferences.europeanHeritageLabel),
       majorTouristPlaces: Boolean(preferences.majorTouristPlaces),
       touristLandmark: Boolean(preferences.touristLandmark),
       touristHistoricArea: Boolean(preferences.touristHistoricArea),

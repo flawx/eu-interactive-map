@@ -17,6 +17,9 @@ export const nl = {
     unescoNatural: "Natural sites",
     unescoMixed: "Mixed sites",
     unescoAttribution: "Data: UNESCO World Heritage Centre",
+    europeanHeritageLabel: "Europees Erfgoedlabel",
+    europeanHeritageLabelDescription:
+      "Sites erkend door de Europese Unie om hun symbolische waarde en hun rol in de Europese geschiedenis en integratie",
     majorTouristPlaces: "Major tourist places",
     majorTouristPlacesDescription:
       "Iconic landmarks, historic centres, museums, parks, coasts and mountain destinations across Europe",
@@ -241,6 +244,7 @@ export const nl = {
     groupEuCapitals: "Europese hoofdsteden",
     groupInstitutions: "Europese instellingen",
     groupUnesco: "UNESCO World Heritage",
+    groupEuropeanHeritageLabel: "Europees Erfgoedlabel",
     groupTouristPlaces: "Tourist places",
     groupAirports: "Airports",
     groupInternationalStations: "International stations",

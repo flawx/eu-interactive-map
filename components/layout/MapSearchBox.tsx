@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import {
+  Award,
   Building2,
   Camera,
   Car,
@@ -67,6 +68,8 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
       return t.search.groupInstitutions;
     case "unesco_sites":
       return t.search.groupUnesco;
+    case "european_heritage_label_sites":
+      return t.search.groupEuropeanHeritageLabel;
     case "tourist_places":
       return t.search.groupTouristPlaces;
     case "airports":
@@ -123,6 +126,17 @@ function ResultIcon({
         aria-hidden="true"
       >
         <UnescoCategoryPictogram category={metadata?.category} />
+      </span>
+    );
+  }
+
+  if (type === "european_heritage_label") {
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#facc15] bg-[#003399] text-[#facc15] shadow-sm"
+        aria-hidden="true"
+      >
+        <Award className="h-3 w-3" strokeWidth={2.25} />
       </span>
     );
   }

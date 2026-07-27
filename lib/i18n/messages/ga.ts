@@ -17,6 +17,9 @@ export const ga = {
     unescoNatural: "Natural sites",
     unescoMixed: "Mixed sites",
     unescoAttribution: "Data: UNESCO World Heritage Centre",
+    europeanHeritageLabel: "Lipéad Oidhreachta Eorpach",
+    europeanHeritageLabelDescription:
+      "Láithreacha aitheanta ag an Aontas Eorpach as a luach siombalach agus as a ról i stair agus i gcomhtháthú na hEorpa",
     majorTouristPlaces: "Major tourist places",
     majorTouristPlacesDescription:
       "Iconic landmarks, historic centres, museums, parks, coasts and mountain destinations across Europe",
@@ -241,6 +244,7 @@ export const ga = {
     groupEuCapitals: "Príomhchathracha Eorpacha",
     groupInstitutions: "European institutions",
     groupUnesco: "UNESCO World Heritage",
+    groupEuropeanHeritageLabel: "Lipéad Oidhreachta Eorpach",
     groupTouristPlaces: "Tourist places",
     groupAirports: "Airports",
     groupInternationalStations: "International stations",

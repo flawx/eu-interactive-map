@@ -37,6 +37,8 @@ type MapLegendProps = {
   onToggleUnescoNatural: (value: boolean) => void;
   showUnescoMixed: boolean;
   onToggleUnescoMixed: (value: boolean) => void;
+  showEuropeanHeritageLabel: boolean;
+  onToggleEuropeanHeritageLabel: (value: boolean) => void;
   showMajorTouristPlaces: boolean;
   onToggleMajorTouristPlaces: (value: boolean) => void;
   showTouristLandmark: boolean;
@@ -111,6 +113,8 @@ export default function MapLegend({
   onToggleUnescoNatural,
   showUnescoMixed,
   onToggleUnescoMixed,
+  showEuropeanHeritageLabel,
+  onToggleEuropeanHeritageLabel,
   showMajorTouristPlaces,
   onToggleMajorTouristPlaces,
   showTouristLandmark,
@@ -188,6 +192,7 @@ export default function MapLegend({
 
   const tourismActive = [
     showUnescoWorldHeritage,
+    showEuropeanHeritageLabel,
     showMajorTouristPlaces,
     showMajorEuropeanAirports,
     showEurostarStations,
@@ -216,6 +221,7 @@ export default function MapLegend({
     unescoCultural: showUnescoCultural,
     unescoNatural: showUnescoNatural,
     unescoMixed: showUnescoMixed,
+    europeanHeritageLabel: showEuropeanHeritageLabel,
     majorTouristPlaces: showMajorTouristPlaces,
     touristLandmark: showTouristLandmark,
     touristHistoricArea: showTouristHistoricArea,
@@ -441,6 +447,24 @@ export default function MapLegend({
               {t.legend.unescoAttribution}
             </p>
           ) : null}
+
+          <LayerToggle
+            checked={showEuropeanHeritageLabel}
+            onChange={onToggleEuropeanHeritageLabel}
+            color="#003399"
+            label={t.legend.europeanHeritageLabel}
+            swatchClassName="relative overflow-hidden rounded-full"
+            swatchStyle={{
+              background:
+                "radial-gradient(circle at 50% 50%, #facc15 0 28%, #003399 30%)",
+            }}
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.europeanHeritageLabelDescription}
+          </p>
 
           <LayerToggle
             checked={showMajorTouristPlaces}

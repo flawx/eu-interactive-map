@@ -9,7 +9,8 @@
     "lint": "next lint",
     "effis:refresh": "tsx scripts/refresh-effis-snapshots.ts",
     "unesco:update": "tsx scripts/update-unesco-world-heritage.ts",
-    "security:borders:update": "tsx scripts/update-schengen-border-data.ts"
+    "security:borders:update": "tsx scripts/update-schengen-border-data.ts",
+    "heritage-label:update": "tsx scripts/update-european-heritage-label.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",

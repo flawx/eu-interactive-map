@@ -17,6 +17,9 @@ export const mt = {
     unescoNatural: "Natural sites",
     unescoMixed: "Mixed sites",
     unescoAttribution: "Data: UNESCO World Heritage Centre",
+    europeanHeritageLabel: "Tikketta tal-Wirt Ewropew",
+    europeanHeritageLabelDescription:
+      "Siti rikonoxxuti mill-Unjoni Ewropea għall-valur simboliku tagħhom u r-rwol tagħhom fl-istorja u l-integrazzjoni Ewropea",
     majorTouristPlaces: "Major tourist places",
     majorTouristPlacesDescription:
       "Iconic landmarks, historic centres, museums, parks, coasts and mountain destinations across Europe",
@@ -241,6 +244,7 @@ export const mt = {
     groupEuCapitals: "Kapitali Ewropej",
     groupInstitutions: "European institutions",
     groupUnesco: "UNESCO World Heritage",
+    groupEuropeanHeritageLabel: "Tikketta tal-Wirt Ewropew",
     groupTouristPlaces: "Tourist places",
     groupAirports: "Airports",
     groupInternationalStations: "International stations",

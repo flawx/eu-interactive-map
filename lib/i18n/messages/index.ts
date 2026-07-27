@@ -36,6 +36,7 @@ export function getMessages(locale: Locale): Messages {
       localized.borderCrossingPanel ?? en.borderCrossingPanel,
     temporaryBorderControlPanel:
       localized.temporaryBorderControlPanel ?? en.temporaryBorderControlPanel,
+    ehlPanel: localized.ehlPanel ?? en.ehlPanel,
   };
 }
 
