@@ -13,6 +13,8 @@ import type { WildfireIncident } from "@/lib/incidents/types";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { UNESCO_WORLD_HERITAGE_SITES } from "@/lib/tourism/unescoWorldHeritage";
+import { EUROPEAN_AIRPORTS } from "@/lib/transport/europeanAirports";
+import { EUROSTAR_STATIONS } from "@/lib/transport/eurostarNetwork";
 
 export type MapSearchResultType =
   | "country"
@@ -20,6 +22,8 @@ export type MapSearchResultType =
   | "wildfire"
   | "eu_institution"
   | "unesco_site"
+  | "airport"
+  | "eurostar_station"
   | "categorized_place"
   | "external_place";
 
@@ -28,6 +32,8 @@ export type MapSearchCategory =
   | "eu_capitals"
   | "eu_institutions"
   | "unesco_sites"
+  | "airports"
+  | "international_stations"
   | "active_alerts"
   | "app_places"
   | "external";
@@ -48,6 +54,8 @@ export type MapSearchResult = {
   institutionId?: MainEuInstitutionId;
   siteId?: string;
   unescoSiteId?: string;
+  airportId?: string;
+  eurostarStationId?: string;
   source: "local" | "nominatim";
   metadata: Record<string, string | number | boolean | null>;
 };
@@ -366,6 +374,87 @@ function buildUnescoSiteSearchResults(locale: Locale): MapSearchResult[] {
   });
 }
 
+function buildAirportSearchResults(locale: Locale): MapSearchResult[] {
+  return EUROPEAN_AIRPORTS.map((airport) => {
+    const countryName = countryDisplayName(
+      airport.countryCode === "EL" ? "GR" : airport.countryCode,
+      locale,
+    );
+    const codes = [airport.iataCode, airport.icaoCode].filter(Boolean);
+    const subtitle = [airport.city, countryName, ...codes]
+      .filter(Boolean)
+      .join(" · ");
+
+    return {
+      id: `airport:${airport.id}`,
+      type: "airport",
+      category: "airports",
+      title: airport.name,
+      subtitle,
+      longitude: airport.longitude,
+      latitude: airport.latitude,
+      icon: "airport",
+      countryCode: airport.countryCode,
+      airportId: airport.id,
+      source: "local",
+      metadata: {
+        rank2025: airport.rank2025,
+        searchText: [
+          airport.name,
+          airport.city,
+          airport.iataCode ?? "",
+          airport.icaoCode,
+          airport.countryCode,
+          countryName,
+          "airport",
+          "aéroport",
+          "aeroport",
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
+function buildEurostarStationSearchResults(locale: Locale): MapSearchResult[] {
+  return EUROSTAR_STATIONS.map((station) => {
+    const countryName = countryDisplayName(
+      station.countryCode === "EL" ? "GR" : station.countryCode,
+      locale,
+    );
+    const subtitle = [station.city, countryName, "Eurostar"]
+      .filter(Boolean)
+      .join(" · ");
+
+    return {
+      id: `eurostar-station:${station.id}`,
+      type: "eurostar_station",
+      category: "international_stations",
+      title: station.name,
+      subtitle,
+      longitude: station.longitude,
+      latitude: station.latitude,
+      icon: "eurostar",
+      countryCode: station.countryCode,
+      eurostarStationId: station.id,
+      source: "local",
+      metadata: {
+        serviceStatus: station.serviceStatus,
+        searchText: [
+          station.name,
+          station.city,
+          station.countryCode,
+          countryName,
+          "Eurostar",
+          "Thalys",
+          "train",
+          "gare",
+          "station",
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
 const COUNTRY_ALIASES: Partial<Record<string, readonly string[]>> = {
   EL: ["Greece", "GR", "Hellas", "Grèce", "Griechenland"],
   DE: ["Germany", "Allemagne", "Deutschland"],
@@ -513,6 +602,8 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
 
   results.push(...buildMainEuInstitutionSearchResults(locale));
   results.push(...buildUnescoSiteSearchResults(locale));
+  results.push(...buildAirportSearchResults(locale));
+  results.push(...buildEurostarStationSearchResults(locale));
 
   return results;
 }
@@ -604,6 +695,8 @@ export function searchLocalIndex(
     "countries_capitals",
     "eu_institutions",
     "unesco_sites",
+    "airports",
+    "international_stations",
     "active_alerts",
     "app_places",
     "external",

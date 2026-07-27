@@ -9,6 +9,9 @@ export type MapLayerPreferences = {
   unescoCultural: boolean;
   unescoNatural: boolean;
   unescoMixed: boolean;
+  majorEuropeanAirports: boolean;
+  eurostarStations: boolean;
+  eurostarRoutes: boolean;
   majorWildfires: boolean;
   satelliteActiveFires: boolean;
   recentSatelliteHistory: boolean;
@@ -25,6 +28,9 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   unescoCultural: true,
   unescoNatural: true,
   unescoMixed: true,
+  majorEuropeanAirports: false,
+  eurostarStations: false,
+  eurostarRoutes: false,
   majorWildfires: false,
   satelliteActiveFires: false,
   recentSatelliteHistory: false,
@@ -44,6 +50,9 @@ const LAYER_KEYS = [
   "unescoCultural",
   "unescoNatural",
   "unescoMixed",
+  "majorEuropeanAirports",
+  "eurostarStations",
+  "eurostarRoutes",
   "majorWildfires",
   "satelliteActiveFires",
   "recentSatelliteHistory",
@@ -101,6 +110,9 @@ export function saveMapLayerPreferences(
       unescoCultural: Boolean(preferences.unescoCultural),
       unescoNatural: Boolean(preferences.unescoNatural),
       unescoMixed: Boolean(preferences.unescoMixed),
+      majorEuropeanAirports: Boolean(preferences.majorEuropeanAirports),
+      eurostarStations: Boolean(preferences.eurostarStations),
+      eurostarRoutes: Boolean(preferences.eurostarRoutes),
       majorWildfires: Boolean(preferences.majorWildfires),
       satelliteActiveFires: Boolean(preferences.satelliteActiveFires),
       recentSatelliteHistory: Boolean(preferences.recentSatelliteHistory),

@@ -43,6 +43,14 @@ type MapClientProps = {
   showUnescoMixed: boolean;
   selectedUnescoSiteId: string | null;
   onUnescoSiteSelect?: (siteId: string | null) => void;
+  showMajorEuropeanAirports: boolean;
+  selectedAirportId: string | null;
+  onAirportSelect?: (airportId: string | null) => void;
+  showEurostarStations: boolean;
+  showEurostarRoutes: boolean;
+  selectedEurostarStationId: string | null;
+  highlightedEurostarRouteIds?: readonly string[];
+  onEurostarStationSelect?: (stationId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -96,6 +104,14 @@ export default function MapClient({
   showUnescoMixed,
   selectedUnescoSiteId,
   onUnescoSiteSelect,
+  showMajorEuropeanAirports,
+  selectedAirportId,
+  onAirportSelect,
+  showEurostarStations,
+  showEurostarRoutes,
+  selectedEurostarStationId,
+  highlightedEurostarRouteIds,
+  onEurostarStationSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -141,6 +157,14 @@ export default function MapClient({
       showUnescoMixed={showUnescoMixed}
       selectedUnescoSiteId={selectedUnescoSiteId}
       onUnescoSiteSelect={onUnescoSiteSelect}
+      showMajorEuropeanAirports={showMajorEuropeanAirports}
+      selectedAirportId={selectedAirportId}
+      onAirportSelect={onAirportSelect}
+      showEurostarStations={showEurostarStations}
+      showEurostarRoutes={showEurostarRoutes}
+      selectedEurostarStationId={selectedEurostarStationId}
+      highlightedEurostarRouteIds={highlightedEurostarRouteIds}
+      onEurostarStationSelect={onEurostarStationSelect}
       wildfireIncidents={wildfireIncidents}
       showWildfires={showWildfires}
       onWildfireSelect={onWildfireSelect}

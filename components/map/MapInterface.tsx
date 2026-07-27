@@ -12,6 +12,8 @@ import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
 import MapLegend from "@/components/map/MapLegend";
 import UnescoSitePanel from "@/components/tourism/UnescoSitePanel";
+import AirportPanel from "@/components/transport/AirportPanel";
+import EurostarStationPanel from "@/components/transport/EurostarStationPanel";
 import { getEuCapitalById } from "@/lib/europe/euCapitals";
 import {
   getEuInstitutionById,
@@ -19,6 +21,11 @@ import {
   type EuInstitutionId,
 } from "@/lib/europe/euInstitutions";
 import { getUnescoSiteById } from "@/lib/tourism/unescoWorldHeritage";
+import { getEuropeanAirportById } from "@/lib/transport/europeanAirports";
+import {
+  EUROSTAR_ROUTES,
+  getEurostarStationById,
+} from "@/lib/transport/eurostarNetwork";
 import {
   defaultLocale,
   type Locale,
@@ -137,6 +144,23 @@ export default function MapInterface() {
   const [selectedUnescoSiteId, setSelectedUnescoSiteId] = useState<
     string | null
   >(null);
+  const [showMajorEuropeanAirports, setShowMajorEuropeanAirports] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorEuropeanAirports,
+  );
+  const [showEurostarStations, setShowEurostarStations] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.eurostarStations,
+  );
+  const [showEurostarRoutes, setShowEurostarRoutes] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.eurostarRoutes,
+  );
+  const [selectedAirportId, setSelectedAirportId] = useState<string | null>(
+    null,
+  );
+  const [selectedEurostarStationId, setSelectedEurostarStationId] = useState<
+    string | null
+  >(null);
+  const [highlightedEurostarRouteIds, setHighlightedEurostarRouteIds] =
+    useState<string[]>([]);
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(
     null,
   );
@@ -249,6 +273,9 @@ export default function MapInterface() {
     setShowUnescoCultural(prefs.unescoCultural);
     setShowUnescoNatural(prefs.unescoNatural);
     setShowUnescoMixed(prefs.unescoMixed);
+    setShowMajorEuropeanAirports(prefs.majorEuropeanAirports);
+    setShowEurostarStations(prefs.eurostarStations);
+    setShowEurostarRoutes(prefs.eurostarRoutes);
     setShowWildfires(prefs.majorWildfires);
     setShowSatelliteActiveFires(prefs.satelliteActiveFires);
     setShowSatelliteBurnedAreas(prefs.recentSatelliteHistory);
@@ -276,6 +303,9 @@ export default function MapInterface() {
       unescoCultural: showUnescoCultural,
       unescoNatural: showUnescoNatural,
       unescoMixed: showUnescoMixed,
+      majorEuropeanAirports: showMajorEuropeanAirports,
+      eurostarStations: showEurostarStations,
+      eurostarRoutes: showEurostarRoutes,
       majorWildfires: showWildfires,
       satelliteActiveFires: showSatelliteActiveFires,
       recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -292,6 +322,9 @@ export default function MapInterface() {
     showUnescoCultural,
     showUnescoNatural,
     showUnescoMixed,
+    showMajorEuropeanAirports,
+    showEurostarStations,
+    showEurostarRoutes,
     showWildfires,
     showSatelliteActiveFires,
     showSatelliteBurnedAreas,
@@ -1124,12 +1157,23 @@ export default function MapInterface() {
     setSelectedUnescoSiteId(null);
   };
 
+  const clearAirportSelection = () => {
+    setSelectedAirportId(null);
+  };
+
+  const clearEurostarSelection = () => {
+    setSelectedEurostarStationId(null);
+    setHighlightedEurostarRouteIds([]);
+  };
+
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
     clearInstitutionSelection();
     clearUnescoSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
     setSelectedCountryCode(countryCode);
   };
 
@@ -1139,6 +1183,8 @@ export default function MapInterface() {
     setSelectedCountryCode(null);
     clearInstitutionSelection();
     clearUnescoSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
     clearTemporaryPlace();
     setSelectedCapitalId(capitalId);
 
@@ -1162,6 +1208,8 @@ export default function MapInterface() {
     setSelectedCapitalId(null);
     clearInstitutionSelection();
     clearUnescoSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
     setSelectedWildfireId(incidentId);
   };
 
@@ -1200,6 +1248,8 @@ export default function MapInterface() {
     setSelectedCapitalId(null);
     clearInstitutionSelection();
     clearUnescoSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -1219,6 +1269,8 @@ export default function MapInterface() {
     setSelectedCapitalId(null);
     setSelectedCountryCode(null);
     clearUnescoSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
     clearTemporaryPlace();
     setSelectedInstitutionId(institutionId);
     setSelectedInstitutionSiteId(siteId ?? null);
@@ -1328,6 +1380,8 @@ export default function MapInterface() {
     setSelectedCountryCode(null);
     clearInstitutionSelection();
     clearTemporaryPlace();
+    clearAirportSelection();
+    clearEurostarSelection();
 
     setShowUnescoWorldHeritage(true);
     if (site.category === "cultural") setShowUnescoCultural(true);
@@ -1340,6 +1394,67 @@ export default function MapInterface() {
       kind: "point",
       longitude: site.longitude,
       latitude: site.latitude,
+      zoom: 10,
+    });
+  };
+
+  const handleAirportSelect = (airportId: string | null) => {
+    if (!airportId) {
+      clearAirportSelection();
+      return;
+    }
+    const airport = getEuropeanAirportById(airportId);
+    if (!airport) return;
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearEurostarSelection();
+    clearTemporaryPlace();
+
+    setShowMajorEuropeanAirports(true);
+    setSelectedAirportId(airportId);
+    requestFocus({
+      kind: "point",
+      longitude: airport.longitude,
+      latitude: airport.latitude,
+      zoom: 10,
+    });
+  };
+
+  const handleEurostarStationSelect = (stationId: string | null) => {
+    if (!stationId) {
+      clearEurostarSelection();
+      return;
+    }
+    const station = getEurostarStationById(stationId);
+    if (!station) return;
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearAirportSelection();
+    clearTemporaryPlace();
+
+    setShowEurostarStations(true);
+    setShowEurostarRoutes(true);
+    setSelectedEurostarStationId(stationId);
+    setHighlightedEurostarRouteIds(
+      EUROSTAR_ROUTES.filter(
+        (route) =>
+          route.fromStationId === stationId || route.toStationId === stationId,
+      ).map((route) => route.id),
+    );
+    requestFocus({
+      kind: "point",
+      longitude: station.longitude,
+      latitude: station.latitude,
       zoom: 10,
     });
   };
@@ -1402,6 +1517,16 @@ export default function MapInterface() {
 
     if (result.type === "unesco_site" && result.unescoSiteId) {
       handleUnescoSiteSelect(result.unescoSiteId);
+      return;
+    }
+
+    if (result.type === "airport" && result.airportId) {
+      handleAirportSelect(result.airportId);
+      return;
+    }
+
+    if (result.type === "eurostar_station" && result.eurostarStationId) {
+      handleEurostarStationSelect(result.eurostarStationId);
       return;
     }
 
@@ -1468,6 +1593,14 @@ export default function MapInterface() {
           showUnescoMixed={showUnescoMixed}
           selectedUnescoSiteId={selectedUnescoSiteId}
           onUnescoSiteSelect={handleUnescoSiteSelect}
+          showMajorEuropeanAirports={showMajorEuropeanAirports}
+          selectedAirportId={selectedAirportId}
+          onAirportSelect={handleAirportSelect}
+          showEurostarStations={showEurostarStations}
+          showEurostarRoutes={showEurostarRoutes}
+          selectedEurostarStationId={selectedEurostarStationId}
+          highlightedEurostarRouteIds={highlightedEurostarRouteIds}
+          onEurostarStationSelect={handleEurostarStationSelect}
           wildfireIncidents={wildfireIncidents}
           showWildfires={showWildfires}
           onWildfireSelect={handleWildfireSelect}
@@ -1481,6 +1614,8 @@ export default function MapInterface() {
               setSelectedWildfireId(null);
               clearInstitutionSelection();
               clearUnescoSelection();
+              clearAirportSelection();
+              clearEurostarSelection();
               clearTemporaryPlace();
             }
           }}
@@ -1583,6 +1718,12 @@ export default function MapInterface() {
           onToggleUnescoNatural={setShowUnescoNatural}
           showUnescoMixed={showUnescoMixed}
           onToggleUnescoMixed={setShowUnescoMixed}
+          showMajorEuropeanAirports={showMajorEuropeanAirports}
+          onToggleMajorEuropeanAirports={setShowMajorEuropeanAirports}
+          showEurostarStations={showEurostarStations}
+          onToggleEurostarStations={setShowEurostarStations}
+          showEurostarRoutes={showEurostarRoutes}
+          onToggleEurostarRoutes={setShowEurostarRoutes}
           showWildfires={showWildfires}
           onToggleWildfires={setShowWildfires}
           showSatelliteActiveFires={showSatelliteActiveFires}
@@ -1628,6 +1769,8 @@ export default function MapInterface() {
         {selectedCapitalId &&
           !selectedInstitutionId &&
           !selectedUnescoSiteId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1645,6 +1788,8 @@ export default function MapInterface() {
         {selectedInstitutionId &&
           !selectedCapitalId &&
           !selectedUnescoSiteId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1663,6 +1808,8 @@ export default function MapInterface() {
         {selectedUnescoSiteId &&
           !selectedCapitalId &&
           !selectedInstitutionId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1670,6 +1817,36 @@ export default function MapInterface() {
               siteId={selectedUnescoSiteId}
               locale={locale}
               onClose={clearUnescoSelection}
+            />
+          )}
+
+        {selectedAirportId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedUnescoSiteId &&
+          !selectedEurostarStationId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <AirportPanel
+              airportId={selectedAirportId}
+              locale={locale}
+              onClose={clearAirportSelection}
+            />
+          )}
+
+        {selectedEurostarStationId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedUnescoSiteId &&
+          !selectedAirportId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <EurostarStationPanel
+              stationId={selectedEurostarStationId}
+              locale={locale}
+              onClose={clearEurostarSelection}
             />
           )}
 

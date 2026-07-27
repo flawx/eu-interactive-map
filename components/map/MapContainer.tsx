@@ -29,6 +29,15 @@ import {
   UNESCO_WORLD_HERITAGE_SITES,
   type UnescoSiteCategory,
 } from "@/lib/tourism/unescoWorldHeritage";
+import {
+  airportSelectionCaseExpression,
+  buildAirportCollection,
+  buildEurostarNetworkCollection,
+  createEurostarStationIcon,
+  createMajorAirportIcon,
+  eurostarRouteHighlightExpression,
+  eurostarStationSelectionCaseExpression,
+} from "@/components/map/transportMapLayers";
 import type {
   MapFocusRequest,
   TemporaryMapMarker,
@@ -792,6 +801,14 @@ export default function MapContainer({
   showUnescoMixed = true,
   selectedUnescoSiteId = null,
   onUnescoSiteSelect,
+  showMajorEuropeanAirports = false,
+  selectedAirportId = null,
+  onAirportSelect,
+  showEurostarStations = false,
+  showEurostarRoutes = false,
+  selectedEurostarStationId = null,
+  highlightedEurostarRouteIds = [],
+  onEurostarStationSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -835,6 +852,14 @@ export default function MapContainer({
   showUnescoMixed?: boolean;
   selectedUnescoSiteId?: string | null;
   onUnescoSiteSelect?: (siteId: string | null) => void;
+  showMajorEuropeanAirports?: boolean;
+  selectedAirportId?: string | null;
+  onAirportSelect?: (airportId: string | null) => void;
+  showEurostarStations?: boolean;
+  showEurostarRoutes?: boolean;
+  selectedEurostarStationId?: string | null;
+  highlightedEurostarRouteIds?: readonly string[];
+  onEurostarStationSelect?: (stationId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -905,6 +930,23 @@ export default function MapContainer({
   const onUnescoSiteSelectRef = useRef(onUnescoSiteSelect);
   onUnescoSiteSelectRef.current = onUnescoSiteSelect;
   const unescoPopupRef = useRef<Popup | null>(null);
+  const showMajorEuropeanAirportsRef = useRef(showMajorEuropeanAirports);
+  showMajorEuropeanAirportsRef.current = showMajorEuropeanAirports;
+  const selectedAirportIdRef = useRef(selectedAirportId);
+  selectedAirportIdRef.current = selectedAirportId;
+  const onAirportSelectRef = useRef(onAirportSelect);
+  onAirportSelectRef.current = onAirportSelect;
+  const showEurostarStationsRef = useRef(showEurostarStations);
+  showEurostarStationsRef.current = showEurostarStations;
+  const showEurostarRoutesRef = useRef(showEurostarRoutes);
+  showEurostarRoutesRef.current = showEurostarRoutes;
+  const selectedEurostarStationIdRef = useRef(selectedEurostarStationId);
+  selectedEurostarStationIdRef.current = selectedEurostarStationId;
+  const highlightedEurostarRouteIdsRef = useRef(highlightedEurostarRouteIds);
+  highlightedEurostarRouteIdsRef.current = highlightedEurostarRouteIds;
+  const onEurostarStationSelectRef = useRef(onEurostarStationSelect);
+  onEurostarStationSelectRef.current = onEurostarStationSelect;
+  const eurostarPopupRef = useRef<Popup | null>(null);
   const localeRef = useRef(locale);
   localeRef.current = locale;
   const onWildfireSelectRef = useRef(onWildfireSelect);
@@ -1262,6 +1304,92 @@ export default function MapContainer({
       if (typeof siteId === "string") {
         onUnescoSiteSelectRef.current?.(siteId);
       }
+    };
+
+    const handleAirportClusterClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const clusterId = feature?.properties?.cluster_id;
+      if (typeof clusterId !== "number") return;
+
+      const source = map.getSource(
+        "major-european-airports",
+      ) as GeoJSONSource | undefined;
+      if (!source) return;
+
+      source
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          if (!feature?.geometry || feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          map.easeTo({
+            center: [lng, lat],
+            zoom,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
+            duration: 500,
+          });
+        })
+        .catch(() => {
+          // Ignore expansion-zoom lookup failures.
+        });
+    };
+
+    const handleAirportPointClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const airportId = feature?.properties?.airportId;
+      if (typeof airportId === "string") {
+        onAirportSelectRef.current?.(airportId);
+      }
+    };
+
+    const handleEurostarStationClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const stationId = feature?.properties?.stationId;
+      if (typeof stationId === "string") {
+        onEurostarStationSelectRef.current?.(stationId);
+      }
+    };
+
+    const showEurostarRoutePopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "LineString") return;
+
+      const { fromName, toName, serviceStatus, geometryAccuracy } =
+        feature.properties ?? {};
+      if (typeof fromName !== "string" || typeof toName !== "string") return;
+
+      const coords = e.lngLat;
+
+      if (!eurostarPopupRef.current) {
+        eurostarPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 10,
+          className: "eurostar-route-popup",
+        });
+      }
+
+      const statusLabel =
+        serviceStatus === "seasonal" ? "Seasonal" : "Regular";
+      const schematicNote =
+        geometryAccuracy === "schematic" ? " · Schematic route" : "";
+
+      eurostarPopupRef.current
+        .setLngLat(coords)
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:200px;">${escapeHtml(
+            String(fromName),
+          )} → ${escapeHtml(String(toName))}</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+            statusLabel,
+          )}${escapeHtml(schematicNote)}</div>`,
+        )
+        .addTo(map);
+    };
+
+    const hideEurostarRoutePopup = () => {
+      resetCursor();
+      eurostarPopupRef.current?.remove();
     };
 
     const showUnescoPopup = (e: MapLayerMouseEvent) => {
@@ -2389,6 +2517,268 @@ export default function MapContainer({
         });
       }
 
+      if (!map.getSource("eurostar-network")) {
+        map.addSource("eurostar-network", {
+          type: "geojson",
+          data: buildEurostarNetworkCollection(),
+        });
+      }
+
+      if (!map.getLayer("eurostar-routes-line")) {
+        map.addLayer({
+          id: "eurostar-routes-line",
+          type: "line",
+          source: "eurostar-network",
+          filter: ["==", ["get", "featureKind"], "route"],
+          layout: {
+            visibility: showEurostarRoutesRef.current ? "visible" : "none",
+            "line-cap": "round",
+            "line-join": "round",
+          },
+          paint: {
+            "line-color": [
+              "match",
+              ["get", "serviceStatus"],
+              "seasonal",
+              "#60a5fa",
+              "#1e3a8a",
+            ],
+            "line-width": eurostarRouteHighlightExpression(
+              highlightedEurostarRouteIdsRef.current,
+              5,
+              3,
+            ),
+            "line-opacity": [
+              "match",
+              ["get", "serviceStatus"],
+              "seasonal",
+              0.55,
+              0.75,
+            ],
+            "line-dasharray": [2, 1.5],
+          },
+        });
+      }
+
+      if (!map.hasImage("major-airport-icon")) {
+        map.addImage("major-airport-icon", createMajorAirportIcon(), {
+          pixelRatio: 2,
+        });
+      }
+      if (!map.hasImage("eurostar-station-icon")) {
+        map.addImage("eurostar-station-icon", createEurostarStationIcon(), {
+          pixelRatio: 2,
+        });
+      }
+
+      if (!map.getSource("major-european-airports")) {
+        map.addSource("major-european-airports", {
+          type: "geojson",
+          data: buildAirportCollection(),
+          promoteId: "airportId",
+          cluster: true,
+          clusterMaxZoom: 6,
+          clusterRadius: 42,
+        });
+      }
+
+      if (!map.getLayer("airport-clusters")) {
+        map.addLayer({
+          id: "airport-clusters",
+          type: "circle",
+          source: "major-european-airports",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showMajorEuropeanAirportsRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-color": "#0e7490",
+            "circle-opacity": 0.85,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              14,
+              8,
+              18,
+              20,
+              22,
+            ],
+          },
+        });
+      }
+
+      if (!map.getLayer("airport-cluster-count")) {
+        map.addLayer({
+          id: "airport-cluster-count",
+          type: "symbol",
+          source: "major-european-airports",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showMajorEuropeanAirportsRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-font": ["Noto Sans Bold"],
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+          },
+          paint: {
+            "text-color": "#ffffff",
+          },
+        });
+      }
+
+      if (!map.getLayer("major-airport-selected")) {
+        map.addLayer({
+          id: "major-airport-selected",
+          type: "circle",
+          source: "major-european-airports",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showMajorEuropeanAirportsRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-radius": airportSelectionCaseExpression(
+              selectedAirportIdRef.current,
+              22,
+              0,
+            ),
+            "circle-color": "#22d3ee",
+            "circle-opacity": 0.3,
+          },
+        });
+      }
+
+      if (!map.getLayer("major-airports-symbol")) {
+        map.addLayer({
+          id: "major-airports-symbol",
+          type: "symbol",
+          source: "major-european-airports",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showMajorEuropeanAirportsRef.current
+              ? "visible"
+              : "none",
+            "icon-image": "major-airport-icon",
+            "icon-size": airportSelectionCaseExpression(
+              selectedAirportIdRef.current,
+              1.15,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
+          },
+        });
+      }
+
+      if (!map.getLayer("major-airports-label")) {
+        map.addLayer({
+          id: "major-airports-label",
+          type: "symbol",
+          source: "major-european-airports",
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 6,
+          layout: {
+            visibility: showMajorEuropeanAirportsRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "label"],
+            "text-size": 11,
+            "text-offset": [0, 1.45],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#0e7490",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
+      if (!map.getLayer("eurostar-selected-station")) {
+        map.addLayer({
+          id: "eurostar-selected-station",
+          type: "circle",
+          source: "eurostar-network",
+          filter: ["==", ["get", "featureKind"], "station"],
+          layout: {
+            visibility: showEurostarStationsRef.current ? "visible" : "none",
+          },
+          paint: {
+            "circle-radius": eurostarStationSelectionCaseExpression(
+              selectedEurostarStationIdRef.current,
+              24,
+              0,
+            ),
+            "circle-color": "#facc15",
+            "circle-opacity": 0.35,
+          },
+        });
+      }
+
+      if (!map.getLayer("eurostar-stations-symbol")) {
+        map.addLayer({
+          id: "eurostar-stations-symbol",
+          type: "symbol",
+          source: "eurostar-network",
+          filter: ["==", ["get", "featureKind"], "station"],
+          layout: {
+            visibility: showEurostarStationsRef.current ? "visible" : "none",
+            "icon-image": "eurostar-station-icon",
+            "icon-size": eurostarStationSelectionCaseExpression(
+              selectedEurostarStationIdRef.current,
+              1.2,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
+          },
+        });
+      }
+
+      if (!map.getLayer("eurostar-stations-label")) {
+        map.addLayer({
+          id: "eurostar-stations-label",
+          type: "symbol",
+          source: "eurostar-network",
+          filter: ["==", ["get", "featureKind"], "station"],
+          minzoom: 5,
+          layout: {
+            visibility: showEurostarStationsRef.current ? "visible" : "none",
+            "text-field": ["get", "name"],
+            "text-size": 11,
+            "text-offset": [0, 1.5],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#1e3a8a",
+            "text-halo-color": "#fff7ed",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       // Reorder so brown (7d history) sits below red (24h active) which sits
       // below the EFFIS layers, all stacked above the base country layers.
       const layerStackOrder = [
@@ -2404,6 +2794,7 @@ export default function MapContainer({
         "effis-burned-area-snapshots-fill",
         "effis-burned-area-snapshots-border",
         "effis-burned-area-snapshots-selected",
+        "eurostar-routes-line",
         "eu-capitals-halo",
         "eu-capitals-symbol",
         "eu-capitals-label",
@@ -2415,6 +2806,14 @@ export default function MapContainer({
         "unesco-world-heritage-labels",
         "unesco-clusters",
         "unesco-cluster-count",
+        "airport-clusters",
+        "airport-cluster-count",
+        "major-airport-selected",
+        "major-airports-symbol",
+        "major-airports-label",
+        "eurostar-selected-station",
+        "eurostar-stations-symbol",
+        "eurostar-stations-label",
         "user-location-accuracy",
         "user-location-halo",
         "user-location-pulse",
@@ -2458,6 +2857,17 @@ export default function MapContainer({
       map.on("click", "unesco-world-heritage-symbol", handleUnescoPointClick);
       map.on("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
       map.on("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
+      map.on("click", "airport-clusters", handleAirportClusterClick);
+      map.on("mouseenter", "airport-clusters", setPointerCursor);
+      map.on("mouseleave", "airport-clusters", resetCursor);
+      map.on("click", "major-airports-symbol", handleAirportPointClick);
+      map.on("mouseenter", "major-airports-symbol", setPointerCursor);
+      map.on("mouseleave", "major-airports-symbol", resetCursor);
+      map.on("click", "eurostar-stations-symbol", handleEurostarStationClick);
+      map.on("mouseenter", "eurostar-stations-symbol", setPointerCursor);
+      map.on("mouseleave", "eurostar-stations-symbol", resetCursor);
+      map.on("mouseenter", "eurostar-routes-line", showEurostarRoutePopup);
+      map.on("mouseleave", "eurostar-routes-line", hideEurostarRoutePopup);
       map.on("click", handleEffisBurnedAreaClick);
 
       // Re-run GeoJSON sync effects that may have run before sources existed
@@ -2521,6 +2931,18 @@ export default function MapContainer({
       map.off("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
       map.off("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
       unescoPopupRef.current?.remove();
+      map.off("click", "airport-clusters", handleAirportClusterClick);
+      map.off("mouseenter", "airport-clusters", setPointerCursor);
+      map.off("mouseleave", "airport-clusters", resetCursor);
+      map.off("click", "major-airports-symbol", handleAirportPointClick);
+      map.off("mouseenter", "major-airports-symbol", setPointerCursor);
+      map.off("mouseleave", "major-airports-symbol", resetCursor);
+      map.off("click", "eurostar-stations-symbol", handleEurostarStationClick);
+      map.off("mouseenter", "eurostar-stations-symbol", setPointerCursor);
+      map.off("mouseleave", "eurostar-stations-symbol", resetCursor);
+      map.off("mouseenter", "eurostar-routes-line", showEurostarRoutePopup);
+      map.off("mouseleave", "eurostar-routes-line", hideEurostarRoutePopup);
+      eurostarPopupRef.current?.remove();
       map.off("click", handleEffisBurnedAreaClick);
 
       effisRequestControllerRef.current?.abort();
@@ -2925,6 +3347,118 @@ export default function MapContainer({
       );
     }
   }, [selectedUnescoSiteId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showMajorEuropeanAirports ? "visible" : "none";
+    for (const layerId of [
+      "major-airport-selected",
+      "major-airports-symbol",
+      "major-airports-label",
+      "airport-clusters",
+      "airport-cluster-count",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showMajorEuropeanAirports, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("major-airport-selected")) {
+      map.setPaintProperty(
+        "major-airport-selected",
+        "circle-radius",
+        airportSelectionCaseExpression(selectedAirportId, 22, 0),
+      );
+    }
+    if (map.getLayer("major-airports-symbol")) {
+      map.setLayoutProperty(
+        "major-airports-symbol",
+        "icon-size",
+        airportSelectionCaseExpression(selectedAirportId, 1.15, 1),
+      );
+    }
+  }, [selectedAirportId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("eurostar-routes-line")) {
+      map.setLayoutProperty(
+        "eurostar-routes-line",
+        "visibility",
+        showEurostarRoutes ? "visible" : "none",
+      );
+    }
+  }, [showEurostarRoutes, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showEurostarStations ? "visible" : "none";
+    for (const layerId of [
+      "eurostar-selected-station",
+      "eurostar-stations-symbol",
+      "eurostar-stations-label",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showEurostarStations, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("eurostar-selected-station")) {
+      map.setPaintProperty(
+        "eurostar-selected-station",
+        "circle-radius",
+        eurostarStationSelectionCaseExpression(
+          selectedEurostarStationId,
+          24,
+          0,
+        ),
+      );
+    }
+    if (map.getLayer("eurostar-stations-symbol")) {
+      map.setLayoutProperty(
+        "eurostar-stations-symbol",
+        "icon-size",
+        eurostarStationSelectionCaseExpression(
+          selectedEurostarStationId,
+          1.2,
+          1,
+        ),
+      );
+    }
+  }, [selectedEurostarStationId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("eurostar-routes-line")) {
+      map.setPaintProperty(
+        "eurostar-routes-line",
+        "line-width",
+        eurostarRouteHighlightExpression(
+          highlightedEurostarRouteIds,
+          5,
+          3,
+        ),
+      );
+    }
+  }, [highlightedEurostarRouteIds, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;

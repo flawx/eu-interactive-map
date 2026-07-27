@@ -37,6 +37,12 @@ type MapLegendProps = {
   onToggleUnescoNatural: (value: boolean) => void;
   showUnescoMixed: boolean;
   onToggleUnescoMixed: (value: boolean) => void;
+  showMajorEuropeanAirports: boolean;
+  onToggleMajorEuropeanAirports: (value: boolean) => void;
+  showEurostarStations: boolean;
+  onToggleEurostarStations: (value: boolean) => void;
+  showEurostarRoutes: boolean;
+  onToggleEurostarRoutes: (value: boolean) => void;
   showWildfires: boolean;
   onToggleWildfires: (value: boolean) => void;
   showSatelliteActiveFires: boolean;
@@ -77,6 +83,12 @@ export default function MapLegend({
   onToggleUnescoNatural,
   showUnescoMixed,
   onToggleUnescoMixed,
+  showMajorEuropeanAirports,
+  onToggleMajorEuropeanAirports,
+  showEurostarStations,
+  onToggleEurostarStations,
+  showEurostarRoutes,
+  onToggleEurostarRoutes,
   showWildfires,
   onToggleWildfires,
   showSatelliteActiveFires,
@@ -118,7 +130,12 @@ export default function MapLegend({
     showEuMainInstitutions,
   ].filter(Boolean).length;
 
-  const tourismActive = showUnescoWorldHeritage ? 1 : 0;
+  const tourismActive = [
+    showUnescoWorldHeritage,
+    showMajorEuropeanAirports,
+    showEurostarStations,
+    showEurostarRoutes,
+  ].filter(Boolean).length;
 
   const alertsActive = [
     showWildfires,
@@ -137,6 +154,9 @@ export default function MapLegend({
     unescoCultural: showUnescoCultural,
     unescoNatural: showUnescoNatural,
     unescoMixed: showUnescoMixed,
+    majorEuropeanAirports: showMajorEuropeanAirports,
+    eurostarStations: showEurostarStations,
+    eurostarRoutes: showEurostarRoutes,
     majorWildfires: showWildfires,
     satelliteActiveFires: showSatelliteActiveFires,
     recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -343,6 +363,53 @@ export default function MapLegend({
               style={{ color: "var(--map-ui-muted)" }}
             >
               {t.legend.unescoAttribution}
+            </p>
+          ) : null}
+
+          <p
+            className="px-2 pb-1 pt-2 text-[11px] font-medium"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.internationalTransport}
+          </p>
+          <LayerToggle
+            checked={showMajorEuropeanAirports}
+            onChange={onToggleMajorEuropeanAirports}
+            color="#0e7490"
+            label={t.legend.majorEuropeanAirports}
+            swatchClassName="rounded-[3px]"
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.majorEuropeanAirportsDescription}
+          </p>
+          <LayerToggle
+            checked={showEurostarStations}
+            onChange={onToggleEurostarStations}
+            color="#f59e0b"
+            label={t.legend.eurostarStations}
+            swatchClassName="rounded-[3px]"
+          />
+          <LayerToggle
+            checked={showEurostarRoutes}
+            onChange={onToggleEurostarRoutes}
+            color="#1e3a8a"
+            label={t.legend.eurostarRoutes}
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.eurostarTransportDescription}
+          </p>
+          {showEurostarRoutes ? (
+            <p
+              className="px-2 pb-1 text-[10px] leading-snug"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.legend.eurostarSchematicNote}
             </p>
           ) : null}
         </Category>

@@ -46,7 +46,12 @@ next-env.d.ts
 .tmp-unesco/
 .tmp-unesco-context/
 
-# GISCO / UNESCO import caches (downloaded by scripts)
+# GISCO / UNESCO / EUROCONTROL import caches
 data/.countries-*.geojson
 data/.gisco-countries-*.geojson
 data/.unesco-world-heritage.*.download.xml
+data/.eurocontrol-*
+data/eurocontrol-data-snapshot-58-dataset.xlsx
+data/.eurocontrol-snap58.html
+scripts/_parse-eurocontrol.ts
+scripts/patch-transport-i18n.ts

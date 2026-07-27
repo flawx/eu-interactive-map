@@ -17,7 +17,9 @@ import {
   LoaderCircle,
   MapPin,
   Mountain,
+  Plane,
   Search,
+  TrainFront,
   X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
@@ -57,6 +59,10 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
       return t.search.groupInstitutions;
     case "unesco_sites":
       return t.search.groupUnesco;
+    case "airports":
+      return t.search.groupAirports;
+    case "international_stations":
+      return t.search.groupInternationalStations;
     case "active_alerts":
       return t.search.groupAlerts;
     case "app_places":
@@ -105,6 +111,28 @@ function ResultIcon({
         aria-hidden="true"
       >
         <UnescoCategoryPictogram category={metadata?.category} />
+      </span>
+    );
+  }
+
+  if (type === "airport") {
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-white bg-[#0e7490] text-white shadow-sm"
+        aria-hidden="true"
+      >
+        <Plane className="h-3 w-3" strokeWidth={2.25} />
+      </span>
+    );
+  }
+
+  if (type === "eurostar_station") {
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-[#1e3a8a] bg-[#f59e0b] text-[#1e3a8a] shadow-sm"
+        aria-hidden="true"
+      >
+        <TrainFront className="h-3 w-3" strokeWidth={2.25} />
       </span>
     );
   }
