@@ -17,7 +17,13 @@ import type {
 import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import { EU_CAPITALS } from "@/lib/europe/euCapitals";
+import {
+  EU_INSTITUTION_SITES,
+  uniquePhysicalSites,
+  type EuInstitutionId,
+} from "@/lib/europe/euInstitutions";
 import type { Locale } from "@/lib/i18n/config";
+import { getMessages } from "@/lib/i18n/messages";
 import type {
   MapFocusRequest,
   TemporaryMapMarker,
@@ -315,6 +321,229 @@ function createEuCapitalIcon(): { width: number; height: number; data: Uint8Arra
   return { width: size, height: size, data: new Uint8Array(imageData.data.buffer) };
 }
 
+type InstitutionPanelMessages = ReturnType<typeof getMessages>["institutionPanel"];
+
+function shortNameForInstitution(
+  id: EuInstitutionId,
+  tp: InstitutionPanelMessages,
+): string {
+  switch (id) {
+    case "european-commission":
+      return tp.shortCommission;
+    case "european-council":
+      return tp.shortEuropeanCouncil;
+    case "council-of-the-eu":
+      return tp.shortCouncilOfTheEu;
+    case "european-parliament":
+      return tp.shortParliament;
+    case "european-central-bank":
+      return tp.shortEcb;
+  }
+}
+
+function localNameForInstitution(
+  id: EuInstitutionId,
+  tp: InstitutionPanelMessages,
+): string {
+  switch (id) {
+    case "european-commission":
+      return tp.nameCommission;
+    case "european-council":
+      return tp.nameEuropeanCouncil;
+    case "council-of-the-eu":
+      return tp.nameCouncilOfTheEu;
+    case "european-parliament":
+      return tp.nameParliament;
+    case "european-central-bank":
+      return tp.nameEcb;
+  }
+}
+
+function buildEuMainInstitutionsCollection(
+  locale: Locale,
+): GeoJSON.FeatureCollection {
+  const tp = getMessages(locale).institutionPanel;
+  const sites = uniquePhysicalSites();
+
+  return {
+    type: "FeatureCollection",
+    features: sites.map((site) => {
+      const institutionCount = site.institutionIds.length;
+      const primaryInstitutionId = site.institutionIds[0];
+
+      const displayName = site.sharedSite
+        ? site.name
+        : localNameForInstitution(primaryInstitutionId, tp);
+      const displaySubtitle = site.sharedSite
+        ? site.institutionIds
+            .map((id) => shortNameForInstitution(id, tp))
+            .join(" · ")
+        : site.city;
+      const labelCompact = site.sharedSite
+        ? site.name
+        : shortNameForInstitution(primaryInstitutionId, tp);
+      const labelDetailed = site.sharedSite
+        ? `${site.name} — ${site.city}`
+        : `${localNameForInstitution(primaryInstitutionId, tp)} — ${site.city}`;
+      const iconImageId =
+        site.sharedSite && institutionCount > 1
+          ? `eu-institution-icon-badge-${institutionCount}`
+          : "eu-institution-icon";
+
+      return {
+        type: "Feature",
+        id: site.id,
+        properties: {
+          siteId: site.id,
+          siteName: site.name,
+          institutionIds: JSON.stringify(site.institutionIds),
+          institutionCount,
+          city: site.city,
+          countryCode: site.countryCode,
+          siteType: site.siteType,
+          sharedSite: site.sharedSite,
+          primaryInstitutionId,
+          displayName,
+          displaySubtitle,
+          labelCompact,
+          labelDetailed,
+          iconImageId,
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [site.longitude, site.latitude],
+        },
+      };
+    }),
+  };
+}
+
+/**
+ * Modern institutional marker: EU-blue rounded square, yellow star, white
+ * stroke and a soft shadow. `badgeCount` draws a small yellow count badge
+ * for shared sites (e.g. the Europa building hosting two institutions).
+ */
+function createEuInstitutionIcon(
+  badgeCount?: number,
+): { width: number; height: number; data: Uint8Array } {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return { width: size, height: size, data: new Uint8Array(size * size * 4) };
+  }
+
+  const roundedRect = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+  ) => {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  };
+
+  const badgeSize = 40;
+  const badgeX = (size - badgeSize) / 2;
+  const badgeY = (size - badgeSize) / 2 + 1;
+
+  // soft shadow
+  roundedRect(badgeX, badgeY + 2, badgeSize, badgeSize, 12);
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fill();
+
+  // white outer stroke
+  roundedRect(badgeX, badgeY, badgeSize, badgeSize, 12);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+
+  // EU blue face
+  roundedRect(badgeX + 3, badgeY + 3, badgeSize - 6, badgeSize - 6, 10);
+  ctx.fillStyle = "#003399";
+  ctx.fill();
+
+  // yellow star
+  const drawStar = (
+    cx: number,
+    cy: number,
+    spikes: number,
+    outer: number,
+    inner: number,
+  ) => {
+    let rot = (Math.PI / 2) * 3;
+    let x = cx;
+    let y = cy;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outer);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outer;
+      y = cy + Math.sin(rot) * outer;
+      ctx.lineTo(x, y);
+      rot += Math.PI / spikes;
+      x = cx + Math.cos(rot) * inner;
+      y = cy + Math.sin(rot) * inner;
+      ctx.lineTo(x, y);
+      rot += Math.PI / spikes;
+    }
+    ctx.lineTo(cx, cy - outer);
+    ctx.closePath();
+    ctx.fillStyle = "#facc15";
+    ctx.fill();
+  };
+  drawStar(size / 2, badgeY + badgeSize / 2, 5, 9, 4);
+
+  if (badgeCount && badgeCount > 1) {
+    const bx = badgeX + badgeSize - 3;
+    const by = badgeY + 1;
+    const r = 9;
+    ctx.beginPath();
+    ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.fillStyle = "#facc15";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#ffffff";
+    ctx.stroke();
+    ctx.fillStyle = "#0b1f4d";
+    ctx.font = "bold 12px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(badgeCount), bx, by + 1);
+  }
+
+  const imageData = ctx.getImageData(0, 0, size, size);
+  return { width: size, height: size, data: new Uint8Array(imageData.data.buffer) };
+}
+
+function siteSelectionCaseExpression(
+  selectedSiteId: string | null,
+  selectedValue: number,
+  defaultValue: number,
+): [
+  "case",
+  ["==", ["get", "siteId"], string],
+  number,
+  number,
+] {
+  return [
+    "case",
+    ["==", ["get", "siteId"], selectedSiteId ?? ""],
+    selectedValue,
+    defaultValue,
+  ];
+}
+
 function capitalSelectionCaseExpression(
   selectedCapitalId: string | null,
   selectedValue: number,
@@ -343,6 +572,9 @@ export default function MapContainer({
   showEuCapitals = false,
   selectedCapitalId = null,
   onCapitalSelect,
+  showEuMainInstitutions = false,
+  selectedInstitutionSiteId = null,
+  onInstitutionSiteSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -377,6 +609,9 @@ export default function MapContainer({
   showEuCapitals?: boolean;
   selectedCapitalId?: string | null;
   onCapitalSelect: (capitalId: string | null) => void;
+  showEuMainInstitutions?: boolean;
+  selectedInstitutionSiteId?: string | null;
+  onInstitutionSiteSelect?: (siteId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -428,6 +663,12 @@ export default function MapContainer({
   selectedCapitalIdRef.current = selectedCapitalId;
   const onCapitalSelectRef = useRef(onCapitalSelect);
   onCapitalSelectRef.current = onCapitalSelect;
+  const showEuMainInstitutionsRef = useRef(showEuMainInstitutions);
+  showEuMainInstitutionsRef.current = showEuMainInstitutions;
+  const selectedInstitutionSiteIdRef = useRef(selectedInstitutionSiteId);
+  selectedInstitutionSiteIdRef.current = selectedInstitutionSiteId;
+  const onInstitutionSiteSelectRef = useRef(onInstitutionSiteSelect);
+  onInstitutionSiteSelectRef.current = onInstitutionSiteSelect;
   const localeRef = useRef(locale);
   localeRef.current = locale;
   const onWildfireSelectRef = useRef(onWildfireSelect);
@@ -740,6 +981,14 @@ export default function MapContainer({
       const capitalId = feature?.properties?.capitalId;
       if (typeof capitalId === "string") {
         onCapitalSelectRef.current(capitalId);
+      }
+    };
+
+    const handleInstitutionSiteClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const siteId = feature?.properties?.siteId;
+      if (typeof siteId === "string") {
+        onInstitutionSiteSelectRef.current?.(siteId);
       }
     };
 
@@ -1564,6 +1813,107 @@ export default function MapContainer({
         });
       }
 
+      if (!map.getSource("eu-main-institutions")) {
+        map.addSource("eu-main-institutions", {
+          type: "geojson",
+          data: buildEuMainInstitutionsCollection(localeRef.current),
+          promoteId: "siteId",
+        });
+      }
+
+      if (!map.hasImage("eu-institution-icon")) {
+        map.addImage("eu-institution-icon", createEuInstitutionIcon(), {
+          pixelRatio: 2,
+        });
+      }
+
+      const sharedInstitutionCounts = new Set<number>();
+      for (const site of EU_INSTITUTION_SITES) {
+        if (site.sharedSite) sharedInstitutionCounts.add(site.institutionIds.length);
+      }
+      for (const count of sharedInstitutionCounts) {
+        const imageId = `eu-institution-icon-badge-${count}`;
+        if (!map.hasImage(imageId)) {
+          map.addImage(imageId, createEuInstitutionIcon(count), {
+            pixelRatio: 2,
+          });
+        }
+      }
+
+      if (!map.getLayer("eu-main-institutions-halo")) {
+        map.addLayer({
+          id: "eu-main-institutions-halo",
+          type: "circle",
+          source: "eu-main-institutions",
+          minzoom: 5,
+          layout: {
+            visibility: showEuMainInstitutionsRef.current ? "visible" : "none",
+          },
+          paint: {
+            "circle-radius": siteSelectionCaseExpression(
+              selectedInstitutionSiteIdRef.current,
+              19,
+              14,
+            ),
+            "circle-color": "#003399",
+            "circle-opacity": 0.22,
+          },
+        });
+      }
+
+      if (!map.getLayer("eu-main-institutions-symbol")) {
+        map.addLayer({
+          id: "eu-main-institutions-symbol",
+          type: "symbol",
+          source: "eu-main-institutions",
+          minzoom: 5,
+          layout: {
+            visibility: showEuMainInstitutionsRef.current ? "visible" : "none",
+            "icon-image": ["get", "iconImageId"],
+            "icon-size": siteSelectionCaseExpression(
+              selectedInstitutionSiteIdRef.current,
+              0.65,
+              0.5,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+          },
+        });
+      }
+
+      if (!map.getLayer("eu-main-institutions-label")) {
+        map.addLayer({
+          id: "eu-main-institutions-label",
+          type: "symbol",
+          source: "eu-main-institutions",
+          minzoom: 5,
+          layout: {
+            visibility: showEuMainInstitutionsRef.current ? "visible" : "none",
+            "text-field": [
+              "step",
+              ["zoom"],
+              ["get", "labelCompact"],
+              7,
+              ["get", "labelDetailed"],
+            ],
+            "text-size": 12,
+            "text-offset": [0, 1.5],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#0b1f4d",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       // Reorder so brown (7d history) sits below red (24h active) which sits
       // below the EFFIS layers, all stacked above the base country layers.
       const layerStackOrder = [
@@ -1582,6 +1932,9 @@ export default function MapContainer({
         "eu-capitals-halo",
         "eu-capitals-symbol",
         "eu-capitals-label",
+        "eu-main-institutions-halo",
+        "eu-main-institutions-symbol",
+        "eu-main-institutions-label",
         "user-location-accuracy",
         "user-location-halo",
         "user-location-pulse",
@@ -1616,6 +1969,9 @@ export default function MapContainer({
       map.on("click", "eu-capitals-symbol", handleCapitalClick);
       map.on("mouseenter", "eu-capitals-symbol", setPointerCursor);
       map.on("mouseleave", "eu-capitals-symbol", resetCursor);
+      map.on("click", "eu-main-institutions-symbol", handleInstitutionSiteClick);
+      map.on("mouseenter", "eu-main-institutions-symbol", setPointerCursor);
+      map.on("mouseleave", "eu-main-institutions-symbol", resetCursor);
       map.on("click", handleEffisBurnedAreaClick);
 
       // Re-run GeoJSON sync effects that may have run before sources existed
@@ -1665,6 +2021,13 @@ export default function MapContainer({
       map.off("click", "eu-capitals-symbol", handleCapitalClick);
       map.off("mouseenter", "eu-capitals-symbol", setPointerCursor);
       map.off("mouseleave", "eu-capitals-symbol", resetCursor);
+      map.off(
+        "click",
+        "eu-main-institutions-symbol",
+        handleInstitutionSiteClick,
+      );
+      map.off("mouseenter", "eu-main-institutions-symbol", setPointerCursor);
+      map.off("mouseleave", "eu-main-institutions-symbol", resetCursor);
       map.off("click", handleEffisBurnedAreaClick);
 
       effisRequestControllerRef.current?.abort();
@@ -1957,6 +2320,55 @@ export default function MapContainer({
       );
     }
   }, [selectedCapitalId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showEuMainInstitutions ? "visible" : "none";
+    for (const layerId of [
+      "eu-main-institutions-halo",
+      "eu-main-institutions-symbol",
+      "eu-main-institutions-label",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showEuMainInstitutions, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(
+      "eu-main-institutions",
+    ) as GeoJSONSource | undefined;
+    if (!source) return;
+
+    source.setData(buildEuMainInstitutionsCollection(locale));
+  }, [locale, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("eu-main-institutions-halo")) {
+      map.setPaintProperty(
+        "eu-main-institutions-halo",
+        "circle-radius",
+        siteSelectionCaseExpression(selectedInstitutionSiteId, 19, 14),
+      );
+    }
+
+    if (map.getLayer("eu-main-institutions-symbol")) {
+      map.setLayoutProperty(
+        "eu-main-institutions-symbol",
+        "icon-size",
+        siteSelectionCaseExpression(selectedInstitutionSiteId, 0.65, 0.5),
+      );
+    }
+  }, [selectedInstitutionSiteId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -2295,6 +2707,22 @@ export default function MapContainer({
         map.fitBounds(bounds, {
           padding: 80,
           maxZoom: 7,
+          duration: 800,
+        });
+      }
+      return;
+    }
+
+    if (focusRequest.kind === "bounds") {
+      const bounds = new LngLatBounds(
+        [focusRequest.west, focusRequest.south],
+        [focusRequest.east, focusRequest.north],
+      );
+
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: focusRequest.padding ?? 90,
+          maxZoom: focusRequest.maxZoom ?? 12,
           duration: 800,
         });
       }

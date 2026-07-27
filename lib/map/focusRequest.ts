@@ -7,6 +7,16 @@ export type MapFocusRequest =
       latitude: number;
       zoom: number;
       nonce: number;
+    }
+  | {
+      kind: "bounds";
+      west: number;
+      south: number;
+      east: number;
+      north: number;
+      padding?: number;
+      maxZoom?: number;
+      nonce: number;
     };
 
 export type TemporaryMapMarker = {

@@ -4,8 +4,14 @@ import {
   type EuInstitutionId,
 } from "@/lib/data/countryFacts";
 import { EU_CAPITALS, EU_MEMBER_COUNTRY_CODES } from "@/lib/europe/euCapitals";
+import {
+  EU_INSTITUTIONS,
+  uniquePhysicalSites,
+  type EuInstitutionId as MainEuInstitutionId,
+} from "@/lib/europe/euInstitutions";
 import type { WildfireIncident } from "@/lib/incidents/types";
 import type { Locale } from "@/lib/i18n/config";
+import { getMessages } from "@/lib/i18n/messages";
 
 export type MapSearchResultType =
   | "country"
@@ -36,6 +42,8 @@ export type MapSearchResult = {
   countryCode?: string;
   capitalId?: string;
   incidentId?: string;
+  institutionId?: MainEuInstitutionId;
+  siteId?: string;
   source: "local" | "nominatim";
   metadata: Record<string, string | number | boolean | null>;
 };
@@ -172,6 +180,133 @@ const INSTITUTION_SEATS: ReadonlyArray<{
   },
 ];
 
+/** Only Court of Justice / Court of Auditors remain in this legacy seat list. */
+const COURT_SEATS = INSTITUTION_SEATS.filter(
+  (seat) => seat.id === "court-of-justice" || seat.id === "court-of-auditors",
+);
+
+function mainInstitutionLocalName(
+  id: MainEuInstitutionId,
+  locale: Locale,
+): string {
+  const tp = getMessages(locale).institutionPanel;
+  switch (id) {
+    case "european-commission":
+      return tp.nameCommission;
+    case "european-council":
+      return tp.nameEuropeanCouncil;
+    case "council-of-the-eu":
+      return tp.nameCouncilOfTheEu;
+    case "european-parliament":
+      return tp.nameParliament;
+    case "european-central-bank":
+      return tp.nameEcb;
+  }
+}
+
+function mainInstitutionShortName(
+  id: MainEuInstitutionId,
+  locale: Locale,
+): string {
+  const tp = getMessages(locale).institutionPanel;
+  switch (id) {
+    case "european-commission":
+      return tp.shortCommission;
+    case "european-council":
+      return tp.shortEuropeanCouncil;
+    case "council-of-the-eu":
+      return tp.shortCouncilOfTheEu;
+    case "european-parliament":
+      return tp.shortParliament;
+    case "european-central-bank":
+      return tp.shortEcb;
+  }
+}
+
+/**
+ * Search entries for the five main EU institutions: one logical result per
+ * institution plus one per unique physical site (so "Berlaymont" or
+ * "Europa building" resolve directly to their location).
+ */
+function buildMainEuInstitutionSearchResults(locale: Locale): MapSearchResult[] {
+  const results: MapSearchResult[] = [];
+
+  for (const institution of EU_INSTITUTIONS) {
+    const primarySite = institution.sites[0];
+    const name = mainInstitutionLocalName(institution.id, locale);
+    const shortName = mainInstitutionShortName(institution.id, locale);
+    const cities = [...new Set(institution.sites.map((site) => site.city))];
+    const subtitle =
+      cities.length > 1
+        ? cities.join(" · ")
+        : `${primarySite.city} · ${countryDisplayName(primarySite.countryCode, locale)}`;
+
+    results.push({
+      id: `eu-institution:${institution.id}`,
+      type: "eu_institution",
+      category: "eu_institutions",
+      title: name,
+      subtitle,
+      longitude: primarySite.longitude,
+      latitude: primarySite.latitude,
+      icon: "institution",
+      countryCode: primarySite.countryCode,
+      institutionId: institution.id,
+      source: "local",
+      metadata: {
+        sharedSite: false,
+        searchText: [
+          name,
+          shortName,
+          institution.canonicalName,
+          institution.shortName,
+          ...institution.aliases,
+          ...cities,
+        ].join(" "),
+      },
+    });
+  }
+
+  for (const site of uniquePhysicalSites()) {
+    const primaryInstitutionId = site.institutionIds[0];
+    const countryLabel = countryDisplayName(site.countryCode, locale);
+    const institutionShortNames = site.institutionIds.map((id) =>
+      mainInstitutionShortName(id, locale),
+    );
+    const sharedLabel = getMessages(locale).institutionPanel.sharedSite;
+    const subtitle = site.sharedSite
+      ? `${site.city} · ${countryLabel} · ${sharedLabel}`
+      : `${site.city} · ${countryLabel}`;
+
+    results.push({
+      id: `eu-institution-site:${site.id}`,
+      type: "eu_institution",
+      category: "eu_institutions",
+      title: site.name,
+      subtitle,
+      longitude: site.longitude,
+      latitude: site.latitude,
+      icon: "institution",
+      countryCode: site.countryCode,
+      institutionId: primaryInstitutionId,
+      siteId: site.id,
+      source: "local",
+      metadata: {
+        sharedSite: site.sharedSite,
+        searchText: [
+          site.name,
+          ...site.aliases,
+          site.city,
+          site.countryCode,
+          ...institutionShortNames,
+        ].join(" "),
+      },
+    });
+  }
+
+  return results;
+}
+
 const COUNTRY_ALIASES: Partial<Record<string, readonly string[]>> = {
   EL: ["Greece", "GR", "Hellas", "Grèce", "Griechenland"],
   DE: ["Germany", "Allemagne", "Deutschland"],
@@ -291,7 +426,7 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
     Object.keys(euInstitutionsByCountry),
   );
 
-  for (const seat of INSTITUTION_SEATS) {
+  for (const seat of COURT_SEATS) {
     if (!allowedInstitutionCountries.has(seat.countryCode)) continue;
     const hosted = euInstitutionsByCountry[seat.countryCode] ?? [];
     if (!hosted.includes(seat.id)) continue;
@@ -308,7 +443,7 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
       countryCode: seat.countryCode,
       source: "local",
       metadata: {
-        institutionId: seat.id,
+        legacyInstitutionId: seat.id,
         city: seat.city,
         searchText: [seat.title, seat.city, seat.countryCode, ...seat.aliases].join(
           " ",
@@ -316,6 +451,8 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
       },
     });
   }
+
+  results.push(...buildMainEuInstitutionSearchResults(locale));
 
   return results;
 }

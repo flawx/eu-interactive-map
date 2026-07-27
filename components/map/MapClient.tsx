@@ -34,6 +34,9 @@ type MapClientProps = {
   showEuCapitals: boolean;
   selectedCapitalId: string | null;
   onCapitalSelect: (capitalId: string | null) => void;
+  showEuMainInstitutions: boolean;
+  selectedInstitutionSiteId: string | null;
+  onInstitutionSiteSelect?: (siteId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -78,6 +81,9 @@ export default function MapClient({
   showEuCapitals,
   selectedCapitalId,
   onCapitalSelect,
+  showEuMainInstitutions,
+  selectedInstitutionSiteId,
+  onInstitutionSiteSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -114,6 +120,9 @@ export default function MapClient({
       showEuCapitals={showEuCapitals}
       selectedCapitalId={selectedCapitalId}
       onCapitalSelect={onCapitalSelect}
+      showEuMainInstitutions={showEuMainInstitutions}
+      selectedInstitutionSiteId={selectedInstitutionSiteId}
+      onInstitutionSiteSelect={onInstitutionSiteSelect}
       wildfireIncidents={wildfireIncidents}
       showWildfires={showWildfires}
       onWildfireSelect={onWildfireSelect}

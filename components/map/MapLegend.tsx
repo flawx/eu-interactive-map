@@ -27,6 +27,8 @@ type MapLegendProps = {
   onToggleSchengenNonEU: (value: boolean) => void;
   showEuCapitals: boolean;
   onToggleEuCapitals: (value: boolean) => void;
+  showEuMainInstitutions: boolean;
+  onToggleEuMainInstitutions: (value: boolean) => void;
   showWildfires: boolean;
   onToggleWildfires: (value: boolean) => void;
   showSatelliteActiveFires: boolean;
@@ -57,6 +59,8 @@ export default function MapLegend({
   onToggleSchengenNonEU,
   showEuCapitals,
   onToggleEuCapitals,
+  showEuMainInstitutions,
+  onToggleEuMainInstitutions,
   showWildfires,
   onToggleWildfires,
   showSatelliteActiveFires,
@@ -95,6 +99,7 @@ export default function MapLegend({
     showSchengenNonEU,
     showCandidates,
     showEuCapitals,
+    showEuMainInstitutions,
   ].filter(Boolean).length;
 
   const alertsActive = [
@@ -109,6 +114,7 @@ export default function MapLegend({
     schengenOutsideEu: showSchengenNonEU,
     euCandidates: showCandidates,
     euCapitals: showEuCapitals,
+    euMainInstitutions: showEuMainInstitutions,
     majorWildfires: showWildfires,
     satelliteActiveFires: showSatelliteActiveFires,
     recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -240,6 +246,23 @@ export default function MapLegend({
             style={{ color: "var(--map-ui-muted)" }}
           >
             {t.legend.euCapitalsDescription}
+          </p>
+          <LayerToggle
+            checked={showEuMainInstitutions}
+            onChange={onToggleEuMainInstitutions}
+            color="#003399"
+            label={t.legend.euMainInstitutions}
+            swatchClassName="relative overflow-hidden rounded-[3px]"
+            swatchStyle={{
+              background:
+                "radial-gradient(circle at 50% 50%, #facc15 0 30%, #003399 32%)",
+            }}
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.euMainInstitutionsDescription}
           </p>
         </Category>
 

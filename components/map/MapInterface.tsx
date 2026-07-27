@@ -6,11 +6,17 @@ import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel"
 import AppHeader from "@/components/layout/AppHeader";
 import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
 import CapitalCityPanel from "@/components/europe/CapitalCityPanel";
+import EuInstitutionPanel from "@/components/europe/EuInstitutionPanel";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
 import MapLegend from "@/components/map/MapLegend";
 import { getEuCapitalById } from "@/lib/europe/euCapitals";
+import {
+  getEuInstitutionById,
+  getEuInstitutionSiteById,
+  type EuInstitutionId,
+} from "@/lib/europe/euInstitutions";
 import {
   defaultLocale,
   type Locale,
@@ -106,6 +112,14 @@ export default function MapInterface() {
   const [selectedCapitalId, setSelectedCapitalId] = useState<string | null>(
     null,
   );
+  const [showEuMainInstitutions, setShowEuMainInstitutions] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euMainInstitutions,
+  );
+  const [selectedInstitutionId, setSelectedInstitutionId] =
+    useState<EuInstitutionId | null>(null);
+  const [selectedInstitutionSiteId, setSelectedInstitutionSiteId] = useState<
+    string | null
+  >(null);
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(
     null,
   );
@@ -213,6 +227,7 @@ export default function MapInterface() {
     setShowSchengenNonEU(prefs.schengenOutsideEu);
     setShowCandidates(prefs.euCandidates);
     setShowEuCapitals(prefs.euCapitals);
+    setShowEuMainInstitutions(prefs.euMainInstitutions);
     setShowWildfires(prefs.majorWildfires);
     setShowSatelliteActiveFires(prefs.satelliteActiveFires);
     setShowSatelliteBurnedAreas(prefs.recentSatelliteHistory);
@@ -235,6 +250,7 @@ export default function MapInterface() {
       schengenOutsideEu: showSchengenNonEU,
       euCandidates: showCandidates,
       euCapitals: showEuCapitals,
+      euMainInstitutions: showEuMainInstitutions,
       majorWildfires: showWildfires,
       satelliteActiveFires: showSatelliteActiveFires,
       recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -246,6 +262,7 @@ export default function MapInterface() {
     showSchengenNonEU,
     showCandidates,
     showEuCapitals,
+    showEuMainInstitutions,
     showWildfires,
     showSatelliteActiveFires,
     showSatelliteBurnedAreas,
@@ -1069,10 +1086,16 @@ export default function MapInterface() {
 
   void wildfiresLoading;
 
+  const clearInstitutionSelection = () => {
+    setSelectedInstitutionId(null);
+    setSelectedInstitutionSiteId(null);
+  };
+
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
+    clearInstitutionSelection();
     setSelectedCountryCode(countryCode);
   };
 
@@ -1080,6 +1103,7 @@ export default function MapInterface() {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
     setSelectedCountryCode(null);
+    clearInstitutionSelection();
     clearTemporaryPlace();
     setSelectedCapitalId(capitalId);
 
@@ -1101,6 +1125,7 @@ export default function MapInterface() {
     setSelectedCountryCode(null);
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
+    clearInstitutionSelection();
     setSelectedWildfireId(incidentId);
   };
 
@@ -1113,6 +1138,15 @@ export default function MapInterface() {
           longitude: number;
           latitude: number;
           zoom: number;
+        }
+      | {
+          kind: "bounds";
+          west: number;
+          south: number;
+          east: number;
+          north: number;
+          padding?: number;
+          maxZoom?: number;
         },
   ) => {
     focusNonceRef.current += 1;
@@ -1128,6 +1162,7 @@ export default function MapInterface() {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
+    clearInstitutionSelection();
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -1138,12 +1173,114 @@ export default function MapInterface() {
     window.setTimeout(() => setLegendHighlight(false), 1600);
   };
 
+  const handleInstitutionSelect = (
+    institutionId: EuInstitutionId | null,
+    siteId?: string,
+  ) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearTemporaryPlace();
+    setSelectedInstitutionId(institutionId);
+    setSelectedInstitutionSiteId(siteId ?? null);
+
+    if (!institutionId) return;
+
+    setShowEuMainInstitutions(true);
+
+    const institution = getEuInstitutionById(institutionId);
+    if (!institution) return;
+
+    if (siteId) {
+      const site = getEuInstitutionSiteById(siteId);
+      if (site) {
+        requestFocus({
+          kind: "point",
+          longitude: site.longitude,
+          latitude: site.latitude,
+          zoom: 12,
+        });
+        return;
+      }
+    }
+
+    const sites = institution.sites;
+    if (sites.length === 1) {
+      setSelectedInstitutionSiteId(sites[0].id);
+      requestFocus({
+        kind: "point",
+        longitude: sites[0].longitude,
+        latitude: sites[0].latitude,
+        zoom: 12,
+      });
+      return;
+    }
+
+    if (sites.length > 1) {
+      let west = Infinity;
+      let south = Infinity;
+      let east = -Infinity;
+      let north = -Infinity;
+      for (const site of sites) {
+        west = Math.min(west, site.longitude);
+        east = Math.max(east, site.longitude);
+        south = Math.min(south, site.latitude);
+        north = Math.max(north, site.latitude);
+      }
+      requestFocus({
+        kind: "bounds",
+        west,
+        south,
+        east,
+        north,
+        padding: 90,
+        maxZoom: 8,
+      });
+    }
+  };
+
+  const handleInstitutionSiteSelect = (siteId: string | null) => {
+    if (!siteId) {
+      setSelectedInstitutionSiteId(null);
+      return;
+    }
+
+    const site = getEuInstitutionSiteById(siteId);
+    if (!site) return;
+
+    const keepCurrentInstitution =
+      selectedInstitutionId !== null &&
+      site.institutionIds.includes(selectedInstitutionId);
+
+    const institutionId = keepCurrentInstitution
+      ? selectedInstitutionId!
+      : site.institutionIds[0];
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearTemporaryPlace();
+    setShowEuMainInstitutions(true);
+    setSelectedInstitutionId(institutionId);
+    setSelectedInstitutionSiteId(siteId);
+
+    requestFocus({
+      kind: "point",
+      longitude: site.longitude,
+      latitude: site.latitude,
+      zoom: 12,
+    });
+  };
+
   const handleSelectSearchResult = (result: MapSearchResult) => {
     if (result.type === "external_place") {
       setSelectedCountryCode(null);
       setSelectedWildfireId(null);
       setSelectedEffisBurnedArea(null);
       setSelectedCapitalId(null);
+      clearInstitutionSelection();
       setTemporaryPlace(result);
       requestFocus({
         kind: "point",
@@ -1172,7 +1309,26 @@ export default function MapInterface() {
       return;
     }
 
-    if (result.type === "capital" || result.type === "eu_institution") {
+    if (result.type === "eu_institution") {
+      if (result.institutionId) {
+        handleInstitutionSelect(result.institutionId, result.siteId);
+      } else {
+        setSelectedWildfireId(null);
+        setSelectedEffisBurnedArea(null);
+        setSelectedCountryCode(null);
+        setSelectedCapitalId(null);
+        clearInstitutionSelection();
+        requestFocus({
+          kind: "point",
+          longitude: result.longitude,
+          latitude: result.latitude,
+          zoom: 12,
+        });
+      }
+      return;
+    }
+
+    if (result.type === "capital") {
       if (result.countryCode) {
         handleCountrySelect(result.countryCode);
       } else {
@@ -1180,12 +1336,13 @@ export default function MapInterface() {
         setSelectedEffisBurnedArea(null);
         setSelectedCountryCode(null);
         setSelectedCapitalId(null);
+        clearInstitutionSelection();
       }
       requestFocus({
         kind: "point",
         longitude: result.longitude,
         latitude: result.latitude,
-        zoom: result.type === "capital" ? 8 : 12,
+        zoom: 8,
       });
       return;
     }
@@ -1224,6 +1381,9 @@ export default function MapInterface() {
           showEuCapitals={showEuCapitals}
           selectedCapitalId={selectedCapitalId}
           onCapitalSelect={handleCapitalSelect}
+          showEuMainInstitutions={showEuMainInstitutions}
+          selectedInstitutionSiteId={selectedInstitutionSiteId}
+          onInstitutionSiteSelect={handleInstitutionSiteSelect}
           wildfireIncidents={wildfireIncidents}
           showWildfires={showWildfires}
           onWildfireSelect={handleWildfireSelect}
@@ -1235,6 +1395,7 @@ export default function MapInterface() {
             if (burnedArea) {
               setSelectedCountryCode(null);
               setSelectedWildfireId(null);
+              clearInstitutionSelection();
               clearTemporaryPlace();
             }
           }}
@@ -1327,6 +1488,8 @@ export default function MapInterface() {
           onToggleSchengenNonEU={setShowSchengenNonEU}
           showEuCapitals={showEuCapitals}
           onToggleEuCapitals={setShowEuCapitals}
+          showEuMainInstitutions={showEuMainInstitutions}
+          onToggleEuMainInstitutions={setShowEuMainInstitutions}
           showWildfires={showWildfires}
           onToggleWildfires={setShowWildfires}
           showSatelliteActiveFires={showSatelliteActiveFires}
@@ -1370,6 +1533,7 @@ export default function MapInterface() {
         )}
 
         {selectedCapitalId &&
+          !selectedInstitutionId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1381,6 +1545,23 @@ export default function MapInterface() {
                 setSelectedCapitalId(null);
                 handleCountrySelect(countryCode);
               }}
+            />
+          )}
+
+        {selectedInstitutionId &&
+          !selectedCapitalId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <EuInstitutionPanel
+              institutionId={selectedInstitutionId}
+              locale={locale}
+              activeSiteId={selectedInstitutionSiteId}
+              onClose={clearInstitutionSelection}
+              onFocusSite={(siteId) => handleInstitutionSiteSelect(siteId)}
+              onOpenInstitution={(institutionId, siteId) =>
+                handleInstitutionSelect(institutionId, siteId)
+              }
             />
           )}
 

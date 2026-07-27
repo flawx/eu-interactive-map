@@ -90,7 +90,7 @@ function ResultIcon({
     case "wildfire":
       return <Flame className="h-4 w-4 text-[#d93025]" aria-hidden="true" />;
     case "eu_institution":
-      return <Building2 className="h-4 w-4 text-[#9334e6]" aria-hidden="true" />;
+      return <Building2 className="h-4 w-4 text-[#003399]" aria-hidden="true" />;
     default:
       return <MapPin className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />;
   }
