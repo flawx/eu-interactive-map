@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ExternalLink, TrainFront, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  TrainFront,
+  X,
+} from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { getEurostarStationById } from "@/lib/transport/eurostarNetwork";
@@ -82,57 +88,68 @@ export default function EurostarStationPanel({
   const destinations = details?.directDestinations ?? [];
 
   return (
-    <aside className="pointer-events-auto flex max-h-[min(78vh,720px)] w-[min(100%,24rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-      <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-            {tp.badge}
-          </p>
-          <h2 className="truncate text-base font-semibold text-slate-900">
-            {station.name}
-          </h2>
-          <p className="truncate text-sm text-slate-500">
-            {station.city} · {countryName}
-          </p>
+    <aside
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      style={{
+        top: "var(--map-panel-top-offset)",
+        maxHeight:
+          "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
+      }}
+    >
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-900/50 text-amber-200 shadow-sm">
+            <TrainFront className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold leading-snug">{station.name}</p>
+            <p className="text-[11px] text-slate-300">
+              {station.city} · {countryName}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.countryPanel.close}
+            title={t.countryPanel.close}
+            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+          >
+            <X aria-hidden="true" size={22} strokeWidth={2} />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-          aria-label={t.countryPanel.close}
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+        <p className="mt-2 inline-flex rounded-full border border-amber-400/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-100">
+          {tp.badge}
+        </p>
+      </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         {loading && (
           <div className="space-y-3">
-            <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-slate-100" />
+            <div className="h-40 animate-pulse rounded-xl bg-white/10" />
+            <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
           </div>
         )}
 
         {!loading && error && (
-          <p className="text-sm text-slate-600">{tp.detailsUnavailable}</p>
+          <p className="text-sm text-amber-200/90">{tp.detailsUnavailable}</p>
         )}
 
         {!loading && !error && (
           <div className="space-y-5">
-            {photo && (
+            {photo ? (
               <section>
-                <div className="relative overflow-hidden rounded-xl bg-slate-100">
+                <div className="overflow-hidden rounded-lg border border-white/10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.thumbnailUrl ?? photo.url}
                     alt={photo.title ?? station.name}
-                    className="h-44 w-full object-cover"
+                    className="h-40 w-full object-cover"
                   />
                   {images.length > 1 && (
-                    <>
+                    <div className="flex items-center justify-between gap-2 bg-black/40 px-2 py-1.5">
                       <button
                         type="button"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white"
+                        className="rounded p-1 text-slate-200"
                         onClick={() =>
                           setPhotoIndex(
                             (photoIndex - 1 + images.length) % images.length,
@@ -142,9 +159,12 @@ export default function EurostarStationPanel({
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
+                      <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-slate-300">
+                        {tp.photoCredit}: {photo.author} · {photo.license}
+                      </p>
                       <button
                         type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white"
+                        className="rounded p-1 text-slate-200"
                         onClick={() =>
                           setPhotoIndex((photoIndex + 1) % images.length)
                         }
@@ -152,45 +172,47 @@ export default function EurostarStationPanel({
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
-                    </>
+                    </div>
+                  )}
+                  {images.length <= 1 && (
+                    <p className="bg-black/40 px-2 py-1.5 text-center text-[10px] leading-snug text-slate-300">
+                      {tp.photoCredit}: {photo.author} · {photo.license}
+                    </p>
                   )}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  {tp.photoCredit}: {photo.author} · {photo.license}
-                </p>
               </section>
-            )}
+            ) : null}
 
             <section>
-              <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <TrainFront className="h-4 w-4 text-amber-700" />
+              <h3 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <TrainFront className="h-4 w-4 text-amber-400" />
                 {tp.presentation}
               </h3>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-200">
                 {station.serviceStatus === "seasonal"
                   ? tp.seasonalService
                   : tp.regularService}
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="mt-2 text-sm leading-relaxed text-slate-200">
                 {details?.description ?? tp.loadingDetails}
               </p>
             </section>
 
             <section>
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 {tp.directDestinations}
               </h3>
-              <ul className="space-y-1.5 text-sm text-slate-700">
+              <ul className="space-y-1.5 text-sm text-slate-200">
                 {destinations.map((dest) => (
                   <li
                     key={dest.stationId}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5"
                   >
                     <span>
                       {dest.name}
                       <span className="text-slate-400"> · {dest.city}</span>
                     </span>
-                    <span className="text-[11px] font-medium uppercase text-slate-500">
+                    <span className="text-[11px] font-medium uppercase text-slate-400">
                       {dest.serviceStatus === "seasonal"
                         ? tp.seasonalService
                         : tp.regularService}
@@ -198,7 +220,7 @@ export default function EurostarStationPanel({
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-slate-400">
                 {tp.schematicLink}. {tp.schematicDisclaimer}
               </p>
             </section>
@@ -207,21 +229,21 @@ export default function EurostarStationPanel({
               details?.borderControlInfo ||
               details?.accessibilityInfo) && (
               <section>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                   {tp.practicalInfo}
                 </h3>
                 {details.recommendedArrivalInfo && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-200">
                     {tp.recommendedArrival}: {details.recommendedArrivalInfo}
                   </p>
                 )}
                 {details.borderControlInfo && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-200">
                     {tp.borderControl}: {details.borderControlInfo}
                   </p>
                 )}
                 {details.accessibilityInfo && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-200">
                     {tp.accessibility}: {details.accessibilityInfo}
                   </p>
                 )}
@@ -229,16 +251,16 @@ export default function EurostarStationPanel({
             )}
 
             <section>
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 {tp.officialLinks}
               </h3>
-              <ul className="space-y-1 text-sm">
+              <ul className="space-y-1.5 text-sm">
                 <li>
                   <a
                     href={station.officialUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-amber-800 underline"
+                    className="inline-flex items-center gap-1 text-sky-400 hover:underline"
                   >
                     {tp.eurostarGuide}
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -250,7 +272,7 @@ export default function EurostarStationPanel({
                       href={station.stationWebsite}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-amber-800 underline"
+                      className="inline-flex items-center gap-1 text-sky-400 hover:underline"
                     >
                       {tp.stationWebsite}
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -263,7 +285,7 @@ export default function EurostarStationPanel({
                       href={details.wikipediaUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-amber-800 underline"
+                      className="inline-flex items-center gap-1 text-sky-400 hover:underline"
                     >
                       {tp.wikipedia}
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -275,17 +297,17 @@ export default function EurostarStationPanel({
 
             {details?.sources?.length ? (
               <section>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                   {tp.sources}
                 </h3>
-                <ul className="space-y-1 text-xs text-slate-500">
+                <ul className="space-y-1 text-[11px] text-slate-400">
                   {details.sources.map((source) => (
                     <li key={source.url}>
                       <a
                         href={source.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="underline"
+                        className="hover:text-sky-300 hover:underline"
                       >
                         {source.label}
                       </a>

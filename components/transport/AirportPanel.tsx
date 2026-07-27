@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ExternalLink, Plane, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Plane,
+  X,
+} from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { getEuropeanAirportById } from "@/lib/transport/europeanAirports";
@@ -81,58 +87,69 @@ export default function AirportPanel({
     regionNames?.of(flagCode(airport.countryCode)) ?? airport.countryCode;
 
   return (
-    <aside className="pointer-events-auto flex max-h-[min(78vh,720px)] w-[min(100%,24rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-      <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-800">
-            {tp.badge}
-          </p>
-          <h2 className="truncate text-base font-semibold text-slate-900">
-            {airport.name}
-          </h2>
-          <p className="truncate text-sm text-slate-500">
-            {airport.city} · {countryName}
-          </p>
+    <aside
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      style={{
+        top: "var(--map-panel-top-offset)",
+        maxHeight:
+          "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
+      }}
+    >
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan-400/40 bg-cyan-900/60 text-cyan-200 shadow-sm">
+            <Plane className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold leading-snug">{airport.name}</p>
+            <p className="text-[11px] text-slate-300">
+              {airport.city} · {countryName}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.countryPanel.close}
+            title={t.countryPanel.close}
+            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+          >
+            <X aria-hidden="true" size={22} strokeWidth={2} />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-          aria-label={t.countryPanel.close}
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+        <p className="mt-2 inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2 py-0.5 text-[10px] font-medium text-cyan-200">
+          {tp.badge}
+        </p>
+      </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         {loading && (
           <div className="space-y-3">
-            <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-slate-100" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
+            <div className="h-40 animate-pulse rounded-xl bg-white/10" />
+            <div className="h-4 w-3/4 animate-pulse rounded bg-white/10" />
+            <div className="h-4 w-1/2 animate-pulse rounded bg-white/10" />
           </div>
         )}
 
         {!loading && error && (
-          <p className="text-sm text-slate-600">{tp.detailsUnavailable}</p>
+          <p className="text-sm text-amber-200/90">{tp.detailsUnavailable}</p>
         )}
 
         {!loading && !error && (
           <div className="space-y-5">
-            {photo && (
+            {photo ? (
               <section>
-                <div className="relative overflow-hidden rounded-xl bg-slate-100">
+                <div className="overflow-hidden rounded-lg border border-white/10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.thumbnailUrl ?? photo.url}
                     alt={photo.title ?? airport.name}
-                    className="h-44 w-full object-cover"
+                    className="h-40 w-full object-cover"
                   />
                   {images.length > 1 && (
-                    <>
+                    <div className="flex items-center justify-between gap-2 bg-black/40 px-2 py-1.5">
                       <button
                         type="button"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white"
+                        className="rounded p-1 text-slate-200"
                         onClick={() =>
                           setPhotoIndex(
                             (photoIndex - 1 + images.length) % images.length,
@@ -142,9 +159,12 @@ export default function AirportPanel({
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
+                      <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-slate-300">
+                        {tp.photoCredit}: {photo.author} · {photo.license}
+                      </p>
                       <button
                         type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white"
+                        className="rounded p-1 text-slate-200"
                         onClick={() =>
                           setPhotoIndex((photoIndex + 1) % images.length)
                         }
@@ -152,67 +172,69 @@ export default function AirportPanel({
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
-                    </>
+                    </div>
+                  )}
+                  {images.length <= 1 && (
+                    <p className="bg-black/40 px-2 py-1.5 text-center text-[10px] leading-snug text-slate-300">
+                      {tp.photoCredit}: {photo.author} · {photo.license}
+                      {photo.sourceUrl && (
+                        <>
+                          {" · "}
+                          <a
+                            href={photo.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sky-400 hover:underline"
+                          >
+                            source
+                          </a>
+                        </>
+                      )}
+                    </p>
                   )}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  {tp.photoCredit}: {photo.author} · {photo.license}
-                  {photo.sourceUrl && (
-                    <>
-                      {" · "}
-                      <a
-                        href={photo.sourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline"
-                      >
-                        source
-                      </a>
-                    </>
-                  )}
-                </p>
               </section>
-            )}
+            ) : null}
 
             <section>
-              <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Plane className="h-4 w-4 text-cyan-700" />
+              <h3 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <Plane className="h-4 w-4 text-cyan-400" />
                 {tp.overview}
               </h3>
-              <p className="text-sm leading-relaxed text-slate-600">
+              <p className="text-sm leading-relaxed text-slate-200">
                 {details?.description ?? tp.loadingDetails}
               </p>
             </section>
 
             <section className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-xs font-medium uppercase text-slate-400">
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <p className="text-[10px] font-medium uppercase text-slate-400">
                   {tp.iataCode}
                 </p>
-                <p className="font-semibold text-slate-800">
+                <p className="font-semibold text-slate-100">
                   {airport.iataCode ?? "—"}
                 </p>
               </div>
-              <div>
-                <p className="text-xs font-medium uppercase text-slate-400">
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <p className="text-[10px] font-medium uppercase text-slate-400">
                   {tp.icaoCode}
                 </p>
-                <p className="font-semibold text-slate-800">{airport.icaoCode}</p>
+                <p className="font-semibold text-slate-100">{airport.icaoCode}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium uppercase text-slate-400">
+              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <p className="text-[10px] font-medium uppercase text-slate-400">
                   {tp.europeanRanking}
                 </p>
-                <p className="font-semibold text-slate-800">
+                <p className="font-semibold text-slate-100">
                   {airport.rank2025 != null ? `#${airport.rank2025}` : "—"}
                 </p>
               </div>
               {details?.openedYear != null && (
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
+                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <p className="text-[10px] font-medium uppercase text-slate-400">
                     {tp.openedYear}
                   </p>
-                  <p className="font-semibold text-slate-800">
+                  <p className="font-semibold text-slate-100">
                     {details.openedYear}
                   </p>
                 </div>
@@ -223,21 +245,21 @@ export default function AirportPanel({
               details?.groundTransportSummary ||
               details?.operatorName) && (
               <section>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                   {tp.practicalInfo}
                 </h3>
                 {details.operatorName && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-200">
                     {tp.operator}: {details.operatorName}
                   </p>
                 )}
                 {details.terminals?.length ? (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-200">
                     {tp.terminals}: {details.terminals.join(", ")}
                   </p>
                 ) : null}
                 {details.groundTransportSummary && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-200">
                     {tp.groundTransport}: {details.groundTransportSummary}
                   </p>
                 )}
@@ -245,17 +267,17 @@ export default function AirportPanel({
             )}
 
             <section>
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 {tp.officialLinks}
               </h3>
-              <ul className="space-y-1 text-sm">
+              <ul className="space-y-1.5 text-sm">
                 {airport.officialWebsite && (
                   <li>
                     <a
                       href={airport.officialWebsite}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-cyan-800 underline"
+                      className="inline-flex items-center gap-1 text-sky-400 hover:underline"
                     >
                       {tp.officialWebsite}
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -268,7 +290,7 @@ export default function AirportPanel({
                       href={details.wikipediaUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-cyan-800 underline"
+                      className="inline-flex items-center gap-1 text-sky-400 hover:underline"
                     >
                       {tp.wikipedia}
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -280,17 +302,17 @@ export default function AirportPanel({
 
             {details?.sources?.length ? (
               <section>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                   {tp.sources}
                 </h3>
-                <ul className="space-y-1 text-xs text-slate-500">
+                <ul className="space-y-1 text-[11px] text-slate-400">
                   {details.sources.map((source) => (
                     <li key={source.url}>
                       <a
                         href={source.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="underline"
+                        className="hover:text-sky-300 hover:underline"
                       >
                         {source.label}
                       </a>
