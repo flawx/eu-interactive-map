@@ -16,6 +16,8 @@ type AuditedItem = {
   expected: ExpectedEntity;
 };
 
+type AuditResult = Awaited<ReturnType<typeof auditExpectedEntities>>[number];
+
 const items: AuditedItem[] = [
   ...MAJOR_TOURIST_PLACES.map((place) => ({
     dataset: "majorTouristPlaces",
@@ -120,10 +122,44 @@ const items: AuditedItem[] = [
 ];
 
 async function main(): Promise<void> {
-  const results = await auditExpectedEntities(items.map((item) => item.expected));
+  const results: Array<AuditResult | null> = items.map(() => null);
+  for (let pass = 0; pass < 3; pass += 1) {
+    const pending = items
+      .map((item, index) => ({ item, index }))
+      .filter(({ item, index }) =>
+        Boolean(item.expected.wikidataId) && !results[index]?.validQid,
+      );
+    for (let index = 0; index < pending.length; index += 20) {
+      const batch = pending.slice(index, index + 20);
+      const batchResults = await auditExpectedEntities(
+        batch.map(({ item }) => item.expected),
+      );
+      batch.forEach(({ index: resultIndex }, batchIndex) => {
+        const next = batchResults[batchIndex];
+        if (next.validQid || results[resultIndex] === null) {
+          results[resultIndex] = next;
+        }
+      });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
+  items.forEach((item, index) => {
+    if (!item.expected.wikidataId) {
+      results[index] = {
+        wikidataId: null,
+        validQid: false,
+        nameMatches: false,
+        countryMatches: false,
+        distanceKm: null,
+        hasSitelink: false,
+        imageRejected: false,
+      };
+    }
+  });
+  const completedResults = results as AuditResult[];
 
   const anomalies = items.flatMap((item, index) => {
-    const result = results[index];
+    const result = completedResults[index];
     const reasons: string[] = [];
     if (!item.expected.wikidataId) reasons.push("missing_qid");
     else if (!result.validQid) reasons.push("invalid_qid");
@@ -157,19 +193,19 @@ async function main(): Promise<void> {
     resolverVersion: "entity-resolver-v2",
     totalEntities: items.length,
     entitiesWithQid: items.filter((item) => item.expected.wikidataId).length,
-    qidsVerified: results.filter(
+    qidsVerified: completedResults.filter(
       (result) => result.validQid && result.nameMatches && result.countryMatches,
     ).length,
-    invalidQids: results.filter((result) => !result.validQid).length,
-    wikipediaPagesMatched: results.filter((result) => result.hasSitelink).length,
+    invalidQids: completedResults.filter((result) => !result.validQid).length,
+    wikipediaPagesMatched: completedResults.filter((result) => result.hasSitelink).length,
     pagesRejected: anomalies.filter((item) =>
       item.reasons.some((reason) => reason !== "missing_sitelink"),
     ).length,
-    entitiesWithoutSitelink: results.filter(
+    entitiesWithoutSitelink: completedResults.filter(
       (result) => result.validQid && !result.hasSitelink,
     ).length,
-    entitiesWithoutDescription: results.filter((result) => !result.hasSitelink).length,
-    imagesRejected: results.filter((result) => result.imageRejected).length,
+    entitiesWithoutDescription: completedResults.filter((result) => !result.hasSitelink).length,
+    imagesRejected: completedResults.filter((result) => result.imageRejected).length,
     anomalyCount: anomalies.length,
     anomaliesByDataset,
     entriesWithoutQid,

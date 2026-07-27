@@ -55,3 +55,6 @@ data/eurocontrol-data-snapshot-58-dataset.xlsx
 data/.eurocontrol-snap58.html
 scripts/_parse-eurocontrol.ts
 scripts/patch-transport-i18n.ts
+
+# Local entity-repair review artifacts
+/tmp/
