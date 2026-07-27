@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "effis:refresh": "tsx scripts/refresh-effis-snapshots.ts"
+    "effis:refresh": "tsx scripts/refresh-effis-snapshots.ts",
+    "unesco:update": "tsx scripts/update-unesco-world-heritage.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",

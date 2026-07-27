@@ -11,12 +11,14 @@ import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
 import MapLegend from "@/components/map/MapLegend";
+import UnescoSitePanel from "@/components/tourism/UnescoSitePanel";
 import { getEuCapitalById } from "@/lib/europe/euCapitals";
 import {
   getEuInstitutionById,
   getEuInstitutionSiteById,
   type EuInstitutionId,
 } from "@/lib/europe/euInstitutions";
+import { getUnescoSiteById } from "@/lib/tourism/unescoWorldHeritage";
 import {
   defaultLocale,
   type Locale,
@@ -118,6 +120,21 @@ export default function MapInterface() {
   const [selectedInstitutionId, setSelectedInstitutionId] =
     useState<EuInstitutionId | null>(null);
   const [selectedInstitutionSiteId, setSelectedInstitutionSiteId] = useState<
+    string | null
+  >(null);
+  const [showUnescoWorldHeritage, setShowUnescoWorldHeritage] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.unescoWorldHeritage,
+  );
+  const [showUnescoCultural, setShowUnescoCultural] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.unescoCultural,
+  );
+  const [showUnescoNatural, setShowUnescoNatural] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.unescoNatural,
+  );
+  const [showUnescoMixed, setShowUnescoMixed] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.unescoMixed,
+  );
+  const [selectedUnescoSiteId, setSelectedUnescoSiteId] = useState<
     string | null
   >(null);
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(
@@ -228,6 +245,10 @@ export default function MapInterface() {
     setShowCandidates(prefs.euCandidates);
     setShowEuCapitals(prefs.euCapitals);
     setShowEuMainInstitutions(prefs.euMainInstitutions);
+    setShowUnescoWorldHeritage(prefs.unescoWorldHeritage);
+    setShowUnescoCultural(prefs.unescoCultural);
+    setShowUnescoNatural(prefs.unescoNatural);
+    setShowUnescoMixed(prefs.unescoMixed);
     setShowWildfires(prefs.majorWildfires);
     setShowSatelliteActiveFires(prefs.satelliteActiveFires);
     setShowSatelliteBurnedAreas(prefs.recentSatelliteHistory);
@@ -251,6 +272,10 @@ export default function MapInterface() {
       euCandidates: showCandidates,
       euCapitals: showEuCapitals,
       euMainInstitutions: showEuMainInstitutions,
+      unescoWorldHeritage: showUnescoWorldHeritage,
+      unescoCultural: showUnescoCultural,
+      unescoNatural: showUnescoNatural,
+      unescoMixed: showUnescoMixed,
       majorWildfires: showWildfires,
       satelliteActiveFires: showSatelliteActiveFires,
       recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -263,6 +288,10 @@ export default function MapInterface() {
     showCandidates,
     showEuCapitals,
     showEuMainInstitutions,
+    showUnescoWorldHeritage,
+    showUnescoCultural,
+    showUnescoNatural,
+    showUnescoMixed,
     showWildfires,
     showSatelliteActiveFires,
     showSatelliteBurnedAreas,
@@ -1091,11 +1120,16 @@ export default function MapInterface() {
     setSelectedInstitutionSiteId(null);
   };
 
+  const clearUnescoSelection = () => {
+    setSelectedUnescoSiteId(null);
+  };
+
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
     clearInstitutionSelection();
+    clearUnescoSelection();
     setSelectedCountryCode(countryCode);
   };
 
@@ -1104,6 +1138,7 @@ export default function MapInterface() {
     setSelectedEffisBurnedArea(null);
     setSelectedCountryCode(null);
     clearInstitutionSelection();
+    clearUnescoSelection();
     clearTemporaryPlace();
     setSelectedCapitalId(capitalId);
 
@@ -1126,6 +1161,7 @@ export default function MapInterface() {
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
     clearInstitutionSelection();
+    clearUnescoSelection();
     setSelectedWildfireId(incidentId);
   };
 
@@ -1163,6 +1199,7 @@ export default function MapInterface() {
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
     clearInstitutionSelection();
+    clearUnescoSelection();
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -1181,6 +1218,7 @@ export default function MapInterface() {
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
     setSelectedCountryCode(null);
+    clearUnescoSelection();
     clearTemporaryPlace();
     setSelectedInstitutionId(institutionId);
     setSelectedInstitutionSiteId(siteId ?? null);
@@ -1261,6 +1299,7 @@ export default function MapInterface() {
     setSelectedEffisBurnedArea(null);
     setSelectedCapitalId(null);
     setSelectedCountryCode(null);
+    clearUnescoSelection();
     clearTemporaryPlace();
     setShowEuMainInstitutions(true);
     setSelectedInstitutionId(institutionId);
@@ -1274,6 +1313,37 @@ export default function MapInterface() {
     });
   };
 
+  const handleUnescoSiteSelect = (siteId: string | null) => {
+    if (!siteId) {
+      setSelectedUnescoSiteId(null);
+      return;
+    }
+
+    const site = getUnescoSiteById(siteId);
+    if (!site) return;
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearInstitutionSelection();
+    clearTemporaryPlace();
+
+    setShowUnescoWorldHeritage(true);
+    if (site.category === "cultural") setShowUnescoCultural(true);
+    if (site.category === "natural") setShowUnescoNatural(true);
+    if (site.category === "mixed") setShowUnescoMixed(true);
+
+    setSelectedUnescoSiteId(siteId);
+
+    requestFocus({
+      kind: "point",
+      longitude: site.longitude,
+      latitude: site.latitude,
+      zoom: 10,
+    });
+  };
+
   const handleSelectSearchResult = (result: MapSearchResult) => {
     if (result.type === "external_place") {
       setSelectedCountryCode(null);
@@ -1281,6 +1351,7 @@ export default function MapInterface() {
       setSelectedEffisBurnedArea(null);
       setSelectedCapitalId(null);
       clearInstitutionSelection();
+      clearUnescoSelection();
       setTemporaryPlace(result);
       requestFocus({
         kind: "point",
@@ -1318,6 +1389,7 @@ export default function MapInterface() {
         setSelectedCountryCode(null);
         setSelectedCapitalId(null);
         clearInstitutionSelection();
+        clearUnescoSelection();
         requestFocus({
           kind: "point",
           longitude: result.longitude,
@@ -1325,6 +1397,11 @@ export default function MapInterface() {
           zoom: 12,
         });
       }
+      return;
+    }
+
+    if (result.type === "unesco_site" && result.unescoSiteId) {
+      handleUnescoSiteSelect(result.unescoSiteId);
       return;
     }
 
@@ -1337,6 +1414,7 @@ export default function MapInterface() {
         setSelectedCountryCode(null);
         setSelectedCapitalId(null);
         clearInstitutionSelection();
+        clearUnescoSelection();
       }
       requestFocus({
         kind: "point",
@@ -1384,6 +1462,12 @@ export default function MapInterface() {
           showEuMainInstitutions={showEuMainInstitutions}
           selectedInstitutionSiteId={selectedInstitutionSiteId}
           onInstitutionSiteSelect={handleInstitutionSiteSelect}
+          showUnescoWorldHeritage={showUnescoWorldHeritage}
+          showUnescoCultural={showUnescoCultural}
+          showUnescoNatural={showUnescoNatural}
+          showUnescoMixed={showUnescoMixed}
+          selectedUnescoSiteId={selectedUnescoSiteId}
+          onUnescoSiteSelect={handleUnescoSiteSelect}
           wildfireIncidents={wildfireIncidents}
           showWildfires={showWildfires}
           onWildfireSelect={handleWildfireSelect}
@@ -1396,6 +1480,7 @@ export default function MapInterface() {
               setSelectedCountryCode(null);
               setSelectedWildfireId(null);
               clearInstitutionSelection();
+              clearUnescoSelection();
               clearTemporaryPlace();
             }
           }}
@@ -1490,6 +1575,14 @@ export default function MapInterface() {
           onToggleEuCapitals={setShowEuCapitals}
           showEuMainInstitutions={showEuMainInstitutions}
           onToggleEuMainInstitutions={setShowEuMainInstitutions}
+          showUnescoWorldHeritage={showUnescoWorldHeritage}
+          onToggleUnescoWorldHeritage={setShowUnescoWorldHeritage}
+          showUnescoCultural={showUnescoCultural}
+          onToggleUnescoCultural={setShowUnescoCultural}
+          showUnescoNatural={showUnescoNatural}
+          onToggleUnescoNatural={setShowUnescoNatural}
+          showUnescoMixed={showUnescoMixed}
+          onToggleUnescoMixed={setShowUnescoMixed}
           showWildfires={showWildfires}
           onToggleWildfires={setShowWildfires}
           showSatelliteActiveFires={showSatelliteActiveFires}
@@ -1534,6 +1627,7 @@ export default function MapInterface() {
 
         {selectedCapitalId &&
           !selectedInstitutionId &&
+          !selectedUnescoSiteId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1550,6 +1644,7 @@ export default function MapInterface() {
 
         {selectedInstitutionId &&
           !selectedCapitalId &&
+          !selectedUnescoSiteId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -1562,6 +1657,19 @@ export default function MapInterface() {
               onOpenInstitution={(institutionId, siteId) =>
                 handleInstitutionSelect(institutionId, siteId)
               }
+            />
+          )}
+
+        {selectedUnescoSiteId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <UnescoSitePanel
+              siteId={selectedUnescoSiteId}
+              locale={locale}
+              onClose={clearUnescoSelection}
             />
           )}
 

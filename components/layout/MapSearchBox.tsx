@@ -13,8 +13,10 @@ import {
   Building2,
   Flame,
   Landmark,
+  Leaf,
   LoaderCircle,
   MapPin,
+  Mountain,
   Search,
   X,
 } from "lucide-react";
@@ -53,6 +55,8 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
       return t.search.groupCountriesCapitals;
     case "eu_institutions":
       return t.search.groupInstitutions;
+    case "unesco_sites":
+      return t.search.groupUnesco;
     case "active_alerts":
       return t.search.groupAlerts;
     case "app_places":
@@ -62,13 +66,46 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
   }
 }
 
+function unescoCategoryColor(category: unknown): string {
+  switch (category) {
+    case "natural":
+      return "#15803d";
+    case "mixed":
+      return "#0891b2";
+    default:
+      return "#7c3aed";
+  }
+}
+
+function unescoCategoryIcon(category: unknown) {
+  if (category === "natural") return Leaf;
+  if (category === "mixed") return Mountain;
+  return Landmark;
+}
+
 function ResultIcon({
   type,
   countryCode,
+  metadata,
 }: {
   type: MapSearchResult["type"];
   countryCode?: string;
+  metadata?: MapSearchResult["metadata"];
 }) {
+  if (type === "unesco_site") {
+    const color = unescoCategoryColor(metadata?.category);
+    const Icon = unescoCategoryIcon(metadata?.category);
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-white text-white shadow-sm"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      >
+        <Icon className="h-3 w-3" strokeWidth={2.25} />
+      </span>
+    );
+  }
+
   if (type === "capital" && countryCode) {
     const region = (countryCode === "EL" ? "GR" : countryCode).toLowerCase();
     return (
@@ -338,7 +375,11 @@ export default function MapSearchBox({
                 : "hover:bg-[var(--map-ui-surface-hover)]"
             }`}
           >
-            <ResultIcon type={result.type} countryCode={result.countryCode} />
+            <ResultIcon
+              type={result.type}
+              countryCode={result.countryCode}
+              metadata={result.metadata}
+            />
             <span className="min-w-0 flex-1">
               <span
                 className="block truncate text-sm font-medium"

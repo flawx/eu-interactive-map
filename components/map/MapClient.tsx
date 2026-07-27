@@ -37,6 +37,12 @@ type MapClientProps = {
   showEuMainInstitutions: boolean;
   selectedInstitutionSiteId: string | null;
   onInstitutionSiteSelect?: (siteId: string | null) => void;
+  showUnescoWorldHeritage: boolean;
+  showUnescoCultural: boolean;
+  showUnescoNatural: boolean;
+  showUnescoMixed: boolean;
+  selectedUnescoSiteId: string | null;
+  onUnescoSiteSelect?: (siteId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -84,6 +90,12 @@ export default function MapClient({
   showEuMainInstitutions,
   selectedInstitutionSiteId,
   onInstitutionSiteSelect,
+  showUnescoWorldHeritage,
+  showUnescoCultural,
+  showUnescoNatural,
+  showUnescoMixed,
+  selectedUnescoSiteId,
+  onUnescoSiteSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -123,6 +135,12 @@ export default function MapClient({
       showEuMainInstitutions={showEuMainInstitutions}
       selectedInstitutionSiteId={selectedInstitutionSiteId}
       onInstitutionSiteSelect={onInstitutionSiteSelect}
+      showUnescoWorldHeritage={showUnescoWorldHeritage}
+      showUnescoCultural={showUnescoCultural}
+      showUnescoNatural={showUnescoNatural}
+      showUnescoMixed={showUnescoMixed}
+      selectedUnescoSiteId={selectedUnescoSiteId}
+      onUnescoSiteSelect={onUnescoSiteSelect}
       wildfireIncidents={wildfireIncidents}
       showWildfires={showWildfires}
       onWildfireSelect={onWildfireSelect}

@@ -12,12 +12,14 @@ import {
 import type { WildfireIncident } from "@/lib/incidents/types";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
+import { UNESCO_WORLD_HERITAGE_SITES } from "@/lib/tourism/unescoWorldHeritage";
 
 export type MapSearchResultType =
   | "country"
   | "capital"
   | "wildfire"
   | "eu_institution"
+  | "unesco_site"
   | "categorized_place"
   | "external_place";
 
@@ -25,6 +27,7 @@ export type MapSearchCategory =
   | "countries_capitals"
   | "eu_capitals"
   | "eu_institutions"
+  | "unesco_sites"
   | "active_alerts"
   | "app_places"
   | "external";
@@ -44,6 +47,7 @@ export type MapSearchResult = {
   incidentId?: string;
   institutionId?: MainEuInstitutionId;
   siteId?: string;
+  unescoSiteId?: string;
   source: "local" | "nominatim";
   metadata: Record<string, string | number | boolean | null>;
 };
@@ -307,6 +311,61 @@ function buildMainEuInstitutionSearchResults(locale: Locale): MapSearchResult[] 
   return results;
 }
 
+function unescoIconForCategory(
+  category: "cultural" | "natural" | "mixed",
+): string {
+  switch (category) {
+    case "cultural":
+      return "unesco-cultural";
+    case "natural":
+      return "unesco-natural";
+    case "mixed":
+      return "unesco-mixed";
+  }
+}
+
+/** One search entry per UNESCO World Heritage site in the dataset. */
+function buildUnescoSiteSearchResults(locale: Locale): MapSearchResult[] {
+  const t = getMessages(locale);
+
+  return UNESCO_WORLD_HERITAGE_SITES.map((site) => {
+    const countryNames = site.countryCodes.map((code) =>
+      countryDisplayName(code === "EL" ? "GR" : code, locale),
+    );
+    const countriesLabel = countryNames.join(" · ");
+    const subtitleParts = [countriesLabel, String(site.inscriptionYear)];
+    if (site.dangerStatus === "in-danger") {
+      subtitleParts.push(t.unescoPanel.inDanger);
+    }
+
+    return {
+      id: `unesco-site:${site.id}`,
+      type: "unesco_site",
+      category: "unesco_sites",
+      title: site.canonicalName,
+      subtitle: subtitleParts.join(" · "),
+      longitude: site.longitude,
+      latitude: site.latitude,
+      icon: unescoIconForCategory(site.category),
+      countryCode: site.countryCodes[0],
+      unescoSiteId: site.id,
+      source: "local",
+      metadata: {
+        category: site.category,
+        dangerStatus: site.dangerStatus,
+        searchText: [
+          site.canonicalName,
+          site.location ?? "",
+          String(site.unescoId),
+          site.category,
+          ...site.countryCodes,
+          ...countryNames,
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
 const COUNTRY_ALIASES: Partial<Record<string, readonly string[]>> = {
   EL: ["Greece", "GR", "Hellas", "Grèce", "Griechenland"],
   DE: ["Germany", "Allemagne", "Deutschland"],
@@ -453,6 +512,7 @@ function buildStaticLocalIndex(locale: Locale): MapSearchResult[] {
   }
 
   results.push(...buildMainEuInstitutionSearchResults(locale));
+  results.push(...buildUnescoSiteSearchResults(locale));
 
   return results;
 }
@@ -543,6 +603,7 @@ export function searchLocalIndex(
     "eu_capitals",
     "countries_capitals",
     "eu_institutions",
+    "unesco_sites",
     "active_alerts",
     "app_places",
     "external",

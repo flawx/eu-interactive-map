@@ -5,6 +5,10 @@ export type MapLayerPreferences = {
   euCandidates: boolean;
   euCapitals: boolean;
   euMainInstitutions: boolean;
+  unescoWorldHeritage: boolean;
+  unescoCultural: boolean;
+  unescoNatural: boolean;
+  unescoMixed: boolean;
   majorWildfires: boolean;
   satelliteActiveFires: boolean;
   recentSatelliteHistory: boolean;
@@ -17,6 +21,10 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   euCandidates: false,
   euCapitals: false,
   euMainInstitutions: false,
+  unescoWorldHeritage: false,
+  unescoCultural: true,
+  unescoNatural: true,
+  unescoMixed: true,
   majorWildfires: false,
   satelliteActiveFires: false,
   recentSatelliteHistory: false,
@@ -32,6 +40,10 @@ const LAYER_KEYS = [
   "euCandidates",
   "euCapitals",
   "euMainInstitutions",
+  "unescoWorldHeritage",
+  "unescoCultural",
+  "unescoNatural",
+  "unescoMixed",
   "majorWildfires",
   "satelliteActiveFires",
   "recentSatelliteHistory",
@@ -85,6 +97,10 @@ export function saveMapLayerPreferences(
       euCandidates: Boolean(preferences.euCandidates),
       euCapitals: Boolean(preferences.euCapitals),
       euMainInstitutions: Boolean(preferences.euMainInstitutions),
+      unescoWorldHeritage: Boolean(preferences.unescoWorldHeritage),
+      unescoCultural: Boolean(preferences.unescoCultural),
+      unescoNatural: Boolean(preferences.unescoNatural),
+      unescoMixed: Boolean(preferences.unescoMixed),
       majorWildfires: Boolean(preferences.majorWildfires),
       satelliteActiveFires: Boolean(preferences.satelliteActiveFires),
       recentSatelliteHistory: Boolean(preferences.recentSatelliteHistory),

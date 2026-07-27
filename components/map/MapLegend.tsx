@@ -29,6 +29,14 @@ type MapLegendProps = {
   onToggleEuCapitals: (value: boolean) => void;
   showEuMainInstitutions: boolean;
   onToggleEuMainInstitutions: (value: boolean) => void;
+  showUnescoWorldHeritage: boolean;
+  onToggleUnescoWorldHeritage: (value: boolean) => void;
+  showUnescoCultural: boolean;
+  onToggleUnescoCultural: (value: boolean) => void;
+  showUnescoNatural: boolean;
+  onToggleUnescoNatural: (value: boolean) => void;
+  showUnescoMixed: boolean;
+  onToggleUnescoMixed: (value: boolean) => void;
   showWildfires: boolean;
   onToggleWildfires: (value: boolean) => void;
   showSatelliteActiveFires: boolean;
@@ -61,6 +69,14 @@ export default function MapLegend({
   onToggleEuCapitals,
   showEuMainInstitutions,
   onToggleEuMainInstitutions,
+  showUnescoWorldHeritage,
+  onToggleUnescoWorldHeritage,
+  showUnescoCultural,
+  onToggleUnescoCultural,
+  showUnescoNatural,
+  onToggleUnescoNatural,
+  showUnescoMixed,
+  onToggleUnescoMixed,
   showWildfires,
   onToggleWildfires,
   showSatelliteActiveFires,
@@ -102,6 +118,8 @@ export default function MapLegend({
     showEuMainInstitutions,
   ].filter(Boolean).length;
 
+  const tourismActive = showUnescoWorldHeritage ? 1 : 0;
+
   const alertsActive = [
     showWildfires,
     showSatelliteActiveFires,
@@ -115,6 +133,10 @@ export default function MapLegend({
     euCandidates: showCandidates,
     euCapitals: showEuCapitals,
     euMainInstitutions: showEuMainInstitutions,
+    unescoWorldHeritage: showUnescoWorldHeritage,
+    unescoCultural: showUnescoCultural,
+    unescoNatural: showUnescoNatural,
+    unescoMixed: showUnescoMixed,
     majorWildfires: showWildfires,
     satelliteActiveFires: showSatelliteActiveFires,
     recentSatelliteHistory: showSatelliteBurnedAreas,
@@ -275,11 +297,54 @@ export default function MapLegend({
           id="tourism"
           title={t.nav.tourism}
           icon={<Plane className="h-4 w-4 text-[#188038]" aria-hidden="true" />}
-          activeCount={0}
+          activeCount={tourismActive}
           expanded={expanded.tourism}
           onToggle={() => toggleCategory("tourism")}
         >
-          <EmptyCategory t={t} />
+          <LayerToggle
+            checked={showUnescoWorldHeritage}
+            onChange={onToggleUnescoWorldHeritage}
+            color="#1e3a8a"
+            label={t.legend.unescoWorldHeritage}
+            swatchClassName="rounded-full"
+          />
+          <p
+            className="px-2 pb-1 text-[10px] leading-snug"
+            style={{ color: "var(--map-ui-muted)" }}
+          >
+            {t.legend.unescoWorldHeritageDescription}
+          </p>
+          <div className="ml-2 space-y-1 border-l pl-2" style={{ borderColor: "var(--map-ui-border)" }}>
+            <LayerToggle
+              checked={showUnescoCultural}
+              onChange={onToggleUnescoCultural}
+              color="#7c3aed"
+              label={t.legend.unescoCultural}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showUnescoNatural}
+              onChange={onToggleUnescoNatural}
+              color="#15803d"
+              label={t.legend.unescoNatural}
+              swatchClassName="rounded-[3px]"
+            />
+            <LayerToggle
+              checked={showUnescoMixed}
+              onChange={onToggleUnescoMixed}
+              color="#0891b2"
+              label={t.legend.unescoMixed}
+              swatchClassName="rounded-[3px]"
+            />
+          </div>
+          {showUnescoWorldHeritage ? (
+            <p
+              className="px-2 pt-1 text-[10px] leading-snug"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.legend.unescoAttribution}
+            </p>
+          ) : null}
         </Category>
 
         <Category

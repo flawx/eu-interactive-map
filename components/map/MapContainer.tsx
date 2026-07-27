@@ -5,6 +5,7 @@ import {
   Map as MapLibreMap,
   Marker,
   LngLatBounds,
+  Popup,
   setWorkerUrl,
   type ErrorEvent as MapLibreErrorEvent,
   type GeoJSONSource,
@@ -24,6 +25,10 @@ import {
 } from "@/lib/europe/euInstitutions";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
+import {
+  UNESCO_WORLD_HERITAGE_SITES,
+  type UnescoSiteCategory,
+} from "@/lib/tourism/unescoWorldHeritage";
 import type {
   MapFocusRequest,
   TemporaryMapMarker,
@@ -96,6 +101,15 @@ function buildEffisWmsTileUrl(layers: string, timeRange: string): string {
   });
 
   return `${EFFIS_WMS_BASE}?${params.toString()}&BBOX={bbox-epsg-3857}`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function extendBoundsWithCoordinates(
@@ -533,6 +547,196 @@ function createEuInstitutionIcon(
   return { width: size, height: size, data: new Uint8Array(imageData.data.buffer) };
 }
 
+type UnescoCategoryFilters = {
+  cultural: boolean;
+  natural: boolean;
+  mixed: boolean;
+};
+
+function unescoIconImageId(
+  category: UnescoSiteCategory,
+  inDanger: boolean,
+): string {
+  return `unesco-icon-${category}${inDanger ? "-danger" : ""}`;
+}
+
+function buildUnescoCollection(
+  locale: Locale,
+  filters: UnescoCategoryFilters,
+): GeoJSON.FeatureCollection {
+  const tp = getMessages(locale).unescoPanel;
+
+  const categoryLabel = (category: UnescoSiteCategory) => {
+    switch (category) {
+      case "cultural":
+        return tp.cultural;
+      case "natural":
+        return tp.natural;
+      case "mixed":
+        return tp.mixed;
+    }
+  };
+
+  const sites = UNESCO_WORLD_HERITAGE_SITES.filter((site) => {
+    if (site.category === "cultural") return filters.cultural;
+    if (site.category === "natural") return filters.natural;
+    return filters.mixed;
+  });
+
+  return {
+    type: "FeatureCollection",
+    features: sites.map((site) => {
+      const inDanger = site.dangerStatus === "in-danger";
+      return {
+        type: "Feature",
+        id: site.unescoId,
+        properties: {
+          siteId: site.id,
+          unescoId: site.unescoId,
+          displayName: site.canonicalName,
+          countryCodes: JSON.stringify(site.countryCodes),
+          category: site.category,
+          categoryLabel: categoryLabel(site.category),
+          inscriptionYear: site.inscriptionYear,
+          dangerStatus: site.dangerStatus,
+          inDanger,
+          transboundary: site.transboundary,
+          serial: site.serial,
+          iconImageId: unescoIconImageId(site.category, inDanger),
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [site.longitude, site.latitude],
+        },
+      };
+    }),
+  };
+}
+
+const UNESCO_CATEGORY_COLORS: Record<UnescoSiteCategory, string> = {
+  cultural: "#7c3aed",
+  natural: "#15803d",
+  mixed: "#0891b2",
+};
+
+/**
+ * UNESCO site pin: colored medallion with a small pictogram, white stroke and
+ * soft shadow. When `inDanger` is true, a red ring/badge is added to flag the
+ * List of World Heritage in Danger status.
+ *
+ * Canvas is 64×64 at pixelRatio 2 → ~32×32 CSS px at icon-size 1.0.
+ */
+function createUnescoIcon(
+  category: UnescoSiteCategory,
+  inDanger: boolean,
+): { width: number; height: number; data: Uint8Array } {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return { width: size, height: size, data: new Uint8Array(size * size * 4) };
+  }
+
+  const color = UNESCO_CATEGORY_COLORS[category];
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = 17;
+
+  // soft shadow
+  ctx.beginPath();
+  ctx.arc(cx, cy + 2, radius, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.fill();
+
+  // white ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+
+  // category-colored disc
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // simple pictogram per category
+  ctx.fillStyle = "#ffffff";
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  if (category === "cultural") {
+    // classical pediment + columns
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 9, cy - 4);
+    ctx.lineTo(cx, cy - 10);
+    ctx.lineTo(cx + 9, cy - 4);
+    ctx.closePath();
+    ctx.fill();
+    for (const offset of [-6, 0, 6]) {
+      ctx.fillRect(cx + offset - 1.5, cy - 2, 3, 9);
+    }
+    ctx.fillRect(cx - 10, cy + 7, 20, 2.5);
+  } else if (category === "natural") {
+    // leaf
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 9);
+    ctx.quadraticCurveTo(cx + 10, cy - 6, cx, cy + 9);
+    ctx.quadraticCurveTo(cx - 10, cy - 6, cx, cy - 9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 7);
+    ctx.lineTo(cx, cy + 8);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  } else {
+    // mountain peaks
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 8);
+    ctx.lineTo(cx - 3, cy - 8);
+    ctx.lineTo(cx + 2, cy - 1);
+    ctx.lineTo(cx + 5, cy - 5);
+    ctx.lineTo(cx + 11, cy + 8);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  if (inDanger) {
+    // red outer ring + small badge to flag "in danger" status
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 1.5, 0, Math.PI * 2);
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "#ef4444";
+    ctx.stroke();
+
+    const bx = cx + radius - 3;
+    const by = cy - radius + 3;
+    ctx.beginPath();
+    ctx.arc(bx, by, 6.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#ef4444";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(bx, by, 6.5, 0, Math.PI * 2);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#ffffff";
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 9px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("!", bx, by + 0.5);
+  }
+
+  const imageData = ctx.getImageData(0, 0, size, size);
+  return { width: size, height: size, data: new Uint8Array(imageData.data.buffer) };
+}
+
 function siteSelectionCaseExpression(
   selectedSiteId: string | null,
   selectedValue: number,
@@ -582,6 +786,12 @@ export default function MapContainer({
   showEuMainInstitutions = false,
   selectedInstitutionSiteId = null,
   onInstitutionSiteSelect,
+  showUnescoWorldHeritage = false,
+  showUnescoCultural = true,
+  showUnescoNatural = true,
+  showUnescoMixed = true,
+  selectedUnescoSiteId = null,
+  onUnescoSiteSelect,
   wildfireIncidents,
   showWildfires,
   onWildfireSelect,
@@ -619,6 +829,12 @@ export default function MapContainer({
   showEuMainInstitutions?: boolean;
   selectedInstitutionSiteId?: string | null;
   onInstitutionSiteSelect?: (siteId: string | null) => void;
+  showUnescoWorldHeritage?: boolean;
+  showUnescoCultural?: boolean;
+  showUnescoNatural?: boolean;
+  showUnescoMixed?: boolean;
+  selectedUnescoSiteId?: string | null;
+  onUnescoSiteSelect?: (siteId: string | null) => void;
   wildfireIncidents: WildfireIncident[];
   showWildfires: boolean;
   onWildfireSelect: (incidentId: string | null) => void;
@@ -676,6 +892,19 @@ export default function MapContainer({
   selectedInstitutionSiteIdRef.current = selectedInstitutionSiteId;
   const onInstitutionSiteSelectRef = useRef(onInstitutionSiteSelect);
   onInstitutionSiteSelectRef.current = onInstitutionSiteSelect;
+  const showUnescoWorldHeritageRef = useRef(showUnescoWorldHeritage);
+  showUnescoWorldHeritageRef.current = showUnescoWorldHeritage;
+  const showUnescoCulturalRef = useRef(showUnescoCultural);
+  showUnescoCulturalRef.current = showUnescoCultural;
+  const showUnescoNaturalRef = useRef(showUnescoNatural);
+  showUnescoNaturalRef.current = showUnescoNatural;
+  const showUnescoMixedRef = useRef(showUnescoMixed);
+  showUnescoMixedRef.current = showUnescoMixed;
+  const selectedUnescoSiteIdRef = useRef(selectedUnescoSiteId);
+  selectedUnescoSiteIdRef.current = selectedUnescoSiteId;
+  const onUnescoSiteSelectRef = useRef(onUnescoSiteSelect);
+  onUnescoSiteSelectRef.current = onUnescoSiteSelect;
+  const unescoPopupRef = useRef<Popup | null>(null);
   const localeRef = useRef(locale);
   localeRef.current = locale;
   const onWildfireSelectRef = useRef(onWildfireSelect);
@@ -997,6 +1226,84 @@ export default function MapContainer({
       if (typeof siteId === "string") {
         onInstitutionSiteSelectRef.current?.(siteId);
       }
+    };
+
+    const handleUnescoClusterClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const clusterId = feature?.properties?.cluster_id;
+      if (typeof clusterId !== "number") return;
+
+      const source = map.getSource(
+        "unesco-world-heritage-sites",
+      ) as GeoJSONSource | undefined;
+      if (!source) return;
+
+      source
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          if (!feature?.geometry || feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          map.easeTo({
+            center: [lng, lat],
+            zoom,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
+            duration: 500,
+          });
+        })
+        .catch(() => {
+          // Ignore expansion-zoom lookup failures (e.g. source not ready yet).
+        });
+    };
+
+    const handleUnescoPointClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const siteId = feature?.properties?.siteId;
+      if (typeof siteId === "string") {
+        onUnescoSiteSelectRef.current?.(siteId);
+      }
+    };
+
+    const showUnescoPopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+
+      const { displayName, categoryLabel, inscriptionYear } =
+        feature.properties ?? {};
+      if (typeof displayName !== "string") return;
+
+      const coordinates = feature.geometry.coordinates.slice() as [
+        number,
+        number,
+      ];
+
+      if (!unescoPopupRef.current) {
+        unescoPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 14,
+          className: "unesco-hover-popup",
+        });
+      }
+
+      unescoPopupRef.current
+        .setLngLat(coordinates)
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:180px;">${escapeHtml(
+            String(displayName),
+          )}</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${escapeHtml(
+            String(categoryLabel ?? ""),
+          )}${
+            inscriptionYear ? ` · ${escapeHtml(String(inscriptionYear))}` : ""
+          }</div>`,
+        )
+        .addTo(map);
+    };
+
+    const hideUnescoPopup = () => {
+      resetCursor();
+      unescoPopupRef.current?.remove();
     };
 
     const handleEffisSnapshotClick = (event: MapLayerMouseEvent) => {
@@ -1922,6 +2229,166 @@ export default function MapContainer({
         });
       }
 
+      if (!map.getSource("unesco-world-heritage-sites")) {
+        map.addSource("unesco-world-heritage-sites", {
+          type: "geojson",
+          data: buildUnescoCollection(localeRef.current, {
+            cultural: showUnescoCulturalRef.current,
+            natural: showUnescoNaturalRef.current,
+            mixed: showUnescoMixedRef.current,
+          }),
+          promoteId: "siteId",
+          cluster: true,
+          clusterMaxZoom: 7,
+          clusterRadius: 45,
+        });
+      }
+
+      const unescoCategories: UnescoSiteCategory[] = [
+        "cultural",
+        "natural",
+        "mixed",
+      ];
+      for (const category of unescoCategories) {
+        for (const inDanger of [false, true]) {
+          const imageId = unescoIconImageId(category, inDanger);
+          if (!map.hasImage(imageId)) {
+            map.addImage(imageId, createUnescoIcon(category, inDanger), {
+              pixelRatio: 2,
+            });
+          }
+        }
+      }
+
+      if (!map.getLayer("unesco-clusters")) {
+        map.addLayer({
+          id: "unesco-clusters",
+          type: "circle",
+          source: "unesco-world-heritage-sites",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showUnescoWorldHeritageRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-color": "#1e3a8a",
+            "circle-opacity": 0.85,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              14,
+              10,
+              18,
+              50,
+              22,
+              200,
+              26,
+            ],
+          },
+        });
+      }
+
+      if (!map.getLayer("unesco-cluster-count")) {
+        map.addLayer({
+          id: "unesco-cluster-count",
+          type: "symbol",
+          source: "unesco-world-heritage-sites",
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: showUnescoWorldHeritageRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-font": ["Noto Sans Bold"],
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+          },
+          paint: {
+            "text-color": "#ffffff",
+          },
+        });
+      }
+
+      if (!map.getLayer("unesco-world-heritage-halo")) {
+        map.addLayer({
+          id: "unesco-world-heritage-halo",
+          type: "circle",
+          source: "unesco-world-heritage-sites",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showUnescoWorldHeritageRef.current
+              ? "visible"
+              : "none",
+          },
+          paint: {
+            "circle-radius": siteSelectionCaseExpression(
+              selectedUnescoSiteIdRef.current,
+              22,
+              0,
+            ),
+            "circle-color": "#facc15",
+            "circle-opacity": 0.3,
+          },
+        });
+      }
+
+      if (!map.getLayer("unesco-world-heritage-symbol")) {
+        map.addLayer({
+          id: "unesco-world-heritage-symbol",
+          type: "symbol",
+          source: "unesco-world-heritage-sites",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: showUnescoWorldHeritageRef.current
+              ? "visible"
+              : "none",
+            "icon-image": ["get", "iconImageId"],
+            "icon-size": siteSelectionCaseExpression(
+              selectedUnescoSiteIdRef.current,
+              1.15,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
+          },
+        });
+      }
+
+      if (!map.getLayer("unesco-world-heritage-labels")) {
+        map.addLayer({
+          id: "unesco-world-heritage-labels",
+          type: "symbol",
+          source: "unesco-world-heritage-sites",
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 7,
+          layout: {
+            visibility: showUnescoWorldHeritageRef.current
+              ? "visible"
+              : "none",
+            "text-field": ["get", "displayName"],
+            "text-size": 11,
+            "text-offset": [0, 1.4],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#1e3a8a",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       // Reorder so brown (7d history) sits below red (24h active) which sits
       // below the EFFIS layers, all stacked above the base country layers.
       const layerStackOrder = [
@@ -1943,6 +2410,11 @@ export default function MapContainer({
         "eu-main-institutions-halo",
         "eu-main-institutions-symbol",
         "eu-main-institutions-label",
+        "unesco-world-heritage-halo",
+        "unesco-world-heritage-symbol",
+        "unesco-world-heritage-labels",
+        "unesco-clusters",
+        "unesco-cluster-count",
         "user-location-accuracy",
         "user-location-halo",
         "user-location-pulse",
@@ -1980,6 +2452,12 @@ export default function MapContainer({
       map.on("click", "eu-main-institutions-symbol", handleInstitutionSiteClick);
       map.on("mouseenter", "eu-main-institutions-symbol", setPointerCursor);
       map.on("mouseleave", "eu-main-institutions-symbol", resetCursor);
+      map.on("click", "unesco-clusters", handleUnescoClusterClick);
+      map.on("mouseenter", "unesco-clusters", setPointerCursor);
+      map.on("mouseleave", "unesco-clusters", resetCursor);
+      map.on("click", "unesco-world-heritage-symbol", handleUnescoPointClick);
+      map.on("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
+      map.on("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
       map.on("click", handleEffisBurnedAreaClick);
 
       // Re-run GeoJSON sync effects that may have run before sources existed
@@ -2036,6 +2514,13 @@ export default function MapContainer({
       );
       map.off("mouseenter", "eu-main-institutions-symbol", setPointerCursor);
       map.off("mouseleave", "eu-main-institutions-symbol", resetCursor);
+      map.off("click", "unesco-clusters", handleUnescoClusterClick);
+      map.off("mouseenter", "unesco-clusters", setPointerCursor);
+      map.off("mouseleave", "unesco-clusters", resetCursor);
+      map.off("click", "unesco-world-heritage-symbol", handleUnescoPointClick);
+      map.off("mouseenter", "unesco-world-heritage-symbol", showUnescoPopup);
+      map.off("mouseleave", "unesco-world-heritage-symbol", hideUnescoPopup);
+      unescoPopupRef.current?.remove();
       map.off("click", handleEffisBurnedAreaClick);
 
       effisRequestControllerRef.current?.abort();
@@ -2377,6 +2862,69 @@ export default function MapContainer({
       );
     }
   }, [selectedInstitutionSiteId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const visibility = showUnescoWorldHeritage ? "visible" : "none";
+    for (const layerId of [
+      "unesco-world-heritage-halo",
+      "unesco-world-heritage-symbol",
+      "unesco-world-heritage-labels",
+      "unesco-clusters",
+      "unesco-cluster-count",
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showUnescoWorldHeritage, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const source = map.getSource(
+      "unesco-world-heritage-sites",
+    ) as GeoJSONSource | undefined;
+    if (!source) return;
+
+    source.setData(
+      buildUnescoCollection(locale, {
+        cultural: showUnescoCultural,
+        natural: showUnescoNatural,
+        mixed: showUnescoMixed,
+      }),
+    );
+  }, [
+    locale,
+    showUnescoCultural,
+    showUnescoNatural,
+    showUnescoMixed,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getLayer("unesco-world-heritage-halo")) {
+      map.setPaintProperty(
+        "unesco-world-heritage-halo",
+        "circle-radius",
+        siteSelectionCaseExpression(selectedUnescoSiteId, 22, 0),
+      );
+    }
+
+    if (map.getLayer("unesco-world-heritage-symbol")) {
+      map.setLayoutProperty(
+        "unesco-world-heritage-symbol",
+        "icon-size",
+        siteSelectionCaseExpression(selectedUnescoSiteId, 1.15, 1),
+      );
+    }
+  }, [selectedUnescoSiteId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;
