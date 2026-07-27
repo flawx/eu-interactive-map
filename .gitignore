@@ -45,3 +45,8 @@ next-env.d.ts
 # local UNESCO download scratch
 .tmp-unesco/
 .tmp-unesco-context/
+
+# GISCO / UNESCO import caches (downloaded by scripts)
+data/.countries-*.geojson
+data/.gisco-countries-*.geojson
+data/.unesco-world-heritage.*.download.xml

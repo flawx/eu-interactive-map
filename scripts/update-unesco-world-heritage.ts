@@ -5,14 +5,30 @@
  * Official source:
  * https://whc.unesco.org/en/list/xml/
  *
- * Atomic write: temp file → validate → replace final JSON only on success.
+ * Pipeline:
+ * 1. download official XML
+ * 2. normalize rows
+ * 3. validate coordinates
+ * 4. resolve containing European territory (GISCO geometries)
+ * 5. verify allowed map country
+ * 6. verify European perimeter (not overseas / Anatolia / Maghreb / …)
+ * 7. atomic write of local JSON only after full validation
  */
 
 import fs from "fs";
 import path from "path";
 import { spawnSync } from "child_process";
 import {
-  isPointInUnescoEuropeCoverage,
+  buildEuropeanTerritoryIndex,
+  buildWorldCountryIndex,
+  GISCO_COUNTRIES_10M_URL,
+  isAllowedUnescoMapCountry,
+  resolveEuropeanTerritory,
+  type EuropeanTerritoryEntry,
+  type GiscoCountryFeatureCollection,
+  type WorldCountryEntry,
+} from "../lib/tourism/unescoEuropeCoverage";
+import {
   summarizeUnescoSites,
   validateUnescoWorldHeritageSites,
   type UnescoDangerStatus,
@@ -23,6 +39,7 @@ import {
 
 const OFFICIAL_XML_URL = "https://whc.unesco.org/en/list/xml/";
 const FETCH_TIMEOUT_MS = 30_000;
+const GISCO_TIMEOUT_MS = 120_000;
 const USER_AGENT =
   "EUInteractiveMap/0.1 (educational; UNESCO list import; contact: local-dev)";
 
@@ -33,6 +50,21 @@ const TEMP_DOWNLOAD_PATH = path.join(
   DATA_DIR,
   `.unesco-world-heritage.${process.pid}.download.xml`,
 );
+const GISCO_CACHE_PATH = path.join(
+  DATA_DIR,
+  ".gisco-countries-10m-2024.geojson",
+);
+
+type ExclusionReason =
+  | "invalid-coordinates"
+  | "outside-european-territory"
+  | "forbidden-or-disallowed-country";
+
+type ExclusionStat = {
+  reason: ExclusionReason;
+  resolvedOrHint: string;
+  count: number;
+};
 
 function decodeXmlEntities(value: string): string {
   return value
@@ -40,10 +72,14 @@ function decodeXmlEntities(value: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+      String.fromCodePoint(Number.parseInt(hex, 16)),
+    )
     .replace(/&#(\d+);/g, (_, code) =>
-      String.fromCharCode(Number.parseInt(code, 10)),
-    );
+      String.fromCodePoint(Number.parseInt(code, 10)),
+    )
+    .replace(/&amp;/g, "&");
 }
 
 function stripHtml(value: string): string {
@@ -104,7 +140,6 @@ function parseDanger(raw: string | null): {
     return { status: "not-in-danger", years: [] };
   }
   const years = parseYearsList(trimmed);
-  // Active danger entries typically start with "Y"
   if (/^Y\b/i.test(trimmed)) {
     return { status: "in-danger", years };
   }
@@ -138,28 +173,40 @@ function parsePois(row: string): Array<{
 function pickRepresentativePoint(
   row: string,
   pois: Array<{ latitude: number; longitude: number; iso2: string | null }>,
-): { latitude: number; longitude: number } | null {
-  const europeanPois = pois.filter((poi) =>
-    isPointInUnescoEuropeCoverage(poi.longitude, poi.latitude),
-  );
-  if (europeanPois.length > 0) {
-    const lat =
-      europeanPois.reduce((sum, poi) => sum + poi.latitude, 0) /
-      europeanPois.length;
-    const lon =
-      europeanPois.reduce((sum, poi) => sum + poi.longitude, 0) /
-      europeanPois.length;
-    return { latitude: lat, longitude: lon };
+  territoryIndex: readonly EuropeanTerritoryEntry[],
+  worldIndex: readonly WorldCountryEntry[],
+): {
+  latitude: number;
+  longitude: number;
+  resolvedCountryCode: string;
+} | null {
+  const candidates: Array<{ latitude: number; longitude: number }> = [];
+
+  for (const poi of pois) {
+    candidates.push({ latitude: poi.latitude, longitude: poi.longitude });
   }
 
   const lat = Number.parseFloat(tagValue(row, "latitude") ?? "");
   const lon = Number.parseFloat(tagValue(row, "longitude") ?? "");
-  if (
-    Number.isFinite(lat) &&
-    Number.isFinite(lon) &&
-    isPointInUnescoEuropeCoverage(lon, lat)
-  ) {
-    return { latitude: lat, longitude: lon };
+  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    candidates.push({ latitude: lat, longitude: lon });
+  }
+
+  // Prefer a point that itself lies in European coverage (transboundary rule).
+  for (const candidate of candidates) {
+    const resolved = resolveEuropeanTerritory(
+      candidate.longitude,
+      candidate.latitude,
+      territoryIndex,
+      worldIndex,
+    );
+    if (resolved && isAllowedUnescoMapCountry(resolved)) {
+      return {
+        latitude: candidate.latitude,
+        longitude: candidate.longitude,
+        resolvedCountryCode: resolved,
+      };
+    }
   }
 
   return null;
@@ -168,20 +215,81 @@ function pickRepresentativePoint(
 function parseRow(
   row: string,
   importedAt: string,
-): UnescoWorldHeritageSite | null {
+  territoryIndex: readonly EuropeanTerritoryEntry[],
+  worldIndex: readonly WorldCountryEntry[],
+): {
+  site: UnescoWorldHeritageSite | null;
+  exclusion?: { reason: ExclusionReason; hint: string };
+} {
   const idRaw = tagValue(row, "id_number");
   const unescoId = idRaw ? Number.parseInt(idRaw, 10) : NaN;
-  if (!Number.isInteger(unescoId)) return null;
+  if (!Number.isInteger(unescoId)) {
+    return {
+      site: null,
+      exclusion: { reason: "invalid-coordinates", hint: "bad-id" },
+    };
+  }
 
   const name = stripHtml(tagValue(row, "site") ?? "");
-  if (!name) return null;
+  if (!name) {
+    return {
+      site: null,
+      exclusion: { reason: "invalid-coordinates", hint: "missing-name" },
+    };
+  }
 
   const category = parseCategory(tagValue(row, "category"));
-  if (!category) return null;
+  if (!category) {
+    return {
+      site: null,
+      exclusion: { reason: "invalid-coordinates", hint: "bad-category" },
+    };
+  }
 
   const pois = parsePois(row);
-  const point = pickRepresentativePoint(row, pois);
-  if (!point) return null;
+  const primaryLat = Number.parseFloat(tagValue(row, "latitude") ?? "");
+  const primaryLon = Number.parseFloat(tagValue(row, "longitude") ?? "");
+  const hasAnyCoord =
+    pois.length > 0 ||
+    (Number.isFinite(primaryLat) && Number.isFinite(primaryLon));
+
+  if (!hasAnyCoord) {
+    return {
+      site: null,
+      exclusion: { reason: "invalid-coordinates", hint: `id:${unescoId}` },
+    };
+  }
+
+  const point = pickRepresentativePoint(
+    row,
+    pois,
+    territoryIndex,
+    worldIndex,
+  );
+  if (!point) {
+    const isoHint =
+      mapIsoToMapCode(tagValue(row, "iso_code")?.split(",")[0] ?? "") ??
+      (Number.isFinite(primaryLon) && Number.isFinite(primaryLat)
+        ? `${primaryLon.toFixed(2)},${primaryLat.toFixed(2)}`
+        : "unknown");
+    return {
+      site: null,
+      exclusion: {
+        reason: "outside-european-territory",
+        hint: isoHint,
+      },
+    };
+  }
+
+  if (!isAllowedUnescoMapCountry(point.resolvedCountryCode)) {
+    return {
+      site: null,
+      exclusion: {
+        reason: "forbidden-or-disallowed-country",
+        hint: point.resolvedCountryCode,
+      },
+    };
+  }
 
   const isoCodes = (tagValue(row, "iso_code") ?? "")
     .split(",")
@@ -195,7 +303,9 @@ function parseRow(
     }
   }
   const uniqueCountries = [...new Set(countryCodes)];
-  if (uniqueCountries.length === 0) return null;
+  if (uniqueCountries.length === 0) {
+    uniqueCountries.push(point.resolvedCountryCode);
+  }
 
   const stateParties = (tagValue(row, "states") ?? "")
     .split(",")
@@ -203,7 +313,12 @@ function parseRow(
     .filter(Boolean);
 
   const inscribed = Number.parseInt(tagValue(row, "date_inscribed") ?? "", 10);
-  if (!Number.isInteger(inscribed)) return null;
+  if (!Number.isInteger(inscribed)) {
+    return {
+      site: null,
+      exclusion: { reason: "invalid-coordinates", hint: `id:${unescoId}` },
+    };
+  }
 
   const danger = parseDanger(tagValue(row, "danger"));
   const transnational = tagValue(row, "transnational") === "1";
@@ -213,47 +328,50 @@ function parseRow(
     `https://whc.unesco.org/en/list/${unescoId}`;
 
   if (!officialUrl.startsWith("https://whc.unesco.org/")) {
-    return null;
+    return {
+      site: null,
+      exclusion: { reason: "invalid-coordinates", hint: `id:${unescoId}` },
+    };
   }
 
   const shortDescriptionRaw = tagValue(row, "short_description");
   const justificationRaw = tagValue(row, "justification");
 
   return {
-    id: `unesco-${unescoId}`,
-    unescoId,
-    canonicalName: name,
-    countryCodes: uniqueCountries,
-    stateParties:
-      stateParties.length > 0 ? stateParties : uniqueCountries.slice(),
-    category,
-    latitude: point.latitude,
-    longitude: point.longitude,
-    inscriptionYear: inscribed,
-    extensionYears: parseYearsList(tagValue(row, "secondary_dates")),
-    criteria: parseCriteria(tagValue(row, "criteria_txt")),
-    areaHectares: null,
-    bufferZoneHectares: null,
-    dangerStatus: danger.status,
-    dangerYears: danger.years,
-    transboundary: transnational || uniqueCountries.length > 1,
-    serial,
-    officialUrl,
-    region: tagValue(row, "regions"),
-    location: tagValue(row, "location"),
-    shortDescription: shortDescriptionRaw
-      ? stripHtml(shortDescriptionRaw)
-      : null,
-    justification: justificationRaw ? stripHtml(justificationRaw) : null,
-    importedAt,
+    site: {
+      id: `unesco-${unescoId}`,
+      unescoId,
+      canonicalName: name,
+      countryCodes: uniqueCountries,
+      stateParties:
+        stateParties.length > 0 ? stateParties : uniqueCountries.slice(),
+      category,
+      latitude: point.latitude,
+      longitude: point.longitude,
+      inscriptionYear: inscribed,
+      extensionYears: parseYearsList(tagValue(row, "secondary_dates")),
+      criteria: parseCriteria(tagValue(row, "criteria_txt")),
+      areaHectares: null,
+      bufferZoneHectares: null,
+      dangerStatus: danger.status,
+      dangerYears: danger.years,
+      transboundary: transnational || uniqueCountries.length > 1,
+      serial,
+      officialUrl,
+      region: tagValue(row, "regions"),
+      location: tagValue(row, "location"),
+      shortDescription: shortDescriptionRaw
+        ? stripHtml(shortDescriptionRaw)
+        : null,
+      justification: justificationRaw ? stripHtml(justificationRaw) : null,
+      importedAt,
+      resolvedCountryCode: point.resolvedCountryCode,
+      resolvedEuropeanTerritory: true,
+    },
   };
 }
 
-async function downloadOfficialXml(): Promise<{
-  text: string;
-  contentType: string | null;
-}> {
-  // Prefer curl: Cloudflare often blocks bare Node fetch with 403.
+function curlDownload(url: string, outPath: string, timeoutMs: number): boolean {
   const curlBin = process.platform === "win32" ? "curl.exe" : "curl";
   const curlResult = spawnSync(
     curlBin,
@@ -262,26 +380,27 @@ async function downloadOfficialXml(): Promise<{
       "-A",
       USER_AGENT,
       "-H",
-      "Accept: application/xml,text/xml,*/*",
+      "Accept: application/xml,application/json,text/xml,*/*",
       "--max-time",
-      String(Math.ceil(FETCH_TIMEOUT_MS / 1000)),
+      String(Math.ceil(timeoutMs / 1000)),
       "-o",
-      TEMP_DOWNLOAD_PATH,
-      "-w",
-      "%{content_type}",
-      OFFICIAL_XML_URL,
+      outPath,
+      url,
     ],
     { encoding: "utf8" },
   );
+  return curlResult.status === 0 && fs.existsSync(outPath);
+}
 
-  if (curlResult.status === 0 && fs.existsSync(TEMP_DOWNLOAD_PATH)) {
+async function downloadOfficialXml(): Promise<{
+  text: string;
+  contentType: string | null;
+}> {
+  if (curlDownload(OFFICIAL_XML_URL, TEMP_DOWNLOAD_PATH, FETCH_TIMEOUT_MS)) {
     const text = fs.readFileSync(TEMP_DOWNLOAD_PATH, "utf8");
     fs.unlinkSync(TEMP_DOWNLOAD_PATH);
     if (text.includes("<query") && text.includes("<row>")) {
-      return {
-        text,
-        contentType: (curlResult.stdout || "text/xml").trim() || "text/xml",
-      };
+      return { text, contentType: "text/xml" };
     }
   }
 
@@ -319,11 +438,51 @@ async function downloadOfficialXml(): Promise<{
   return { text, contentType };
 }
 
+async function loadGiscoCountries(): Promise<GiscoCountryFeatureCollection> {
+  if (fs.existsSync(GISCO_CACHE_PATH)) {
+    const cached = fs.readFileSync(GISCO_CACHE_PATH, "utf8");
+    if (cached.includes("FeatureCollection") && cached.includes("CNTR_ID")) {
+      console.log(`Using cached GISCO countries: ${GISCO_CACHE_PATH}`);
+      return JSON.parse(cached) as GiscoCountryFeatureCollection;
+    }
+  }
+
+  console.log(`Downloading GISCO countries from ${GISCO_COUNTRIES_10M_URL} …`);
+  const tempPath = `${GISCO_CACHE_PATH}.${process.pid}.tmp`;
+  if (!curlDownload(GISCO_COUNTRIES_10M_URL, tempPath, GISCO_TIMEOUT_MS)) {
+    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+    throw new Error("Failed to download GISCO country geometries");
+  }
+
+  const text = fs.readFileSync(tempPath, "utf8");
+  if (!text.includes("FeatureCollection") || !text.includes("CNTR_ID")) {
+    fs.unlinkSync(tempPath);
+    throw new Error("GISCO payload is not a country FeatureCollection");
+  }
+
+  fs.renameSync(tempPath, GISCO_CACHE_PATH);
+  return JSON.parse(text) as GiscoCountryFeatureCollection;
+}
+
 function writeAtomically(filePath: string, contents: string): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   fs.writeFileSync(tempPath, contents, "utf8");
   fs.renameSync(tempPath, filePath);
+}
+
+function bumpExclusion(
+  map: Map<string, ExclusionStat>,
+  reason: ExclusionReason,
+  hint: string,
+): void {
+  const key = `${reason}::${hint}`;
+  const existing = map.get(key);
+  if (existing) {
+    existing.count += 1;
+    return;
+  }
+  map.set(key, { reason, resolvedOrHint: hint, count: 1 });
 }
 
 async function main() {
@@ -338,10 +497,36 @@ async function main() {
     throw new Error(`Unexpectedly few rows in UNESCO XML (${rows.length})`);
   }
 
+  const gisco = await loadGiscoCountries();
+  const territoryIndex = buildEuropeanTerritoryIndex(gisco);
+  const worldIndex = buildWorldCountryIndex(gisco);
+  if (territoryIndex.length < 30) {
+    throw new Error(
+      `European territory index too small (${territoryIndex.length})`,
+    );
+  }
+  console.log(
+    `European territory index: ${territoryIndex.length} countries/territories`,
+  );
+
   const sites: UnescoWorldHeritageSite[] = [];
+  const exclusions = new Map<string, ExclusionStat>();
+  let excludedCount = 0;
+
   for (const row of rows) {
-    const parsed = parseRow(row, importedAt);
-    if (parsed) sites.push(parsed);
+    const parsed = parseRow(row, importedAt, territoryIndex, worldIndex);
+    if (parsed.site) {
+      sites.push(parsed.site);
+      continue;
+    }
+    excludedCount += 1;
+    if (parsed.exclusion) {
+      bumpExclusion(
+        exclusions,
+        parsed.exclusion.reason,
+        parsed.exclusion.hint,
+      );
+    }
   }
 
   sites.sort((a, b) => a.unescoId - b.unescoId);
@@ -367,10 +552,15 @@ async function main() {
   const payload = `${JSON.stringify(dataset, null, 2)}\n`;
   writeAtomically(OUTPUT_PATH, payload);
 
+  const topExclusions = [...exclusions.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 40);
+
   console.log("UNESCO World Heritage import complete.");
   console.log(`  content-type : ${contentType ?? "n/a"}`);
   console.log(`  source rows  : ${rows.length}`);
   console.log(`  europe sites : ${summary.total}`);
+  console.log(`  excluded     : ${excludedCount}`);
   console.log(`  cultural     : ${summary.cultural}`);
   console.log(`  natural      : ${summary.natural}`);
   console.log(`  mixed        : ${summary.mixed}`);
@@ -378,6 +568,12 @@ async function main() {
   console.log(`  transboundary: ${summary.transboundary}`);
   console.log(`  serial       : ${summary.serial}`);
   console.log(`  written to   : ${OUTPUT_PATH}`);
+  console.log("  top exclusions:");
+  for (const item of topExclusions) {
+    console.log(
+      `    [${item.reason}] ${item.resolvedOrHint}: ${item.count}`,
+    );
+  }
 }
 
 main().catch((error: unknown) => {

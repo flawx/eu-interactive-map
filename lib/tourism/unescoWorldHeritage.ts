@@ -1,4 +1,10 @@
 import rawSites from "@/data/unesco-world-heritage-europe.json";
+import {
+  isAllowedUnescoMapCountry,
+  isForbiddenUnescoCountry,
+  UNESCO_EUROPE_MAP_BOUNDS,
+  UNESCO_MAP_COUNTRY_CODES,
+} from "@/lib/tourism/unescoEuropeCoverage";
 
 export type UnescoSiteCategory = "cultural" | "natural" | "mixed";
 
@@ -28,6 +34,10 @@ export type UnescoWorldHeritageSite = {
   shortDescription: string | null;
   justification: string | null;
   importedAt: string;
+  /** ISO / GISCO country code containing the representative point. */
+  resolvedCountryCode?: string;
+  /** True when the point lies in the European map coverage. */
+  resolvedEuropeanTerritory?: boolean;
 };
 
 export type UnescoWorldHeritageDataset = {
@@ -40,26 +50,10 @@ export type UnescoWorldHeritageDataset = {
   sites: UnescoWorldHeritageSite[];
 };
 
-/** Approximate geographic coverage of the interactive Europe map. */
-export const UNESCO_EUROPE_BBOX = {
-  minLongitude: -25,
-  maxLongitude: 45,
-  minLatitude: 30,
-  maxLatitude: 72,
-} as const;
+/** @deprecated Prefer UNESCO_EUROPE_MAP_BOUNDS — kept for call-site compatibility. */
+export const UNESCO_EUROPE_BBOX = UNESCO_EUROPE_MAP_BOUNDS;
 
-export const UNESCO_MAP_COUNTRY_CODES = [
-  // EU members (map codes; Greece = EL)
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "EL",
-  "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK",
-  "SI", "ES", "SE",
-  // Schengen non-EU
-  "IS", "LI", "NO", "CH",
-  // Official candidates / Eastern partners already on the map
-  "AL", "BA", "GE", "MD", "ME", "MK", "RS", "TR", "UA",
-  // Other European states present in the country dataset / search index
-  "UK", "XK",
-] as const;
+export { UNESCO_MAP_COUNTRY_CODES };
 
 const dataset = rawSites as UnescoWorldHeritageDataset;
 
@@ -87,10 +81,10 @@ export function isPointInUnescoEuropeCoverage(
   return (
     Number.isFinite(longitude) &&
     Number.isFinite(latitude) &&
-    longitude >= UNESCO_EUROPE_BBOX.minLongitude &&
-    longitude <= UNESCO_EUROPE_BBOX.maxLongitude &&
-    latitude >= UNESCO_EUROPE_BBOX.minLatitude &&
-    latitude <= UNESCO_EUROPE_BBOX.maxLatitude
+    longitude >= UNESCO_EUROPE_MAP_BOUNDS.minLongitude &&
+    longitude <= UNESCO_EUROPE_MAP_BOUNDS.maxLongitude &&
+    latitude >= UNESCO_EUROPE_MAP_BOUNDS.minLatitude &&
+    latitude <= UNESCO_EUROPE_MAP_BOUNDS.maxLatitude
   );
 }
 
@@ -132,6 +126,22 @@ export function validateUnescoWorldHeritageSites(
       !isPointInUnescoEuropeCoverage(site.longitude, site.latitude)
     ) {
       errors.push(`Site outside European coverage: ${site.id}`);
+    }
+
+    if (!site.resolvedCountryCode) {
+      errors.push(`Missing resolvedCountryCode for ${site.id}`);
+    } else if (!isAllowedUnescoMapCountry(site.resolvedCountryCode)) {
+      errors.push(
+        `resolvedCountryCode not in map perimeter: ${site.id} (${site.resolvedCountryCode})`,
+      );
+    } else if (isForbiddenUnescoCountry(site.resolvedCountryCode)) {
+      errors.push(
+        `Forbidden resolvedCountryCode: ${site.id} (${site.resolvedCountryCode})`,
+      );
+    }
+
+    if (site.resolvedEuropeanTerritory !== true) {
+      errors.push(`resolvedEuropeanTerritory not true for ${site.id}`);
     }
 
     if (
