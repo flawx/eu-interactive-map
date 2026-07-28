@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import EffisBurnedAreaPanel from "@/components/incidents/EffisBurnedAreaPanel";
 import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel";
+import AlertDetailsPanel from "@/components/alerts/AlertDetailsPanel";
 import AppHeader from "@/components/layout/AppHeader";
 import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
 import CapitalCityPanel from "@/components/europe/CapitalCityPanel";
@@ -98,6 +99,13 @@ import {
   type UserLocationStatus,
 } from "@/lib/map/userLocation";
 import type { MapSearchResult } from "@/lib/search/mapSearch";
+import type {
+  AlertApiResponse,
+  AlertConnectorStatus,
+  NormalizedAlert,
+} from "@/lib/alerts/types";
+import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
+import type { WildfireWind } from "@/lib/alerts/wind";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
 const FIRMS_HISTORY_UNAVAILABLE_TIMEOUT_MS = 25_000;
@@ -335,6 +343,53 @@ export default function MapInterface() {
   const [showSatelliteBurnedAreas, setShowSatelliteBurnedAreas] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.recentSatelliteHistory,
   );
+  const [showWildfireWind, setShowWildfireWind] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.wildfireWind,
+  );
+  const [showOfficialWeatherWarnings, setShowOfficialWeatherWarnings] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.officialWeatherWarnings,
+  );
+  const [showWeatherHeavyRain, setShowWeatherHeavyRain] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherHeavyRain,
+  );
+  const [showWeatherFlood, setShowWeatherFlood] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherFlood,
+  );
+  const [showWeatherStrongWind, setShowWeatherStrongWind] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherStrongWind,
+  );
+  const [showWeatherThunderstorm, setShowWeatherThunderstorm] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherThunderstorm,
+  );
+  const [showWeatherHail, setShowWeatherHail] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherHail,
+  );
+  const [showWeatherSnowIce, setShowWeatherSnowIce] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherSnowIce,
+  );
+  const [showWeatherCoastal, setShowWeatherCoastal] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherCoastal,
+  );
+  const [showWeatherOther, setShowWeatherOther] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.weatherOther,
+  );
+  const [showMajorFloodAlerts, setShowMajorFloodAlerts] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorFloodAlerts,
+  );
+  const [showObservedFloodExtent, setShowObservedFloodExtent] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.observedFloodExtent,
+  );
+  const [showMajorStorms, setShowMajorStorms] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorStorms,
+  );
+  const [normalizedAlerts, setNormalizedAlerts] = useState<NormalizedAlert[]>([]);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [alertConnectorStatus, setAlertConnectorStatus] = useState<
+    Record<string, AlertConnectorStatus>
+  >({});
+  const [copernicusFloodStatus, setCopernicusFloodStatus] =
+    useState<CopernicusFloodLayerStatus | null>(null);
+  const [wildfireWinds, setWildfireWinds] = useState<WildfireWind[]>([]);
   const [selectedWildfireId, setSelectedWildfireId] = useState<string | null>(
     null,
   );
@@ -413,6 +468,10 @@ export default function MapInterface() {
       null,
     [wildfireIncidents, selectedWildfireId],
   );
+  const selectedAlert = useMemo(
+    () => normalizedAlerts.find((alert) => alert.id === selectedAlertId) ?? null,
+    [normalizedAlerts, selectedAlertId],
+  );
 
   const selectedTemporaryControl = useMemo(
     () =>
@@ -477,6 +536,19 @@ export default function MapInterface() {
     setShowWildfires(prefs.majorWildfires);
     setShowSatelliteActiveFires(prefs.satelliteActiveFires);
     setShowSatelliteBurnedAreas(prefs.recentSatelliteHistory);
+    setShowWildfireWind(prefs.wildfireWind);
+    setShowOfficialWeatherWarnings(prefs.officialWeatherWarnings);
+    setShowWeatherHeavyRain(prefs.weatherHeavyRain);
+    setShowWeatherFlood(prefs.weatherFlood);
+    setShowWeatherStrongWind(prefs.weatherStrongWind);
+    setShowWeatherThunderstorm(prefs.weatherThunderstorm);
+    setShowWeatherHail(prefs.weatherHail);
+    setShowWeatherSnowIce(prefs.weatherSnowIce);
+    setShowWeatherCoastal(prefs.weatherCoastal);
+    setShowWeatherOther(prefs.weatherOther);
+    setShowMajorFloodAlerts(prefs.majorFloodAlerts);
+    setShowObservedFloodExtent(prefs.observedFloodExtent);
+    setShowMajorStorms(prefs.majorStorms);
     setLayerPrefsHydrated(true);
   }, []);
 
@@ -564,6 +636,19 @@ export default function MapInterface() {
       majorWildfires: showWildfires,
       satelliteActiveFires: showSatelliteActiveFires,
       recentSatelliteHistory: showSatelliteBurnedAreas,
+      wildfireWind: showWildfireWind,
+      officialWeatherWarnings: showOfficialWeatherWarnings,
+      weatherHeavyRain: showWeatherHeavyRain,
+      weatherFlood: showWeatherFlood,
+      weatherStrongWind: showWeatherStrongWind,
+      weatherThunderstorm: showWeatherThunderstorm,
+      weatherHail: showWeatherHail,
+      weatherSnowIce: showWeatherSnowIce,
+      weatherCoastal: showWeatherCoastal,
+      weatherOther: showWeatherOther,
+      majorFloodAlerts: showMajorFloodAlerts,
+      observedFloodExtent: showObservedFloodExtent,
+      majorStorms: showMajorStorms,
     });
   }, [
     layerPrefsHydrated,
@@ -609,6 +694,19 @@ export default function MapInterface() {
     showWildfires,
     showSatelliteActiveFires,
     showSatelliteBurnedAreas,
+    showWildfireWind,
+    showOfficialWeatherWarnings,
+    showWeatherHeavyRain,
+    showWeatherFlood,
+    showWeatherStrongWind,
+    showWeatherThunderstorm,
+    showWeatherHail,
+    showWeatherSnowIce,
+    showWeatherCoastal,
+    showWeatherOther,
+    showMajorFloodAlerts,
+    showObservedFloodExtent,
+    showMajorStorms,
   ]);
 
   const legendPreferences = useMemo<MapLayerPreferences>(
@@ -655,6 +753,19 @@ export default function MapInterface() {
       majorWildfires: showWildfires,
       satelliteActiveFires: showSatelliteActiveFires,
       recentSatelliteHistory: showSatelliteBurnedAreas,
+      wildfireWind: showWildfireWind,
+      officialWeatherWarnings: showOfficialWeatherWarnings,
+      weatherHeavyRain: showWeatherHeavyRain,
+      weatherFlood: showWeatherFlood,
+      weatherStrongWind: showWeatherStrongWind,
+      weatherThunderstorm: showWeatherThunderstorm,
+      weatherHail: showWeatherHail,
+      weatherSnowIce: showWeatherSnowIce,
+      weatherCoastal: showWeatherCoastal,
+      weatherOther: showWeatherOther,
+      majorFloodAlerts: showMajorFloodAlerts,
+      observedFloodExtent: showObservedFloodExtent,
+      majorStorms: showMajorStorms,
     }),
     [
       showEurozone,
@@ -699,6 +810,19 @@ export default function MapInterface() {
       showWildfires,
       showSatelliteActiveFires,
       showSatelliteBurnedAreas,
+      showWildfireWind,
+      showOfficialWeatherWarnings,
+      showWeatherHeavyRain,
+      showWeatherFlood,
+      showWeatherStrongWind,
+      showWeatherThunderstorm,
+      showWeatherHail,
+      showWeatherSnowIce,
+      showWeatherCoastal,
+      showWeatherOther,
+      showMajorFloodAlerts,
+      showObservedFloodExtent,
+      showMajorStorms,
     ],
   );
 
@@ -746,6 +870,19 @@ export default function MapInterface() {
       majorWildfires: setShowWildfires,
       satelliteActiveFires: setShowSatelliteActiveFires,
       recentSatelliteHistory: setShowSatelliteBurnedAreas,
+      wildfireWind: setShowWildfireWind,
+      officialWeatherWarnings: setShowOfficialWeatherWarnings,
+      weatherHeavyRain: setShowWeatherHeavyRain,
+      weatherFlood: setShowWeatherFlood,
+      weatherStrongWind: setShowWeatherStrongWind,
+      weatherThunderstorm: setShowWeatherThunderstorm,
+      weatherHail: setShowWeatherHail,
+      weatherSnowIce: setShowWeatherSnowIce,
+      weatherCoastal: setShowWeatherCoastal,
+      weatherOther: setShowWeatherOther,
+      majorFloodAlerts: setShowMajorFloodAlerts,
+      observedFloodExtent: setShowObservedFloodExtent,
+      majorStorms: setShowMajorStorms,
       schengenExternalBorderCrossings: setShowSchengenExternalBorderCrossings,
       schengenTemporaryInternalControls:
         setShowSchengenTemporaryInternalControls,
@@ -795,6 +932,19 @@ export default function MapInterface() {
     setShowWildfires(defaults.majorWildfires);
     setShowSatelliteActiveFires(defaults.satelliteActiveFires);
     setShowSatelliteBurnedAreas(defaults.recentSatelliteHistory);
+    setShowWildfireWind(defaults.wildfireWind);
+    setShowOfficialWeatherWarnings(defaults.officialWeatherWarnings);
+    setShowWeatherHeavyRain(defaults.weatherHeavyRain);
+    setShowWeatherFlood(defaults.weatherFlood);
+    setShowWeatherStrongWind(defaults.weatherStrongWind);
+    setShowWeatherThunderstorm(defaults.weatherThunderstorm);
+    setShowWeatherHail(defaults.weatherHail);
+    setShowWeatherSnowIce(defaults.weatherSnowIce);
+    setShowWeatherCoastal(defaults.weatherCoastal);
+    setShowWeatherOther(defaults.weatherOther);
+    setShowMajorFloodAlerts(defaults.majorFloodAlerts);
+    setShowObservedFloodExtent(defaults.observedFloodExtent);
+    setShowMajorStorms(defaults.majorStorms);
     setShowSchengenExternalBorderCrossings(
       defaults.schengenExternalBorderCrossings,
     );
@@ -1051,6 +1201,178 @@ export default function MapInterface() {
       window.clearInterval(intervalId);
     };
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const enabled =
+      showOfficialWeatherWarnings || showMajorFloodAlerts || showMajorStorms;
+    if (!enabled) return () => controller.abort();
+
+    const replaceSourceAlerts = (
+      sourceId: string,
+      response: AlertApiResponse,
+    ) => {
+      setAlertConnectorStatus((current) => ({
+        ...current,
+        [sourceId]: response.connectorStatus,
+      }));
+      if (response.connectorStatus !== "operational") return;
+      setNormalizedAlerts((current) => [
+        ...current.filter((alert) =>
+          sourceId === "gdacs"
+            ? alert.source !== "gdacs" ||
+              !response.alerts.some((incoming) => incoming.category === alert.category)
+            : alert.source !== sourceId,
+        ),
+        ...response.alerts,
+      ]);
+    };
+
+    const load = async () => {
+      const requests: Array<Promise<void>> = [];
+      if (showOfficialWeatherWarnings) {
+        requests.push(
+          fetch(`/api/alerts/weather?locale=${encodeURIComponent(locale)}`, {
+            signal: controller.signal,
+          })
+            .then(async (response) => {
+              if (!response.ok) throw new Error("weather_alerts_http");
+              replaceSourceAlerts("meteoalarm", (await response.json()) as AlertApiResponse);
+            })
+            .catch((error: unknown) => {
+              if (!isAbortError(error)) {
+                setAlertConnectorStatus((current) => ({
+                  ...current,
+                  meteoalarm: "unavailable",
+                }));
+              }
+            }),
+        );
+      }
+      if (showMajorFloodAlerts) {
+        requests.push(
+          fetch("/api/alerts/floods", { signal: controller.signal })
+            .then(async (response) => {
+              if (!response.ok) throw new Error("flood_alerts_http");
+              replaceSourceAlerts("gdacs", (await response.json()) as AlertApiResponse);
+            })
+            .catch((error: unknown) => {
+              if (!isAbortError(error)) {
+                setAlertConnectorStatus((current) => ({ ...current, gdacs: "unavailable" }));
+              }
+            }),
+        );
+      }
+      if (showMajorStorms) {
+        requests.push(
+          fetch("/api/alerts/storms", { signal: controller.signal })
+            .then(async (response) => {
+              if (!response.ok) throw new Error("storm_alerts_http");
+              replaceSourceAlerts("gdacs", (await response.json()) as AlertApiResponse);
+            })
+            .catch((error: unknown) => {
+              if (!isAbortError(error)) {
+                setAlertConnectorStatus((current) => ({ ...current, gdacs: "unavailable" }));
+              }
+            }),
+        );
+      }
+      await Promise.allSettled(requests);
+    };
+
+    void load();
+    const interval = window.setInterval(() => void load(), 5 * 60 * 1000);
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+    };
+  }, [
+    locale,
+    showMajorFloodAlerts,
+    showMajorStorms,
+    showOfficialWeatherWarnings,
+  ]);
+
+  useEffect(() => {
+    if (!showObservedFloodExtent) return;
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const response = await fetch("/api/alerts/flood-extent", {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("copernicus_status_http");
+        const status = (await response.json()) as CopernicusFloodLayerStatus;
+        setCopernicusFloodStatus(status);
+        setAlertConnectorStatus((current) => ({
+          ...current,
+          "copernicus-gfm": status.connectorStatus,
+        }));
+      } catch (error) {
+        if (!isAbortError(error)) {
+          setCopernicusFloodStatus((current) =>
+            current ? { ...current, available: false, connectorStatus: "unavailable" } : null,
+          );
+          setAlertConnectorStatus((current) => ({
+            ...current,
+            "copernicus-gfm": "unavailable",
+          }));
+        }
+      }
+    };
+    void load();
+    const interval = window.setInterval(() => void load(), 15 * 60 * 1000);
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+    };
+  }, [showObservedFloodExtent]);
+
+  useEffect(() => {
+    if (!showWildfireWind || !showWildfires || wildfireIncidents.length === 0) {
+      setWildfireWinds([]);
+      return;
+    }
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const response = await fetch("/api/alerts/wind", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            coordinates: wildfireIncidents.slice(0, 20).map((incident) => ({
+              latitude: incident.latitude,
+              longitude: incident.longitude,
+            })),
+          }),
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("wind_http");
+        const data = (await response.json()) as {
+          winds?: WildfireWind[];
+          connectorStatus?: AlertConnectorStatus;
+        };
+        if (Array.isArray(data.winds)) setWildfireWinds(data.winds);
+        setAlertConnectorStatus((current) => ({
+          ...current,
+          "open-meteo-ecmwf": data.connectorStatus ?? "operational",
+        }));
+      } catch (error) {
+        if (!isAbortError(error)) {
+          setAlertConnectorStatus((current) => ({
+            ...current,
+            "open-meteo-ecmwf": "unavailable",
+          }));
+        }
+      }
+    };
+    void load();
+    const interval = window.setInterval(() => void load(), 15 * 60 * 1000);
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+    };
+  }, [showWildfireWind, showWildfires, wildfireIncidents]);
 
   useEffect(() => {
     if (wildfireIncidents.length === 0) return;
@@ -1651,6 +1973,7 @@ export default function MapInterface() {
     setSelectedTouristPlaceId(null);
     clearMountainPlaceSelection();
     clearCivilEngineeringWorkSelection();
+    setSelectedAlertId(null);
   };
 
   const clearAirportSelection = () => {
@@ -2064,6 +2387,53 @@ export default function MapInterface() {
     });
   };
 
+  const handleAlertSelect = (alertId: string | null) => {
+    if (!alertId) {
+      setSelectedAlertId(null);
+      return;
+    }
+    const alert = normalizedAlerts.find((item) => item.id === alertId);
+    if (!alert) return;
+    setSelectedCountryCode(null);
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearTemporaryPlace();
+    if (alert.source === "meteoalarm") {
+      setShowOfficialWeatherWarnings(true);
+      if (alert.hazard === "heavy_rain") setShowWeatherHeavyRain(true);
+      else if (["river_flood", "flash_flood"].includes(alert.hazard)) setShowWeatherFlood(true);
+      else if (["strong_wind", "extreme_wind"].includes(alert.hazard)) setShowWeatherStrongWind(true);
+      else if (["thunderstorm", "tornado"].includes(alert.hazard)) setShowWeatherThunderstorm(true);
+      else if (alert.hazard === "hail") setShowWeatherHail(true);
+      else if (["snow", "ice"].includes(alert.hazard)) setShowWeatherSnowIce(true);
+      else if (["coastal_flood", "storm_surge"].includes(alert.hazard)) setShowWeatherCoastal(true);
+      else setShowWeatherOther(true);
+    } else if (alert.category === "flood") {
+      setShowMajorFloodAlerts(true);
+    } else if (alert.category === "tropical_cyclone") {
+      setShowMajorStorms(true);
+    }
+    setSelectedAlertId(alertId);
+    if (alert.geometry && focusGeometryRef.current) {
+      focusGeometryRef.current(alert.geometry);
+    } else if (alert.centroid) {
+      requestFocus({
+        kind: "point",
+        longitude: alert.centroid.longitude,
+        latitude: alert.centroid.latitude,
+        zoom: 7,
+      });
+    }
+  };
+
   const enableMountainCategory = (category: MountainPlaceCategory) => {
     if (category === "ski_resort") setShowMountainSkiResorts(true);
     if (category === "mountain_destination") setShowMountainDestinations(true);
@@ -2439,6 +2809,16 @@ export default function MapInterface() {
         latitude: result.latitude,
         zoom: 7,
       });
+      return;
+    }
+
+    if (
+      (result.type === "weather_alert" ||
+        result.type === "flood_alert" ||
+        result.type === "storm_alert") &&
+      result.alertId
+    ) {
+      handleAlertSelect(result.alertId);
     }
   };
 
@@ -2449,6 +2829,7 @@ export default function MapInterface() {
         onLocaleChange={setLocale}
         t={t}
         wildfires={wildfireIncidents}
+        alerts={normalizedAlerts}
         temporaryBorderControls={temporaryBorderControls}
         onSelectSearchResult={handleSelectSearchResult}
         onGoEurope={handleGoEurope}
@@ -2553,6 +2934,26 @@ export default function MapInterface() {
           onEffisBurnedAreaLoadingChange={setEffisBurnedAreaLoading}
           effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
           selectedWildfireId={selectedWildfireId}
+          normalizedAlerts={normalizedAlerts}
+          showOfficialWeatherWarnings={showOfficialWeatherWarnings}
+          weatherHazardFilters={{
+            heavyRain: showWeatherHeavyRain,
+            flood: showWeatherFlood,
+            strongWind: showWeatherStrongWind,
+            thunderstorm: showWeatherThunderstorm,
+            hail: showWeatherHail,
+            snowIce: showWeatherSnowIce,
+            coastal: showWeatherCoastal,
+            other: showWeatherOther,
+          }}
+          showMajorFloodAlerts={showMajorFloodAlerts}
+          showMajorStorms={showMajorStorms}
+          selectedAlertId={selectedAlertId}
+          onAlertSelect={handleAlertSelect}
+          showObservedFloodExtent={showObservedFloodExtent}
+          copernicusFloodStatus={copernicusFloodStatus}
+          showWildfireWind={showWildfireWind && showWildfires}
+          wildfireWinds={wildfireWinds}
           locale={locale}
           firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
           firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}
@@ -2665,6 +3066,29 @@ export default function MapInterface() {
         {showEffisUnavailableNasaShown && !showEffisUnavailableBanner && (
           <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/70 px-3 py-1.5 text-center text-[10px] text-slate-300 shadow-lg backdrop-blur-md">
             {t.incidents.effisUnavailableNasaShown}
+          </div>
+        )}
+
+        {showObservedFloodExtent && copernicusFloodStatus && (
+          <div className="pointer-events-none absolute bottom-4 right-4 z-20 max-w-[min(22rem,calc(100%-2rem))] rounded-lg border border-cyan-400/20 bg-slate-950/90 px-3 py-2 text-[10px] text-slate-200 shadow-xl backdrop-blur-md">
+            <p className="font-medium text-cyan-100">
+              {t.alertPanel.observationNotForecast}
+            </p>
+            <p className="mt-1 text-slate-400">
+              {t.alertPanel.acquisitionTime}:{" "}
+              {copernicusFloodStatus.acquisitionTime
+                ? new Intl.DateTimeFormat(locale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(copernicusFloodStatus.acquisitionTime))
+                : t.alertPanel.unavailable}
+              {" · "}
+              {copernicusFloodStatus.connectorStatus === "operational"
+                ? t.alertPanel.connectorOperational
+                : copernicusFloodStatus.connectorStatus === "delayed"
+                  ? t.alertPanel.connectorDelayed
+                  : t.alertPanel.connectorUnavailable}
+            </p>
           </div>
         )}
 
@@ -2939,10 +3363,28 @@ export default function MapInterface() {
                 ? firmsHistorySnapshotsByIncidentId[selectedWildfireId] ?? null
                 : null
             }
+            wind={
+              selectedWildfire
+                ? wildfireWinds.find(
+                    (wind) =>
+                      Math.abs(wind.latitude - selectedWildfire.latitude) < 0.05 &&
+                      Math.abs(wind.longitude - selectedWildfire.longitude) < 0.05,
+                  ) ?? null
+                : null
+            }
             onClose={() => setSelectedWildfireId(null)}
             onFocusGeometry={(geometry) => {
               focusGeometryRef.current?.(geometry);
             }}
+          />
+        )}
+
+        {selectedAlert && (
+          <AlertDetailsPanel
+            alert={selectedAlert}
+            locale={locale}
+            connectorStatus={alertConnectorStatus[selectedAlert.source]}
+            onClose={() => setSelectedAlertId(null)}
           />
         )}
 

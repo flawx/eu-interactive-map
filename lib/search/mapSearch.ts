@@ -10,6 +10,7 @@ import {
   type EuInstitutionId as MainEuInstitutionId,
 } from "@/lib/europe/euInstitutions";
 import type { WildfireIncident } from "@/lib/incidents/types";
+import type { NormalizedAlert } from "@/lib/alerts/types";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { UNESCO_WORLD_HERITAGE_SITES } from "@/lib/tourism/unescoWorldHeritage";
@@ -35,6 +36,9 @@ export type MapSearchResultType =
   | "country"
   | "capital"
   | "wildfire"
+  | "weather_alert"
+  | "flood_alert"
+  | "storm_alert"
   | "eu_institution"
   | "unesco_site"
   | "european_heritage_label"
@@ -77,6 +81,7 @@ export type MapSearchResult = {
   countryCode?: string;
   capitalId?: string;
   incidentId?: string;
+  alertId?: string;
   institutionId?: MainEuInstitutionId;
   siteId?: string;
   unescoSiteId?: string;
@@ -1017,10 +1022,54 @@ export function buildLocalSearchIndex(
   locale: Locale,
   wildfires: readonly WildfireIncident[],
   temporaryControls: readonly TemporaryInternalBorderControl[] = getActiveTemporaryControls(),
+  normalizedAlerts: readonly NormalizedAlert[] = [],
 ): MapSearchResult[] {
   return [
     ...buildStaticLocalIndex(locale, temporaryControls),
     ...wildfires.map((incident) => wildfireToResult(incident, locale)),
+    ...normalizedAlerts
+      .filter((alert) => alert.centroid)
+      .map((alert) => ({
+        id: `alert:${alert.id}`,
+        type:
+          alert.category === "weather"
+            ? "weather_alert"
+            : alert.category === "flood"
+              ? "flood_alert"
+              : "storm_alert",
+        category: "active_alerts",
+        title: alert.title,
+        subtitle:
+          [...alert.affectedAreaNames, ...alert.countryCodes].join(" · ") ||
+          alert.officialSourceName,
+        longitude: alert.centroid!.longitude,
+        latitude: alert.centroid!.latitude,
+        icon:
+          alert.category === "weather"
+            ? "weather-alert"
+            : alert.category === "flood"
+              ? "flood-alert"
+              : "storm-alert",
+        countryCode: alert.countryCodes[0],
+        alertId: alert.id,
+        source: "local",
+        metadata: {
+          hazard: alert.hazard,
+          severity: alert.severity,
+          source: alert.source,
+          searchText: [
+            alert.title,
+            alert.description,
+            alert.hazard,
+            alert.category,
+            alert.officialSourceName,
+            ...alert.countryCodes,
+            ...alert.affectedAreaNames,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        },
+      } satisfies MapSearchResult)),
   ];
 }
 

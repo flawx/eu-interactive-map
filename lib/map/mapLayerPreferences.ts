@@ -35,6 +35,19 @@ export type MapLayerPreferences = {
   majorWildfires: boolean;
   satelliteActiveFires: boolean;
   recentSatelliteHistory: boolean;
+  wildfireWind: boolean;
+  officialWeatherWarnings: boolean;
+  weatherHeavyRain: boolean;
+  weatherFlood: boolean;
+  weatherStrongWind: boolean;
+  weatherThunderstorm: boolean;
+  weatherHail: boolean;
+  weatherSnowIce: boolean;
+  weatherCoastal: boolean;
+  weatherOther: boolean;
+  majorFloodAlerts: boolean;
+  observedFloodExtent: boolean;
+  majorStorms: boolean;
   schengenExternalBorderCrossings: boolean;
   schengenTemporaryInternalControls: boolean;
   borderCrossingRoad: boolean;
@@ -80,6 +93,19 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   majorWildfires: false,
   satelliteActiveFires: false,
   recentSatelliteHistory: false,
+  wildfireWind: false,
+  officialWeatherWarnings: false,
+  weatherHeavyRain: true,
+  weatherFlood: true,
+  weatherStrongWind: true,
+  weatherThunderstorm: true,
+  weatherHail: true,
+  weatherSnowIce: true,
+  weatherCoastal: true,
+  weatherOther: true,
+  majorFloodAlerts: false,
+  observedFloodExtent: false,
+  majorStorms: false,
   schengenExternalBorderCrossings: false,
   schengenTemporaryInternalControls: false,
   borderCrossingRoad: true,
@@ -128,6 +154,19 @@ const LAYER_KEYS = [
   "majorWildfires",
   "satelliteActiveFires",
   "recentSatelliteHistory",
+  "wildfireWind",
+  "officialWeatherWarnings",
+  "weatherHeavyRain",
+  "weatherFlood",
+  "weatherStrongWind",
+  "weatherThunderstorm",
+  "weatherHail",
+  "weatherSnowIce",
+  "weatherCoastal",
+  "weatherOther",
+  "majorFloodAlerts",
+  "observedFloodExtent",
+  "majorStorms",
   "schengenExternalBorderCrossings",
   "schengenTemporaryInternalControls",
   "borderCrossingRoad",
@@ -218,6 +257,19 @@ export function saveMapLayerPreferences(
       majorWildfires: Boolean(preferences.majorWildfires),
       satelliteActiveFires: Boolean(preferences.satelliteActiveFires),
       recentSatelliteHistory: Boolean(preferences.recentSatelliteHistory),
+      wildfireWind: Boolean(preferences.wildfireWind),
+      officialWeatherWarnings: Boolean(preferences.officialWeatherWarnings),
+      weatherHeavyRain: Boolean(preferences.weatherHeavyRain),
+      weatherFlood: Boolean(preferences.weatherFlood),
+      weatherStrongWind: Boolean(preferences.weatherStrongWind),
+      weatherThunderstorm: Boolean(preferences.weatherThunderstorm),
+      weatherHail: Boolean(preferences.weatherHail),
+      weatherSnowIce: Boolean(preferences.weatherSnowIce),
+      weatherCoastal: Boolean(preferences.weatherCoastal),
+      weatherOther: Boolean(preferences.weatherOther),
+      majorFloodAlerts: Boolean(preferences.majorFloodAlerts),
+      observedFloodExtent: Boolean(preferences.observedFloodExtent),
+      majorStorms: Boolean(preferences.majorStorms),
       schengenExternalBorderCrossings: Boolean(
         preferences.schengenExternalBorderCrossings,
       ),

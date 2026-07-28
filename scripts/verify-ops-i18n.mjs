@@ -9,7 +9,7 @@ const expectedEn = {
   opsTabSituation: "Situation",
   opsTabSafety: "Safety",
   opsTabTimeline: "Timeline",
-  opsTabSourcesCommunity: "Sources and community",
+  opsTabSourcesCommunity: "Sources",
   opsCauseUnconfirmed: "Cause not confirmed",
   opsLastKnownArea: "Last known area",
   opsDeployedResources: "Deployed resources",
@@ -33,8 +33,8 @@ const expectedEn = {
   opsOfficialSources: "Official sources",
   opsMedia: "Media",
   opsCommunity: "Community",
-  opsAreaFirms24h: "Satellite-detected area — last 24 hours",
-  opsAreaFirms7d: "Cumulative satellite-detected area — 7 days",
+  opsAreaFirms24h: "Satellite detections — 24 h",
+  opsAreaFirms7d: "Cumulative detections — 7 days",
   opsAreaEffis: "Burned area perimeter estimated by EFFIS",
   opsAreaGdacs: "Area reported by GDACS",
   opsLoading: "Loading operational details…",
@@ -54,7 +54,7 @@ const expectedFr = {
   opsTabSituation: "Situation",
   opsTabSafety: "Sécurité",
   opsTabTimeline: "Chronologie",
-  opsTabSourcesCommunity: "Sources et communauté",
+  opsTabSourcesCommunity: "Sources",
   opsCauseUnconfirmed: "Cause non confirmée",
   opsLastKnownArea: "Dernière superficie connue",
   opsDeployedResources: "Moyens déployés",
@@ -78,8 +78,8 @@ const expectedFr = {
   opsOfficialSources: "Sources officielles",
   opsMedia: "Médias",
   opsCommunity: "Communauté",
-  opsAreaFirms24h: "Surface satellite détectée — dernières 24 h",
-  opsAreaFirms7d: "Surface satellite détectée cumulée — 7 jours",
+  opsAreaFirms24h: "Détections satellite — 24 h",
+  opsAreaFirms7d: "Détections cumulées — 7 jours",
   opsAreaEffis: "Périmètre brûlé estimé par EFFIS",
   opsAreaGdacs: "Surface déclarée par GDACS",
   opsLoading: "Chargement des détails opérationnels…",
@@ -128,7 +128,7 @@ console.log("types keys:", typeKeys.length, "missing:", missingTypes.length);
 
 const locales = fs
   .readdirSync(dir)
-  .filter((f) => f.endsWith(".ts") && f !== "index.ts" && f !== "types.ts");
+  .filter((f) => /^[a-z]{2}\.ts$/.test(f));
 let allHave = 0;
 for (const f of locales) {
   const ops = extractOps(f);

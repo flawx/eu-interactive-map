@@ -9,6 +9,7 @@ import MapSearchBox from "@/components/layout/MapSearchBox";
 import type { Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages/types";
 import type { WildfireIncident } from "@/lib/incidents/types";
+import type { NormalizedAlert } from "@/lib/alerts/types";
 import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
 import type { MapSearchResult } from "@/lib/search/mapSearch";
 
@@ -17,6 +18,7 @@ type AppHeaderProps = {
   onLocaleChange: (locale: Locale) => void;
   t: Messages;
   wildfires: readonly WildfireIncident[];
+  alerts?: readonly NormalizedAlert[];
   temporaryBorderControls?: readonly TemporaryInternalBorderControl[];
   onSelectSearchResult: (result: MapSearchResult) => void;
   onGoEurope: () => void;
@@ -28,6 +30,7 @@ export default function AppHeader({
   onLocaleChange,
   t,
   wildfires,
+  alerts = [],
   temporaryBorderControls,
   onSelectSearchResult,
   onGoEurope,
@@ -63,6 +66,7 @@ export default function AppHeader({
               locale={locale}
               t={t}
               wildfires={wildfires}
+              alerts={alerts}
               temporaryBorderControls={temporaryBorderControls}
               onSelectResult={onSelectSearchResult}
             />
@@ -99,6 +103,7 @@ export default function AppHeader({
               locale={locale}
               t={t}
               wildfires={wildfires}
+              alerts={alerts}
               temporaryBorderControls={temporaryBorderControls}
               compact
               autoFocus

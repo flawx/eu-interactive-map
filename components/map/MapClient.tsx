@@ -22,6 +22,10 @@ import type { MountainCategoryFilters } from "@/components/map/mountainMapLayers
 import type { CivilEngineeringCategoryFilters } from "@/components/map/civilEngineeringMapLayers";
 import type { UserLocation } from "@/lib/map/userLocation";
 import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
+import type { NormalizedAlert } from "@/lib/alerts/types";
+import type { WildfireWind } from "@/lib/alerts/wind";
+import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
+import type { WeatherHazardFilters } from "@/components/map/alertMapLayers";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -96,6 +100,17 @@ type MapClientProps = {
   onEffisBurnedAreaLoadingChange: (loading: boolean) => void;
   effisSnapshotsByIncidentId: Record<string, EffisBurnedAreaSnapshot>;
   selectedWildfireId: string | null;
+  normalizedAlerts: readonly NormalizedAlert[];
+  showOfficialWeatherWarnings: boolean;
+  weatherHazardFilters: WeatherHazardFilters;
+  showMajorFloodAlerts: boolean;
+  showMajorStorms: boolean;
+  selectedAlertId: string | null;
+  onAlertSelect: (alertId: string | null) => void;
+  showObservedFloodExtent: boolean;
+  copernicusFloodStatus: CopernicusFloodLayerStatus | null;
+  showWildfireWind: boolean;
+  wildfireWinds: readonly WildfireWind[];
   locale: Locale;
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
@@ -190,6 +205,17 @@ export default function MapClient({
   onEffisBurnedAreaLoadingChange,
   effisSnapshotsByIncidentId,
   selectedWildfireId,
+  normalizedAlerts,
+  showOfficialWeatherWarnings,
+  weatherHazardFilters,
+  showMajorFloodAlerts,
+  showMajorStorms,
+  selectedAlertId,
+  onAlertSelect,
+  showObservedFloodExtent,
+  copernicusFloodStatus,
+  showWildfireWind,
+  wildfireWinds,
   locale,
   firmsSnapshotsByIncidentId,
   firmsHistorySnapshotsByIncidentId,
@@ -278,6 +304,17 @@ export default function MapClient({
       onEffisBurnedAreaLoadingChange={onEffisBurnedAreaLoadingChange}
       effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
       selectedWildfireId={selectedWildfireId}
+      normalizedAlerts={normalizedAlerts}
+      showOfficialWeatherWarnings={showOfficialWeatherWarnings}
+      weatherHazardFilters={weatherHazardFilters}
+      showMajorFloodAlerts={showMajorFloodAlerts}
+      showMajorStorms={showMajorStorms}
+      selectedAlertId={selectedAlertId}
+      onAlertSelect={onAlertSelect}
+      showObservedFloodExtent={showObservedFloodExtent}
+      copernicusFloodStatus={copernicusFloodStatus}
+      showWildfireWind={showWildfireWind}
+      wildfireWinds={wildfireWinds}
       locale={locale}
       firmsSnapshotsByIncidentId={firmsSnapshotsByIncidentId}
       firmsHistorySnapshotsByIncidentId={firmsHistorySnapshotsByIncidentId}

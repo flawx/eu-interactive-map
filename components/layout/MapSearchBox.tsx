@@ -28,11 +28,15 @@ import {
   TrainFront,
   TreePine,
   Waves,
+  CloudRain,
+  CloudLightning,
+  Wind,
   X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages/types";
 import type { WildfireIncident } from "@/lib/incidents/types";
+import type { NormalizedAlert } from "@/lib/alerts/types";
 import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
 import {
   buildLocalSearchIndex,
@@ -52,6 +56,7 @@ type MapSearchBoxProps = {
   locale: Locale;
   t: Messages;
   wildfires: readonly WildfireIncident[];
+  alerts?: readonly NormalizedAlert[];
   temporaryBorderControls?: readonly TemporaryInternalBorderControl[];
   compact?: boolean;
   autoFocus?: boolean;
@@ -216,6 +221,34 @@ function ResultIcon({
     );
   }
 
+  if (type === "weather_alert" || type === "flood_alert" || type === "storm_alert") {
+    const color =
+      metadata?.severity === "extreme"
+        ? "#dc2626"
+        : metadata?.severity === "severe"
+          ? "#f97316"
+          : metadata?.severity === "moderate"
+            ? "#eab308"
+            : "#64748b";
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white text-white shadow-sm"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      >
+        {type === "flood_alert" ? (
+          <Waves className="h-3 w-3" />
+        ) : type === "storm_alert" ? (
+          <Wind className="h-3 w-3" />
+        ) : metadata?.hazard === "thunderstorm" ? (
+          <CloudLightning className="h-3 w-3" />
+        ) : (
+          <CloudRain className="h-3 w-3" />
+        )}
+      </span>
+    );
+  }
+
   if (type === "airport") {
     return (
       <span
@@ -332,6 +365,7 @@ export default function MapSearchBox({
   locale,
   t,
   wildfires,
+  alerts = [],
   temporaryBorderControls,
   compact = false,
   autoFocus = false,
@@ -353,8 +387,8 @@ export default function MapSearchBox({
   const [open, setOpen] = useState(false);
 
   const localIndex = useMemo(
-    () => buildLocalSearchIndex(locale, wildfires, temporaryBorderControls),
-    [locale, wildfires, temporaryBorderControls],
+    () => buildLocalSearchIndex(locale, wildfires, temporaryBorderControls, alerts),
+    [alerts, locale, wildfires, temporaryBorderControls],
   );
 
   useEffect(() => {

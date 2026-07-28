@@ -26,11 +26,13 @@ import { sv } from "./sv";
 import type { Messages } from "./types";
 import { mountainTranslations } from "./mountainTranslations";
 import { civilEngineeringTranslations } from "./civilEngineeringTranslations";
+import { alertTranslations } from "./alertTranslations";
 
 export function getMessages(locale: Locale): Messages {
   const localized = rawMessages[locale] as Partial<Messages> & typeof en;
   const mountain = mountainTranslations[locale];
   const civil = civilEngineeringTranslations[locale];
+  const alerts = alertTranslations[locale];
   return {
     ...en,
     ...localized,
@@ -50,6 +52,20 @@ export function getMessages(locale: Locale): Messages {
       civilEngineeringTunnel: civil.tunnel,
       civilEngineeringDam: civil.dam,
       civilEngineeringCanalLock: civil.canalLock,
+      groupFloodsSevereWeather: alerts.group,
+      officialWeatherWarnings: alerts.warnings,
+      majorFloodAlerts: alerts.floods,
+      observedFloodExtent: alerts.observed,
+      majorStorms: alerts.storms,
+      weatherHeavyRain: alerts.rain,
+      weatherFlood: alerts.flood,
+      weatherStrongWind: alerts.wind,
+      weatherThunderstorm: alerts.thunderstorm,
+      weatherHail: alerts.hail,
+      weatherSnowIce: alerts.snowIce,
+      weatherCoastal: alerts.coastal,
+      weatherOther: alerts.other,
+      wildfireWind: alerts.wildfireWind,
     },
     search: {
       ...en.search,
@@ -88,6 +104,25 @@ export function getMessages(locale: Locale): Messages {
         dam: civil.dam,
         canal_lock: civil.canalLock,
       },
+    },
+    alertPanel: {
+      ...en.alertPanel,
+      ...localized.alertPanel,
+      windModeledWarning: alerts.modeledWind,
+      wildfireSpreadWarning: alerts.spreadWarning,
+      observationNotForecast: alerts.observationNotForecast,
+      ...(locale === "fr"
+        ? {
+            cardinalNorth: "nord",
+            cardinalNorthEast: "nord-est",
+            cardinalEast: "est",
+            cardinalSouthEast: "sud-est",
+            cardinalSouth: "sud",
+            cardinalSouthWest: "sud-ouest",
+            cardinalWest: "ouest",
+            cardinalNorthWest: "nord-ouest",
+          }
+        : {}),
     },
     borderCrossingPanel:
       localized.borderCrossingPanel ?? en.borderCrossingPanel,

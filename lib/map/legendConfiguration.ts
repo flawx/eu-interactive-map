@@ -500,6 +500,14 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
               background:
                 "linear-gradient(135deg, #ef4444 0%, #ef4444 55%, #f59e0b 55%, #f59e0b 100%)",
             },
+            filters: [
+              {
+                id: "wildfire-wind",
+                preferenceKey: "wildfireWind",
+                titleKey: { ns: "legend", key: "wildfireWind" },
+                color: "#38bdf8",
+              },
+            ],
           },
           {
             id: "satellite-active-fires",
@@ -514,6 +522,91 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
             titleKey: { ns: "legend", key: "satelliteBurnedAreas" },
             icon: "swatch",
             color: "#7c2d12",
+          },
+        ],
+      },
+      {
+        id: "alerts-floods-weather",
+        titleKey: { ns: "legend", key: "groupFloodsSevereWeather" },
+        defaultExpanded: true,
+        layers: [
+          {
+            id: "official-weather-warnings",
+            preferenceKey: "officialWeatherWarnings",
+            titleKey: { ns: "legend", key: "officialWeatherWarnings" },
+            icon: "weather-warning",
+            color: "#f59e0b",
+            filters: [
+              {
+                id: "weather-heavy-rain",
+                preferenceKey: "weatherHeavyRain",
+                titleKey: { ns: "legend", key: "weatherHeavyRain" },
+                color: "#0ea5e9",
+              },
+              {
+                id: "weather-flood",
+                preferenceKey: "weatherFlood",
+                titleKey: { ns: "legend", key: "weatherFlood" },
+                color: "#2563eb",
+              },
+              {
+                id: "weather-strong-wind",
+                preferenceKey: "weatherStrongWind",
+                titleKey: { ns: "legend", key: "weatherStrongWind" },
+                color: "#a855f7",
+              },
+              {
+                id: "weather-thunderstorm",
+                preferenceKey: "weatherThunderstorm",
+                titleKey: { ns: "legend", key: "weatherThunderstorm" },
+                color: "#7c3aed",
+              },
+              {
+                id: "weather-hail",
+                preferenceKey: "weatherHail",
+                titleKey: { ns: "legend", key: "weatherHail" },
+                color: "#64748b",
+              },
+              {
+                id: "weather-snow-ice",
+                preferenceKey: "weatherSnowIce",
+                titleKey: { ns: "legend", key: "weatherSnowIce" },
+                color: "#bae6fd",
+              },
+              {
+                id: "weather-coastal",
+                preferenceKey: "weatherCoastal",
+                titleKey: { ns: "legend", key: "weatherCoastal" },
+                color: "#0891b2",
+              },
+              {
+                id: "weather-other",
+                preferenceKey: "weatherOther",
+                titleKey: { ns: "legend", key: "weatherOther" },
+                color: "#64748b",
+              },
+            ],
+          },
+          {
+            id: "major-flood-alerts",
+            preferenceKey: "majorFloodAlerts",
+            titleKey: { ns: "legend", key: "majorFloodAlerts" },
+            icon: "flood",
+            color: "#2563eb",
+          },
+          {
+            id: "observed-flood-extent",
+            preferenceKey: "observedFloodExtent",
+            titleKey: { ns: "legend", key: "observedFloodExtent" },
+            icon: "satellite",
+            color: "#06b6d4",
+          },
+          {
+            id: "major-storms",
+            preferenceKey: "majorStorms",
+            titleKey: { ns: "legend", key: "majorStorms" },
+            icon: "storm",
+            color: "#7c3aed",
           },
         ],
       },

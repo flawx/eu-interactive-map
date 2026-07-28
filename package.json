@@ -15,7 +15,8 @@
     "test:entity-resolver": "tsx scripts/test-entity-resolver.ts",
     "test:entity-routes": "tsx scripts/test-entity-routes.ts",
     "test:ehl-entities": "tsx scripts/test-ehl-entity-routes.ts",
-    "test:civil-engineering": "tsx scripts/test-civil-engineering.ts"
+    "test:civil-engineering": "tsx scripts/test-civil-engineering.ts",
+    "test:alerts": "tsx scripts/test-alerts.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",

@@ -7,6 +7,8 @@ import type { EffisBurnedAreaSnapshot } from "@/lib/incidents/effisSnapshot";
 import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import type { WildfireIncident } from "@/lib/incidents/types";
 import type { WildfireOperationalSummary } from "@/lib/incidents/wildfireOperational";
+import type { WildfireWind } from "@/lib/alerts/wind";
+import { windCardinal, windOriginToFlowDirection } from "@/lib/alerts/wind";
 import { formatIncidentDate } from "@/components/incidents/operational/format";
 import {
   OperationalTabs,
@@ -26,6 +28,7 @@ type WildfireIncidentPanelProps = {
   firmsHistorySnapshot?: FirmsIncidentSnapshot | null;
   onClose: () => void;
   onFocusGeometry?: (geometry: GeoJSON.Geometry) => void;
+  wind?: WildfireWind | null;
 };
 
 /** One official refresh attempt per incident id for this browser session. */
@@ -40,6 +43,7 @@ export default function WildfireIncidentPanel({
   firmsHistorySnapshot = null,
   onClose,
   onFocusGeometry,
+  wind = null,
 }: WildfireIncidentPanelProps) {
   const t = getMessages(locale);
   const [opsTab, setOpsTab] = useState<OpsTabId>("situation");
@@ -278,6 +282,18 @@ export default function WildfireIncidentPanel({
         ? t.incidents.firmsCachedData
         : null;
 
+  const cardinalLabel = (degrees: number): string => {
+    const cardinal = windCardinal(degrees);
+    if (cardinal === "N") return t.alertPanel.cardinalNorth;
+    if (cardinal === "NE") return t.alertPanel.cardinalNorthEast;
+    if (cardinal === "E") return t.alertPanel.cardinalEast;
+    if (cardinal === "SE") return t.alertPanel.cardinalSouthEast;
+    if (cardinal === "S") return t.alertPanel.cardinalSouth;
+    if (cardinal === "SW") return t.alertPanel.cardinalSouthWest;
+    if (cardinal === "W") return t.alertPanel.cardinalWest;
+    return t.alertPanel.cardinalNorthWest;
+  };
+
   const tabs: Array<{ id: OpsTabId; label: string }> = [
     { id: "situation", label: t.incidents.opsTabSituation },
     { id: "safety", label: t.incidents.opsTabSafety },
@@ -356,6 +372,44 @@ export default function WildfireIncidentPanel({
               <span className="text-slate-100">{incident.sourceName}</span>
             </div>
           </div>
+
+          {wind && (
+            <section className="rounded-lg border border-sky-400/20 bg-sky-400/10 p-3 text-[11px]">
+              <h3 className="font-semibold text-sky-100">
+                {t.alertPanel.windSpeed}
+              </h3>
+              <dl className="mt-2 space-y-1 text-slate-100">
+                <div>
+                  <dt className="inline text-slate-400">{t.alertPanel.windFrom}: </dt>
+                  <dd className="inline">
+                    {wind.directionDegrees == null
+                      ? t.alertPanel.unavailable
+                      : cardinalLabel(wind.directionDegrees)}
+                    {wind.speedKmh == null ? "" : ` · ${Math.round(wind.speedKmh)} km/h`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.alertPanel.flowTowards}: </dt>
+                  <dd className="inline">
+                    {wind.directionDegrees == null
+                      ? t.alertPanel.unavailable
+                      : cardinalLabel(windOriginToFlowDirection(wind.directionDegrees))}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.alertPanel.windGusts}: </dt>
+                  <dd className="inline">
+                    {wind.gustKmh == null
+                      ? t.alertPanel.unavailable
+                      : `${Math.round(wind.gustKmh)} km/h`}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-2 text-[10px] leading-relaxed text-sky-100">
+                {t.alertPanel.windModeledWarning} {t.alertPanel.wildfireSpreadWarning}
+              </p>
+            </section>
+          )}
 
           {incident.sourceUrl && (
             <a

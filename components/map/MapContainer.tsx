@@ -96,6 +96,29 @@ import {
   type BorderModeFilters,
 } from "@/components/map/schengenBorderMapLayers";
 import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
+import type { NormalizedAlert } from "@/lib/alerts/types";
+import type { WildfireWind } from "@/lib/alerts/wind";
+import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
+import {
+  ALERT_FILL_LAYER_ID,
+  ALERT_FORECAST_TRACK_LAYER_ID,
+  ALERT_LINE_LAYER_ID,
+  ALERT_POINT_LAYER_ID,
+  ALERT_SELECTED_LAYER_ID,
+  ALERT_SELECTED_POINT_LAYER_ID,
+  ALERT_SOURCE_ID,
+  ALERT_TRACK_LAYER_ID,
+  ALERT_TRACK_SOURCE_ID,
+  ALERT_UNCERTAINTY_LAYER_ID,
+  WILDFIRE_WIND_LAYER_ID,
+  WILDFIRE_WIND_SOURCE_ID,
+  buildAlertFeatureCollection,
+  buildStormGeometryCollection,
+  buildWildfireWindCollection,
+  createWindArrowIcon,
+  filterVisibleAlerts,
+  type WeatherHazardFilters,
+} from "@/components/map/alertMapLayers";
 import type {
   MapFocusRequest,
   TemporaryMapMarker,
@@ -920,6 +943,26 @@ export default function MapContainer({
   onEffisBurnedAreaLoadingChange,
   effisSnapshotsByIncidentId,
   selectedWildfireId,
+  normalizedAlerts = [],
+  showOfficialWeatherWarnings = false,
+  weatherHazardFilters = {
+    heavyRain: true,
+    flood: true,
+    strongWind: true,
+    thunderstorm: true,
+    hail: true,
+    snowIce: true,
+    coastal: true,
+    other: true,
+  },
+  showMajorFloodAlerts = false,
+  showMajorStorms = false,
+  selectedAlertId = null,
+  onAlertSelect,
+  showObservedFloodExtent = false,
+  copernicusFloodStatus = null,
+  showWildfireWind = false,
+  wildfireWinds = [],
   locale,
   firmsSnapshotsByIncidentId,
   firmsHistorySnapshotsByIncidentId,
@@ -1004,6 +1047,17 @@ export default function MapContainer({
   onEffisBurnedAreaLoadingChange: (loading: boolean) => void;
   effisSnapshotsByIncidentId: Record<string, EffisBurnedAreaSnapshot>;
   selectedWildfireId: string | null;
+  normalizedAlerts?: readonly NormalizedAlert[];
+  showOfficialWeatherWarnings?: boolean;
+  weatherHazardFilters?: WeatherHazardFilters;
+  showMajorFloodAlerts?: boolean;
+  showMajorStorms?: boolean;
+  selectedAlertId?: string | null;
+  onAlertSelect?: (alertId: string | null) => void;
+  showObservedFloodExtent?: boolean;
+  copernicusFloodStatus?: CopernicusFloodLayerStatus | null;
+  showWildfireWind?: boolean;
+  wildfireWinds?: readonly WildfireWind[];
   locale: Locale;
   firmsSnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
   firmsHistorySnapshotsByIncidentId: Record<string, FirmsIncidentSnapshot>;
@@ -1177,6 +1231,8 @@ export default function MapContainer({
   localeRef.current = locale;
   const onWildfireSelectRef = useRef(onWildfireSelect);
   onWildfireSelectRef.current = onWildfireSelect;
+  const onAlertSelectRef = useRef(onAlertSelect);
+  onAlertSelectRef.current = onAlertSelect;
   const showSatelliteActiveFiresRef = useRef(showSatelliteActiveFires);
   showSatelliteActiveFiresRef.current = showSatelliteActiveFires;
   const showSatelliteBurnedAreasRef = useRef(showSatelliteBurnedAreas);
@@ -5590,6 +5646,319 @@ export default function MapContainer({
       );
     }
   }, [highlightedEurostarRouteIds, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+
+    const visibleAlerts = filterVisibleAlerts(normalizedAlerts, {
+      weather: showOfficialWeatherWarnings,
+      floods: showMajorFloodAlerts,
+      storms: showMajorStorms,
+      weatherFilters: weatherHazardFilters,
+    });
+    const collection = buildAlertFeatureCollection(visibleAlerts);
+    const stormCollection = buildStormGeometryCollection(visibleAlerts);
+    const beforeId = map.getLayer("user-location-accuracy")
+      ? "user-location-accuracy"
+      : undefined;
+
+    if (!map.getSource(ALERT_SOURCE_ID)) {
+      map.addSource(ALERT_SOURCE_ID, {
+        type: "geojson",
+        data: collection,
+        promoteId: "alertId",
+      });
+    } else {
+      (map.getSource(ALERT_SOURCE_ID) as GeoJSONSource).setData(collection);
+    }
+
+    if (!map.getSource(ALERT_TRACK_SOURCE_ID)) {
+      map.addSource(ALERT_TRACK_SOURCE_ID, {
+        type: "geojson",
+        data: stormCollection,
+      });
+    } else {
+      (map.getSource(ALERT_TRACK_SOURCE_ID) as GeoJSONSource).setData(stormCollection);
+    }
+
+    if (!map.getLayer(ALERT_FILL_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_FILL_LAYER_ID,
+          type: "fill",
+          source: ALERT_SOURCE_ID,
+          filter: ["in", ["geometry-type"], ["literal", ["Polygon", "MultiPolygon"]]],
+          paint: {
+            "fill-color": ["get", "severityColor"],
+            "fill-opacity": 0.16,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(ALERT_LINE_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_LINE_LAYER_ID,
+          type: "line",
+          source: ALERT_SOURCE_ID,
+          filter: ["in", ["geometry-type"], ["literal", ["Polygon", "MultiPolygon", "LineString", "MultiLineString"]]],
+          paint: {
+            "line-color": ["get", "severityColor"],
+            "line-width": [
+              "match",
+              ["get", "severity"],
+              "extreme",
+              4,
+              "severe",
+              3,
+              2,
+            ],
+            "line-opacity": 0.9,
+            "line-dasharray": [2, 1],
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(ALERT_POINT_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_POINT_LAYER_ID,
+          type: "circle",
+          source: ALERT_SOURCE_ID,
+          filter: ["==", ["geometry-type"], "Point"],
+          paint: {
+            "circle-radius": 9,
+            "circle-color": ["get", "severityColor"],
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-opacity": 0.92,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(ALERT_SELECTED_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_SELECTED_LAYER_ID,
+          type: "line",
+          source: ALERT_SOURCE_ID,
+          filter: ["==", ["get", "alertId"], selectedAlertId ?? ""],
+          paint: {
+            "line-color": "#7dd3fc",
+            "line-width": 7,
+            "line-opacity": 0.85,
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setFilter(ALERT_SELECTED_LAYER_ID, [
+        "==",
+        ["get", "alertId"],
+        selectedAlertId ?? "",
+      ]);
+    }
+    if (!map.getLayer(ALERT_SELECTED_POINT_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_SELECTED_POINT_LAYER_ID,
+          type: "circle",
+          source: ALERT_SOURCE_ID,
+          filter: [
+            "all",
+            ["==", ["geometry-type"], "Point"],
+            ["==", ["get", "alertId"], selectedAlertId ?? ""],
+          ],
+          paint: {
+            "circle-radius": 17,
+            "circle-color": "#7dd3fc",
+            "circle-opacity": 0.3,
+            "circle-stroke-color": "#e0f2fe",
+            "circle-stroke-width": 2,
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setFilter(ALERT_SELECTED_POINT_LAYER_ID, [
+        "all",
+        ["==", ["geometry-type"], "Point"],
+        ["==", ["get", "alertId"], selectedAlertId ?? ""],
+      ]);
+    }
+
+    if (!map.getLayer(ALERT_UNCERTAINTY_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_UNCERTAINTY_LAYER_ID,
+          type: "fill",
+          source: ALERT_TRACK_SOURCE_ID,
+          filter: ["==", ["get", "segment"], "uncertainty"],
+          paint: {
+            "fill-color": "#8b5cf6",
+            "fill-opacity": 0.12,
+            "fill-outline-color": "#a78bfa",
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(ALERT_TRACK_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_TRACK_LAYER_ID,
+          type: "line",
+          source: ALERT_TRACK_SOURCE_ID,
+          filter: ["==", ["get", "segment"], "past"],
+          paint: { "line-color": "#6d28d9", "line-width": 3 },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(ALERT_FORECAST_TRACK_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: ALERT_FORECAST_TRACK_LAYER_ID,
+          type: "line",
+          source: ALERT_TRACK_SOURCE_ID,
+          filter: ["==", ["get", "segment"], "forecast"],
+          paint: {
+            "line-color": "#a78bfa",
+            "line-width": 3,
+            "line-dasharray": [2, 2],
+          },
+        },
+        beforeId,
+      );
+    }
+    if (map.getLayer(ALERT_SELECTED_LAYER_ID)) {
+      map.moveLayer(ALERT_SELECTED_LAYER_ID, beforeId);
+    }
+    if (map.getLayer(ALERT_SELECTED_POINT_LAYER_ID)) {
+      map.moveLayer(ALERT_SELECTED_POINT_LAYER_ID, beforeId);
+    }
+
+    const handleAlertClick = (event: MapLayerMouseEvent) => {
+      const alertId = event.features?.[0]?.properties?.alertId;
+      if (typeof alertId === "string") onAlertSelectRef.current?.(alertId);
+    };
+    const pointer = () => {
+      map.getCanvas().style.cursor = "pointer";
+    };
+    const reset = () => {
+      map.getCanvas().style.cursor = "";
+    };
+    for (const layerId of [ALERT_FILL_LAYER_ID, ALERT_LINE_LAYER_ID, ALERT_POINT_LAYER_ID]) {
+      map.on("click", layerId, handleAlertClick);
+      map.on("mouseenter", layerId, pointer);
+      map.on("mouseleave", layerId, reset);
+    }
+
+    return () => {
+      for (const layerId of [ALERT_FILL_LAYER_ID, ALERT_LINE_LAYER_ID, ALERT_POINT_LAYER_ID]) {
+        map.off("click", layerId, handleAlertClick);
+        map.off("mouseenter", layerId, pointer);
+        map.off("mouseleave", layerId, reset);
+      }
+    };
+  }, [
+    mapSourcesReadyVersion,
+    normalizedAlerts,
+    selectedAlertId,
+    showMajorFloodAlerts,
+    showMajorStorms,
+    showOfficialWeatherWarnings,
+    weatherHazardFilters,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+    const sourceId = "copernicus-observed-flood-extent";
+    const layerId = "copernicus-observed-flood-extent-layer";
+    const available =
+      showObservedFloodExtent &&
+      copernicusFloodStatus?.available &&
+      Boolean(copernicusFloodStatus.acquisitionTime);
+    const time = copernicusFloodStatus?.acquisitionTime;
+
+    if (available && time) {
+      const tiles = [
+        `/api/alerts/flood-extent/tiles/{z}/{x}/{y}?time=${encodeURIComponent(time)}`,
+      ];
+      const existing = map.getSource(sourceId) as
+        | { setTiles?: (value: string[]) => void }
+        | undefined;
+      if (!existing) {
+        map.addSource(sourceId, {
+          type: "raster",
+          tiles,
+          tileSize: 256,
+          attribution: "European Union, Copernicus Emergency Management Service",
+        });
+      } else {
+        existing.setTiles?.(tiles);
+      }
+      if (!map.getLayer(layerId)) {
+        map.addLayer(
+          {
+            id: layerId,
+            type: "raster",
+            source: sourceId,
+            paint: { "raster-opacity": 0.72, "raster-fade-duration": 0 },
+          },
+          map.getLayer(ALERT_FILL_LAYER_ID) ? ALERT_FILL_LAYER_ID : undefined,
+        );
+      }
+    }
+    applyLayerVisibility(map, layerId, Boolean(available));
+  }, [
+    copernicusFloodStatus,
+    mapSourcesReadyVersion,
+    showObservedFloodExtent,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+    const collection = buildWildfireWindCollection(wildfireWinds);
+    if (!map.getSource(WILDFIRE_WIND_SOURCE_ID)) {
+      map.addSource(WILDFIRE_WIND_SOURCE_ID, {
+        type: "geojson",
+        data: collection,
+      });
+    } else {
+      (map.getSource(WILDFIRE_WIND_SOURCE_ID) as GeoJSONSource).setData(collection);
+    }
+    if (!map.hasImage("wildfire-wind-arrow")) {
+      map.addImage("wildfire-wind-arrow", createWindArrowIcon(), { pixelRatio: 2 });
+    }
+    if (!map.getLayer(WILDFIRE_WIND_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: WILDFIRE_WIND_LAYER_ID,
+          type: "symbol",
+          source: WILDFIRE_WIND_SOURCE_ID,
+          minzoom: 5,
+          layout: {
+            visibility: showWildfireWind ? "visible" : "none",
+            "icon-image": "wildfire-wind-arrow",
+            "icon-size": 0.72,
+            "icon-rotate": ["get", "direction"],
+            "icon-allow-overlap": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "map",
+          },
+        },
+        map.getLayer("user-location-accuracy") ? "user-location-accuracy" : undefined,
+      );
+    }
+    applyLayerVisibility(map, WILDFIRE_WIND_LAYER_ID, showWildfireWind);
+  }, [mapSourcesReadyVersion, showWildfireWind, wildfireWinds]);
 
   useEffect(() => {
     const map = mapRef.current;
