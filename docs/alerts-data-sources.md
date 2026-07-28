@@ -11,6 +11,9 @@ changes the nature of a datum.
 | Copernicus EMS Global Flood Monitoring | Sentinel-1 observed flood extent, acquisition timestamp, WMS-T imagery and GFM STAC/COG point inspection | 15 min | Satellite observation | European Union, Copernicus Emergency Management Service | The connector reads live WMS capabilities and only enables `mapserver:gfm_observed_flood_extent_group_layer` when present. Acquisition, processing and publication are not instantaneous. This is not a hydrological forecast or confirmation of an incident. |
 | Open-Meteo ECMWF API | 10 m wind speed, meteorological origin direction and gusts | 15 min | Forecast model | Open-Meteo and ECMWF IFS | Requests are server-side, validated and limited to 20 coordinates. Wind arrows show airflow, opposite to the meteorological origin direction. Wind does not predict wildfire spread. |
 | GDACS / FIRMS / EFFIS | Existing wildfire events, satellite detections and burned-area products | Existing intervals | Impact estimate / satellite observation | Attribution remains as displayed in the existing wildfire panels | The multirisk layer adapts existing wildfire data without replacing its operational models, caches or official-source workflow. |
+| USGS Earthquake Hazards Program | Global real-time earthquake GeoJSON summary and event details | 2 min | Instrumental observation | USGS | European epicentres are selected from the global feeds. Automatic solutions, magnitudes, depths and intensities can be revised. |
+| EMSC / SeismicPortal | European FDSN event catalogue and contributor solutions | 2 min | Instrumental observation / corroboration | European-Mediterranean Seismological Centre | Used to enrich or corroborate European events without requiring a permanent WebSocket. Provider values remain separately attributed. |
+| GDACS geological hazards | Significant earthquakes and major volcanic events with indicative impact levels | 10 min | Impact estimate | GDACS, European Commission JRC and United Nations | Only events with a European epicentre or explicit European impact are kept. Population exposure and severity are estimates, not confirmed impact reports. |
 
 ## Failure behaviour
 
@@ -63,6 +66,48 @@ GDACS and GFM remain separate: GDACS supplies named major events and indicative
 impact estimates; GFM supplies satellite observations. IDs and source claims
 are never merged.
 
+## Earthquakes and volcanic activity
+
+The earthquake layer uses the USGS real-time GeoJSON feeds as its primary
+instrumental source. For the last 24 hours it normally displays magnitude 2.5
+and above; felt events can also remain visible when a reliable provider reports
+them. The seven-day view displays magnitude 4 and above, felt events, and all
+European GDACS orange or red impact events. These display thresholds reduce
+map saturation and do not classify an earthquake as dangerous.
+
+EMSC FDSN data provides a European comparison for time, epicentre, magnitude,
+depth and source attribution. A USGS, EMSC or GDACS record is merged only when
+there is one unambiguous counterpart within all initial thresholds:
+
+- event time difference no greater than 120 seconds;
+- epicentre distance no greater than 40 kilometres;
+- magnitude difference no greater than 0.5;
+- depth must not be manifestly incompatible.
+
+If several candidates pass, none is merged automatically. The primary value is
+shown with its source, and other provider magnitudes, update times, identifiers
+and links remain separate. Magnitude measures released seismic energy;
+reported or instrumental intensity describes shaking at a location; GDACS
+severity is an indicative impact estimate. They are not interchangeable.
+
+USGS `status=automatic` is displayed as an automatic solution and
+`status=reviewed` as a reviewed solution. Initial coordinates, magnitude,
+depth, intensity and tsunami indicators can change after review. The map does
+not predict earthquakes, aftershocks, damage, evacuation areas or safety
+perimeters.
+
+The volcanic layer is not a static inventory of European volcanoes. It shows
+only current or recently updated GDACS `VO` events that have a European
+location or explicit European impact. Eruption, unrest and ash emission are
+kept distinct when the source supplies enough information. The application
+does not infer plume direction, national alert levels, evacuation zones,
+eruption end dates or explosivity indices.
+
+USGS, EMSC and GDACS calls are server-side, time-bounded, deduplicated and
+cached. A stale successful payload can remain visible with a delayed status
+when a provider is temporarily unavailable. Empty European results are shown
+as “no event”, not as a provider failure.
+
 ## Meteoalarm configuration
 
 Set `METEOALARM_API_TOKEN` only on the server. If it is absent, the connector
@@ -79,7 +124,9 @@ The alert status panel can show active events, the last 24 hours or the last
 
 For deterministic local UI testing, set `ALERTS_DEMO_MODE=true` while running a
 development build. Fixtures cover an orange weather warning, a GDACS flood, an
-associated satellite observation, a cyclone track and an ended alert. A
+associated satellite observation, a cyclone track, an ended alert, three
+earthquake magnitudes with automatic/reviewed and multi-provider variants, an
+active volcano and an ash emission. A
 visible “Demonstration data” badge prevents confusion. Demo data is ignored
 when `NODE_ENV=production`.
 

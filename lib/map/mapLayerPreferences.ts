@@ -48,6 +48,15 @@ export type MapLayerPreferences = {
   majorFloodAlerts: boolean;
   observedFloodExtent: boolean;
   majorStorms: boolean;
+  recentEarthquakes: boolean;
+  earthquakeMinor: boolean;
+  earthquakeModerate: boolean;
+  earthquakeStrong: boolean;
+  earthquakeMajor: boolean;
+  majorVolcanicActivity: boolean;
+  volcanoUnrest: boolean;
+  volcanoEruption: boolean;
+  volcanoAshEmission: boolean;
   schengenExternalBorderCrossings: boolean;
   schengenTemporaryInternalControls: boolean;
   borderCrossingRoad: boolean;
@@ -106,6 +115,15 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   majorFloodAlerts: false,
   observedFloodExtent: false,
   majorStorms: false,
+  recentEarthquakes: false,
+  earthquakeMinor: false,
+  earthquakeModerate: true,
+  earthquakeStrong: true,
+  earthquakeMajor: true,
+  majorVolcanicActivity: false,
+  volcanoUnrest: true,
+  volcanoEruption: true,
+  volcanoAshEmission: true,
   schengenExternalBorderCrossings: false,
   schengenTemporaryInternalControls: false,
   borderCrossingRoad: true,
@@ -169,6 +187,15 @@ const LAYER_KEYS = [
   "majorFloodAlerts",
   "observedFloodExtent",
   "majorStorms",
+  "recentEarthquakes",
+  "earthquakeMinor",
+  "earthquakeModerate",
+  "earthquakeStrong",
+  "earthquakeMajor",
+  "majorVolcanicActivity",
+  "volcanoUnrest",
+  "volcanoEruption",
+  "volcanoAshEmission",
   "schengenExternalBorderCrossings",
   "schengenTemporaryInternalControls",
   "borderCrossingRoad",
@@ -278,6 +305,15 @@ export function saveMapLayerPreferences(
       majorFloodAlerts: Boolean(preferences.majorFloodAlerts),
       observedFloodExtent: Boolean(preferences.observedFloodExtent),
       majorStorms: Boolean(preferences.majorStorms),
+      recentEarthquakes: Boolean(preferences.recentEarthquakes),
+      earthquakeMinor: Boolean(preferences.earthquakeMinor),
+      earthquakeModerate: Boolean(preferences.earthquakeModerate),
+      earthquakeStrong: Boolean(preferences.earthquakeStrong),
+      earthquakeMajor: Boolean(preferences.earthquakeMajor),
+      majorVolcanicActivity: Boolean(preferences.majorVolcanicActivity),
+      volcanoUnrest: Boolean(preferences.volcanoUnrest),
+      volcanoEruption: Boolean(preferences.volcanoEruption),
+      volcanoAshEmission: Boolean(preferences.volcanoAshEmission),
       schengenExternalBorderCrossings: Boolean(
         preferences.schengenExternalBorderCrossings,
       ),

@@ -18,6 +18,16 @@ type AlertTranslation = {
   modeledWind: string;
   spreadWarning: string;
   observationNotForecast: string;
+  geologicalGroup: string;
+  earthquakes: string;
+  earthquakeMinor: string;
+  earthquakeModerate: string;
+  earthquakeStrong: string;
+  earthquakeMajor: string;
+  volcanoes: string;
+  volcanoUnrest: string;
+  volcanoEruption: string;
+  volcanoAsh: string;
 };
 const en: AlertTranslation = {
   group: "Floods and severe weather",
@@ -37,13 +47,23 @@ const en: AlertTranslation = {
   modeledWind: "The displayed wind is modeled weather data.",
   spreadWarning: "It does not represent a certain forecast of wildfire spread.",
   observationNotForecast: "Satellite observation, not a hydrological forecast.",
+  geologicalGroup: "Geological hazards",
+  earthquakes: "Recent earthquakes",
+  earthquakeMinor: "Minor · M2.5–3.9",
+  earthquakeModerate: "Moderate · M4.0–4.9",
+  earthquakeStrong: "Strong · M5.0–5.9",
+  earthquakeMajor: "Major · M6.0+",
+  volcanoes: "Major volcanic activity",
+  volcanoUnrest: "Unrest",
+  volcanoEruption: "Eruption",
+  volcanoAsh: "Ash emission",
 };
 
 function tr(values: Partial<AlertTranslation>): AlertTranslation {
   return { ...en, ...values };
 }
 
-export const alertTranslations: Record<Locale, AlertTranslation> = {
+const baseAlertTranslations: Record<Locale, AlertTranslation> = {
   en,
   fr: tr({ group: "Inondations et météo sévère", warnings: "Alertes météorologiques officielles", floods: "Inondations majeures", observed: "Étendues inondées observées par satellite", storms: "Cyclones et tempêtes majeures", rain: "Pluie forte", flood: "Inondation", wind: "Vent fort", thunderstorm: "Orage", hail: "Grêle", snowIce: "Neige et verglas", coastal: "Risques côtiers", other: "Autres phénomènes", wildfireWind: "Vent autour des incendies", modeledWind: "Le vent affiché est une donnée météorologique modélisée.", spreadWarning: "Il ne représente pas une prévision certaine de propagation de l’incendie.", observationNotForecast: "Observation satellite, pas prévision hydrologique." }),
   de: tr({ group: "Überschwemmungen und Unwetter", warnings: "Amtliche Wetterwarnungen", floods: "Schwere Überschwemmungen", observed: "Satellitenbeobachtete Überschwemmungsflächen", storms: "Schwere Zyklone und Stürme", rain: "Starkregen", flood: "Überschwemmung", wind: "Starker Wind", thunderstorm: "Gewitter", hail: "Hagel", snowIce: "Schnee und Eis", coastal: "Küstengefahren", other: "Andere Phänomene", wildfireWind: "Wind bei Waldbränden" }),
@@ -69,3 +89,65 @@ export const alertTranslations: Record<Locale, AlertTranslation> = {
   sl: tr({ group: "Poplave in nevarno vreme", warnings: "Uradna vremenska opozorila", floods: "Velike poplave", observed: "Satelitsko opazovano poplavljeno območje", storms: "Večji cikloni in neurja", rain: "Močan dež", flood: "Poplava", wind: "Močan veter", thunderstorm: "Nevihta", hail: "Toča", snowIce: "Sneg in led", coastal: "Obalne nevarnosti", other: "Drugi pojavi", wildfireWind: "Veter okoli požarov" }),
   sv: tr({ group: "Översvämningar och allvarligt väder", warnings: "Officiella vädervarningar", floods: "Stora översvämningar", observed: "Satellitobserverad översvämningsutbredning", storms: "Stora cykloner och stormar", rain: "Kraftigt regn", flood: "Översvämning", wind: "Kraftig vind", thunderstorm: "Åskväder", hail: "Hagel", snowIce: "Snö och is", coastal: "Kustfaror", other: "Andra fenomen", wildfireWind: "Vind runt skogsbränder" }),
 };
+
+type GeologicalLabels = readonly [
+  group: string,
+  earthquakes: string,
+  minor: string,
+  moderate: string,
+  strong: string,
+  major: string,
+  volcanoes: string,
+  unrest: string,
+  eruption: string,
+  ash: string,
+];
+
+const geologicalLabels: Record<Locale, GeologicalLabels> = {
+  en: ["Geological hazards", "Recent earthquakes", "Minor · M2.5–3.9", "Moderate · M4.0–4.9", "Strong · M5.0–5.9", "Major · M6.0+", "Major volcanic activity", "Unrest", "Eruption", "Ash emission"],
+  fr: ["Risques géologiques", "Séismes récents", "Faibles · M2,5–3,9", "Modérés · M4,0–4,9", "Forts · M5,0–5,9", "Majeurs · M6,0+", "Activité volcanique majeure", "Agitation", "Éruption", "Émission de cendres"],
+  de: ["Geologische Gefahren", "Aktuelle Erdbeben", "Schwach · M2,5–3,9", "Mäßig · M4,0–4,9", "Stark · M5,0–5,9", "Schwer · M6,0+", "Bedeutende vulkanische Aktivität", "Unruhe", "Ausbruch", "Ascheemission"],
+  es: ["Riesgos geológicos", "Terremotos recientes", "Leves · M2,5–3,9", "Moderados · M4,0–4,9", "Fuertes · M5,0–5,9", "Mayores · M6,0+", "Actividad volcánica importante", "Inestabilidad", "Erupción", "Emisión de ceniza"],
+  it: ["Rischi geologici", "Terremoti recenti", "Deboli · M2,5–3,9", "Moderati · M4,0–4,9", "Forti · M5,0–5,9", "Maggiori · M6,0+", "Attività vulcanica importante", "Agitazione", "Eruzione", "Emissione di cenere"],
+  pt: ["Riscos geológicos", "Sismos recentes", "Fracos · M2,5–3,9", "Moderados · M4,0–4,9", "Fortes · M5,0–5,9", "Maiores · M6,0+", "Atividade vulcânica importante", "Agitação", "Erupção", "Emissão de cinzas"],
+  nl: ["Geologische risico's", "Recente aardbevingen", "Licht · M2,5–3,9", "Matig · M4,0–4,9", "Sterk · M5,0–5,9", "Zwaar · M6,0+", "Belangrijke vulkanische activiteit", "Onrust", "Uitbarsting", "Asuitstoot"],
+  bg: ["Геоложки рискове", "Скорошни земетресения", "Слаби · M2,5–3,9", "Умерени · M4,0–4,9", "Силни · M5,0–5,9", "Големи · M6,0+", "Значителна вулканична активност", "Активизация", "Изригване", "Пепелна емисия"],
+  hr: ["Geološki rizici", "Nedavni potresi", "Slabi · M2,5–3,9", "Umjereni · M4,0–4,9", "Jaki · M5,0–5,9", "Veliki · M6,0+", "Velika vulkanska aktivnost", "Nemir", "Erupcija", "Emisija pepela"],
+  cs: ["Geologická rizika", "Nedávná zemětřesení", "Slabá · M2,5–3,9", "Střední · M4,0–4,9", "Silná · M5,0–5,9", "Velká · M6,0+", "Významná sopečná aktivita", "Neklid", "Erupce", "Emise popela"],
+  da: ["Geologiske risici", "Nylige jordskælv", "Svage · M2,5–3,9", "Moderate · M4,0–4,9", "Stærke · M5,0–5,9", "Store · M6,0+", "Betydelig vulkansk aktivitet", "Uro", "Udbrud", "Askeudledning"],
+  et: ["Geoloogilised ohud", "Hiljutised maavärinad", "Nõrgad · M2,5–3,9", "Mõõdukad · M4,0–4,9", "Tugevad · M5,0–5,9", "Suured · M6,0+", "Oluline vulkaaniline aktiivsus", "Rahutus", "Purse", "Tuhaheide"],
+  fi: ["Geologiset vaarat", "Viimeaikaiset maanjäristykset", "Heikot · M2,5–3,9", "Kohtalaiset · M4,0–4,9", "Voimakkaat · M5,0–5,9", "Suuret · M6,0+", "Merkittävä tulivuoritoiminta", "Levottomuus", "Purkaus", "Tuhkapäästö"],
+  el: ["Γεωλογικοί κίνδυνοι", "Πρόσφατοι σεισμοί", "Ασθενείς · M2,5–3,9", "Μέτριοι · M4,0–4,9", "Ισχυροί · M5,0–5,9", "Μεγάλοι · M6,0+", "Σημαντική ηφαιστειακή δραστηριότητα", "Αναταραχή", "Έκρηξη", "Εκπομπή τέφρας"],
+  hu: ["Földtani veszélyek", "Legutóbbi földrengések", "Gyenge · M2,5–3,9", "Mérsékelt · M4,0–4,9", "Erős · M5,0–5,9", "Nagy · M6,0+", "Jelentős vulkáni tevékenység", "Nyugtalanság", "Kitörés", "Hamu kibocsátása"],
+  ga: ["Rioscaí geolaíochta", "Creathanna talún le déanaí", "Lag · M2.5–3.9", "Measartha · M4.0–4.9", "Láidir · M5.0–5.9", "Mór · M6.0+", "Mórghníomhaíocht bholcánach", "Corraíl", "Brúchtadh", "Astaíocht luaithrigh"],
+  lv: ["Ģeoloģiskie riski", "Nesenās zemestrīces", "Vājas · M2,5–3,9", "Mērenas · M4,0–4,9", "Spēcīgas · M5,0–5,9", "Lielas · M6,0+", "Nozīmīga vulkāniskā aktivitāte", "Nemiers", "Izvirdums", "Pelnu emisija"],
+  lt: ["Geologiniai pavojai", "Naujausi žemės drebėjimai", "Silpni · M2,5–3,9", "Vidutiniai · M4,0–4,9", "Stiprūs · M5,0–5,9", "Dideli · M6,0+", "Reikšmingas vulkaninis aktyvumas", "Neramumai", "Išsiveržimas", "Pelenų emisija"],
+  mt: ["Riskji ġeoloġiċi", "Terremoti reċenti", "Dgħajfa · M2.5–3.9", "Moderati · M4.0–4.9", "Qawwija · M5.0–5.9", "Kbar · M6.0+", "Attività vulkanika kbira", "Inkwiet", "Eruzzjoni", "Emissjoni ta' rmied"],
+  pl: ["Zagrożenia geologiczne", "Ostatnie trzęsienia ziemi", "Słabe · M2,5–3,9", "Umiarkowane · M4,0–4,9", "Silne · M5,0–5,9", "Duże · M6,0+", "Znacząca aktywność wulkaniczna", "Niepokój", "Erupcja", "Emisja popiołu"],
+  ro: ["Riscuri geologice", "Cutremure recente", "Slabe · M2,5–3,9", "Moderate · M4,0–4,9", "Puternice · M5,0–5,9", "Majore · M6,0+", "Activitate vulcanică majoră", "Agitație", "Erupție", "Emisie de cenușă"],
+  sk: ["Geologické riziká", "Nedávne zemetrasenia", "Slabé · M2,5–3,9", "Mierne · M4,0–4,9", "Silné · M5,0–5,9", "Veľké · M6,0+", "Významná sopečná aktivita", "Nepokoj", "Erupcia", "Emisia popola"],
+  sl: ["Geološka tveganja", "Nedavni potresi", "Šibki · M2,5–3,9", "Zmerni · M4,0–4,9", "Močni · M5,0–5,9", "Veliki · M6,0+", "Pomembna vulkanska dejavnost", "Nemir", "Izbruh", "Izpust pepela"],
+  sv: ["Geologiska risker", "Nyliga jordbävningar", "Svaga · M2,5–3,9", "Måttliga · M4,0–4,9", "Starka · M5,0–5,9", "Stora · M6,0+", "Betydande vulkanisk aktivitet", "Oro", "Utbrott", "Askutsläpp"],
+};
+
+export const alertTranslations = Object.fromEntries(
+  (Object.keys(baseAlertTranslations) as Locale[]).map((locale) => {
+    const labels = geologicalLabels[locale];
+    return [
+      locale,
+      {
+        ...baseAlertTranslations[locale],
+        geologicalGroup: labels[0],
+        earthquakes: labels[1],
+        earthquakeMinor: labels[2],
+        earthquakeModerate: labels[3],
+        earthquakeStrong: labels[4],
+        earthquakeMajor: labels[5],
+        volcanoes: labels[6],
+        volcanoUnrest: labels[7],
+        volcanoEruption: labels[8],
+        volcanoAsh: labels[9],
+      },
+    ];
+  }),
+) as Record<Locale, AlertTranslation>;

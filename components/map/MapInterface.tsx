@@ -104,12 +104,19 @@ import type {
   AlertActivityMode,
   AlertApiResponse,
   AlertConnectorStatus,
+  EarthquakeTimeMode,
   NormalizedAlert,
+  VolcanoTimeMode,
 } from "@/lib/alerts/types";
 import {
   countActiveAlerts,
   filterAlertsByActivityMode,
 } from "@/lib/alerts/activityMode";
+import {
+  earthquakeMagnitudeBand,
+  filterEarthquakesByTimeMode,
+  filterVolcanoesByTimeMode,
+} from "@/lib/alerts/geologicalActivity";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 import type { WildfireWind } from "@/lib/alerts/wind";
 
@@ -388,10 +395,41 @@ export default function MapInterface() {
   const [showMajorStorms, setShowMajorStorms] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.majorStorms,
   );
+  const [showRecentEarthquakes, setShowRecentEarthquakes] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.recentEarthquakes,
+  );
+  const [showEarthquakeMinor, setShowEarthquakeMinor] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.earthquakeMinor,
+  );
+  const [showEarthquakeModerate, setShowEarthquakeModerate] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.earthquakeModerate,
+  );
+  const [showEarthquakeStrong, setShowEarthquakeStrong] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.earthquakeStrong,
+  );
+  const [showEarthquakeMajor, setShowEarthquakeMajor] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.earthquakeMajor,
+  );
+  const [showMajorVolcanicActivity, setShowMajorVolcanicActivity] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorVolcanicActivity,
+  );
+  const [showVolcanoUnrest, setShowVolcanoUnrest] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.volcanoUnrest,
+  );
+  const [showVolcanoEruption, setShowVolcanoEruption] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.volcanoEruption,
+  );
+  const [showVolcanoAshEmission, setShowVolcanoAshEmission] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.volcanoAshEmission,
+  );
   const [normalizedAlerts, setNormalizedAlerts] = useState<NormalizedAlert[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [alertActivityMode, setAlertActivityMode] =
     useState<AlertActivityMode>("active");
+  const [earthquakeTimeMode, setEarthquakeTimeMode] =
+    useState<EarthquakeTimeMode>("24h");
+  const [volcanoTimeMode, setVolcanoTimeMode] =
+    useState<VolcanoTimeMode>("ongoing");
   const [alertsDemoMode, setAlertsDemoMode] = useState(false);
   const [alertConnectorStatus, setAlertConnectorStatus] = useState<
     Record<string, AlertConnectorStatus>
@@ -481,10 +519,25 @@ export default function MapInterface() {
     () => normalizedAlerts.find((alert) => alert.id === selectedAlertId) ?? null,
     [normalizedAlerts, selectedAlertId],
   );
-  const activityFilteredAlerts = useMemo(
-    () => filterAlertsByActivityMode(normalizedAlerts, alertActivityMode),
-    [alertActivityMode, normalizedAlerts],
-  );
+  const activityFilteredAlerts = useMemo(() => {
+    const ordinary = filterAlertsByActivityMode(
+      normalizedAlerts.filter(
+        (alert) =>
+          alert.category !== "earthquake" && alert.category !== "volcano",
+      ),
+      alertActivityMode,
+    );
+    return [
+      ...ordinary,
+      ...filterEarthquakesByTimeMode(normalizedAlerts, earthquakeTimeMode),
+      ...filterVolcanoesByTimeMode(normalizedAlerts, volcanoTimeMode),
+    ];
+  }, [
+    alertActivityMode,
+    earthquakeTimeMode,
+    normalizedAlerts,
+    volcanoTimeMode,
+  ]);
   const activeGdacsFloodCount = useMemo(
     () =>
       countActiveAlerts(
@@ -579,6 +632,15 @@ export default function MapInterface() {
     setShowMajorFloodAlerts(prefs.majorFloodAlerts);
     setShowObservedFloodExtent(prefs.observedFloodExtent);
     setShowMajorStorms(prefs.majorStorms);
+    setShowRecentEarthquakes(prefs.recentEarthquakes);
+    setShowEarthquakeMinor(prefs.earthquakeMinor);
+    setShowEarthquakeModerate(prefs.earthquakeModerate);
+    setShowEarthquakeStrong(prefs.earthquakeStrong);
+    setShowEarthquakeMajor(prefs.earthquakeMajor);
+    setShowMajorVolcanicActivity(prefs.majorVolcanicActivity);
+    setShowVolcanoUnrest(prefs.volcanoUnrest);
+    setShowVolcanoEruption(prefs.volcanoEruption);
+    setShowVolcanoAshEmission(prefs.volcanoAshEmission);
     setLayerPrefsHydrated(true);
   }, []);
 
@@ -679,6 +741,15 @@ export default function MapInterface() {
       majorFloodAlerts: showMajorFloodAlerts,
       observedFloodExtent: showObservedFloodExtent,
       majorStorms: showMajorStorms,
+      recentEarthquakes: showRecentEarthquakes,
+      earthquakeMinor: showEarthquakeMinor,
+      earthquakeModerate: showEarthquakeModerate,
+      earthquakeStrong: showEarthquakeStrong,
+      earthquakeMajor: showEarthquakeMajor,
+      majorVolcanicActivity: showMajorVolcanicActivity,
+      volcanoUnrest: showVolcanoUnrest,
+      volcanoEruption: showVolcanoEruption,
+      volcanoAshEmission: showVolcanoAshEmission,
     });
   }, [
     layerPrefsHydrated,
@@ -737,6 +808,15 @@ export default function MapInterface() {
     showMajorFloodAlerts,
     showObservedFloodExtent,
     showMajorStorms,
+    showRecentEarthquakes,
+    showEarthquakeMinor,
+    showEarthquakeModerate,
+    showEarthquakeStrong,
+    showEarthquakeMajor,
+    showMajorVolcanicActivity,
+    showVolcanoUnrest,
+    showVolcanoEruption,
+    showVolcanoAshEmission,
   ]);
 
   const legendPreferences = useMemo<MapLayerPreferences>(
@@ -796,6 +876,15 @@ export default function MapInterface() {
       majorFloodAlerts: showMajorFloodAlerts,
       observedFloodExtent: showObservedFloodExtent,
       majorStorms: showMajorStorms,
+      recentEarthquakes: showRecentEarthquakes,
+      earthquakeMinor: showEarthquakeMinor,
+      earthquakeModerate: showEarthquakeModerate,
+      earthquakeStrong: showEarthquakeStrong,
+      earthquakeMajor: showEarthquakeMajor,
+      majorVolcanicActivity: showMajorVolcanicActivity,
+      volcanoUnrest: showVolcanoUnrest,
+      volcanoEruption: showVolcanoEruption,
+      volcanoAshEmission: showVolcanoAshEmission,
     }),
     [
       showEurozone,
@@ -853,6 +942,15 @@ export default function MapInterface() {
       showMajorFloodAlerts,
       showObservedFloodExtent,
       showMajorStorms,
+      showRecentEarthquakes,
+      showEarthquakeMinor,
+      showEarthquakeModerate,
+      showEarthquakeStrong,
+      showEarthquakeMajor,
+      showMajorVolcanicActivity,
+      showVolcanoUnrest,
+      showVolcanoEruption,
+      showVolcanoAshEmission,
     ],
   );
 
@@ -920,6 +1018,15 @@ export default function MapInterface() {
       majorFloodAlerts: setShowMajorFloodAlerts,
       observedFloodExtent: setShowObservedFloodExtent,
       majorStorms: setShowMajorStorms,
+      recentEarthquakes: setShowRecentEarthquakes,
+      earthquakeMinor: setShowEarthquakeMinor,
+      earthquakeModerate: setShowEarthquakeModerate,
+      earthquakeStrong: setShowEarthquakeStrong,
+      earthquakeMajor: setShowEarthquakeMajor,
+      majorVolcanicActivity: setShowMajorVolcanicActivity,
+      volcanoUnrest: setShowVolcanoUnrest,
+      volcanoEruption: setShowVolcanoEruption,
+      volcanoAshEmission: setShowVolcanoAshEmission,
       schengenExternalBorderCrossings: setShowSchengenExternalBorderCrossings,
       schengenTemporaryInternalControls:
         setShowSchengenTemporaryInternalControls,
@@ -982,6 +1089,15 @@ export default function MapInterface() {
     setShowMajorFloodAlerts(defaults.majorFloodAlerts);
     setShowObservedFloodExtent(defaults.observedFloodExtent);
     setShowMajorStorms(defaults.majorStorms);
+    setShowRecentEarthquakes(defaults.recentEarthquakes);
+    setShowEarthquakeMinor(defaults.earthquakeMinor);
+    setShowEarthquakeModerate(defaults.earthquakeModerate);
+    setShowEarthquakeStrong(defaults.earthquakeStrong);
+    setShowEarthquakeMajor(defaults.earthquakeMajor);
+    setShowMajorVolcanicActivity(defaults.majorVolcanicActivity);
+    setShowVolcanoUnrest(defaults.volcanoUnrest);
+    setShowVolcanoEruption(defaults.volcanoEruption);
+    setShowVolcanoAshEmission(defaults.volcanoAshEmission);
     setShowSchengenExternalBorderCrossings(
       defaults.schengenExternalBorderCrossings,
     );
@@ -1270,7 +1386,11 @@ export default function MapInterface() {
   useEffect(() => {
     const controller = new AbortController();
     const enabled =
-      showOfficialWeatherWarnings || showMajorFloodAlerts || showMajorStorms;
+      showOfficialWeatherWarnings ||
+      showMajorFloodAlerts ||
+      showMajorStorms ||
+      showRecentEarthquakes ||
+      showMajorVolcanicActivity;
     if (!enabled) return () => controller.abort();
 
     const replaceSourceAlerts = (
@@ -1280,12 +1400,17 @@ export default function MapInterface() {
       setAlertConnectorStatus((current) => ({
         ...current,
         [sourceId]: response.connectorStatus,
+        ...(response.providerStatuses ?? {}),
       }));
       if (response.demoMode) setAlertsDemoMode(true);
       if (response.connectorStatus !== "operational") return;
       setNormalizedAlerts((current) => [
         ...current.filter((alert) =>
-          sourceId === "gdacs"
+          sourceId === "geological-earthquakes"
+            ? alert.category !== "earthquake"
+            : sourceId === "geological-volcanoes"
+              ? alert.category !== "volcano"
+              : sourceId === "gdacs"
             ? alert.source !== "gdacs" ||
               !response.alerts.some((incoming) => incoming.category === alert.category)
             : alert.source !== sourceId,
@@ -1343,6 +1468,47 @@ export default function MapInterface() {
             }),
         );
       }
+      if (showRecentEarthquakes) {
+        requests.push(
+          fetch("/api/alerts/earthquakes", { signal: controller.signal })
+            .then(async (response) => {
+              if (!response.ok) throw new Error("earthquake_alerts_http");
+              replaceSourceAlerts(
+                "geological-earthquakes",
+                (await response.json()) as AlertApiResponse,
+              );
+            })
+            .catch((error: unknown) => {
+              if (!isAbortError(error)) {
+                setAlertConnectorStatus((current) => ({
+                  ...current,
+                  usgs: "unavailable",
+                  emsc: "unavailable",
+                }));
+              }
+            }),
+        );
+      }
+      if (showMajorVolcanicActivity) {
+        requests.push(
+          fetch("/api/alerts/volcanoes", { signal: controller.signal })
+            .then(async (response) => {
+              if (!response.ok) throw new Error("volcano_alerts_http");
+              replaceSourceAlerts(
+                "geological-volcanoes",
+                (await response.json()) as AlertApiResponse,
+              );
+            })
+            .catch((error: unknown) => {
+              if (!isAbortError(error)) {
+                setAlertConnectorStatus((current) => ({
+                  ...current,
+                  "gdacs-geological": "unavailable",
+                }));
+              }
+            }),
+        );
+      }
       await Promise.allSettled(requests);
     };
 
@@ -1357,6 +1523,8 @@ export default function MapInterface() {
     showMajorFloodAlerts,
     showMajorStorms,
     showOfficialWeatherWarnings,
+    showRecentEarthquakes,
+    showMajorVolcanicActivity,
   ]);
 
   useEffect(() => {
@@ -2485,6 +2653,23 @@ export default function MapInterface() {
       setShowMajorFloodAlerts(true);
     } else if (alert.category === "tropical_cyclone") {
       setShowMajorStorms(true);
+    } else if (alert.category === "earthquake") {
+      setShowRecentEarthquakes(true);
+      const magnitude =
+        typeof alert.metadata.magnitude === "number"
+          ? alert.metadata.magnitude
+          : null;
+      const band = earthquakeMagnitudeBand(magnitude);
+      if (band === "minor") setShowEarthquakeMinor(true);
+      if (band === "moderate") setShowEarthquakeModerate(true);
+      if (band === "strong") setShowEarthquakeStrong(true);
+      if (band === "major") setShowEarthquakeMajor(true);
+    } else if (alert.category === "volcano") {
+      setShowMajorVolcanicActivity(true);
+      const activity = String(alert.metadata.activityType ?? "unknown");
+      if (activity === "ash_emission") setShowVolcanoAshEmission(true);
+      else if (activity === "eruption") setShowVolcanoEruption(true);
+      else setShowVolcanoUnrest(true);
     }
     setSelectedAlertId(alertId);
     if (alert.geometry && focusGeometryRef.current) {
@@ -2909,7 +3094,9 @@ export default function MapInterface() {
     if (
       (result.type === "weather_alert" ||
         result.type === "flood_alert" ||
-        result.type === "storm_alert") &&
+        result.type === "storm_alert" ||
+        result.type === "earthquake_alert" ||
+        result.type === "volcano_alert") &&
       result.alertId
     ) {
       handleAlertSelect(result.alertId);
@@ -3042,6 +3229,19 @@ export default function MapInterface() {
           }}
           showMajorFloodAlerts={showMajorFloodAlerts}
           showMajorStorms={showMajorStorms}
+          showRecentEarthquakes={showRecentEarthquakes}
+          earthquakeMagnitudeFilters={{
+            minor: showEarthquakeMinor,
+            moderate: showEarthquakeModerate,
+            strong: showEarthquakeStrong,
+            major: showEarthquakeMajor,
+          }}
+          showMajorVolcanicActivity={showMajorVolcanicActivity}
+          volcanoActivityFilters={{
+            unrest: showVolcanoUnrest,
+            eruption: showVolcanoEruption,
+            ashEmission: showVolcanoAshEmission,
+          }}
           selectedAlertId={selectedAlertId}
           onAlertSelect={handleAlertSelect}
           onSatelliteObservationSelect={handleSatelliteObservationSelect}
@@ -3159,13 +3359,32 @@ export default function MapInterface() {
                   : copernicusFloodStatus?.available
                     ? t.alertPanel.connectorOperational
                     : t.alertPanel.noRecentData,
+            recentEarthquakes:
+              alertConnectorStatus.usgs === "unavailable" &&
+              alertConnectorStatus.emsc === "unavailable"
+                ? t.alertPanel.connectorUnavailable
+                : activityFilteredAlerts.some(
+                      (alert) => alert.category === "earthquake",
+                    )
+                  ? t.alertPanel.connectorOperational
+                  : t.alertPanel.providerNoEvents,
+            majorVolcanicActivity:
+              alertConnectorStatus["gdacs-geological"] === "unavailable"
+                ? t.alertPanel.connectorUnavailable
+                : activityFilteredAlerts.some(
+                      (alert) => alert.category === "volcano",
+                    )
+                  ? t.alertPanel.connectorOperational
+                  : t.alertPanel.providerNoEvents,
           }}
         />
 
         {(showOfficialWeatherWarnings ||
           showMajorFloodAlerts ||
           showMajorStorms ||
-          showObservedFloodExtent) && (
+          showObservedFloodExtent ||
+          showRecentEarthquakes ||
+          showMajorVolcanicActivity) && (
           <AlertStatusPanel
             locale={locale}
             mode={alertActivityMode}
@@ -3173,8 +3392,27 @@ export default function MapInterface() {
             statuses={alertConnectorStatus}
             gdacsActiveCount={activeGdacsFloodCount}
             meteoalarmActiveCount={activeMeteoalarmCount}
-            copernicus={copernicusFloodStatus}
+            copernicus={
+              showOfficialWeatherWarnings ||
+              showMajorFloodAlerts ||
+              showMajorStorms ||
+              showObservedFloodExtent
+                ? copernicusFloodStatus
+                : null
+            }
             demoMode={alertsDemoMode}
+            showGeneralModes={
+              showOfficialWeatherWarnings ||
+              showMajorFloodAlerts ||
+              showMajorStorms ||
+              showObservedFloodExtent
+            }
+            earthquakeEnabled={showRecentEarthquakes}
+            earthquakeMode={earthquakeTimeMode}
+            onEarthquakeModeChange={setEarthquakeTimeMode}
+            volcanoEnabled={showMajorVolcanicActivity}
+            volcanoMode={volcanoTimeMode}
+            onVolcanoModeChange={setVolcanoTimeMode}
           />
         )}
 

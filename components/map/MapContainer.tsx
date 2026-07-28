@@ -115,6 +115,14 @@ import {
   FLOOD_EVENT_SOURCE_ID,
   FLOOD_EVENT_WAVE_ICON_ID,
   FLOOD_EVENT_WAVE_LAYER_ID,
+  GEOLOGICAL_ALERT_SOURCE_ID,
+  GEOLOGICAL_CLUSTER_COUNT_LAYER_ID,
+  GEOLOGICAL_CLUSTER_LAYER_ID,
+  EARTHQUAKE_WAVE_LAYER_ID,
+  EARTHQUAKE_MARKER_LAYER_ID,
+  VOLCANO_MARKER_LAYER_ID,
+  GEOLOGICAL_LABEL_LAYER_ID,
+  GEOLOGICAL_SELECTED_LAYER_ID,
   ALERT_TRACK_LAYER_ID,
   ALERT_TRACK_SOURCE_ID,
   ALERT_UNCERTAINTY_LAYER_ID,
@@ -123,11 +131,14 @@ import {
   buildAlertFeatureCollection,
   buildFloodEventMarkerCollection,
   buildStormGeometryCollection,
+  buildGeologicalAlertCollection,
   buildWildfireWindCollection,
   createWindArrowIcon,
   createFloodWaveIcon,
   filterVisibleAlerts,
   type WeatherHazardFilters,
+  type EarthquakeMagnitudeFilters,
+  type VolcanoActivityFilters,
 } from "@/components/map/alertMapLayers";
 import type {
   MapFocusRequest,
@@ -967,6 +978,19 @@ export default function MapContainer({
   },
   showMajorFloodAlerts = false,
   showMajorStorms = false,
+  showRecentEarthquakes = false,
+  earthquakeMagnitudeFilters = {
+    minor: false,
+    moderate: true,
+    strong: true,
+    major: true,
+  },
+  showMajorVolcanicActivity = false,
+  volcanoActivityFilters = {
+    unrest: true,
+    eruption: true,
+    ashEmission: true,
+  },
   selectedAlertId = null,
   onAlertSelect,
   onSatelliteObservationSelect,
@@ -1063,6 +1087,10 @@ export default function MapContainer({
   weatherHazardFilters?: WeatherHazardFilters;
   showMajorFloodAlerts?: boolean;
   showMajorStorms?: boolean;
+  showRecentEarthquakes?: boolean;
+  earthquakeMagnitudeFilters?: EarthquakeMagnitudeFilters;
+  showMajorVolcanicActivity?: boolean;
+  volcanoActivityFilters?: VolcanoActivityFilters;
   selectedAlertId?: string | null;
   onAlertSelect?: (alertId: string | null) => void;
   onSatelliteObservationSelect?: (alert: NormalizedAlert) => void;
@@ -5669,11 +5697,16 @@ export default function MapContainer({
       weather: showOfficialWeatherWarnings,
       floods: showMajorFloodAlerts,
       storms: showMajorStorms,
+      earthquakes: showRecentEarthquakes,
+      volcanoes: showMajorVolcanicActivity,
+      earthquakeFilters: earthquakeMagnitudeFilters,
+      volcanoFilters: volcanoActivityFilters,
       weatherFilters: weatherHazardFilters,
     });
     const collection = buildAlertFeatureCollection(visibleAlerts);
     const floodEvents = buildFloodEventMarkerCollection(visibleAlerts);
     const stormCollection = buildStormGeometryCollection(visibleAlerts);
+    const geologicalCollection = buildGeologicalAlertCollection(visibleAlerts);
     const beforeId = map.getLayer("user-location-accuracy")
       ? "user-location-accuracy"
       : undefined;
@@ -5700,6 +5733,21 @@ export default function MapContainer({
     } else {
       (map.getSource(FLOOD_EVENT_SOURCE_ID) as GeoJSONSource).setData(
         floodEvents,
+      );
+    }
+
+    if (!map.getSource(GEOLOGICAL_ALERT_SOURCE_ID)) {
+      map.addSource(GEOLOGICAL_ALERT_SOURCE_ID, {
+        type: "geojson",
+        data: geologicalCollection,
+        cluster: true,
+        clusterMaxZoom: 7,
+        clusterRadius: 44,
+        promoteId: "alertId",
+      });
+    } else {
+      (map.getSource(GEOLOGICAL_ALERT_SOURCE_ID) as GeoJSONSource).setData(
+        geologicalCollection,
       );
     }
 
@@ -5946,6 +5994,229 @@ export default function MapContainer({
         beforeId,
       );
     }
+    if (!map.getLayer(GEOLOGICAL_CLUSTER_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: GEOLOGICAL_CLUSTER_LAYER_ID,
+          type: "circle",
+          source: GEOLOGICAL_ALERT_SOURCE_ID,
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              18,
+              8,
+              23,
+              25,
+              29,
+            ],
+            "circle-color": "#7c2d12",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-opacity": 0.94,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(GEOLOGICAL_CLUSTER_COUNT_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: GEOLOGICAL_CLUSTER_COUNT_LAYER_ID,
+          type: "symbol",
+          source: GEOLOGICAL_ALERT_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-allow-overlap": true,
+          },
+          paint: {
+            "text-color": "#ffffff",
+            "text-halo-color": "#451a03",
+            "text-halo-width": 1,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(EARTHQUAKE_WAVE_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: EARTHQUAKE_WAVE_LAYER_ID,
+          type: "circle",
+          source: GEOLOGICAL_ALERT_SOURCE_ID,
+          filter: [
+            "all",
+            ["!", ["has", "point_count"]],
+            ["==", ["get", "category"], "earthquake"],
+          ],
+          paint: {
+            "circle-radius": [
+              "+",
+              ["get", "markerRadius"],
+              [
+                "case",
+                ["==", ["get", "alertId"], selectedAlertId ?? ""],
+                9,
+                5,
+              ],
+            ],
+            "circle-color": ["get", "markerColor"],
+            "circle-opacity": 0.18,
+            "circle-stroke-color": ["get", "markerColor"],
+            "circle-stroke-width": 1,
+            "circle-stroke-opacity": 0.65,
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setPaintProperty(EARTHQUAKE_WAVE_LAYER_ID, "circle-radius", [
+        "+",
+        ["get", "markerRadius"],
+        [
+          "case",
+          ["==", ["get", "alertId"], selectedAlertId ?? ""],
+          9,
+          5,
+        ],
+      ]);
+    }
+    if (!map.getLayer(EARTHQUAKE_MARKER_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: EARTHQUAKE_MARKER_LAYER_ID,
+          type: "circle",
+          source: GEOLOGICAL_ALERT_SOURCE_ID,
+          filter: [
+            "all",
+            ["!", ["has", "point_count"]],
+            ["==", ["get", "category"], "earthquake"],
+          ],
+          paint: {
+            "circle-radius": [
+              "+",
+              ["get", "markerRadius"],
+              [
+                "case",
+                ["==", ["get", "alertId"], selectedAlertId ?? ""],
+                3,
+                0,
+              ],
+            ],
+            "circle-color": ["get", "markerColor"],
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-opacity": 0.95,
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setPaintProperty(EARTHQUAKE_MARKER_LAYER_ID, "circle-radius", [
+        "+",
+        ["get", "markerRadius"],
+        [
+          "case",
+          ["==", ["get", "alertId"], selectedAlertId ?? ""],
+          3,
+          0,
+        ],
+      ]);
+    }
+    if (!map.getLayer(VOLCANO_MARKER_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: VOLCANO_MARKER_LAYER_ID,
+          type: "symbol",
+          source: GEOLOGICAL_ALERT_SOURCE_ID,
+          filter: [
+            "all",
+            ["!", ["has", "point_count"]],
+            ["==", ["get", "category"], "volcano"],
+          ],
+          layout: {
+            "text-field": "▲",
+            "text-size": [
+              "case",
+              ["==", ["get", "alertId"], selectedAlertId ?? ""],
+              30,
+              25,
+            ],
+            "text-allow-overlap": true,
+            "text-ignore-placement": true,
+          },
+          paint: {
+            "text-color": ["get", "markerColor"],
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 2,
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setLayoutProperty(VOLCANO_MARKER_LAYER_ID, "text-size", [
+        "case",
+        ["==", ["get", "alertId"], selectedAlertId ?? ""],
+        30,
+        25,
+      ]);
+    }
+    if (!map.getLayer(GEOLOGICAL_LABEL_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: GEOLOGICAL_LABEL_LAYER_ID,
+          type: "symbol",
+          source: GEOLOGICAL_ALERT_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 5,
+          layout: {
+            "text-field": ["get", "label"],
+            "text-size": 11,
+            "text-offset": [0, 1.8],
+            "text-anchor": "top",
+            "text-max-width": 18,
+            "text-optional": true,
+          },
+          paint: {
+            "text-color": "#f8fafc",
+            "text-halo-color": "#0f172a",
+            "text-halo-width": 1.5,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(GEOLOGICAL_SELECTED_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: GEOLOGICAL_SELECTED_LAYER_ID,
+          type: "circle",
+          source: GEOLOGICAL_ALERT_SOURCE_ID,
+          filter: [
+            "all",
+            ["!", ["has", "point_count"]],
+            ["==", ["get", "alertId"], selectedAlertId ?? ""],
+          ],
+          paint: {
+            "circle-radius": 22,
+            "circle-color": "#7dd3fc",
+            "circle-opacity": 0.2,
+            "circle-stroke-color": "#bae6fd",
+            "circle-stroke-width": 2,
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setFilter(GEOLOGICAL_SELECTED_LAYER_ID, [
+        "all",
+        ["!", ["has", "point_count"]],
+        ["==", ["get", "alertId"], selectedAlertId ?? ""],
+      ]);
+    }
     if (!map.getLayer(ALERT_SELECTED_LAYER_ID)) {
       map.addLayer(
         {
@@ -6064,6 +6335,18 @@ export default function MapContainer({
       const zoom = await source.getClusterExpansionZoom(clusterId);
       map.easeTo({ center: coordinates, zoom, duration: 650 });
     };
+    const handleGeologicalClusterClick = async (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      const clusterId = Number(feature?.properties?.cluster_id);
+      const coordinates =
+        feature?.geometry.type === "Point"
+          ? (feature.geometry.coordinates as [number, number])
+          : null;
+      if (!Number.isFinite(clusterId) || !coordinates) return;
+      const source = map.getSource(GEOLOGICAL_ALERT_SOURCE_ID) as GeoJSONSource;
+      const zoom = await source.getClusterExpansionZoom(clusterId);
+      map.easeTo({ center: coordinates, zoom, duration: 650 });
+    };
     let hoverPopup: Popup | null = null;
     const showFloodTooltip = (event: MapLayerMouseEvent) => {
       const feature = event.features?.[0];
@@ -6105,6 +6388,70 @@ export default function MapContainer({
         .setDOMContent(content)
         .addTo(map);
     };
+    const showGeologicalTooltip = (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+      hoverPopup?.remove();
+      const properties = feature.properties ?? {};
+      const messages = getMessages(locale).alertPanel;
+      const content = document.createElement("div");
+      content.className = "space-y-1 text-xs";
+      const eventAt =
+        typeof properties.onsetAt === "string"
+          ? new Intl.DateTimeFormat(locale, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }).format(new Date(properties.onsetAt))
+          : null;
+      const lines =
+        properties.category === "earthquake"
+          ? [
+              properties.title,
+              properties.displayLocation,
+              properties.depthKilometers == null
+                ? null
+                : `${messages.depth}: ${properties.depthKilometers} km`,
+              eventAt ? `${messages.eventTime}: ${eventAt}` : null,
+              properties.updatedAt
+                ? `${messages.updatedAt}: ${properties.updatedAt}`
+                : null,
+              properties.feltReports
+                ? `${messages.feltReports}: ${properties.feltReports}`
+                : null,
+              properties.sourceName,
+              properties.gdacsSeverity
+                ? `${messages.gdacsLevel}: ${properties.gdacsSeverity}`
+                : null,
+            ]
+          : [
+              properties.title,
+              properties.displayLocation,
+              properties.activityType
+                ? `${messages.volcanicActivityType}: ${properties.activityType}`
+                : null,
+              properties.updatedAt
+                ? `${messages.updatedAt}: ${properties.updatedAt}`
+                : null,
+              properties.sourceName,
+              properties.gdacsSeverity
+                ? `${messages.gdacsLevel}: ${properties.gdacsSeverity}`
+                : null,
+            ];
+      for (const value of lines) {
+        if (!value) continue;
+        const line = document.createElement("p");
+        line.textContent = String(value);
+        content.appendChild(line);
+      }
+      hoverPopup = new Popup({
+        closeButton: false,
+        closeOnClick: false,
+        offset: 16,
+      })
+        .setLngLat(feature.geometry.coordinates as [number, number])
+        .setDOMContent(content)
+        .addTo(map);
+    };
     const pointer = () => {
       map.getCanvas().style.cursor = "pointer";
     };
@@ -6121,6 +6468,16 @@ export default function MapContainer({
     map.on("mouseenter", FLOOD_EVENT_MARKER_LAYER_ID, pointer);
     map.on("mousemove", FLOOD_EVENT_MARKER_LAYER_ID, showFloodTooltip);
     map.on("mouseleave", FLOOD_EVENT_MARKER_LAYER_ID, reset);
+    map.on("click", GEOLOGICAL_CLUSTER_LAYER_ID, handleGeologicalClusterClick);
+    for (const layerId of [
+      EARTHQUAKE_MARKER_LAYER_ID,
+      VOLCANO_MARKER_LAYER_ID,
+    ]) {
+      map.on("click", layerId, handleAlertClick);
+      map.on("mouseenter", layerId, pointer);
+      map.on("mousemove", layerId, showGeologicalTooltip);
+      map.on("mouseleave", layerId, reset);
+    }
 
     return () => {
       for (const layerId of [ALERT_FILL_LAYER_ID, ALERT_LINE_LAYER_ID, ALERT_POINT_LAYER_ID]) {
@@ -6134,6 +6491,20 @@ export default function MapContainer({
       map.off("mouseenter", FLOOD_EVENT_MARKER_LAYER_ID, pointer);
       map.off("mousemove", FLOOD_EVENT_MARKER_LAYER_ID, showFloodTooltip);
       map.off("mouseleave", FLOOD_EVENT_MARKER_LAYER_ID, reset);
+      map.off(
+        "click",
+        GEOLOGICAL_CLUSTER_LAYER_ID,
+        handleGeologicalClusterClick,
+      );
+      for (const layerId of [
+        EARTHQUAKE_MARKER_LAYER_ID,
+        VOLCANO_MARKER_LAYER_ID,
+      ]) {
+        map.off("click", layerId, handleAlertClick);
+        map.off("mouseenter", layerId, pointer);
+        map.off("mousemove", layerId, showGeologicalTooltip);
+        map.off("mouseleave", layerId, reset);
+      }
     };
   }, [
     mapSourcesReadyVersion,
@@ -6141,6 +6512,10 @@ export default function MapContainer({
     selectedAlertId,
     showMajorFloodAlerts,
     showMajorStorms,
+    showRecentEarthquakes,
+    earthquakeMagnitudeFilters,
+    showMajorVolcanicActivity,
+    volcanoActivityFilters,
     showOfficialWeatherWarnings,
     weatherHazardFilters,
   ]);

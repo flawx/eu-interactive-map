@@ -2,7 +2,9 @@ export type AlertCategory =
   | "wildfire"
   | "flood"
   | "weather"
-  | "tropical_cyclone";
+  | "tropical_cyclone"
+  | "earthquake"
+  | "volcano";
 
 export type AlertHazard =
   | "wildfire"
@@ -19,6 +21,11 @@ export type AlertHazard =
   | "storm_surge"
   | "snow"
   | "ice"
+  | "earthquake"
+  | "aftershock"
+  | "volcanic_unrest"
+  | "volcanic_eruption"
+  | "ash_emission"
   | "other_weather";
 
 export type AlertSeverity =
@@ -37,6 +44,7 @@ export type AlertStatus =
 
 export type AlertDataNature =
   | "official-warning"
+  | "instrumental-observation"
   | "satellite-observation"
   | "forecast-model"
   | "impact-estimation";
@@ -96,6 +104,49 @@ export type AlertApiResponse = {
   connectorStatus: AlertConnectorStatus;
   warnings: string[];
   demoMode?: boolean;
+  providerStatuses?: Record<string, AlertConnectorStatus>;
 };
 
 export type AlertActivityMode = "active" | "24h" | "72h";
+
+export type EarthquakeReviewStatus = "automatic" | "reviewed" | "unknown";
+
+export type EarthquakeProviderEventIds = {
+  usgs?: string;
+  emsc?: string;
+  gdacs?: string;
+};
+
+export type EarthquakeAlertMetadata = {
+  magnitude: number | null;
+  magnitudeType: string | null;
+  depthKilometers: number | null;
+  feltReports: number | null;
+  maximumReportedIntensity: number | null;
+  estimatedIntensity: number | null;
+  tsunamiFlag: boolean | null;
+  reviewStatus: EarthquakeReviewStatus;
+  usgsEventId: string | null;
+  emscEventId: string | null;
+  gdacsEventId: string | null;
+  providerEventIds: EarthquakeProviderEventIds;
+  providerMagnitudes: Partial<Record<"usgs" | "emsc" | "gdacs", number>>;
+  providerUpdatedAt: Partial<Record<"usgs" | "emsc" | "gdacs", string>>;
+  providerUrls: Partial<Record<"usgs" | "emsc" | "gdacs", string>>;
+  affectedPopulation: number | null;
+  gdacsSeverity: "green" | "orange" | "red" | null;
+};
+
+export type VolcanoAlertMetadata = {
+  volcanoName: string;
+  volcanoId: string | null;
+  activityType: "unrest" | "eruption" | "ash_emission" | "unknown";
+  gdacsEventId: string | null;
+  eruptionStartAt: string | null;
+  lastActivityAt: string | null;
+  ashCloudInformation: string | null;
+  affectedPopulation: number | null;
+};
+
+export type EarthquakeTimeMode = "1h" | "24h" | "7d";
+export type VolcanoTimeMode = "ongoing" | "72h" | "30d";

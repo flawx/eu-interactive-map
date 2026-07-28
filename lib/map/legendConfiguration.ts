@@ -610,6 +610,73 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
           },
         ],
       },
+      {
+        id: "alerts-geological-risks",
+        titleKey: { ns: "legend", key: "groupGeologicalRisks" },
+        defaultExpanded: true,
+        layers: [
+          {
+            id: "recent-earthquakes",
+            preferenceKey: "recentEarthquakes",
+            titleKey: { ns: "legend", key: "recentEarthquakes" },
+            icon: "earthquake",
+            color: "#f97316",
+            filters: [
+              {
+                id: "earthquake-minor",
+                preferenceKey: "earthquakeMinor",
+                titleKey: { ns: "legend", key: "earthquakeMinor" },
+                color: "#facc15",
+              },
+              {
+                id: "earthquake-moderate",
+                preferenceKey: "earthquakeModerate",
+                titleKey: { ns: "legend", key: "earthquakeModerate" },
+                color: "#fb923c",
+              },
+              {
+                id: "earthquake-strong",
+                preferenceKey: "earthquakeStrong",
+                titleKey: { ns: "legend", key: "earthquakeStrong" },
+                color: "#ef4444",
+              },
+              {
+                id: "earthquake-major",
+                preferenceKey: "earthquakeMajor",
+                titleKey: { ns: "legend", key: "earthquakeMajor" },
+                color: "#991b1b",
+              },
+            ],
+          },
+          {
+            id: "major-volcanic-activity",
+            preferenceKey: "majorVolcanicActivity",
+            titleKey: { ns: "legend", key: "majorVolcanicActivity" },
+            icon: "volcano",
+            color: "#dc2626",
+            filters: [
+              {
+                id: "volcano-unrest",
+                preferenceKey: "volcanoUnrest",
+                titleKey: { ns: "legend", key: "volcanoUnrest" },
+                color: "#eab308",
+              },
+              {
+                id: "volcano-eruption",
+                preferenceKey: "volcanoEruption",
+                titleKey: { ns: "legend", key: "volcanoEruption" },
+                color: "#dc2626",
+              },
+              {
+                id: "volcano-ash",
+                preferenceKey: "volcanoAshEmission",
+                titleKey: { ns: "legend", key: "volcanoAshEmission" },
+                color: "#64748b",
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   // Reserved empty categories (hidden until they have layers):

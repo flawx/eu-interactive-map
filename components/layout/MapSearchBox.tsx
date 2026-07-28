@@ -31,6 +31,7 @@ import {
   CloudRain,
   CloudLightning,
   Wind,
+  Activity,
   X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
@@ -221,7 +222,13 @@ function ResultIcon({
     );
   }
 
-  if (type === "weather_alert" || type === "flood_alert" || type === "storm_alert") {
+  if (
+    type === "weather_alert" ||
+    type === "flood_alert" ||
+    type === "storm_alert" ||
+    type === "earthquake_alert" ||
+    type === "volcano_alert"
+  ) {
     const color =
       metadata?.severity === "extreme"
         ? "#dc2626"
@@ -238,6 +245,10 @@ function ResultIcon({
       >
         {type === "flood_alert" ? (
           <Waves className="h-3 w-3" />
+        ) : type === "earthquake_alert" ? (
+          <Activity className="h-3 w-3" />
+        ) : type === "volcano_alert" ? (
+          <Mountain className="h-3 w-3" />
         ) : type === "storm_alert" ? (
           <Wind className="h-3 w-3" />
         ) : metadata?.hazard === "thunderstorm" ? (

@@ -2,6 +2,11 @@ import type { NormalizedAlert, AlertHazard } from "@/lib/alerts/types";
 import type { WildfireWind } from "@/lib/alerts/wind";
 import { severityColor } from "@/lib/alerts/severity";
 import { windOriginToFlowDirection } from "@/lib/alerts/wind";
+import {
+  earthquakeFilterVisible,
+  earthquakeMagnitudeBand,
+  type EarthquakeMagnitudeBand,
+} from "@/lib/alerts/geologicalActivity";
 
 export type WeatherHazardFilters = {
   heavyRain: boolean;
@@ -12,6 +17,14 @@ export type WeatherHazardFilters = {
   snowIce: boolean;
   coastal: boolean;
   other: boolean;
+};
+
+export type EarthquakeMagnitudeFilters = Record<EarthquakeMagnitudeBand, boolean>;
+
+export type VolcanoActivityFilters = {
+  unrest: boolean;
+  eruption: boolean;
+  ashEmission: boolean;
 };
 
 export const ALERT_SOURCE_ID = "normalized-alerts";
@@ -36,6 +49,15 @@ export const ALERT_FORECAST_TRACK_LAYER_ID = "storm-forecast-tracks-line";
 export const ALERT_UNCERTAINTY_LAYER_ID = "storm-uncertainty-fill";
 export const WILDFIRE_WIND_SOURCE_ID = "wildfire-wind";
 export const WILDFIRE_WIND_LAYER_ID = "wildfire-wind-arrows";
+export const GEOLOGICAL_ALERT_SOURCE_ID = "geological-alert-events";
+export const GEOLOGICAL_CLUSTER_LAYER_ID = "geological-alert-clusters";
+export const GEOLOGICAL_CLUSTER_COUNT_LAYER_ID =
+  "geological-alert-cluster-count";
+export const EARTHQUAKE_WAVE_LAYER_ID = "earthquake-marker-wave";
+export const EARTHQUAKE_MARKER_LAYER_ID = "earthquake-marker";
+export const VOLCANO_MARKER_LAYER_ID = "volcano-marker";
+export const GEOLOGICAL_LABEL_LAYER_ID = "geological-alert-label";
+export const GEOLOGICAL_SELECTED_LAYER_ID = "geological-alert-selected";
 
 export function weatherHazardVisible(
   hazard: AlertHazard,
@@ -57,6 +79,10 @@ export function filterVisibleAlerts(
     weather: boolean;
     floods: boolean;
     storms: boolean;
+    earthquakes: boolean;
+    volcanoes: boolean;
+    earthquakeFilters: EarthquakeMagnitudeFilters;
+    volcanoFilters: VolcanoActivityFilters;
     weatherFilters: WeatherHazardFilters;
   },
 ): NormalizedAlert[] {
@@ -66,8 +92,121 @@ export function filterVisibleAlerts(
     }
     if (alert.category === "flood") return options.floods;
     if (alert.category === "tropical_cyclone") return options.storms;
+    if (alert.category === "earthquake") {
+      const magnitude =
+        typeof alert.metadata.magnitude === "number"
+          ? alert.metadata.magnitude
+          : null;
+      return (
+        options.earthquakes &&
+        earthquakeFilterVisible(magnitude, options.earthquakeFilters)
+      );
+    }
+    if (alert.category === "volcano") {
+      if (!options.volcanoes) return false;
+      const activity = String(alert.metadata.activityType ?? "unknown");
+      if (activity === "ash_emission") return options.volcanoFilters.ashEmission;
+      if (activity === "eruption") return options.volcanoFilters.eruption;
+      return options.volcanoFilters.unrest;
+    }
     return false;
   });
+}
+
+function geologicalColor(alert: NormalizedAlert): string {
+  const gdacs = String(alert.metadata.gdacsSeverity ?? "").toLowerCase();
+  if (gdacs === "red") return "#dc2626";
+  if (gdacs === "orange") return "#f97316";
+  if (gdacs === "green") return "#22c55e";
+  if (alert.category === "volcano") {
+    const activity = String(alert.metadata.activityType ?? "unknown");
+    if (activity === "ash_emission") return "#64748b";
+    if (activity === "eruption") return "#dc2626";
+    return "#eab308";
+  }
+  const magnitude =
+    typeof alert.metadata.magnitude === "number"
+      ? alert.metadata.magnitude
+      : null;
+  const band = earthquakeMagnitudeBand(magnitude);
+  if (band === "major") return "#991b1b";
+  if (band === "strong") return "#ef4444";
+  if (band === "moderate") return "#fb923c";
+  return "#facc15";
+}
+
+export function buildGeologicalAlertCollection(
+  alerts: readonly NormalizedAlert[],
+): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: alerts
+      .filter(
+        (alert) =>
+          (alert.category === "earthquake" || alert.category === "volcano") &&
+          alert.centroid,
+      )
+      .map((alert) => {
+        const magnitude =
+          typeof alert.metadata.magnitude === "number"
+            ? alert.metadata.magnitude
+            : null;
+        const depth =
+          typeof alert.metadata.depthKilometers === "number"
+            ? alert.metadata.depthKilometers
+            : null;
+        const felt =
+          typeof alert.metadata.feltReports === "number"
+            ? alert.metadata.feltReports
+            : null;
+        const location =
+          alert.affectedAreaNames[0] ?? alert.countryCodes.join(", ");
+        return {
+          type: "Feature" as const,
+          id: alert.id,
+          properties: {
+            alertId: alert.id,
+            title: alert.title,
+            category: alert.category,
+            magnitude,
+            magnitudeBand: earthquakeMagnitudeBand(magnitude),
+            depthKilometers: depth,
+            feltReports: felt,
+            displayLocation: location,
+            updatedAt: alert.updatedAt,
+            onsetAt: alert.onsetAt,
+            sourceName: alert.officialSourceName,
+            gdacsSeverity: alert.metadata.gdacsSeverity ?? null,
+            activityType: alert.metadata.activityType ?? null,
+            markerColor: geologicalColor(alert),
+            markerRadius:
+              alert.category === "volcano"
+                ? 11
+                : magnitude == null
+                  ? 7
+                  : magnitude >= 6
+                    ? 14
+                    : magnitude >= 5
+                      ? 11
+                      : magnitude >= 4
+                        ? 9
+                        : 7,
+            label:
+              alert.category === "earthquake"
+                ? `${magnitude == null ? "M?" : `M${magnitude.toFixed(1)}`} · ${location}`
+                : alert.title,
+            reviewStatus: alert.metadata.reviewStatus ?? null,
+          },
+          geometry: {
+            type: "Point" as const,
+            coordinates: [
+              alert.centroid!.longitude,
+              alert.centroid!.latitude,
+            ],
+          },
+        };
+      }),
+  };
 }
 
 export function buildAlertFeatureCollection(
@@ -76,6 +215,10 @@ export function buildAlertFeatureCollection(
   return {
     type: "FeatureCollection",
     features: alerts
+      .filter(
+        (alert) =>
+          alert.category !== "earthquake" && alert.category !== "volcano",
+      )
       .filter((alert) => alert.geometry || alert.centroid)
       .map((alert) => ({
         type: "Feature",

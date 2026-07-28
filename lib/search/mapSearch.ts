@@ -39,6 +39,8 @@ export type MapSearchResultType =
   | "weather_alert"
   | "flood_alert"
   | "storm_alert"
+  | "earthquake_alert"
+  | "volcano_alert"
   | "eu_institution"
   | "unesco_site"
   | "european_heritage_label"
@@ -1036,7 +1038,11 @@ export function buildLocalSearchIndex(
             ? "weather_alert"
             : alert.category === "flood"
               ? "flood_alert"
-              : "storm_alert",
+              : alert.category === "earthquake"
+                ? "earthquake_alert"
+                : alert.category === "volcano"
+                  ? "volcano_alert"
+                  : "storm_alert",
         category: "active_alerts",
         title: alert.title,
         subtitle:
@@ -1049,7 +1055,11 @@ export function buildLocalSearchIndex(
             ? "weather-alert"
             : alert.category === "flood"
               ? "flood-alert"
-              : "storm-alert",
+              : alert.category === "earthquake"
+                ? "earthquake-alert"
+                : alert.category === "volcano"
+                  ? "volcano-alert"
+                  : "storm-alert",
         countryCode: alert.countryCodes[0],
         alertId: alert.id,
         source: "local",
@@ -1057,12 +1067,21 @@ export function buildLocalSearchIndex(
           hazard: alert.hazard,
           severity: alert.severity,
           source: alert.source,
+          magnitude:
+            typeof alert.metadata.magnitude === "number"
+              ? alert.metadata.magnitude
+              : null,
           searchText: [
             alert.title,
             alert.description,
             alert.hazard,
             alert.category,
             alert.officialSourceName,
+            alert.metadata.magnitude,
+            alert.metadata.usgsEventId,
+            alert.metadata.emscEventId,
+            alert.metadata.gdacsEventId,
+            alert.metadata.volcanoName,
             ...alert.countryCodes,
             ...alert.affectedAreaNames,
           ]

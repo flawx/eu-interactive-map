@@ -25,7 +25,11 @@ import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBord
 import type { NormalizedAlert } from "@/lib/alerts/types";
 import type { WildfireWind } from "@/lib/alerts/wind";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
-import type { WeatherHazardFilters } from "@/components/map/alertMapLayers";
+import type {
+  EarthquakeMagnitudeFilters,
+  VolcanoActivityFilters,
+  WeatherHazardFilters,
+} from "@/components/map/alertMapLayers";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -105,6 +109,10 @@ type MapClientProps = {
   weatherHazardFilters: WeatherHazardFilters;
   showMajorFloodAlerts: boolean;
   showMajorStorms: boolean;
+  showRecentEarthquakes: boolean;
+  earthquakeMagnitudeFilters: EarthquakeMagnitudeFilters;
+  showMajorVolcanicActivity: boolean;
+  volcanoActivityFilters: VolcanoActivityFilters;
   selectedAlertId: string | null;
   onAlertSelect: (alertId: string | null) => void;
   onSatelliteObservationSelect: (alert: NormalizedAlert) => void;
@@ -211,6 +219,10 @@ export default function MapClient({
   weatherHazardFilters,
   showMajorFloodAlerts,
   showMajorStorms,
+  showRecentEarthquakes,
+  earthquakeMagnitudeFilters,
+  showMajorVolcanicActivity,
+  volcanoActivityFilters,
   selectedAlertId,
   onAlertSelect,
   onSatelliteObservationSelect,
@@ -311,6 +323,10 @@ export default function MapClient({
       weatherHazardFilters={weatherHazardFilters}
       showMajorFloodAlerts={showMajorFloodAlerts}
       showMajorStorms={showMajorStorms}
+      showRecentEarthquakes={showRecentEarthquakes}
+      earthquakeMagnitudeFilters={earthquakeMagnitudeFilters}
+      showMajorVolcanicActivity={showMajorVolcanicActivity}
+      volcanoActivityFilters={volcanoActivityFilters}
       selectedAlertId={selectedAlertId}
       onAlertSelect={onAlertSelect}
       onSatelliteObservationSelect={onSatelliteObservationSelect}

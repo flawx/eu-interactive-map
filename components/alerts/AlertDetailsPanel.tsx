@@ -40,6 +40,8 @@ export default function AlertDetailsPanel({
   const natureLabel =
     nature === "official-warning"
       ? t.officialWarning
+      : nature === "instrumental-observation"
+        ? t.instrumentalObservation
       : nature === "satellite-observation"
         ? t.satelliteObservation
         : nature === "forecast-model"
@@ -75,7 +77,10 @@ export default function AlertDetailsPanel({
     typeof alert.metadata.populationExposure === "number" &&
     Number.isFinite(alert.metadata.populationExposure)
       ? alert.metadata.populationExposure
-      : null;
+      : typeof alert.metadata.affectedPopulation === "number" &&
+          Number.isFinite(alert.metadata.affectedPopulation)
+        ? alert.metadata.affectedPopulation
+        : null;
   const acquisitionTime = formatDate(
     typeof alert.metadata.acquisitionTime === "string"
       ? alert.metadata.acquisitionTime
@@ -88,6 +93,35 @@ export default function AlertDetailsPanel({
       : null,
     locale,
   );
+  const magnitude =
+    typeof alert.metadata.magnitude === "number"
+      ? alert.metadata.magnitude
+      : null;
+  const depthKilometers =
+    typeof alert.metadata.depthKilometers === "number"
+      ? alert.metadata.depthKilometers
+      : null;
+  const feltReports =
+    typeof alert.metadata.feltReports === "number"
+      ? alert.metadata.feltReports
+      : null;
+  const reportedIntensity =
+    typeof alert.metadata.maximumReportedIntensity === "number"
+      ? alert.metadata.maximumReportedIntensity
+      : null;
+  const estimatedIntensity =
+    typeof alert.metadata.estimatedIntensity === "number"
+      ? alert.metadata.estimatedIntensity
+      : null;
+  const gdacsLevel =
+    typeof alert.metadata.gdacsSeverity === "string"
+      ? alert.metadata.gdacsSeverity
+      : null;
+  const providerMagnitudes =
+    alert.metadata.providerMagnitudes &&
+    typeof alert.metadata.providerMagnitudes === "object"
+      ? (alert.metadata.providerMagnitudes as Record<string, number>)
+      : {};
 
   return (
     <aside
@@ -139,6 +173,192 @@ export default function AlertDetailsPanel({
             {alert.description ?? t.unavailable}
           </p>
         </section>
+
+        {alert.category === "earthquake" && (
+          <>
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {t.earthquake}
+              </h3>
+              <dl className="mt-1.5 space-y-1.5">
+                <div>
+                  <dt className="inline text-slate-400">{t.magnitude}: </dt>
+                  <dd className="inline text-slate-100">
+                    {magnitude == null ? t.unavailable : magnitude.toFixed(1)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.magnitudeType}: </dt>
+                  <dd className="inline text-slate-100">
+                    {typeof alert.metadata.magnitudeType === "string"
+                      ? alert.metadata.magnitudeType
+                      : t.unavailable}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.depth}: </dt>
+                  <dd className="inline text-slate-100">
+                    {depthKilometers == null
+                      ? t.unavailable
+                      : `${depthKilometers.toFixed(1)} km`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.eventTime}: </dt>
+                  <dd className="inline text-slate-100">
+                    {onsetAt ?? t.unavailable}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.reviewStatus}: </dt>
+                  <dd className="inline text-slate-100">
+                    {alert.metadata.reviewStatus === "reviewed"
+                      ? t.reviewed
+                      : alert.metadata.reviewStatus === "automatic"
+                        ? t.automaticReview
+                        : t.unavailable}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {t.feltReports}
+              </h3>
+              <dl className="mt-1.5 space-y-1.5">
+                <div>
+                  <dt className="inline text-slate-400">{t.feltReports}: </dt>
+                  <dd className="inline text-slate-100">
+                    {feltReports == null
+                      ? t.unavailable
+                      : new Intl.NumberFormat(locale).format(feltReports)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.reportedIntensity}: </dt>
+                  <dd className="inline text-slate-100">
+                    {reportedIntensity ?? t.unavailable}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.estimatedIntensity}: </dt>
+                  <dd className="inline text-slate-100">
+                    {estimatedIntensity ?? t.unavailable}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+            {Object.keys(providerMagnitudes).length > 1 && (
+              <section>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {t.providerValues}
+                </h3>
+                <dl className="mt-1.5 space-y-1.5">
+                  {Object.entries(providerMagnitudes).map(([provider, value]) => (
+                    <div key={provider}>
+                      <dt className="inline uppercase text-slate-400">{provider}: </dt>
+                      <dd className="inline text-slate-100">M{value.toFixed(1)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
+            {(gdacsLevel || affectedPopulation != null) && (
+              <section>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {t.impactEstimate}
+                </h3>
+                {gdacsLevel && (
+                  <p className="mt-1.5 text-slate-100">
+                    {t.gdacsLevel}: {gdacsLevel}
+                  </p>
+                )}
+                {affectedPopulation != null && (
+                  <p className="mt-1 text-slate-100">
+                    {t.potentiallyAffectedPopulation}:{" "}
+                    {new Intl.NumberFormat(locale).format(affectedPopulation)}
+                  </p>
+                )}
+              </section>
+            )}
+            {typeof alert.metadata.tsunamiFlag === "boolean" && (
+              <section>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {t.tsunamiIndicator}
+                </h3>
+                <p className="mt-1.5 text-slate-100">
+                  {alert.metadata.tsunamiFlag ? "true" : "false"}
+                </p>
+              </section>
+            )}
+            <div className="space-y-1.5 rounded-lg border border-orange-400/20 bg-orange-400/10 p-3 text-orange-100">
+              <p>{t.magnitudeWarning}</p>
+              <p>{t.revisionWarning}</p>
+              <p>{t.noPrediction}</p>
+            </div>
+          </>
+        )}
+
+        {alert.category === "volcano" && (
+          <>
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {t.volcano}
+              </h3>
+              <dl className="mt-1.5 space-y-1.5">
+                <div>
+                  <dt className="inline text-slate-400">{t.volcanicActivityType}: </dt>
+                  <dd className="inline text-slate-100">
+                    {typeof alert.metadata.activityType === "string"
+                      ? alert.metadata.activityType
+                      : t.unavailable}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.eruptionStart}: </dt>
+                  <dd className="inline text-slate-100">
+                    {formatDate(
+                      typeof alert.metadata.eruptionStartAt === "string"
+                        ? alert.metadata.eruptionStartAt
+                        : null,
+                      locale,
+                    ) ?? t.unavailable}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline text-slate-400">{t.lastActivity}: </dt>
+                  <dd className="inline text-slate-100">
+                    {formatDate(
+                      typeof alert.metadata.lastActivityAt === "string"
+                        ? alert.metadata.lastActivityAt
+                        : alert.updatedAt,
+                      locale,
+                    ) ?? t.unavailable}
+                  </dd>
+                </div>
+                {gdacsLevel && (
+                  <div>
+                    <dt className="inline text-slate-400">{t.gdacsLevel}: </dt>
+                    <dd className="inline text-slate-100">{gdacsLevel}</dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+            {typeof alert.metadata.ashCloudInformation === "string" && (
+              <section>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  {t.ashCloudInformation}
+                </h3>
+                <p className="mt-1.5 text-slate-100">
+                  {alert.metadata.ashCloudInformation}
+                </p>
+              </section>
+            )}
+            <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-amber-100">
+              {t.volcanoAuthorityWarning}
+            </p>
+          </>
+        )}
 
         {alert.category === "flood" && (
           <section>
@@ -227,7 +447,8 @@ export default function AlertDetailsPanel({
           </>
         )}
 
-        {alert.source === "gdacs" && (
+        {(alert.source === "gdacs" ||
+          typeof alert.metadata.gdacsEventId === "string") && (
           <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-amber-100">
             {t.gdacsIndicative}
           </p>
@@ -250,6 +471,27 @@ export default function AlertDetailsPanel({
               <ExternalLink className="h-3 w-3" />
             </a>
           )}
+          {Boolean(
+            alert.metadata.providerUrls &&
+              typeof alert.metadata.providerUrls === "object",
+          ) && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {Object.entries(
+                  alert.metadata.providerUrls as Record<string, string>,
+                ).map(([provider, url]) => (
+                  <a
+                    key={provider}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[10px] uppercase text-sky-300 hover:bg-white/5"
+                  >
+                    {provider}
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                ))}
+              </div>
+            )}
         </section>
       </div>
     </aside>
