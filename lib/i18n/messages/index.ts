@@ -121,6 +121,32 @@ export function getMessages(locale: Locale): Messages {
             cardinalSouthWest: "sud-ouest",
             cardinalWest: "ouest",
             cardinalNorthWest: "nord-ouest",
+            satelliteFloodTitle:
+              "Étendue inondée observée par satellite",
+            location: "Lieu",
+            observedArea: "Superficie observée",
+            areaUnavailable: "Superficie observée non disponible",
+            potentiallyAffectedPopulation:
+              "Population potentiellement affectée",
+            satellite: "Satellite",
+            confidence: "Niveau de confiance",
+            automaticDetection:
+              "Cette zone a été détectée automatiquement à partir d’une image satellite.",
+            notOfficialConfirmation:
+              "Elle ne constitue pas à elle seule la confirmation officielle d’un incident en cours.",
+            falsePositivesPossible:
+              "Des faux positifs et des zones non détectées sont possibles.",
+            gdacsIndicative:
+              "Les informations GDACS sont indicatives et ne remplacent pas les consignes des autorités locales.",
+            configurationRequired: "Configuration requise",
+            noActiveEventsEurope: "Aucun événement actif en Europe",
+            noRecentData: "Aucune donnée récente",
+            activeMode: "Actifs",
+            last24Hours: "Dernières 24 heures",
+            last72Hours: "Dernières 72 heures",
+            demoData: "Données de démonstration",
+            demoUnavailableProvider:
+              "Fournisseur de démonstration indisponible",
           }
         : {}),
     },

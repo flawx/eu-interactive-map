@@ -16,13 +16,34 @@ import {
 import {
   DEFAULT_MAP_LAYER_PREFERENCES,
   countActiveMapLayers,
+  migrateMapLayerPreferences,
 } from "../lib/map/mapLayerPreferences";
 import { buildLocalSearchIndex, searchLocalIndex } from "../lib/search/mapSearch";
-import { buildAlertFeatureCollection, filterVisibleAlerts } from "../components/map/alertMapLayers";
+import {
+  buildAlertFeatureCollection,
+  buildFloodEventMarkerCollection,
+  filterVisibleAlerts,
+} from "../components/map/alertMapLayers";
 import { supportedLocales } from "../lib/i18n/config";
 import { getMessages } from "../lib/i18n/messages";
 import { getAlertFreshness, isBeyondExpiryGrace } from "../lib/alerts/staleness";
 import { ALERT_SOURCES } from "../lib/alerts/sourceRegistry";
+import {
+  geometryIntersectsProjectEurope,
+  isCountryAllowedInProject,
+} from "../lib/alerts/geography";
+import {
+  parseGfmCapabilities,
+  resolveLatestAvailableGfmTime,
+} from "../lib/alerts/providers/copernicusGfmCapabilities";
+import {
+  tileBounds4326,
+  tileIntersectsProjectEurope,
+  validateTileCoordinates,
+} from "../lib/alerts/providers/copernicusFloodTiles";
+import {
+  filterAlertsByActivityMode,
+} from "../lib/alerts/activityMode";
 
 const now = new Date("2026-07-28T12:00:00Z");
 
@@ -165,6 +186,37 @@ const outsideEurope = normalizeGdacsFeature(
   now.toISOString(),
 );
 assert.equal(outsideEurope, null);
+assert.equal(
+  normalizeGdacsFeature(
+    {
+      type: "Feature",
+      id: "FL-TN",
+      geometry: { type: "Point", coordinates: [10, 36] },
+      properties: {
+        eventtype: "FL",
+        eventid: "FL-TN",
+        countrycode: "TUN",
+      },
+    },
+    "FL",
+    now.toISOString(),
+  ),
+  null,
+);
+for (const country of ["FR", "ESP", "ISL"]) {
+  assert.equal(isCountryAllowedInProject(country), true);
+}
+for (const country of ["CHN", "USA", "PHL", "AUS"]) {
+  assert.equal(isCountryAllowedInProject(country), false);
+}
+assert.equal(
+  geometryIntersectsProjectEurope({
+    type: "Polygon",
+    coordinates: [[[-180, -80], [180, -80], [180, 80], [-180, 80], [-180, -80]]],
+  }),
+  false,
+  "a world bounding box is not evidence of a European event",
+);
 
 const visible = filterVisibleAlerts([yellow, orange, red, floodGreen, cyclone], {
   weather: true,
@@ -183,19 +235,29 @@ const visible = filterVisibleAlerts([yellow, orange, red, floodGreen, cyclone], 
 });
 assert(!visible.some((alert) => alert.id === red.id));
 assert.equal(buildAlertFeatureCollection(visible).features.length, 4);
+assert.equal(buildFloodEventMarkerCollection(visible).features.length, 1);
 
 const capabilities = `
   <Layer><Name>mapserver:gfm_observed_flood_extent_group_layer</Name>
   <Dimension name="time" default="2026-07-28T00:00:00Z" units="ISO8601">2022-01-01T00:00:00Z/2026-07-28T12:00:00Z/PT12H</Dimension></Layer>`;
 const status = parseCopernicusCapabilities(capabilities, now);
 assert.equal(status.available, true);
-assert.equal(status.acquisitionTime, "2026-07-28T00:00:00Z");
+assert.equal(status.acquisitionTime, "2026-07-28T12:00:00Z");
 assert.equal(parseCopernicusCapabilities("<xml/>", now).available, false);
 assert.throws(() => buildCopernicusTileUrl(4, 2, 3, "invalid"));
 assert.match(
   buildCopernicusTileUrl(4, 2, 3, "2026-07-28T00:00:00Z"),
   /gfm_observed_flood_extent_group_layer/,
 );
+const parsedCapabilities = parseGfmCapabilities(capabilities);
+assert.equal(
+  resolveLatestAvailableGfmTime(parsedCapabilities, now),
+  "2026-07-28T12:00:00Z",
+);
+assert.equal(validateTileCoordinates(15, 18753, 9586), true);
+assert.equal(tileIntersectsProjectEurope(15, 18753, 9586), true);
+assert(tileBounds4326(5, 15, 10).west < tileBounds4326(5, 15, 10).east);
+assert.equal(tileIntersectsProjectEurope(5, 2, 10), false);
 
 assert.equal(windOriginToFlowDirection(0), 180);
 assert.equal(windOriginToFlowDirection(90), 270);
@@ -248,6 +310,31 @@ assert.equal(
   countActiveMapLayers({ ...DEFAULT_MAP_LAYER_PREFERENCES, wildfireWind: true }),
   base,
   "wildfire wind is a dependent visual option",
+);
+const migrated = migrateMapLayerPreferences({
+  euroArea: false,
+  officialWeatherWarnings: true,
+});
+assert.equal(migrated.euroArea, false);
+assert.equal(migrated.officialWeatherWarnings, true);
+assert.equal(migrated.weatherHeavyRain, true);
+assert.equal(migrated.weatherFlood, true);
+assert.equal(migrated.weatherStrongWind, true);
+assert.equal(migrated.weatherThunderstorm, true);
+assert.equal(migrated.weatherHail, true);
+assert.equal(migrated.weatherSnowIce, true);
+assert.equal(migrated.weatherCoastal, true);
+assert.equal(migrated.weatherOther, true);
+assert.equal(
+  filterAlertsByActivityMode(
+    [
+      floodGreen,
+      { ...floodGreen, id: "ended", status: "ended", updatedAt: "2026-07-28T02:00:00Z" },
+    ],
+    "24h",
+    now,
+  ).length,
+  2,
 );
 
 const search = buildLocalSearchIndex("en", [], [], [yellow, floodGreen, cyclone]);

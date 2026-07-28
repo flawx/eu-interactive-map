@@ -1,0 +1,114 @@
+"use client";
+
+import type { Locale } from "@/lib/i18n/config";
+import { getMessages } from "@/lib/i18n/messages";
+import type {
+  AlertActivityMode,
+  AlertConnectorStatus,
+} from "@/lib/alerts/types";
+import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
+
+type Props = {
+  locale: Locale;
+  mode: AlertActivityMode;
+  onModeChange: (mode: AlertActivityMode) => void;
+  statuses: Record<string, AlertConnectorStatus>;
+  gdacsActiveCount: number;
+  meteoalarmActiveCount: number;
+  copernicus: CopernicusFloodLayerStatus | null;
+  demoMode: boolean;
+};
+
+function statusLabel(
+  status: AlertConnectorStatus | undefined,
+  activeCount: number,
+  t: ReturnType<typeof getMessages>["alertPanel"],
+): string {
+  if (status === "misconfigured") return t.configurationRequired;
+  if (status === "unavailable") return t.connectorUnavailable;
+  if (status === "delayed") return t.connectorDelayed;
+  if (status === "operational" && activeCount === 0) {
+    return t.noActiveEventsEurope;
+  }
+  return status === "operational"
+    ? t.connectorOperational
+    : t.noRecentData;
+}
+
+export default function AlertStatusPanel({
+  locale,
+  mode,
+  onModeChange,
+  statuses,
+  gdacsActiveCount,
+  meteoalarmActiveCount,
+  copernicus,
+  demoMode,
+}: Props) {
+  const t = getMessages(locale).alertPanel;
+  const acquisition = copernicus?.acquisitionTime
+    ? new Intl.DateTimeFormat(locale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "UTC",
+      }).format(new Date(copernicus.acquisitionTime))
+    : null;
+  return (
+    <section className="absolute bottom-4 left-1/2 z-20 w-[min(34rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-slate-950/92 p-3 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
+      <div className="flex gap-1 rounded-lg bg-white/5 p-1">
+        {([
+          ["active", t.activeMode],
+          ["24h", t.last24Hours],
+          ["72h", t.last72Hours],
+        ] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onModeChange(value)}
+            className={`min-h-9 flex-1 rounded-md px-2 py-1 ${mode === value ? "bg-sky-500/25 text-sky-100" : "text-slate-400 hover:bg-white/5"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {demoMode && (
+        <p className="mt-2 rounded-md border border-amber-300/30 bg-amber-300/10 px-2 py-1 font-semibold text-amber-100">
+          {t.demoData}
+        </p>
+      )}
+      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        <dt className="font-medium text-slate-200">Meteoalarm</dt>
+        <dd className="text-right text-slate-400">
+          {statusLabel(statuses.meteoalarm, meteoalarmActiveCount, t)}
+        </dd>
+        <dt className="font-medium text-slate-200">GDACS floods</dt>
+        <dd className="text-right text-slate-400">
+          {statusLabel(statuses.gdacs, gdacsActiveCount, t)}
+        </dd>
+        <dt className="font-medium text-slate-200">Copernicus GFM</dt>
+        <dd className="text-right text-slate-400">
+          {copernicus?.connectorStatus === "unavailable"
+            ? t.connectorUnavailable
+            : acquisition
+              ? `${t.acquisitionTime}: ${acquisition} UTC`
+              : t.noRecentData}
+        </dd>
+        {demoMode && (
+          <>
+            <dt className="font-medium text-slate-200">
+              {t.demoUnavailableProvider}
+            </dt>
+            <dd className="text-right text-slate-400">
+              {t.connectorUnavailable}
+            </dd>
+          </>
+        )}
+      </dl>
+      {copernicus && (
+        <p className="mt-2 border-t border-white/10 pt-2 text-[10px] text-cyan-100">
+          {t.observationNotForecast}
+        </p>
+      )}
+    </section>
+  );
+}

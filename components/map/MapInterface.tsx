@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import EffisBurnedAreaPanel from "@/components/incidents/EffisBurnedAreaPanel";
 import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel";
 import AlertDetailsPanel from "@/components/alerts/AlertDetailsPanel";
+import AlertStatusPanel from "@/components/alerts/AlertStatusPanel";
 import AppHeader from "@/components/layout/AppHeader";
 import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
 import CapitalCityPanel from "@/components/europe/CapitalCityPanel";
@@ -100,10 +101,15 @@ import {
 } from "@/lib/map/userLocation";
 import type { MapSearchResult } from "@/lib/search/mapSearch";
 import type {
+  AlertActivityMode,
   AlertApiResponse,
   AlertConnectorStatus,
   NormalizedAlert,
 } from "@/lib/alerts/types";
+import {
+  countActiveAlerts,
+  filterAlertsByActivityMode,
+} from "@/lib/alerts/activityMode";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 import type { WildfireWind } from "@/lib/alerts/wind";
 
@@ -384,6 +390,9 @@ export default function MapInterface() {
   );
   const [normalizedAlerts, setNormalizedAlerts] = useState<NormalizedAlert[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [alertActivityMode, setAlertActivityMode] =
+    useState<AlertActivityMode>("active");
+  const [alertsDemoMode, setAlertsDemoMode] = useState(false);
   const [alertConnectorStatus, setAlertConnectorStatus] = useState<
     Record<string, AlertConnectorStatus>
   >({});
@@ -471,6 +480,27 @@ export default function MapInterface() {
   const selectedAlert = useMemo(
     () => normalizedAlerts.find((alert) => alert.id === selectedAlertId) ?? null,
     [normalizedAlerts, selectedAlertId],
+  );
+  const activityFilteredAlerts = useMemo(
+    () => filterAlertsByActivityMode(normalizedAlerts, alertActivityMode),
+    [alertActivityMode, normalizedAlerts],
+  );
+  const activeGdacsFloodCount = useMemo(
+    () =>
+      countActiveAlerts(
+        normalizedAlerts.filter(
+          (alert) =>
+            alert.source === "gdacs" && alert.category === "flood",
+        ),
+      ),
+    [normalizedAlerts],
+  );
+  const activeMeteoalarmCount = useMemo(
+    () =>
+      countActiveAlerts(
+        normalizedAlerts.filter((alert) => alert.source === "meteoalarm"),
+      ),
+    [normalizedAlerts],
   );
 
   const selectedTemporaryControl = useMemo(
@@ -830,6 +860,13 @@ export default function MapInterface() {
     key: keyof MapLayerPreferences,
     value: boolean,
   ) => {
+    if (
+      key === "officialWeatherWarnings" &&
+      value &&
+      alertConnectorStatus.meteoalarm === "misconfigured"
+    ) {
+      return;
+    }
     const setters: Record<
       keyof MapLayerPreferences,
       (next: boolean) => void
@@ -1145,6 +1182,34 @@ export default function MapInterface() {
 
   useEffect(() => {
     const controller = new AbortController();
+    fetch(`/api/alerts/weather?locale=${encodeURIComponent(locale)}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("weather_status_http");
+        const data = (await response.json()) as AlertApiResponse;
+        setAlertConnectorStatus((current) => ({
+          ...current,
+          meteoalarm: data.connectorStatus,
+        }));
+        if (data.demoMode) setAlertsDemoMode(true);
+        if (data.connectorStatus === "misconfigured") {
+          setShowOfficialWeatherWarnings(false);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) {
+          setAlertConnectorStatus((current) => ({
+            ...current,
+            meteoalarm: "unavailable",
+          }));
+        }
+      });
+    return () => controller.abort();
+  }, [locale]);
+
+  useEffect(() => {
+    const controller = new AbortController();
 
     const loadWildfires = async () => {
       try {
@@ -1216,6 +1281,7 @@ export default function MapInterface() {
         ...current,
         [sourceId]: response.connectorStatus,
       }));
+      if (response.demoMode) setAlertsDemoMode(true);
       if (response.connectorStatus !== "operational") return;
       setNormalizedAlerts((current) => [
         ...current.filter((alert) =>
@@ -1294,7 +1360,6 @@ export default function MapInterface() {
   ]);
 
   useEffect(() => {
-    if (!showObservedFloodExtent) return;
     const controller = new AbortController();
     const load = async () => {
       try {
@@ -1326,7 +1391,7 @@ export default function MapInterface() {
       controller.abort();
       window.clearInterval(interval);
     };
-  }, [showObservedFloodExtent]);
+  }, []);
 
   useEffect(() => {
     if (!showWildfireWind || !showWildfires || wildfireIncidents.length === 0) {
@@ -2434,6 +2499,35 @@ export default function MapInterface() {
     }
   };
 
+  const handleSatelliteObservationSelect = (alert: NormalizedAlert) => {
+    setNormalizedAlerts((current) => [
+      ...current.filter((item) => item.id !== alert.id),
+      alert,
+    ]);
+    setSelectedCountryCode(null);
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearTemporaryPlace();
+    setShowObservedFloodExtent(true);
+    setSelectedAlertId(alert.id);
+    if (alert.centroid) {
+      requestFocus({
+        kind: "point",
+        longitude: alert.centroid.longitude,
+        latitude: alert.centroid.latitude,
+        zoom: 11,
+      });
+    }
+  };
+
   const enableMountainCategory = (category: MountainPlaceCategory) => {
     if (category === "ski_resort") setShowMountainSkiResorts(true);
     if (category === "mountain_destination") setShowMountainDestinations(true);
@@ -2829,7 +2923,7 @@ export default function MapInterface() {
         onLocaleChange={setLocale}
         t={t}
         wildfires={wildfireIncidents}
-        alerts={normalizedAlerts}
+        alerts={activityFilteredAlerts}
         temporaryBorderControls={temporaryBorderControls}
         onSelectSearchResult={handleSelectSearchResult}
         onGoEurope={handleGoEurope}
@@ -2934,7 +3028,7 @@ export default function MapInterface() {
           onEffisBurnedAreaLoadingChange={setEffisBurnedAreaLoading}
           effisSnapshotsByIncidentId={effisSnapshotsByIncidentId}
           selectedWildfireId={selectedWildfireId}
-          normalizedAlerts={normalizedAlerts}
+          normalizedAlerts={activityFilteredAlerts}
           showOfficialWeatherWarnings={showOfficialWeatherWarnings}
           weatherHazardFilters={{
             heavyRain: showWeatherHeavyRain,
@@ -2950,6 +3044,7 @@ export default function MapInterface() {
           showMajorStorms={showMajorStorms}
           selectedAlertId={selectedAlertId}
           onAlertSelect={handleAlertSelect}
+          onSatelliteObservationSelect={handleSatelliteObservationSelect}
           showObservedFloodExtent={showObservedFloodExtent}
           copernicusFloodStatus={copernicusFloodStatus}
           showWildfireWind={showWildfireWind && showWildfires}
@@ -3033,7 +3128,55 @@ export default function MapInterface() {
           preferences={legendPreferences}
           onTogglePreference={handleLegendPreferenceToggle}
           onResetLayers={handleLegendLayersReset}
+          disabledPreferences={{
+            officialWeatherWarnings:
+              alertConnectorStatus.meteoalarm === "misconfigured",
+          }}
+          preferenceStatusLabels={{
+            officialWeatherWarnings:
+              alertConnectorStatus.meteoalarm === "misconfigured"
+                ? t.alertPanel.configurationRequired
+                : alertConnectorStatus.meteoalarm === "unavailable"
+                  ? t.alertPanel.connectorUnavailable
+                  : alertConnectorStatus.meteoalarm === "operational"
+                    ? activeMeteoalarmCount
+                      ? t.alertPanel.connectorOperational
+                      : t.alertPanel.noActiveEventsEurope
+                    : t.alertPanel.noRecentData,
+            majorFloodAlerts:
+              alertConnectorStatus.gdacs === "unavailable"
+                ? t.alertPanel.connectorUnavailable
+                : alertConnectorStatus.gdacs === "operational"
+                  ? activeGdacsFloodCount
+                    ? t.alertPanel.connectorOperational
+                    : t.alertPanel.noActiveEventsEurope
+                  : t.alertPanel.noRecentData,
+            observedFloodExtent:
+              copernicusFloodStatus?.connectorStatus === "unavailable"
+                ? t.alertPanel.connectorUnavailable
+                : copernicusFloodStatus?.connectorStatus === "delayed"
+                  ? t.alertPanel.connectorDelayed
+                  : copernicusFloodStatus?.available
+                    ? t.alertPanel.connectorOperational
+                    : t.alertPanel.noRecentData,
+          }}
         />
+
+        {(showOfficialWeatherWarnings ||
+          showMajorFloodAlerts ||
+          showMajorStorms ||
+          showObservedFloodExtent) && (
+          <AlertStatusPanel
+            locale={locale}
+            mode={alertActivityMode}
+            onModeChange={setAlertActivityMode}
+            statuses={alertConnectorStatus}
+            gdacsActiveCount={activeGdacsFloodCount}
+            meteoalarmActiveCount={activeMeteoalarmCount}
+            copernicus={copernicusFloodStatus}
+            demoMode={alertsDemoMode}
+          />
+        )}
 
         {effisBurnedAreaLoading && (
           <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
@@ -3070,7 +3213,7 @@ export default function MapInterface() {
         )}
 
         {showObservedFloodExtent && copernicusFloodStatus && (
-          <div className="pointer-events-none absolute bottom-4 right-4 z-20 max-w-[min(22rem,calc(100%-2rem))] rounded-lg border border-cyan-400/20 bg-slate-950/90 px-3 py-2 text-[10px] text-slate-200 shadow-xl backdrop-blur-md">
+          <div className="hidden">
             <p className="font-medium text-cyan-100">
               {t.alertPanel.observationNotForecast}
             </p>

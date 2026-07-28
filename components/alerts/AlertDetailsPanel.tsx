@@ -66,6 +66,28 @@ export default function AlertDetailsPanel({
   const updatedAt = formatDate(alert.updatedAt, locale);
   const onsetAt = formatDate(alert.onsetAt, locale);
   const expiresAt = formatDate(alert.expiresAt, locale);
+  const areaSquareKilometers =
+    typeof alert.metadata.affectedAreaSquareKilometers === "number" &&
+    Number.isFinite(alert.metadata.affectedAreaSquareKilometers)
+      ? alert.metadata.affectedAreaSquareKilometers
+      : null;
+  const affectedPopulation =
+    typeof alert.metadata.populationExposure === "number" &&
+    Number.isFinite(alert.metadata.populationExposure)
+      ? alert.metadata.populationExposure
+      : null;
+  const acquisitionTime = formatDate(
+    typeof alert.metadata.acquisitionTime === "string"
+      ? alert.metadata.acquisitionTime
+      : null,
+    locale,
+  );
+  const publishedAt = formatDate(
+    typeof alert.metadata.publishedAt === "string"
+      ? alert.metadata.publishedAt
+      : null,
+    locale,
+  );
 
   return (
     <aside
@@ -118,6 +140,25 @@ export default function AlertDetailsPanel({
           </p>
         </section>
 
+        {alert.category === "flood" && (
+          <section>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              {t.observedArea}
+            </h3>
+            <p className="mt-1.5 text-slate-100">
+              {areaSquareKilometers == null
+                ? t.areaUnavailable
+                : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(areaSquareKilometers)} km²`}
+            </p>
+            {affectedPopulation != null && (
+              <p className="mt-1 text-slate-300">
+                {t.potentiallyAffectedPopulation}:{" "}
+                {new Intl.NumberFormat(locale).format(affectedPopulation)}
+              </p>
+            )}
+          </section>
+        )}
+
         <section>
           <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
             {t.affectedArea}
@@ -158,8 +199,37 @@ export default function AlertDetailsPanel({
         </section>
 
         {nature === "satellite-observation" && (
-          <p className="rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-3 text-cyan-100">
-            {t.observationNotForecast}
+          <>
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {t.associatedData}
+              </h3>
+              <dl className="mt-1.5 space-y-1.5">
+                {acquisitionTime && (
+                  <div><dt className="inline text-slate-400">{t.acquisitionTime}: </dt><dd className="inline text-slate-100">{acquisitionTime}</dd></div>
+                )}
+                {publishedAt && (
+                  <div><dt className="inline text-slate-400">{t.publishedAt}: </dt><dd className="inline text-slate-100">{publishedAt}</dd></div>
+                )}
+                {typeof alert.metadata.satellite === "string" && (
+                  <div><dt className="inline text-slate-400">{t.satellite}: </dt><dd className="inline text-slate-100">{alert.metadata.satellite}</dd></div>
+                )}
+                {typeof alert.metadata.confidencePercent === "number" && (
+                  <div><dt className="inline text-slate-400">{t.confidence}: </dt><dd className="inline text-slate-100">{alert.metadata.confidencePercent}%</dd></div>
+                )}
+              </dl>
+            </section>
+            <div className="space-y-1.5 rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-3 text-cyan-100">
+              <p>{t.automaticDetection}</p>
+              <p>{t.notOfficialConfirmation}</p>
+              <p>{t.falsePositivesPossible}</p>
+            </div>
+          </>
+        )}
+
+        {alert.source === "gdacs" && (
+          <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-amber-100">
+            {t.gdacsIndicative}
           </p>
         )}
 

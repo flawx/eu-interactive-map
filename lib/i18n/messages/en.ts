@@ -640,6 +640,29 @@ export const en = {
     windModeledWarning: "The displayed wind is modeled weather data.",
     wildfireSpreadWarning:
       "It does not represent a certain forecast of wildfire spread.",
+    satelliteFloodTitle: "Flood extent observed by satellite",
+    location: "Location",
+    observedArea: "Observed area",
+    areaUnavailable: "Observed area unavailable",
+    potentiallyAffectedPopulation: "Potentially affected population",
+    satellite: "Satellite",
+    confidence: "Confidence",
+    automaticDetection:
+      "This area was detected automatically from a satellite image.",
+    notOfficialConfirmation:
+      "It does not by itself constitute official confirmation of an ongoing incident.",
+    falsePositivesPossible:
+      "False positives and undetected areas are possible.",
+    gdacsIndicative:
+      "GDACS information is indicative and does not replace instructions from local authorities.",
+    configurationRequired: "Configuration required",
+    noActiveEventsEurope: "No active event in Europe",
+    noRecentData: "No recent data",
+    activeMode: "Active",
+    last24Hours: "Last 24 hours",
+    last72Hours: "Last 72 hours",
+    demoData: "Demonstration data",
+    demoUnavailableProvider: "Unavailable demo provider",
   },
   civilEngineeringPanel: {
     badge: "Major civil engineering work",

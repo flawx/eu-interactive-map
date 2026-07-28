@@ -621,6 +621,25 @@ export type Messages = {
     cardinalNorthWest: string;
     windModeledWarning: string;
     wildfireSpreadWarning: string;
+    satelliteFloodTitle: string;
+    location: string;
+    observedArea: string;
+    areaUnavailable: string;
+    potentiallyAffectedPopulation: string;
+    satellite: string;
+    confidence: string;
+    automaticDetection: string;
+    notOfficialConfirmation: string;
+    falsePositivesPossible: string;
+    gdacsIndicative: string;
+    configurationRequired: string;
+    noActiveEventsEurope: string;
+    noRecentData: string;
+    activeMode: string;
+    last24Hours: string;
+    last72Hours: string;
+    demoData: string;
+    demoUnavailableProvider: string;
   };
   civilEngineeringPanel: {
     badge: string;

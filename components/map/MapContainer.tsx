@@ -107,15 +107,25 @@ import {
   ALERT_SELECTED_LAYER_ID,
   ALERT_SELECTED_POINT_LAYER_ID,
   ALERT_SOURCE_ID,
+  FLOOD_EVENT_CLUSTER_COUNT_LAYER_ID,
+  FLOOD_EVENT_CLUSTER_LAYER_ID,
+  FLOOD_EVENT_LABEL_LAYER_ID,
+  FLOOD_EVENT_MARKER_LAYER_ID,
+  FLOOD_EVENT_MARKER_RING_LAYER_ID,
+  FLOOD_EVENT_SOURCE_ID,
+  FLOOD_EVENT_WAVE_ICON_ID,
+  FLOOD_EVENT_WAVE_LAYER_ID,
   ALERT_TRACK_LAYER_ID,
   ALERT_TRACK_SOURCE_ID,
   ALERT_UNCERTAINTY_LAYER_ID,
   WILDFIRE_WIND_LAYER_ID,
   WILDFIRE_WIND_SOURCE_ID,
   buildAlertFeatureCollection,
+  buildFloodEventMarkerCollection,
   buildStormGeometryCollection,
   buildWildfireWindCollection,
   createWindArrowIcon,
+  createFloodWaveIcon,
   filterVisibleAlerts,
   type WeatherHazardFilters,
 } from "@/components/map/alertMapLayers";
@@ -959,6 +969,7 @@ export default function MapContainer({
   showMajorStorms = false,
   selectedAlertId = null,
   onAlertSelect,
+  onSatelliteObservationSelect,
   showObservedFloodExtent = false,
   copernicusFloodStatus = null,
   showWildfireWind = false,
@@ -1054,6 +1065,7 @@ export default function MapContainer({
   showMajorStorms?: boolean;
   selectedAlertId?: string | null;
   onAlertSelect?: (alertId: string | null) => void;
+  onSatelliteObservationSelect?: (alert: NormalizedAlert) => void;
   showObservedFloodExtent?: boolean;
   copernicusFloodStatus?: CopernicusFloodLayerStatus | null;
   showWildfireWind?: boolean;
@@ -1233,6 +1245,8 @@ export default function MapContainer({
   onWildfireSelectRef.current = onWildfireSelect;
   const onAlertSelectRef = useRef(onAlertSelect);
   onAlertSelectRef.current = onAlertSelect;
+  const onSatelliteObservationSelectRef = useRef(onSatelliteObservationSelect);
+  onSatelliteObservationSelectRef.current = onSatelliteObservationSelect;
   const showSatelliteActiveFiresRef = useRef(showSatelliteActiveFires);
   showSatelliteActiveFiresRef.current = showSatelliteActiveFires;
   const showSatelliteBurnedAreasRef = useRef(showSatelliteBurnedAreas);
@@ -5658,6 +5672,7 @@ export default function MapContainer({
       weatherFilters: weatherHazardFilters,
     });
     const collection = buildAlertFeatureCollection(visibleAlerts);
+    const floodEvents = buildFloodEventMarkerCollection(visibleAlerts);
     const stormCollection = buildStormGeometryCollection(visibleAlerts);
     const beforeId = map.getLayer("user-location-accuracy")
       ? "user-location-accuracy"
@@ -5671,6 +5686,21 @@ export default function MapContainer({
       });
     } else {
       (map.getSource(ALERT_SOURCE_ID) as GeoJSONSource).setData(collection);
+    }
+
+    if (!map.getSource(FLOOD_EVENT_SOURCE_ID)) {
+      map.addSource(FLOOD_EVENT_SOURCE_ID, {
+        type: "geojson",
+        data: floodEvents,
+        cluster: true,
+        clusterMaxZoom: 7,
+        clusterRadius: 44,
+        promoteId: "alertId",
+      });
+    } else {
+      (map.getSource(FLOOD_EVENT_SOURCE_ID) as GeoJSONSource).setData(
+        floodEvents,
+      );
     }
 
     if (!map.getSource(ALERT_TRACK_SOURCE_ID)) {
@@ -5728,13 +5758,189 @@ export default function MapContainer({
           id: ALERT_POINT_LAYER_ID,
           type: "circle",
           source: ALERT_SOURCE_ID,
-          filter: ["==", ["geometry-type"], "Point"],
+          filter: [
+            "all",
+            ["==", ["geometry-type"], "Point"],
+            [
+              "!",
+              [
+                "all",
+                ["==", ["get", "source"], "gdacs"],
+                ["==", ["get", "category"], "flood"],
+              ],
+            ],
+          ],
           paint: {
             "circle-radius": 9,
             "circle-color": ["get", "severityColor"],
             "circle-stroke-color": "#ffffff",
             "circle-stroke-width": 2,
             "circle-opacity": 0.92,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(FLOOD_EVENT_CLUSTER_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: FLOOD_EVENT_CLUSTER_LAYER_ID,
+          type: "circle",
+          source: FLOOD_EVENT_SOURCE_ID,
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              18,
+              8,
+              23,
+              20,
+              28,
+            ],
+            "circle-color": "#0369a1",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-opacity": 0.94,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(FLOOD_EVENT_CLUSTER_COUNT_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: FLOOD_EVENT_CLUSTER_COUNT_LAYER_ID,
+          type: "symbol",
+          source: FLOOD_EVENT_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-allow-overlap": true,
+          },
+          paint: {
+            "text-color": "#ffffff",
+            "text-halo-color": "#075985",
+            "text-halo-width": 1,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(FLOOD_EVENT_MARKER_RING_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: FLOOD_EVENT_MARKER_RING_LAYER_ID,
+          type: "circle",
+          source: FLOOD_EVENT_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            "circle-radius": [
+              "case",
+              ["==", ["get", "alertId"], selectedAlertId ?? ""],
+              15,
+              12,
+            ],
+            "circle-color": ["get", "severityColor"],
+            "circle-opacity": [
+              "case",
+              ["==", ["get", "status"], "ended"],
+              0.45,
+              0.95,
+            ],
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setPaintProperty(
+        FLOOD_EVENT_MARKER_RING_LAYER_ID,
+        "circle-radius",
+        [
+          "case",
+          ["==", ["get", "alertId"], selectedAlertId ?? ""],
+          15,
+          12,
+        ],
+      );
+    }
+    if (!map.getLayer(FLOOD_EVENT_MARKER_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: FLOOD_EVENT_MARKER_LAYER_ID,
+          type: "circle",
+          source: FLOOD_EVENT_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            "circle-radius": [
+              "case",
+              ["==", ["get", "alertId"], selectedAlertId ?? ""],
+              11,
+              9,
+            ],
+            "circle-color": [
+              "case",
+              ["==", ["get", "status"], "ended"],
+              "#64748b",
+              "#0284c7",
+            ],
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+          },
+        },
+        beforeId,
+      );
+    } else {
+      map.setPaintProperty(FLOOD_EVENT_MARKER_LAYER_ID, "circle-radius", [
+        "case",
+        ["==", ["get", "alertId"], selectedAlertId ?? ""],
+        11,
+        9,
+      ]);
+    }
+    if (!map.hasImage(FLOOD_EVENT_WAVE_ICON_ID)) {
+      map.addImage(FLOOD_EVENT_WAVE_ICON_ID, createFloodWaveIcon(), {
+        pixelRatio: 2,
+      });
+    }
+    if (!map.getLayer(FLOOD_EVENT_WAVE_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: FLOOD_EVENT_WAVE_LAYER_ID,
+          type: "symbol",
+          source: FLOOD_EVENT_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            "icon-image": FLOOD_EVENT_WAVE_ICON_ID,
+            "icon-size": 0.78,
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(FLOOD_EVENT_LABEL_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: FLOOD_EVENT_LABEL_LAYER_ID,
+          type: "symbol",
+          source: FLOOD_EVENT_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 5,
+          layout: {
+            "text-field": ["get", "title"],
+            "text-size": 11,
+            "text-offset": [0, 1.7],
+            "text-anchor": "top",
+            "text-max-width": 18,
+            "text-optional": true,
+          },
+          paint: {
+            "text-color": "#e0f2fe",
+            "text-halo-color": "#0f172a",
+            "text-halo-width": 1.5,
           },
         },
         beforeId,
@@ -5846,6 +6052,59 @@ export default function MapContainer({
       const alertId = event.features?.[0]?.properties?.alertId;
       if (typeof alertId === "string") onAlertSelectRef.current?.(alertId);
     };
+    const handleFloodClusterClick = async (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      const clusterId = Number(feature?.properties?.cluster_id);
+      const coordinates =
+        feature?.geometry.type === "Point"
+          ? (feature.geometry.coordinates as [number, number])
+          : null;
+      if (!Number.isFinite(clusterId) || !coordinates) return;
+      const source = map.getSource(FLOOD_EVENT_SOURCE_ID) as GeoJSONSource;
+      const zoom = await source.getClusterExpansionZoom(clusterId);
+      map.easeTo({ center: coordinates, zoom, duration: 650 });
+    };
+    let hoverPopup: Popup | null = null;
+    const showFloodTooltip = (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+      hoverPopup?.remove();
+      const properties = feature.properties ?? {};
+      const content = document.createElement("div");
+      content.className = "space-y-1 text-xs";
+      const tooltipMessages = getMessages(locale).alertPanel;
+      const tooltipStatus =
+        properties.status === "active"
+          ? tooltipMessages.activeAlert
+          : properties.status === "ended"
+            ? tooltipMessages.expiredAlert
+            : tooltipMessages.unknownStatus;
+      for (const value of [
+        properties.title,
+        properties.displayLocation,
+        `GDACS · ${properties.severity ?? ""}`,
+        tooltipStatus,
+        properties.startAt,
+        properties.updatedAt,
+        properties.affectedAreaSquareKilometers
+          ? `${properties.affectedAreaSquareKilometers} km²`
+          : tooltipMessages.areaUnavailable,
+        tooltipMessages.impactEstimate,
+      ]) {
+        if (!value) continue;
+        const line = document.createElement("p");
+        line.textContent = String(value);
+        content.appendChild(line);
+      }
+      hoverPopup = new Popup({
+        closeButton: false,
+        closeOnClick: false,
+        offset: 14,
+      })
+        .setLngLat(feature.geometry.coordinates as [number, number])
+        .setDOMContent(content)
+        .addTo(map);
+    };
     const pointer = () => {
       map.getCanvas().style.cursor = "pointer";
     };
@@ -5857,6 +6116,11 @@ export default function MapContainer({
       map.on("mouseenter", layerId, pointer);
       map.on("mouseleave", layerId, reset);
     }
+    map.on("click", FLOOD_EVENT_CLUSTER_LAYER_ID, handleFloodClusterClick);
+    map.on("click", FLOOD_EVENT_MARKER_LAYER_ID, handleAlertClick);
+    map.on("mouseenter", FLOOD_EVENT_MARKER_LAYER_ID, pointer);
+    map.on("mousemove", FLOOD_EVENT_MARKER_LAYER_ID, showFloodTooltip);
+    map.on("mouseleave", FLOOD_EVENT_MARKER_LAYER_ID, reset);
 
     return () => {
       for (const layerId of [ALERT_FILL_LAYER_ID, ALERT_LINE_LAYER_ID, ALERT_POINT_LAYER_ID]) {
@@ -5864,6 +6128,12 @@ export default function MapContainer({
         map.off("mouseenter", layerId, pointer);
         map.off("mouseleave", layerId, reset);
       }
+      hoverPopup?.remove();
+      map.off("click", FLOOD_EVENT_CLUSTER_LAYER_ID, handleFloodClusterClick);
+      map.off("click", FLOOD_EVENT_MARKER_LAYER_ID, handleAlertClick);
+      map.off("mouseenter", FLOOD_EVENT_MARKER_LAYER_ID, pointer);
+      map.off("mousemove", FLOOD_EVENT_MARKER_LAYER_ID, showFloodTooltip);
+      map.off("mouseleave", FLOOD_EVENT_MARKER_LAYER_ID, reset);
     };
   }, [
     mapSourcesReadyVersion,
@@ -5898,6 +6168,9 @@ export default function MapContainer({
           type: "raster",
           tiles,
           tileSize: 256,
+          minzoom: 0,
+          maxzoom: copernicusFloodStatus.maxZoom,
+          bounds: [-25, 34, 45, 72],
           attribution: "European Union, Copernicus Emergency Management Service",
         });
       } else {
@@ -5916,8 +6189,105 @@ export default function MapContainer({
       }
     }
     applyLayerVisibility(map, layerId, Boolean(available));
+    if (!map.getLayer(layerId)) return;
+
+    const handleObservationClick = async (event: MapLayerMouseEvent) => {
+      if (!available) return;
+      const vectorHits = map.queryRenderedFeatures(event.point, {
+        layers: [
+          FLOOD_EVENT_CLUSTER_LAYER_ID,
+          FLOOD_EVENT_MARKER_LAYER_ID,
+          ALERT_POINT_LAYER_ID,
+          ALERT_FILL_LAYER_ID,
+        ].filter((id) => Boolean(map.getLayer(id))),
+      });
+      if (vectorHits.length) return;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 10_000);
+      try {
+        const response = await fetch(
+          `/api/alerts/flood-extent/inspect?longitude=${encodeURIComponent(event.lngLat.lng)}&latitude=${encodeURIComponent(event.lngLat.lat)}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          detected?: boolean;
+          observation?: {
+            observationId: string;
+            latitude: number;
+            longitude: number;
+            acquisitionTime: string;
+            publishedAt: string | null;
+            satellite: string;
+            confidencePercent: number | null;
+            qualityIndicators: string[];
+            sourceUrl: string;
+          } | null;
+        };
+        const observation = data.observation;
+        if (!data.detected || !observation) return;
+        const messages = getMessages(locale).alertPanel;
+        onSatelliteObservationSelectRef.current?.({
+          id: `copernicus-gfm:${observation.observationId}`,
+          source: "copernicus-gfm",
+          sourceEventId: observation.observationId,
+          category: "flood",
+          hazard: "river_flood",
+          title: messages.satelliteFloodTitle,
+          description: null,
+          instructions: null,
+          severity: "unknown",
+          status: "unknown",
+          certainty:
+            observation.confidencePercent == null
+              ? null
+              : `${observation.confidencePercent}%`,
+          urgency: null,
+          effectiveAt: observation.acquisitionTime,
+          onsetAt: observation.acquisitionTime,
+          expiresAt: null,
+          updatedAt: observation.publishedAt ?? observation.acquisitionTime,
+          fetchedAt: new Date().toISOString(),
+          countryCodes: [],
+          affectedAreaNames: [
+            `${observation.latitude.toFixed(5)}, ${observation.longitude.toFixed(5)}`,
+          ],
+          geometry: {
+            type: "Point",
+            coordinates: [observation.longitude, observation.latitude],
+          },
+          centroid: {
+            longitude: observation.longitude,
+            latitude: observation.latitude,
+          },
+          sourceUrl: observation.sourceUrl,
+          officialSourceName:
+            "Copernicus Emergency Management Service — Global Flood Monitoring",
+          observed: true,
+          forecast: false,
+          metadata: {
+            dataNature: "satellite-observation",
+            acquisitionTime: observation.acquisitionTime,
+            publishedAt: observation.publishedAt,
+            satellite: observation.satellite,
+            confidencePercent: observation.confidencePercent,
+            qualityIndicators: observation.qualityIndicators,
+            automaticallyDetected: true,
+          },
+        });
+      } catch {
+        // No panel is opened when the official point query is unavailable.
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    };
+    map.on("click", layerId, handleObservationClick);
+    return () => {
+      map.off("click", layerId, handleObservationClick);
+    };
   }, [
     copernicusFloodStatus,
+    locale,
     mapSourcesReadyVersion,
     showObservedFloodExtent,
   ]);

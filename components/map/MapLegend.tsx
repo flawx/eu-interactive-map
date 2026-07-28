@@ -51,6 +51,10 @@ type MapLegendProps = {
   highlight?: boolean;
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
+  disabledPreferences?: Partial<Record<keyof MapLayerPreferences, boolean>>;
+  preferenceStatusLabels?: Partial<
+    Record<keyof MapLayerPreferences, string>
+  >;
 };
 
 function resolveLegendText(
@@ -69,6 +73,8 @@ export default function MapLegend({
   highlight,
   collapsed,
   onCollapsedChange,
+  disabledPreferences = {},
+  preferenceStatusLabels = {},
 }: MapLegendProps) {
   const t = getMessages(locale);
   const isHighlighted = Boolean(highlight);
@@ -389,6 +395,12 @@ export default function MapLegend({
                         filtersExpanded={expandedFilters[layer.id] ?? false}
                         onToggleFilters={() => toggleFilters(layer.id)}
                         onTogglePreference={onTogglePreference}
+                        disabled={Boolean(
+                          disabledPreferences[layer.preferenceKey],
+                        )}
+                        statusLabel={
+                          preferenceStatusLabels[layer.preferenceKey] ?? null
+                        }
                         descriptionOpen={openDescriptionId === layer.id}
                         onToggleDescription={() =>
                           setOpenDescriptionId((current) =>
@@ -657,6 +669,8 @@ function LayerRow({
   onTogglePreference,
   descriptionOpen,
   onToggleDescription,
+  disabled,
+  statusLabel,
 }: {
   layer: LegendLayerDefinition;
   preferences: MapLayerPreferences;
@@ -669,6 +683,8 @@ function LayerRow({
   ) => void;
   descriptionOpen: boolean;
   onToggleDescription: () => void;
+  disabled: boolean;
+  statusLabel: string | null;
 }) {
   const checked = preferences[layer.preferenceKey];
   const title = resolveLegendText(messages, layer.titleKey);
@@ -683,11 +699,14 @@ function LayerRow({
   return (
     <div className="rounded-md">
       <div className="flex min-h-11 items-center gap-1.5 px-1.5">
-        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1">
+        <label
+          className={`flex min-w-0 flex-1 items-center gap-2 py-1 ${disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer"}`}
+        >
           <input
             type="checkbox"
             className="h-4 w-4 shrink-0 accent-[#1a73e8]"
             checked={checked}
+            disabled={disabled}
             onChange={(event) =>
               onTogglePreference(layer.preferenceKey, event.target.checked)
             }
@@ -701,7 +720,15 @@ function LayerRow({
             aria-hidden="true"
           />
           <span className="min-w-0 flex-1 truncate text-[13px] leading-snug">
-            {title}
+            <span className="block truncate">{title}</span>
+            {statusLabel ? (
+              <span
+                className="block truncate text-[10px] font-normal"
+                style={{ color: "var(--map-ui-muted)" }}
+              >
+                {statusLabel}
+              </span>
+            ) : null}
           </span>
         </label>
         {description ? (

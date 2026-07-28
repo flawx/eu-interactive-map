@@ -20,6 +20,16 @@ export const ALERT_LINE_LAYER_ID = "normalized-alert-zones-line";
 export const ALERT_POINT_LAYER_ID = "normalized-alert-points";
 export const ALERT_SELECTED_LAYER_ID = "normalized-alert-selected";
 export const ALERT_SELECTED_POINT_LAYER_ID = "normalized-alert-selected-point";
+export const FLOOD_EVENT_SOURCE_ID = "gdacs-flood-events";
+export const FLOOD_EVENT_CLUSTER_LAYER_ID = "gdacs-flood-event-clusters";
+export const FLOOD_EVENT_CLUSTER_COUNT_LAYER_ID =
+  "gdacs-flood-event-cluster-count";
+export const FLOOD_EVENT_MARKER_RING_LAYER_ID =
+  "gdacs-flood-event-marker-ring";
+export const FLOOD_EVENT_MARKER_LAYER_ID = "gdacs-flood-event-marker";
+export const FLOOD_EVENT_WAVE_LAYER_ID = "gdacs-flood-event-wave";
+export const FLOOD_EVENT_LABEL_LAYER_ID = "gdacs-flood-event-label";
+export const FLOOD_EVENT_WAVE_ICON_ID = "gdacs-flood-wave-icon";
 export const ALERT_TRACK_SOURCE_ID = "storm-tracks";
 export const ALERT_TRACK_LAYER_ID = "storm-tracks-line";
 export const ALERT_FORECAST_TRACK_LAYER_ID = "storm-forecast-tracks-line";
@@ -80,6 +90,16 @@ export function buildAlertFeatureCollection(
           status: alert.status,
           source: alert.source,
           updatedAt: alert.updatedAt,
+          displayLocation:
+            alert.affectedAreaNames[0] ?? alert.countryCodes.join(", "),
+          countryCodes: alert.countryCodes.join(","),
+          startAt: alert.onsetAt,
+          endAt: alert.expiresAt,
+          affectedAreaSquareKilometers:
+            alert.metadata.affectedAreaSquareKilometers ?? null,
+          affectedPopulation: alert.metadata.populationExposure ?? null,
+          sourceUrl: alert.sourceUrl,
+          dataNature: alert.metadata.dataNature ?? null,
         },
         geometry:
           alert.geometry ??
@@ -88,6 +108,86 @@ export function buildAlertFeatureCollection(
             coordinates: [alert.centroid!.longitude, alert.centroid!.latitude],
           } satisfies GeoJSON.Point),
       })),
+  };
+}
+
+export function buildFloodEventMarkerCollection(
+  alerts: readonly NormalizedAlert[],
+): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: alerts
+      .filter(
+        (alert) =>
+          alert.source === "gdacs" &&
+          alert.category === "flood" &&
+          alert.centroid,
+      )
+      .map((alert) => ({
+        type: "Feature",
+        id: alert.id,
+        properties: {
+          alertId: alert.id,
+          sourceEventId: alert.sourceEventId,
+          title: alert.title,
+          displayLocation:
+            alert.affectedAreaNames[0] ?? alert.countryCodes.join(", "),
+          countryCodes: alert.countryCodes.join(","),
+          severity: alert.severity,
+          severityColor: severityColor(alert.severity),
+          status: alert.status,
+          startAt: alert.onsetAt,
+          endAt: alert.expiresAt,
+          updatedAt: alert.updatedAt,
+          affectedAreaSquareKilometers:
+            alert.metadata.affectedAreaSquareKilometers ?? null,
+          affectedPopulation: alert.metadata.populationExposure ?? null,
+          sourceUrl: alert.sourceUrl,
+          dataNature: "impact-estimation",
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [
+            alert.centroid!.longitude,
+            alert.centroid!.latitude,
+          ],
+        },
+      })),
+  };
+}
+
+export function createFloodWaveIcon(): {
+  width: number;
+  height: number;
+  data: Uint8Array;
+} {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return {
+      width: size,
+      height: size,
+      data: new Uint8Array(size * size * 4),
+    };
+  }
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = 5;
+  context.lineCap = "round";
+  for (const y of [21, 32, 43]) {
+    context.beginPath();
+    context.moveTo(11, y);
+    context.bezierCurveTo(19, y - 7, 25, y + 7, 32, y);
+    context.bezierCurveTo(39, y - 7, 45, y + 7, 53, y);
+    context.stroke();
+  }
+  const image = context.getImageData(0, 0, size, size);
+  return {
+    width: size,
+    height: size,
+    data: new Uint8Array(image.data.buffer),
   };
 }
 

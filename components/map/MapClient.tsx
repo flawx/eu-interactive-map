@@ -107,6 +107,7 @@ type MapClientProps = {
   showMajorStorms: boolean;
   selectedAlertId: string | null;
   onAlertSelect: (alertId: string | null) => void;
+  onSatelliteObservationSelect: (alert: NormalizedAlert) => void;
   showObservedFloodExtent: boolean;
   copernicusFloodStatus: CopernicusFloodLayerStatus | null;
   showWildfireWind: boolean;
@@ -212,6 +213,7 @@ export default function MapClient({
   showMajorStorms,
   selectedAlertId,
   onAlertSelect,
+  onSatelliteObservationSelect,
   showObservedFloodExtent,
   copernicusFloodStatus,
   showWildfireWind,
@@ -311,6 +313,7 @@ export default function MapClient({
       showMajorStorms={showMajorStorms}
       selectedAlertId={selectedAlertId}
       onAlertSelect={onAlertSelect}
+      onSatelliteObservationSelect={onSatelliteObservationSelect}
       showObservedFloodExtent={showObservedFloodExtent}
       copernicusFloodStatus={copernicusFloodStatus}
       showWildfireWind={showWildfireWind}

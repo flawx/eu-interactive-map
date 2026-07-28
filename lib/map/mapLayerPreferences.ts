@@ -114,7 +114,9 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   borderCrossingSea: true,
 };
 
-const LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
+const LAYER_PREFS_KEY = "eu-map-layer-preferences-v2";
+const LEGACY_LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
+export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 2;
 const LEGEND_COLLAPSED_KEY = "eu-map-legend-collapsed-v1";
 
 const LAYER_KEYS = [
@@ -179,32 +181,38 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
 }
 
+export function migrateMapLayerPreferences(
+  value: unknown,
+): MapLayerPreferences {
+  const result = { ...DEFAULT_MAP_LAYER_PREFERENCES };
+  if (!value || typeof value !== "object" || Array.isArray(value)) return result;
+  const record = value as Record<string, unknown>;
+  const source =
+    record.preferences &&
+    typeof record.preferences === "object" &&
+    !Array.isArray(record.preferences)
+      ? (record.preferences as Record<string, unknown>)
+      : record;
+  for (const key of LAYER_KEYS) {
+    if (isBoolean(source[key])) result[key] = source[key];
+  }
+  return result;
+}
+
 export function loadMapLayerPreferences(): MapLayerPreferences {
   if (typeof window === "undefined") {
     return { ...DEFAULT_MAP_LAYER_PREFERENCES };
   }
 
   try {
-    const raw = window.localStorage.getItem(LAYER_PREFS_KEY);
+    const raw =
+      window.localStorage.getItem(LAYER_PREFS_KEY) ??
+      window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY);
     if (!raw) {
       return { ...DEFAULT_MAP_LAYER_PREFERENCES };
     }
 
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return { ...DEFAULT_MAP_LAYER_PREFERENCES };
-    }
-
-    const source = parsed as Record<string, unknown>;
-    const result = { ...DEFAULT_MAP_LAYER_PREFERENCES };
-
-    for (const key of LAYER_KEYS) {
-      if (isBoolean(source[key])) {
-        result[key] = source[key];
-      }
-    }
-
-    return result;
+    return migrateMapLayerPreferences(JSON.parse(raw));
   } catch {
     return { ...DEFAULT_MAP_LAYER_PREFERENCES };
   }
@@ -281,7 +289,13 @@ export function saveMapLayerPreferences(
       borderCrossingAir: Boolean(preferences.borderCrossingAir),
       borderCrossingSea: Boolean(preferences.borderCrossingSea),
     };
-    window.localStorage.setItem(LAYER_PREFS_KEY, JSON.stringify(payload));
+    window.localStorage.setItem(
+      LAYER_PREFS_KEY,
+      JSON.stringify({
+        schemaVersion: MAP_LAYER_PREFERENCES_SCHEMA_VERSION,
+        preferences: payload,
+      }),
+    );
   } catch {
     // private mode / quota — keep session values only
   }

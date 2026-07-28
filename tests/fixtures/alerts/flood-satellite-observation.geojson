@@ -1,0 +1,1 @@
+{"type":"Feature","id":"DEMO-GFM-001","properties":{"datetime":"2026-07-28T06:27:37Z","satellite":"Sentinel-1","confidence":82,"automatic":true},"geometry":{"type":"Polygon","coordinates":[[[3.36,43.57],[3.55,43.57],[3.55,43.68],[3.36,43.68],[3.36,43.57]]]}}

@@ -1,10 +1,18 @@
 import { ALERT_SOURCES } from "@/lib/alerts/sourceRegistry";
 import type { AlertConnectorStatus } from "@/lib/alerts/types";
+import {
+  COPERNICUS_GFM_MAX_ZOOM,
+  COPERNICUS_GFM_WMS,
+  COPERNICUS_OBSERVED_FLOOD_LAYER,
+  parseGfmCapabilities,
+  resolveLatestAvailableGfmTime,
+} from "@/lib/alerts/providers/copernicusGfmCapabilities";
 
-export const COPERNICUS_GFM_WMS =
-  "https://european-flood.emergency.copernicus.eu/api/wms/";
-export const COPERNICUS_OBSERVED_FLOOD_LAYER =
-  "mapserver:gfm_observed_flood_extent_group_layer";
+export {
+  COPERNICUS_GFM_MAX_ZOOM,
+  COPERNICUS_GFM_WMS,
+  COPERNICUS_OBSERVED_FLOOD_LAYER,
+};
 
 export type CopernicusFloodLayerStatus = {
   available: boolean;
@@ -17,14 +25,17 @@ export type CopernicusFloodLayerStatus = {
   dataNature: "satellite-observation";
   source: typeof ALERT_SOURCES.copernicusGfm;
   warning: string | null;
+  queryable: boolean;
+  maxZoom: number;
 };
 
 export function parseCopernicusCapabilities(
   xml: string,
   now = new Date(),
 ): Omit<CopernicusFloodLayerStatus, "publishedAt" | "source"> {
-  const layerIndex = xml.indexOf(`<Name>${COPERNICUS_OBSERVED_FLOOD_LAYER}</Name>`);
-  if (layerIndex < 0) {
+  const capabilities = parseGfmCapabilities(xml, now.toISOString());
+  const layer = capabilities.observedFloodExtent;
+  if (!layer) {
     return {
       available: false,
       connectorStatus: "unavailable",
@@ -34,14 +45,17 @@ export function parseCopernicusCapabilities(
       satellite: "Sentinel-1",
       dataNature: "satellite-observation",
       warning: "copernicus_layer_not_found",
+      queryable: false,
+      maxZoom: COPERNICUS_GFM_MAX_ZOOM,
     };
   }
-  const block = xml.slice(layerIndex, layerIndex + 2500);
-  const match = block.match(
-    /<Dimension[^>]*name=["']time["'][^>]*default=["']([^"']+)["'][^>]*>([^<]+)<\/Dimension>/i,
-  );
-  const acquisitionTime = match?.[1] ?? null;
-  const interval = match?.[2]?.trim() ?? null;
+  const acquisitionTime = resolveLatestAvailableGfmTime(capabilities, now);
+  const interval =
+    layer.time?.kind === "interval"
+      ? `${layer.time.start}/${layer.time.end}/${layer.time.period}`
+      : layer.time?.kind === "values"
+        ? layer.time.values.join(",")
+        : null;
   const age = acquisitionTime ? now.getTime() - Date.parse(acquisitionTime) : Infinity;
   return {
     available: true,
@@ -52,9 +66,11 @@ export function parseCopernicusCapabilities(
     satellite: "Sentinel-1",
     dataNature: "satellite-observation",
     warning: acquisitionTime ? null : "copernicus_time_missing",
+    queryable: layer.queryable,
+    maxZoom: COPERNICUS_GFM_MAX_ZOOM,
   };
 }
-function tileBounds3857(z: number, x: number, y: number): string {
+export function tileBounds3857(z: number, x: number, y: number): string {
   const world = 20037508.342789244;
   const tiles = 2 ** z;
   const size = (world * 2) / tiles;
@@ -71,12 +87,14 @@ export function buildCopernicusTileUrl(
   y: number,
   time: string,
 ): string {
-  if (!Number.isInteger(z) || z < 0 || z > 14) throw new Error("invalid_zoom");
+  if (!Number.isInteger(z) || z < 0 || z > COPERNICUS_GFM_MAX_ZOOM) {
+    throw new Error("invalid_zoom");
+  }
   const max = 2 ** z;
   if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= max || y >= max) {
     throw new Error("invalid_tile");
   }
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(time)) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(time)) {
     throw new Error("invalid_time");
   }
   const params = new URLSearchParams({

@@ -1,5 +1,6 @@
 import { stableAlertId } from "@/lib/alerts/deduplication";
 import {
+  geometryIntersectsProjectEurope,
   isEuropeanAlertCentroid,
   normalizeAlertCountryCode,
 } from "@/lib/alerts/geography";
@@ -125,7 +126,15 @@ export function normalizeMeteoalarmFeature(
   const countryCode = normalizeAlertCountryCode(
     properties.country ?? properties.countryCode ?? message.country,
   );
-  if (!countryCode && !isEuropeanAlertCentroid(centroid)) return null;
+  const explicitCountry = text(
+    properties.country ?? properties.countryCode ?? message.country,
+  );
+  if (explicitCountry && !countryCode) return null;
+  if (
+    !countryCode &&
+    !isEuropeanAlertCentroid(centroid) &&
+    !geometryIntersectsProjectEurope(geometry)
+  ) return null;
   const onsetAt = iso(message.onset ?? message.effective ?? properties.onset);
   const expiresAt = iso(message.expires ?? properties.expires);
   const updatedAt =
@@ -218,18 +227,30 @@ export function normalizeGdacsFeature(
   if (!sourceEventId) return null;
   const geometry = validGeometry(record.geometry);
   const centroid = geometryCentroid(geometry);
-  const countryValues = [
-    properties.country,
+  const explicitCountryCodeValues = [
     properties.countrycode,
     properties.iso3,
+  ].flatMap((value) => String(value ?? "").split(/[;,|]/))
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const countryValues = [
+    ...explicitCountryCodeValues,
+    properties.country,
   ]
     .flatMap((value) => String(value ?? "").split(/[;,|]/))
     .map(normalizeAlertCountryCode)
     .filter((value): value is string => Boolean(value));
-  if (!countryValues.length && !isEuropeanAlertCentroid(centroid)) return null;
+  if (explicitCountryCodeValues.length && !countryValues.length) return null;
+  if (
+    !countryValues.length &&
+    !isEuropeanAlertCentroid(centroid) &&
+    !geometryIntersectsProjectEurope(geometry)
+  ) return null;
   const startedAt = iso(properties.fromdate ?? properties.fromDate);
+  const endedAt = iso(properties.todate ?? properties.toDate);
   const updatedAt =
-    iso(properties.todate ?? properties.toDate ?? properties.lastupdate) ??
+    iso(properties.lastupdate) ??
+    endedAt ??
     fetchedAt;
   const alertLevel =
     properties.alertlevel ??
@@ -263,12 +284,12 @@ export function normalizeGdacsFeature(
     description: text(properties.description ?? properties.htmldescription),
     instructions: null,
     severity: normalizeGdacsSeverity(alertLevel),
-    status: normalizeAlertStatus(properties.status, startedAt, null),
+    status: normalizeAlertStatus(properties.status, startedAt, endedAt),
     certainty: null,
     urgency: null,
     effectiveAt: startedAt,
     onsetAt: startedAt,
-    expiresAt: null,
+    expiresAt: endedAt,
     updatedAt,
     fetchedAt,
     countryCodes: [...new Set(countryValues)],
@@ -292,6 +313,10 @@ export function normalizeGdacsFeature(
       dataNature: "impact-estimation",
       episode,
       populationExposure: number(properties.population),
+      affectedAreaSquareKilometers:
+        number(properties.area_km2) ??
+        number(properties.affected_area_km2) ??
+        number(properties.affectedAreaSquareKilometers),
       movementSpeed: number(properties.movespeed ?? properties.speed),
       movementDirection: number(properties.movedirection ?? properties.direction),
       trackGeometry: validGeometry(properties.trackgeometry),

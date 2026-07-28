@@ -1,0 +1,1 @@
+{"type":"Feature","id":"DEMO-WEATHER-ORANGE","properties":{"event":"heavy rain","severity":"orange","country":"FR","status":"active"},"geometry":{"type":"Polygon","coordinates":[[[6,44],[7,44],[7,45],[6,45],[6,44]]]}}

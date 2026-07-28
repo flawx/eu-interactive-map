@@ -1,30 +1,51 @@
 import "server-only";
 
 import {
-  COPERNICUS_GFM_WMS,
   COPERNICUS_OBSERVED_FLOOD_LAYER,
-  parseCopernicusCapabilities,
   type CopernicusFloodLayerStatus,
 } from "@/lib/alerts/copernicusFlood";
 import { ALERT_SOURCES } from "@/lib/alerts/sourceRegistry";
-
-const CAPABILITIES_URL =
-  `${COPERNICUS_GFM_WMS}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities`;
+import {
+  COPERNICUS_GFM_MAX_ZOOM,
+  getGfmCapabilities,
+  resolveLatestAvailableGfmTime,
+} from "@/lib/alerts/providers/copernicusGfmCapabilities";
 
 export async function getCopernicusFloodLayerStatus(): Promise<CopernicusFloodLayerStatus> {
   const publishedAt = new Date().toISOString();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12_000);
   try {
-    const response = await fetch(CAPABILITIES_URL, {
-      headers: { Accept: "application/xml,text/xml" },
-      signal: controller.signal,
-      next: { revalidate: 900 },
-    });
-    if (!response.ok) throw new Error(`copernicus_http_${response.status}`);
-    const xml = await response.text();
+    const capabilities = await getGfmCapabilities();
+    const layer = capabilities.observedFloodExtent;
+    const acquisitionTime = resolveLatestAvailableGfmTime(capabilities);
+    const interval =
+      layer?.time?.kind === "interval"
+        ? `${layer.time.start}/${layer.time.end}/${layer.time.period}`
+        : layer?.time?.kind === "values"
+          ? layer.time.values.join(",")
+          : null;
+    const age = acquisitionTime
+      ? Date.now() - Date.parse(acquisitionTime)
+      : Infinity;
     return {
-      ...parseCopernicusCapabilities(xml),
+      available: Boolean(layer && acquisitionTime),
+      connectorStatus:
+        !layer || !acquisitionTime
+          ? "unavailable"
+          : age > 48 * 60 * 60 * 1000
+            ? "delayed"
+            : "operational",
+      layerName: COPERNICUS_OBSERVED_FLOOD_LAYER,
+      acquisitionTime,
+      interval,
+      satellite: "Sentinel-1",
+      dataNature: "satellite-observation",
+      warning: layer
+        ? acquisitionTime
+          ? null
+          : "copernicus_time_missing"
+        : "copernicus_layer_not_found",
+      queryable: Boolean(layer?.queryable),
+      maxZoom: COPERNICUS_GFM_MAX_ZOOM,
       publishedAt,
       source: ALERT_SOURCES.copernicusGfm,
     };
@@ -41,8 +62,8 @@ export async function getCopernicusFloodLayerStatus(): Promise<CopernicusFloodLa
       source: ALERT_SOURCES.copernicusGfm,
       warning:
         error instanceof Error ? error.message : "copernicus_unavailable",
+      queryable: false,
+      maxZoom: COPERNICUS_GFM_MAX_ZOOM,
     };
-  } finally {
-    clearTimeout(timeout);
   }
 }

@@ -95,4 +95,7 @@ export type AlertApiResponse = {
   source: AlertSourceDefinition;
   connectorStatus: AlertConnectorStatus;
   warnings: string[];
+  demoMode?: boolean;
 };
+
+export type AlertActivityMode = "active" | "24h" | "72h";
