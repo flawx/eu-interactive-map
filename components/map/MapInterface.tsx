@@ -5,6 +5,7 @@ import EffisBurnedAreaPanel from "@/components/incidents/EffisBurnedAreaPanel";
 import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel";
 import AlertDetailsPanel from "@/components/alerts/AlertDetailsPanel";
 import AlertStatusPanel from "@/components/alerts/AlertStatusPanel";
+import CopernicusActivationPanel from "@/components/alerts/CopernicusActivationPanel";
 import AppHeader from "@/components/layout/AppHeader";
 import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
 import CapitalCityPanel from "@/components/europe/CapitalCityPanel";
@@ -107,6 +108,7 @@ import type {
   EarthquakeTimeMode,
   NormalizedAlert,
   VolcanoTimeMode,
+  CemsActivationTimeMode,
 } from "@/lib/alerts/types";
 import {
   countActiveAlerts,
@@ -118,6 +120,7 @@ import {
   filterVolcanoesByTimeMode,
 } from "@/lib/alerts/geologicalActivity";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
+import type { LandslideNowcastLayerStatus } from "@/lib/alerts/landslideNowcast";
 import type { WildfireWind } from "@/lib/alerts/wind";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
@@ -422,6 +425,31 @@ export default function MapInterface() {
   const [showVolcanoAshEmission, setShowVolcanoAshEmission] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.volcanoAshEmission,
   );
+  const [showLandslideLikelihood, setShowLandslideLikelihood] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.landslideLikelihood,
+  );
+  const [showLandslideLikelihoodModerate, setShowLandslideLikelihoodModerate] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.landslideLikelihoodModerate);
+  const [showLandslideLikelihoodHigh, setShowLandslideLikelihoodHigh] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.landslideLikelihoodHigh,
+  );
+  const [showMappedLandslideEvents, setShowMappedLandslideEvents] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.mappedLandslideEvents,
+  );
+  const [showMajorIndustrialIncidents, setShowMajorIndustrialIncidents] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.majorIndustrialIncidents);
+  const [showIndustrialAccidents, setShowIndustrialAccidents] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.industrialAccidents,
+  );
+  const [showChemicalAccidents, setShowChemicalAccidents] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.chemicalAccidents,
+  );
+  const [showIndustrialExplosions, setShowIndustrialExplosions] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.industrialExplosions,
+  );
+  const [showOtherTechnicalAccidents, setShowOtherTechnicalAccidents] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.otherTechnicalAccidents,
+  );
   const [normalizedAlerts, setNormalizedAlerts] = useState<NormalizedAlert[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [alertActivityMode, setAlertActivityMode] =
@@ -430,12 +458,16 @@ export default function MapInterface() {
     useState<EarthquakeTimeMode>("24h");
   const [volcanoTimeMode, setVolcanoTimeMode] =
     useState<VolcanoTimeMode>("ongoing");
+  const [cemsTimeMode, setCemsTimeMode] =
+    useState<CemsActivationTimeMode>("ongoing");
   const [alertsDemoMode, setAlertsDemoMode] = useState(false);
   const [alertConnectorStatus, setAlertConnectorStatus] = useState<
     Record<string, AlertConnectorStatus>
   >({});
   const [copernicusFloodStatus, setCopernicusFloodStatus] =
     useState<CopernicusFloodLayerStatus | null>(null);
+  const [landslideNowcastStatus, setLandslideNowcastStatus] =
+    useState<LandslideNowcastLayerStatus | null>(null);
   const [wildfireWinds, setWildfireWinds] = useState<WildfireWind[]>([]);
   const [selectedWildfireId, setSelectedWildfireId] = useState<string | null>(
     null,
@@ -523,7 +555,10 @@ export default function MapInterface() {
     const ordinary = filterAlertsByActivityMode(
       normalizedAlerts.filter(
         (alert) =>
-          alert.category !== "earthquake" && alert.category !== "volcano",
+          alert.category !== "earthquake" &&
+          alert.category !== "volcano" &&
+          alert.category !== "landslide" &&
+          alert.category !== "industrial_incident",
       ),
       alertActivityMode,
     );
@@ -531,9 +566,26 @@ export default function MapInterface() {
       ...ordinary,
       ...filterEarthquakesByTimeMode(normalizedAlerts, earthquakeTimeMode),
       ...filterVolcanoesByTimeMode(normalizedAlerts, volcanoTimeMode),
+      ...normalizedAlerts.filter((alert) => {
+        if (
+          alert.category !== "landslide" &&
+          alert.category !== "industrial_incident"
+        ) {
+          return false;
+        }
+        if (cemsTimeMode === "ongoing") return alert.status === "active";
+        if (alert.status === "active") return true;
+        const cutoff =
+          Date.now() -
+          (cemsTimeMode === "72h" ? 72 : 30 * 24) * 60 * 60 * 1000;
+        return [alert.updatedAt, alert.expiresAt, alert.onsetAt]
+          .filter((value): value is string => Boolean(value))
+          .some((value) => Date.parse(value) >= cutoff);
+      }),
     ];
   }, [
     alertActivityMode,
+    cemsTimeMode,
     earthquakeTimeMode,
     normalizedAlerts,
     volcanoTimeMode,
@@ -641,6 +693,15 @@ export default function MapInterface() {
     setShowVolcanoUnrest(prefs.volcanoUnrest);
     setShowVolcanoEruption(prefs.volcanoEruption);
     setShowVolcanoAshEmission(prefs.volcanoAshEmission);
+    setShowLandslideLikelihood(prefs.landslideLikelihood);
+    setShowLandslideLikelihoodModerate(prefs.landslideLikelihoodModerate);
+    setShowLandslideLikelihoodHigh(prefs.landslideLikelihoodHigh);
+    setShowMappedLandslideEvents(prefs.mappedLandslideEvents);
+    setShowMajorIndustrialIncidents(prefs.majorIndustrialIncidents);
+    setShowIndustrialAccidents(prefs.industrialAccidents);
+    setShowChemicalAccidents(prefs.chemicalAccidents);
+    setShowIndustrialExplosions(prefs.industrialExplosions);
+    setShowOtherTechnicalAccidents(prefs.otherTechnicalAccidents);
     setLayerPrefsHydrated(true);
   }, []);
 
@@ -750,6 +811,15 @@ export default function MapInterface() {
       volcanoUnrest: showVolcanoUnrest,
       volcanoEruption: showVolcanoEruption,
       volcanoAshEmission: showVolcanoAshEmission,
+      landslideLikelihood: showLandslideLikelihood,
+      landslideLikelihoodModerate: showLandslideLikelihoodModerate,
+      landslideLikelihoodHigh: showLandslideLikelihoodHigh,
+      mappedLandslideEvents: showMappedLandslideEvents,
+      majorIndustrialIncidents: showMajorIndustrialIncidents,
+      industrialAccidents: showIndustrialAccidents,
+      chemicalAccidents: showChemicalAccidents,
+      industrialExplosions: showIndustrialExplosions,
+      otherTechnicalAccidents: showOtherTechnicalAccidents,
     });
   }, [
     layerPrefsHydrated,
@@ -817,6 +887,15 @@ export default function MapInterface() {
     showVolcanoUnrest,
     showVolcanoEruption,
     showVolcanoAshEmission,
+    showLandslideLikelihood,
+    showLandslideLikelihoodModerate,
+    showLandslideLikelihoodHigh,
+    showMappedLandslideEvents,
+    showMajorIndustrialIncidents,
+    showIndustrialAccidents,
+    showChemicalAccidents,
+    showIndustrialExplosions,
+    showOtherTechnicalAccidents,
   ]);
 
   const legendPreferences = useMemo<MapLayerPreferences>(
@@ -885,6 +964,15 @@ export default function MapInterface() {
       volcanoUnrest: showVolcanoUnrest,
       volcanoEruption: showVolcanoEruption,
       volcanoAshEmission: showVolcanoAshEmission,
+      landslideLikelihood: showLandslideLikelihood,
+      landslideLikelihoodModerate: showLandslideLikelihoodModerate,
+      landslideLikelihoodHigh: showLandslideLikelihoodHigh,
+      mappedLandslideEvents: showMappedLandslideEvents,
+      majorIndustrialIncidents: showMajorIndustrialIncidents,
+      industrialAccidents: showIndustrialAccidents,
+      chemicalAccidents: showChemicalAccidents,
+      industrialExplosions: showIndustrialExplosions,
+      otherTechnicalAccidents: showOtherTechnicalAccidents,
     }),
     [
       showEurozone,
@@ -951,6 +1039,15 @@ export default function MapInterface() {
       showVolcanoUnrest,
       showVolcanoEruption,
       showVolcanoAshEmission,
+      showLandslideLikelihood,
+      showLandslideLikelihoodModerate,
+      showLandslideLikelihoodHigh,
+      showMappedLandslideEvents,
+      showMajorIndustrialIncidents,
+      showIndustrialAccidents,
+      showChemicalAccidents,
+      showIndustrialExplosions,
+      showOtherTechnicalAccidents,
     ],
   );
 
@@ -1027,6 +1124,15 @@ export default function MapInterface() {
       volcanoUnrest: setShowVolcanoUnrest,
       volcanoEruption: setShowVolcanoEruption,
       volcanoAshEmission: setShowVolcanoAshEmission,
+      landslideLikelihood: setShowLandslideLikelihood,
+      landslideLikelihoodModerate: setShowLandslideLikelihoodModerate,
+      landslideLikelihoodHigh: setShowLandslideLikelihoodHigh,
+      mappedLandslideEvents: setShowMappedLandslideEvents,
+      majorIndustrialIncidents: setShowMajorIndustrialIncidents,
+      industrialAccidents: setShowIndustrialAccidents,
+      chemicalAccidents: setShowChemicalAccidents,
+      industrialExplosions: setShowIndustrialExplosions,
+      otherTechnicalAccidents: setShowOtherTechnicalAccidents,
       schengenExternalBorderCrossings: setShowSchengenExternalBorderCrossings,
       schengenTemporaryInternalControls:
         setShowSchengenTemporaryInternalControls,
@@ -1098,6 +1204,15 @@ export default function MapInterface() {
     setShowVolcanoUnrest(defaults.volcanoUnrest);
     setShowVolcanoEruption(defaults.volcanoEruption);
     setShowVolcanoAshEmission(defaults.volcanoAshEmission);
+    setShowLandslideLikelihood(defaults.landslideLikelihood);
+    setShowLandslideLikelihoodModerate(defaults.landslideLikelihoodModerate);
+    setShowLandslideLikelihoodHigh(defaults.landslideLikelihoodHigh);
+    setShowMappedLandslideEvents(defaults.mappedLandslideEvents);
+    setShowMajorIndustrialIncidents(defaults.majorIndustrialIncidents);
+    setShowIndustrialAccidents(defaults.industrialAccidents);
+    setShowChemicalAccidents(defaults.chemicalAccidents);
+    setShowIndustrialExplosions(defaults.industrialExplosions);
+    setShowOtherTechnicalAccidents(defaults.otherTechnicalAccidents);
     setShowSchengenExternalBorderCrossings(
       defaults.schengenExternalBorderCrossings,
     );
@@ -1390,7 +1505,9 @@ export default function MapInterface() {
       showMajorFloodAlerts ||
       showMajorStorms ||
       showRecentEarthquakes ||
-      showMajorVolcanicActivity;
+      showMajorVolcanicActivity ||
+      showMappedLandslideEvents ||
+      showMajorIndustrialIncidents;
     if (!enabled) return () => controller.abort();
 
     const replaceSourceAlerts = (
@@ -1410,6 +1527,9 @@ export default function MapInterface() {
             ? alert.category !== "earthquake"
             : sourceId === "geological-volcanoes"
               ? alert.category !== "volcano"
+              : sourceId === "copernicus-emergency-mapping"
+                ? alert.category !== "landslide" &&
+                  alert.category !== "industrial_incident"
               : sourceId === "gdacs"
             ? alert.source !== "gdacs" ||
               !response.alerts.some((incoming) => incoming.category === alert.category)
@@ -1509,6 +1629,29 @@ export default function MapInterface() {
             }),
         );
       }
+      if (showMappedLandslideEvents || showMajorIndustrialIncidents) {
+        requests.push(
+          fetch(
+            `/api/alerts/emergency-mapping?category=all&period=${encodeURIComponent(cemsTimeMode)}`,
+            { signal: controller.signal },
+          )
+            .then(async (response) => {
+              if (!response.ok) throw new Error("cems_alerts_http");
+              replaceSourceAlerts(
+                "copernicus-emergency-mapping",
+                (await response.json()) as AlertApiResponse,
+              );
+            })
+            .catch((error: unknown) => {
+              if (!isAbortError(error)) {
+                setAlertConnectorStatus((current) => ({
+                  ...current,
+                  "copernicus-emergency-mapping": "unavailable",
+                }));
+              }
+            }),
+        );
+      }
       await Promise.allSettled(requests);
     };
 
@@ -1525,7 +1668,43 @@ export default function MapInterface() {
     showOfficialWeatherWarnings,
     showRecentEarthquakes,
     showMajorVolcanicActivity,
+    showMappedLandslideEvents,
+    showMajorIndustrialIncidents,
+    cemsTimeMode,
   ]);
+
+  useEffect(() => {
+    if (!showLandslideLikelihood) return;
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const response = await fetch("/api/alerts/landslides/nowcast", {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("nasa_lhasa_status_http");
+        const status = (await response.json()) as LandslideNowcastLayerStatus;
+        setLandslideNowcastStatus(status);
+        setAlertConnectorStatus((current) => ({
+          ...current,
+          "nasa-lhasa": status.connectorStatus,
+        }));
+        if (status.demoMode) setAlertsDemoMode(true);
+      } catch (error) {
+        if (!isAbortError(error)) {
+          setAlertConnectorStatus((current) => ({
+            ...current,
+            "nasa-lhasa": "unavailable",
+          }));
+        }
+      }
+    };
+    void load();
+    const interval = window.setInterval(() => void load(), 30 * 60 * 1000);
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+    };
+  }, [showLandslideLikelihood]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -2670,6 +2849,20 @@ export default function MapInterface() {
       if (activity === "ash_emission") setShowVolcanoAshEmission(true);
       else if (activity === "eruption") setShowVolcanoEruption(true);
       else setShowVolcanoUnrest(true);
+    } else if (alert.category === "landslide") {
+      setShowMappedLandslideEvents(true);
+    } else if (alert.category === "industrial_incident") {
+      setShowMajorIndustrialIncidents(true);
+      if (alert.hazard === "chemical_accident") setShowChemicalAccidents(true);
+      else if (alert.hazard === "explosion") setShowIndustrialExplosions(true);
+      else if (
+        alert.hazard === "technical_accident" ||
+        alert.hazard === "unknown_industrial_incident"
+      ) {
+        setShowOtherTechnicalAccidents(true);
+      } else {
+        setShowIndustrialAccidents(true);
+      }
     }
     setSelectedAlertId(alertId);
     if (alert.geometry && focusGeometryRef.current) {
@@ -3096,7 +3289,9 @@ export default function MapInterface() {
         result.type === "flood_alert" ||
         result.type === "storm_alert" ||
         result.type === "earthquake_alert" ||
-        result.type === "volcano_alert") &&
+        result.type === "volcano_alert" ||
+        result.type === "landslide_activation" ||
+        result.type === "industrial_incident_activation") &&
       result.alertId
     ) {
       handleAlertSelect(result.alertId);
@@ -3242,6 +3437,20 @@ export default function MapInterface() {
             eruption: showVolcanoEruption,
             ashEmission: showVolcanoAshEmission,
           }}
+          showLandslideLikelihood={showLandslideLikelihood}
+          landslideLikelihoodFilters={{
+            moderate: showLandslideLikelihoodModerate,
+            high: showLandslideLikelihoodHigh,
+          }}
+          landslideNowcastStatus={landslideNowcastStatus}
+          showMappedLandslideEvents={showMappedLandslideEvents}
+          showMajorIndustrialIncidents={showMajorIndustrialIncidents}
+          industrialIncidentFilters={{
+            industrial: showIndustrialAccidents,
+            chemical: showChemicalAccidents,
+            explosion: showIndustrialExplosions,
+            technical: showOtherTechnicalAccidents,
+          }}
           selectedAlertId={selectedAlertId}
           onAlertSelect={handleAlertSelect}
           onSatelliteObservationSelect={handleSatelliteObservationSelect}
@@ -3376,6 +3585,30 @@ export default function MapInterface() {
                     )
                   ? t.alertPanel.connectorOperational
                   : t.alertPanel.providerNoEvents,
+            landslideLikelihood:
+              alertConnectorStatus["nasa-lhasa"] === "unavailable"
+                ? t.alertPanel.connectorUnavailable
+                : alertConnectorStatus["nasa-lhasa"] === "delayed"
+                  ? t.alertPanel.connectorDelayed
+                  : alertConnectorStatus["nasa-lhasa"] === "operational"
+                    ? t.alertPanel.connectorOperational
+                    : t.alertPanel.noRecentData,
+            mappedLandslideEvents:
+              alertConnectorStatus["copernicus-emergency-mapping"] === "unavailable"
+                ? t.alertPanel.connectorUnavailable
+                : activityFilteredAlerts.some(
+                      (alert) => alert.category === "landslide",
+                    )
+                  ? t.alertPanel.connectorOperational
+                  : t.alertPanel.providerNoEvents,
+            majorIndustrialIncidents:
+              alertConnectorStatus["copernicus-emergency-mapping"] === "unavailable"
+                ? t.alertPanel.connectorUnavailable
+                : activityFilteredAlerts.some(
+                      (alert) => alert.category === "industrial_incident",
+                    )
+                  ? t.alertPanel.connectorOperational
+                  : t.alertPanel.providerNoEvents,
           }}
         />
 
@@ -3384,7 +3617,10 @@ export default function MapInterface() {
           showMajorStorms ||
           showObservedFloodExtent ||
           showRecentEarthquakes ||
-          showMajorVolcanicActivity) && (
+          showMajorVolcanicActivity ||
+          showLandslideLikelihood ||
+          showMappedLandslideEvents ||
+          showMajorIndustrialIncidents) && (
           <AlertStatusPanel
             locale={locale}
             mode={alertActivityMode}
@@ -3413,6 +3649,13 @@ export default function MapInterface() {
             volcanoEnabled={showMajorVolcanicActivity}
             volcanoMode={volcanoTimeMode}
             onVolcanoModeChange={setVolcanoTimeMode}
+            cemsMode={cemsTimeMode}
+            onCemsModeChange={setCemsTimeMode}
+            showCems={
+              showMappedLandslideEvents || showMajorIndustrialIncidents
+            }
+            showLhasa={showLandslideLikelihood}
+            lhasaValidAt={landslideNowcastStatus?.validAt ?? null}
           />
         )}
 
@@ -3760,14 +4003,22 @@ export default function MapInterface() {
           />
         )}
 
-        {selectedAlert && (
+        {selectedAlert &&
+        (selectedAlert.category === "landslide" ||
+          selectedAlert.category === "industrial_incident") ? (
+          <CopernicusActivationPanel
+            alert={selectedAlert}
+            locale={locale}
+            onClose={() => setSelectedAlertId(null)}
+          />
+        ) : selectedAlert ? (
           <AlertDetailsPanel
             alert={selectedAlert}
             locale={locale}
             connectorStatus={alertConnectorStatus[selectedAlert.source]}
             onClose={() => setSelectedAlertId(null)}
           />
-        )}
+        ) : null}
 
         {selectedEffisBurnedArea && (
           <EffisBurnedAreaPanel

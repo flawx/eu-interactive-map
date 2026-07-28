@@ -123,6 +123,19 @@ import {
   VOLCANO_MARKER_LAYER_ID,
   GEOLOGICAL_LABEL_LAYER_ID,
   GEOLOGICAL_SELECTED_LAYER_ID,
+  CEMS_LANDSLIDE_SOURCE_ID,
+  CEMS_INDUSTRIAL_SOURCE_ID,
+  CEMS_LANDSLIDE_CLUSTER_LAYER_ID,
+  CEMS_INDUSTRIAL_CLUSTER_LAYER_ID,
+  CEMS_LANDSLIDE_MARKER_LAYER_ID,
+  CEMS_INDUSTRIAL_MARKER_LAYER_ID,
+  CEMS_LANDSLIDE_LABEL_LAYER_ID,
+  CEMS_INDUSTRIAL_LABEL_LAYER_ID,
+  CEMS_AOI_SOURCE_ID,
+  CEMS_AOI_FILL_LAYER_ID,
+  CEMS_AOI_LINE_LAYER_ID,
+  CEMS_PRODUCT_SOURCE_ID,
+  CEMS_PRODUCT_LINE_LAYER_ID,
   ALERT_TRACK_LAYER_ID,
   ALERT_TRACK_SOURCE_ID,
   ALERT_UNCERTAINTY_LAYER_ID,
@@ -132,6 +145,8 @@ import {
   buildFloodEventMarkerCollection,
   buildStormGeometryCollection,
   buildGeologicalAlertCollection,
+  buildCemsActivationMarkerCollection,
+  buildCemsGeometryCollection,
   buildWildfireWindCollection,
   createWindArrowIcon,
   createFloodWaveIcon,
@@ -139,7 +154,9 @@ import {
   type WeatherHazardFilters,
   type EarthquakeMagnitudeFilters,
   type VolcanoActivityFilters,
+  type IndustrialIncidentFilters,
 } from "@/components/map/alertMapLayers";
+import type { LandslideNowcastLayerStatus } from "@/lib/alerts/landslideNowcast";
 import type {
   MapFocusRequest,
   TemporaryMapMarker,
@@ -991,6 +1008,17 @@ export default function MapContainer({
     eruption: true,
     ashEmission: true,
   },
+  showLandslideLikelihood = false,
+  landslideLikelihoodFilters = { moderate: true, high: true },
+  landslideNowcastStatus = null,
+  showMappedLandslideEvents = false,
+  showMajorIndustrialIncidents = false,
+  industrialIncidentFilters = {
+    industrial: true,
+    chemical: true,
+    explosion: true,
+    technical: true,
+  },
   selectedAlertId = null,
   onAlertSelect,
   onSatelliteObservationSelect,
@@ -1091,6 +1119,12 @@ export default function MapContainer({
   earthquakeMagnitudeFilters?: EarthquakeMagnitudeFilters;
   showMajorVolcanicActivity?: boolean;
   volcanoActivityFilters?: VolcanoActivityFilters;
+  showLandslideLikelihood?: boolean;
+  landslideLikelihoodFilters?: { moderate: boolean; high: boolean };
+  landslideNowcastStatus?: LandslideNowcastLayerStatus | null;
+  showMappedLandslideEvents?: boolean;
+  showMajorIndustrialIncidents?: boolean;
+  industrialIncidentFilters?: IndustrialIncidentFilters;
   selectedAlertId?: string | null;
   onAlertSelect?: (alertId: string | null) => void;
   onSatelliteObservationSelect?: (alert: NormalizedAlert) => void;
@@ -5699,14 +5733,35 @@ export default function MapContainer({
       storms: showMajorStorms,
       earthquakes: showRecentEarthquakes,
       volcanoes: showMajorVolcanicActivity,
+      mappedLandslides: showMappedLandslideEvents,
+      industrialIncidents: showMajorIndustrialIncidents,
       earthquakeFilters: earthquakeMagnitudeFilters,
       volcanoFilters: volcanoActivityFilters,
+      industrialFilters: industrialIncidentFilters,
       weatherFilters: weatherHazardFilters,
     });
     const collection = buildAlertFeatureCollection(visibleAlerts);
     const floodEvents = buildFloodEventMarkerCollection(visibleAlerts);
     const stormCollection = buildStormGeometryCollection(visibleAlerts);
     const geologicalCollection = buildGeologicalAlertCollection(visibleAlerts);
+    const cemsLandslides = buildCemsActivationMarkerCollection(
+      visibleAlerts,
+      "landslide",
+    );
+    const cemsIndustrial = buildCemsActivationMarkerCollection(
+      visibleAlerts,
+      "industrial_incident",
+    );
+    const cemsAois = buildCemsGeometryCollection(
+      visibleAlerts,
+      selectedAlertId,
+      "aoi",
+    );
+    const cemsProducts = buildCemsGeometryCollection(
+      visibleAlerts,
+      selectedAlertId,
+      "product",
+    );
     const beforeId = map.getLayer("user-location-accuracy")
       ? "user-location-accuracy"
       : undefined;
@@ -5749,6 +5804,34 @@ export default function MapContainer({
       (map.getSource(GEOLOGICAL_ALERT_SOURCE_ID) as GeoJSONSource).setData(
         geologicalCollection,
       );
+    }
+
+    for (const [sourceId, data] of [
+      [CEMS_LANDSLIDE_SOURCE_ID, cemsLandslides],
+      [CEMS_INDUSTRIAL_SOURCE_ID, cemsIndustrial],
+    ] as const) {
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, {
+          type: "geojson",
+          data,
+          cluster: true,
+          clusterMaxZoom: 7,
+          clusterRadius: 44,
+          promoteId: "alertId",
+        });
+      } else {
+        (map.getSource(sourceId) as GeoJSONSource).setData(data);
+      }
+    }
+    for (const [sourceId, data] of [
+      [CEMS_AOI_SOURCE_ID, cemsAois],
+      [CEMS_PRODUCT_SOURCE_ID, cemsProducts],
+    ] as const) {
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, { type: "geojson", data });
+      } else {
+        (map.getSource(sourceId) as GeoJSONSource).setData(data);
+      }
     }
 
     if (!map.getSource(ALERT_TRACK_SOURCE_ID)) {
@@ -6016,6 +6099,141 @@ export default function MapContainer({
             "circle-stroke-width": 2,
             "circle-opacity": 0.94,
           },
+        },
+        beforeId,
+      );
+    }
+    for (const [layerId, sourceId, color] of [
+      [CEMS_LANDSLIDE_CLUSTER_LAYER_ID, CEMS_LANDSLIDE_SOURCE_ID, "#92400e"],
+      [CEMS_INDUSTRIAL_CLUSTER_LAYER_ID, CEMS_INDUSTRIAL_SOURCE_ID, "#6d28d9"],
+    ] as const) {
+      if (!map.getLayer(layerId)) {
+        map.addLayer(
+          {
+            id: layerId,
+            type: "circle",
+            source: sourceId,
+            filter: ["has", "point_count"],
+            paint: {
+              "circle-radius": ["step", ["get", "point_count"], 18, 8, 23, 25, 29],
+              "circle-color": color,
+              "circle-stroke-color": "#ffffff",
+              "circle-stroke-width": 2,
+              "circle-opacity": 0.94,
+            },
+          },
+          beforeId,
+        );
+      }
+    }
+    for (const [layerId, sourceId, glyph] of [
+      [CEMS_LANDSLIDE_MARKER_LAYER_ID, CEMS_LANDSLIDE_SOURCE_ID, "▲"],
+      [CEMS_INDUSTRIAL_MARKER_LAYER_ID, CEMS_INDUSTRIAL_SOURCE_ID, "◆"],
+    ] as const) {
+      if (!map.getLayer(layerId)) {
+        map.addLayer(
+          {
+            id: layerId,
+            type: "symbol",
+            source: sourceId,
+            filter: ["!", ["has", "point_count"]],
+            layout: {
+              "text-field": glyph,
+              "text-size": [
+                "case",
+                ["==", ["get", "alertId"], selectedAlertId ?? ""],
+                31,
+                26,
+              ],
+              "text-allow-overlap": true,
+              "text-ignore-placement": true,
+            },
+            paint: {
+              "text-color": ["get", "markerColor"],
+              "text-halo-color": "#ffffff",
+              "text-halo-width": 2,
+              "text-opacity": [
+                "case",
+                ["==", ["get", "status"], "ended"],
+                0.55,
+                1,
+              ],
+            },
+          },
+          beforeId,
+        );
+      } else {
+        map.setLayoutProperty(layerId, "text-size", [
+          "case",
+          ["==", ["get", "alertId"], selectedAlertId ?? ""],
+          31,
+          26,
+        ]);
+      }
+    }
+    for (const [layerId, sourceId] of [
+      [CEMS_LANDSLIDE_LABEL_LAYER_ID, CEMS_LANDSLIDE_SOURCE_ID],
+      [CEMS_INDUSTRIAL_LABEL_LAYER_ID, CEMS_INDUSTRIAL_SOURCE_ID],
+    ] as const) {
+      if (!map.getLayer(layerId)) {
+        map.addLayer(
+          {
+            id: layerId,
+            type: "symbol",
+            source: sourceId,
+            filter: ["!", ["has", "point_count"]],
+            minzoom: 5,
+            layout: {
+              "text-field": ["get", "label"],
+              "text-size": 11,
+              "text-offset": [0, 1.8],
+              "text-anchor": "top",
+              "text-max-width": 18,
+              "text-optional": true,
+            },
+            paint: {
+              "text-color": "#f8fafc",
+              "text-halo-color": "#0f172a",
+              "text-halo-width": 1.5,
+            },
+          },
+          beforeId,
+        );
+      }
+    }
+    if (!map.getLayer(CEMS_AOI_FILL_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: CEMS_AOI_FILL_LAYER_ID,
+          type: "fill",
+          source: CEMS_AOI_SOURCE_ID,
+          paint: { "fill-color": "#f59e0b", "fill-opacity": 0.13 },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(CEMS_AOI_LINE_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: CEMS_AOI_LINE_LAYER_ID,
+          type: "line",
+          source: CEMS_AOI_SOURCE_ID,
+          paint: {
+            "line-color": "#fbbf24",
+            "line-width": 2,
+            "line-dasharray": [2, 1],
+          },
+        },
+        beforeId,
+      );
+    }
+    if (!map.getLayer(CEMS_PRODUCT_LINE_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: CEMS_PRODUCT_LINE_LAYER_ID,
+          type: "line",
+          source: CEMS_PRODUCT_SOURCE_ID,
+          paint: { "line-color": "#22d3ee", "line-width": 3 },
         },
         beforeId,
       );
@@ -6347,6 +6565,21 @@ export default function MapContainer({
       const zoom = await source.getClusterExpansionZoom(clusterId);
       map.easeTo({ center: coordinates, zoom, duration: 650 });
     };
+    const handleCemsClusterClick = async (
+      event: MapLayerMouseEvent,
+      sourceId: string,
+    ) => {
+      const feature = event.features?.[0];
+      const clusterId = Number(feature?.properties?.cluster_id);
+      const coordinates =
+        feature?.geometry.type === "Point"
+          ? (feature.geometry.coordinates as [number, number])
+          : null;
+      if (!Number.isFinite(clusterId) || !coordinates) return;
+      const source = map.getSource(sourceId) as GeoJSONSource;
+      const zoom = await source.getClusterExpansionZoom(clusterId);
+      map.easeTo({ center: coordinates, zoom, duration: 650 });
+    };
     let hoverPopup: Popup | null = null;
     const showFloodTooltip = (event: MapLayerMouseEvent) => {
       const feature = event.features?.[0];
@@ -6452,6 +6685,38 @@ export default function MapContainer({
         .setDOMContent(content)
         .addTo(map);
     };
+    const showCemsTooltip = (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+      hoverPopup?.remove();
+      const properties = feature.properties ?? {};
+      const content = document.createElement("div");
+      content.className = "space-y-1 text-xs";
+      for (const value of [
+        properties.title,
+        properties.displayLocation,
+        properties.activationKind,
+        properties.code,
+        properties.status,
+        properties.eventTime,
+        properties.updatedAt,
+        `${properties.aoiCount ?? 0} AOI`,
+        "Copernicus EMS",
+      ]) {
+        if (!value) continue;
+        const line = document.createElement("p");
+        line.textContent = String(value);
+        content.appendChild(line);
+      }
+      hoverPopup = new Popup({
+        closeButton: false,
+        closeOnClick: false,
+        offset: 16,
+      })
+        .setLngLat(feature.geometry.coordinates as [number, number])
+        .setDOMContent(content)
+        .addTo(map);
+    };
     const pointer = () => {
       map.getCanvas().style.cursor = "pointer";
     };
@@ -6469,6 +6734,24 @@ export default function MapContainer({
     map.on("mousemove", FLOOD_EVENT_MARKER_LAYER_ID, showFloodTooltip);
     map.on("mouseleave", FLOOD_EVENT_MARKER_LAYER_ID, reset);
     map.on("click", GEOLOGICAL_CLUSTER_LAYER_ID, handleGeologicalClusterClick);
+    const cemsLandslideClusterClick = (event: MapLayerMouseEvent) =>
+      void handleCemsClusterClick(event, CEMS_LANDSLIDE_SOURCE_ID);
+    const cemsIndustrialClusterClick = (event: MapLayerMouseEvent) =>
+      void handleCemsClusterClick(event, CEMS_INDUSTRIAL_SOURCE_ID);
+    map.on("click", CEMS_LANDSLIDE_CLUSTER_LAYER_ID, cemsLandslideClusterClick);
+    map.on("click", CEMS_INDUSTRIAL_CLUSTER_LAYER_ID, cemsIndustrialClusterClick);
+    for (const layerId of [
+      CEMS_LANDSLIDE_MARKER_LAYER_ID,
+      CEMS_INDUSTRIAL_MARKER_LAYER_ID,
+    ]) {
+      map.on("click", layerId, handleAlertClick);
+      map.on("mouseenter", layerId, pointer);
+      map.on("mousemove", layerId, showCemsTooltip);
+      map.on("mouseleave", layerId, () => {
+        reset();
+        hoverPopup?.remove();
+      });
+    }
     for (const layerId of [
       EARTHQUAKE_MARKER_LAYER_ID,
       VOLCANO_MARKER_LAYER_ID,
@@ -6496,6 +6779,16 @@ export default function MapContainer({
         GEOLOGICAL_CLUSTER_LAYER_ID,
         handleGeologicalClusterClick,
       );
+      map.off("click", CEMS_LANDSLIDE_CLUSTER_LAYER_ID, cemsLandslideClusterClick);
+      map.off("click", CEMS_INDUSTRIAL_CLUSTER_LAYER_ID, cemsIndustrialClusterClick);
+      for (const layerId of [
+        CEMS_LANDSLIDE_MARKER_LAYER_ID,
+        CEMS_INDUSTRIAL_MARKER_LAYER_ID,
+      ]) {
+        map.off("click", layerId, handleAlertClick);
+        map.off("mouseenter", layerId, pointer);
+        map.off("mousemove", layerId, showCemsTooltip);
+      }
       for (const layerId of [
         EARTHQUAKE_MARKER_LAYER_ID,
         VOLCANO_MARKER_LAYER_ID,
@@ -6516,8 +6809,75 @@ export default function MapContainer({
     earthquakeMagnitudeFilters,
     showMajorVolcanicActivity,
     volcanoActivityFilters,
+    showMappedLandslideEvents,
+    showMajorIndustrialIncidents,
+    industrialIncidentFilters,
     showOfficialWeatherWarnings,
     weatherHazardFilters,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+    const configurations = [
+      {
+        sourceId: "nasa-lhasa-moderate",
+        layerId: "nasa-lhasa-moderate-layer",
+        enabled:
+          showLandslideLikelihood &&
+          landslideLikelihoodFilters.moderate,
+        tiles: landslideNowcastStatus?.tileTemplates.moderate,
+      },
+      {
+        sourceId: "nasa-lhasa-high",
+        layerId: "nasa-lhasa-high-layer",
+        enabled:
+          showLandslideLikelihood &&
+          landslideLikelihoodFilters.high,
+        tiles: landslideNowcastStatus?.tileTemplates.high,
+      },
+    ];
+    for (const configuration of configurations) {
+      const available =
+        configuration.enabled &&
+        landslideNowcastStatus?.connectorStatus !== "unavailable" &&
+        Boolean(configuration.tiles);
+      if (configuration.tiles && !map.getSource(configuration.sourceId)) {
+        map.addSource(configuration.sourceId, {
+          type: "raster",
+          tiles: [configuration.tiles],
+          tileSize: 256,
+          minzoom: 0,
+          maxzoom: landslideNowcastStatus?.maxZoom ?? 10,
+          bounds: landslideNowcastStatus?.bounds ?? [-31.5, 27, 45, 72.5],
+          attribution: "NASA LHASA",
+        });
+      }
+      if (
+        configuration.tiles &&
+        map.getSource(configuration.sourceId) &&
+        !map.getLayer(configuration.layerId)
+      ) {
+        map.addLayer(
+          {
+            id: configuration.layerId,
+            type: "raster",
+            source: configuration.sourceId,
+            paint: {
+              "raster-opacity": 1,
+              "raster-fade-duration": 0,
+            },
+          },
+          map.getLayer(ALERT_FILL_LAYER_ID) ? ALERT_FILL_LAYER_ID : undefined,
+        );
+      }
+      applyLayerVisibility(map, configuration.layerId, Boolean(available));
+    }
+  }, [
+    landslideLikelihoodFilters,
+    landslideNowcastStatus,
+    mapSourcesReadyVersion,
+    showLandslideLikelihood,
   ]);
 
   useEffect(() => {

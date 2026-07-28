@@ -71,6 +71,26 @@ export const ALERT_SOURCES = {
     dataNature: "forecast-model",
     potentialDelay: "Model data updates approximately every six hours.",
   },
+  nasaLhasa: {
+    id: "nasa-lhasa",
+    name: "NASA LHASA",
+    categories: ["landslide"],
+    updateIntervalMs: 30 * 60 * 1000,
+    attribution: "NASA Global Landslide Hazard Assessment System (LHASA)",
+    officialUrl: "https://gpm.nasa.gov/applications/landslides",
+    dataNature: "forecast-model",
+    potentialDelay: "The current public image service does not expose a reliable product timestamp.",
+  },
+  copernicusEmergencyMapping: {
+    id: "copernicus-emergency-mapping",
+    name: "Copernicus Emergency Management Service — Rapid Mapping",
+    categories: ["landslide", "industrial_incident"],
+    updateIntervalMs: 10 * 60 * 1000,
+    attribution: "European Union, Copernicus Emergency Management Service",
+    officialUrl: "https://mapping.emergency.copernicus.eu/",
+    dataNature: "satellite-observation",
+    potentialDelay: "An activation is a mapping request; products can be delivered hours after the event.",
+  },
 } as const satisfies Record<string, AlertSourceDefinition>;
 
 export function getAlertSource(id: keyof typeof ALERT_SOURCES): AlertSourceDefinition {

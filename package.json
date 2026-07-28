@@ -18,7 +18,8 @@
     "test:civil-engineering": "tsx scripts/test-civil-engineering.ts",
     "test:alerts": "tsx scripts/test-alerts.ts",
     "test:alerts-flood-ux": "tsx scripts/test-alert-flood-ux.ts",
-    "test:alerts-geological": "tsx scripts/test-geological-alerts.ts"
+    "test:alerts-geological": "tsx scripts/test-geological-alerts.ts",
+    "test:alerts-landslide-industrial": "tsx scripts/test-landslide-industrial-alerts.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",

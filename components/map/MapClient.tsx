@@ -25,9 +25,11 @@ import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBord
 import type { NormalizedAlert } from "@/lib/alerts/types";
 import type { WildfireWind } from "@/lib/alerts/wind";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
+import type { LandslideNowcastLayerStatus } from "@/lib/alerts/landslideNowcast";
 import type {
   EarthquakeMagnitudeFilters,
   VolcanoActivityFilters,
+  IndustrialIncidentFilters,
   WeatherHazardFilters,
 } from "@/components/map/alertMapLayers";
 
@@ -113,6 +115,12 @@ type MapClientProps = {
   earthquakeMagnitudeFilters: EarthquakeMagnitudeFilters;
   showMajorVolcanicActivity: boolean;
   volcanoActivityFilters: VolcanoActivityFilters;
+  showLandslideLikelihood: boolean;
+  landslideLikelihoodFilters: { moderate: boolean; high: boolean };
+  landslideNowcastStatus: LandslideNowcastLayerStatus | null;
+  showMappedLandslideEvents: boolean;
+  showMajorIndustrialIncidents: boolean;
+  industrialIncidentFilters: IndustrialIncidentFilters;
   selectedAlertId: string | null;
   onAlertSelect: (alertId: string | null) => void;
   onSatelliteObservationSelect: (alert: NormalizedAlert) => void;
@@ -223,6 +231,12 @@ export default function MapClient({
   earthquakeMagnitudeFilters,
   showMajorVolcanicActivity,
   volcanoActivityFilters,
+  showLandslideLikelihood,
+  landslideLikelihoodFilters,
+  landslideNowcastStatus,
+  showMappedLandslideEvents,
+  showMajorIndustrialIncidents,
+  industrialIncidentFilters,
   selectedAlertId,
   onAlertSelect,
   onSatelliteObservationSelect,
@@ -327,6 +341,12 @@ export default function MapClient({
       earthquakeMagnitudeFilters={earthquakeMagnitudeFilters}
       showMajorVolcanicActivity={showMajorVolcanicActivity}
       volcanoActivityFilters={volcanoActivityFilters}
+      showLandslideLikelihood={showLandslideLikelihood}
+      landslideLikelihoodFilters={landslideLikelihoodFilters}
+      landslideNowcastStatus={landslideNowcastStatus}
+      showMappedLandslideEvents={showMappedLandslideEvents}
+      showMajorIndustrialIncidents={showMajorIndustrialIncidents}
+      industrialIncidentFilters={industrialIncidentFilters}
       selectedAlertId={selectedAlertId}
       onAlertSelect={onAlertSelect}
       onSatelliteObservationSelect={onSatelliteObservationSelect}

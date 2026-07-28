@@ -372,3 +372,187 @@ export function demoVolcanoAlerts(): NormalizedAlert[] {
     }),
   ];
 }
+
+function demoAoi(
+  id: string,
+  name: string,
+  longitude: number,
+  latitude: number,
+  products: unknown[] = [],
+) {
+  return {
+    id,
+    name,
+    geometry: {
+      type: "Polygon",
+      coordinates: [[
+        [longitude - 0.18, latitude - 0.12],
+        [longitude + 0.18, latitude - 0.12],
+        [longitude + 0.18, latitude + 0.12],
+        [longitude - 0.18, latitude + 0.12],
+        [longitude - 0.18, latitude - 0.12],
+      ]],
+    },
+    products,
+  };
+}
+
+function demoProduct(
+  id: string,
+  aoiId: string,
+  kind: "reference" | "delineation" | "grading" | "monitoring",
+) {
+  return {
+    id,
+    aoiId,
+    kind,
+    feasible: true,
+    latestVersion: "1",
+    deliveredAt: "2026-07-28T08:00:00Z",
+    geometry: null,
+    layers: [
+      {
+        format: kind === "grading" ? "cog" : "geojson",
+        url: "https://rapidmapping.emergency.copernicus.eu/",
+        attribution: "European Union, Copernicus EMS",
+      },
+    ],
+    downloadUrl: "https://rapidmapping.emergency.copernicus.eu/",
+  };
+}
+
+export function demoCemsAlerts(): NormalizedAlert[] {
+  const landslideProduct = demoProduct(
+    "DEMO-LANDSLIDE-DEL",
+    "DEMO-LANDSLIDE-AOI",
+    "delineation",
+  );
+  const industrialProduct = demoProduct(
+    "DEMO-INDUSTRIAL-GRA",
+    "DEMO-INDUSTRIAL-AOI",
+    "grading",
+  );
+  const values = [
+    {
+      code: "EMSR990",
+      category: "landslide" as const,
+      hazard: "landslide_event" as const,
+      title: "Landslide in the French Alps",
+      countryCodes: ["FR"],
+      areas: ["Savoie", "France"],
+      longitude: 6.45,
+      latitude: 45.48,
+      closed: false,
+      activationKind: "landslide",
+      aois: [demoAoi("DEMO-LANDSLIDE-AOI", "Savoie landslide", 6.45, 45.48, [landslideProduct])],
+      products: [landslideProduct],
+      observedArea: 1.8,
+    },
+    {
+      code: "EMSR991",
+      category: "landslide" as const,
+      hazard: "landslide_event" as const,
+      title: "Recent closed landslide mapping",
+      countryCodes: ["IT"],
+      areas: ["Lombardy", "Italy"],
+      longitude: 9.75,
+      latitude: 46.05,
+      closed: true,
+      activationKind: "landslide",
+      aois: [demoAoi("DEMO-LANDSLIDE-CLOSED-AOI", "Lombardy", 9.75, 46.05)],
+      products: [],
+      observedArea: null,
+    },
+    {
+      code: "EMSR992",
+      category: "industrial_incident" as const,
+      hazard: "industrial_accident" as const,
+      title: "Major industrial accident — Rotterdam",
+      countryCodes: ["NL"],
+      areas: ["Rotterdam", "Netherlands"],
+      longitude: 4.32,
+      latitude: 51.9,
+      closed: false,
+      activationKind: "industrial_accident",
+      aois: [demoAoi("DEMO-INDUSTRIAL-AOI", "Rotterdam port", 4.32, 51.9, [industrialProduct])],
+      products: [industrialProduct],
+      observedArea: null,
+    },
+    {
+      code: "EMSR993",
+      category: "industrial_incident" as const,
+      hazard: "chemical_accident" as const,
+      title: "Confirmed chemical spill — Croatia",
+      countryCodes: ["HR"],
+      areas: ["Osijek-Baranja", "Croatia"],
+      longitude: 18.7,
+      latitude: 45.55,
+      closed: false,
+      activationKind: "chemical_accident",
+      aois: [demoAoi("DEMO-CHEMICAL-AOI", "Affected river sector", 18.7, 45.55)],
+      products: [],
+      observedArea: null,
+    },
+    {
+      code: "EMSR994",
+      category: "industrial_incident" as const,
+      hazard: "explosion" as const,
+      title: "Industrial explosion — Belgium",
+      countryCodes: ["BE"],
+      areas: ["Antwerp", "Belgium"],
+      longitude: 4.4,
+      latitude: 51.25,
+      closed: false,
+      activationKind: "explosion",
+      aois: [demoAoi("DEMO-EXPLOSION-AOI", "Antwerp", 4.4, 51.25)],
+      products: [],
+      observedArea: null,
+    },
+  ];
+  return values.map((item) =>
+    base({
+      id: `demo:cems:${item.code.toLowerCase()}`,
+      source: "copernicus-emergency-mapping",
+      sourceEventId: item.code,
+      category: item.category,
+      hazard: item.hazard,
+      title: item.title,
+      description:
+        "Deterministic Copernicus emergency-mapping activation for interface testing.",
+      status: item.closed ? "ended" : "active",
+      countryCodes: item.countryCodes,
+      affectedAreaNames: item.areas,
+      centroid: { longitude: item.longitude, latitude: item.latitude },
+      geometry: item.aois[0]?.geometry as GeoJSON.Geometry,
+      sourceUrl: "https://rapidmapping.emergency.copernicus.eu/",
+      officialSourceName:
+        "Copernicus Emergency Management Service — Rapid Mapping",
+      observed: true,
+      metadata: {
+        dataNature: "satellite-observation",
+        demo: true,
+        activationKind: item.activationKind,
+        cemsActivationCode: item.code,
+        category: item.category,
+        subCategory: item.activationKind,
+        eventTime: "2026-07-28T06:00:00Z",
+        activationTime: "2026-07-28T07:00:00Z",
+        closed: item.closed,
+        aoiCount: item.aois.length,
+        productCount: item.products.length,
+        aois: item.aois,
+        products: item.products,
+        reportUrl: "https://rapidmapping.emergency.copernicus.eu/",
+        viewerUrl: "https://rapidmapping.emergency.copernicus.eu/",
+        observedAreaSquareKilometers: item.observedArea,
+        affectedAreaSquareKilometers: item.observedArea,
+        affectedBuildings: item.activationKind === "industrial_accident" ? 4 : null,
+        affectedPopulation: null,
+        substances: item.activationKind === "chemical_accident" ? ["Officially confirmed substance"] : [],
+        officialInstructions: null,
+        emarsReportUrl: null,
+        mappingActivationNotIncidentConfirmation: true,
+      },
+    }),
+  );
+}

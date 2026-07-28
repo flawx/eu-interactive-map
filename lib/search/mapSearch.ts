@@ -41,6 +41,8 @@ export type MapSearchResultType =
   | "storm_alert"
   | "earthquake_alert"
   | "volcano_alert"
+  | "landslide_activation"
+  | "industrial_incident_activation"
   | "eu_institution"
   | "unesco_site"
   | "european_heritage_label"
@@ -1042,6 +1044,10 @@ export function buildLocalSearchIndex(
                 ? "earthquake_alert"
                 : alert.category === "volcano"
                   ? "volcano_alert"
+                  : alert.category === "landslide"
+                    ? "landslide_activation"
+                    : alert.category === "industrial_incident"
+                      ? "industrial_incident_activation"
                   : "storm_alert",
         category: "active_alerts",
         title: alert.title,
@@ -1059,6 +1065,10 @@ export function buildLocalSearchIndex(
                 ? "earthquake-alert"
                 : alert.category === "volcano"
                   ? "volcano-alert"
+                  : alert.category === "landslide"
+                    ? "landslide-activation"
+                    : alert.category === "industrial_incident"
+                      ? "industrial-incident-activation"
                   : "storm-alert",
         countryCode: alert.countryCodes[0],
         alertId: alert.id,
@@ -1082,6 +1092,16 @@ export function buildLocalSearchIndex(
             alert.metadata.emscEventId,
             alert.metadata.gdacsEventId,
             alert.metadata.volcanoName,
+            alert.metadata.cemsActivationCode,
+            alert.metadata.category,
+            alert.metadata.subCategory,
+            ...(Array.isArray(alert.metadata.aois)
+              ? alert.metadata.aois.map((item) =>
+                  item && typeof item === "object" && "name" in item
+                    ? String(item.name)
+                    : "",
+                )
+              : []),
             ...alert.countryCodes,
             ...alert.affectedAreaNames,
           ]

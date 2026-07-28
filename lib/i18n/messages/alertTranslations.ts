@@ -28,6 +28,16 @@ type AlertTranslation = {
   volcanoUnrest: string;
   volcanoEruption: string;
   volcanoAsh: string;
+  landslideLikelihood: string;
+  landslideModerate: string;
+  landslideHigh: string;
+  mappedLandslides: string;
+  industrialGroup: string;
+  majorIndustrialIncidents: string;
+  industrialAccidents: string;
+  chemicalAccidents: string;
+  industrialExplosions: string;
+  otherTechnicalAccidents: string;
 };
 const en: AlertTranslation = {
   group: "Floods and severe weather",
@@ -57,6 +67,16 @@ const en: AlertTranslation = {
   volcanoUnrest: "Unrest",
   volcanoEruption: "Eruption",
   volcanoAsh: "Ash emission",
+  landslideLikelihood: "Landslide likelihood",
+  landslideModerate: "Moderate likelihood",
+  landslideHigh: "High likelihood",
+  mappedLandslides: "Mapped landslide events",
+  industrialGroup: "Industrial and technological incidents",
+  majorIndustrialIncidents: "Major industrial and chemical accidents",
+  industrialAccidents: "Industrial accidents",
+  chemicalAccidents: "Chemical accidents",
+  industrialExplosions: "Explosions",
+  otherTechnicalAccidents: "Other technical accidents",
 };
 
 function tr(values: Partial<AlertTranslation>): AlertTranslation {
@@ -130,9 +150,50 @@ const geologicalLabels: Record<Locale, GeologicalLabels> = {
   sv: ["Geologiska risker", "Nyliga jordbävningar", "Svaga · M2,5–3,9", "Måttliga · M4,0–4,9", "Starka · M5,0–5,9", "Stora · M6,0+", "Betydande vulkanisk aktivitet", "Oro", "Utbrott", "Askutsläpp"],
 };
 
+type LandslideIndustrialLabels = readonly [
+  likelihood: string,
+  moderate: string,
+  high: string,
+  mapped: string,
+  industrialGroup: string,
+  industrialLayer: string,
+  industrial: string,
+  chemical: string,
+  explosions: string,
+  technical: string,
+];
+
+const landslideIndustrialLabels: Record<Locale, LandslideIndustrialLabels> = {
+  en: ["Landslide likelihood", "Moderate likelihood", "High likelihood", "Mapped landslide events", "Industrial and technological incidents", "Major industrial and chemical accidents", "Industrial accidents", "Chemical accidents", "Explosions", "Other technical accidents"],
+  fr: ["Probabilité de glissement de terrain", "Probabilité modérée", "Probabilité élevée", "Glissements de terrain cartographiés", "Incidents industriels et technologiques", "Accidents industriels et chimiques majeurs", "Accidents industriels", "Accidents chimiques", "Explosions", "Autres accidents techniques"],
+  de: ["Erdrutschwahrscheinlichkeit", "Mäßige Wahrscheinlichkeit", "Hohe Wahrscheinlichkeit", "Kartierte Erdrutschereignisse", "Industrie- und Technologievorfälle", "Schwere Industrie- und Chemieunfälle", "Industrieunfälle", "Chemieunfälle", "Explosionen", "Andere technische Unfälle"],
+  es: ["Probabilidad de deslizamiento", "Probabilidad moderada", "Probabilidad alta", "Deslizamientos cartografiados", "Incidentes industriales y tecnológicos", "Grandes accidentes industriales y químicos", "Accidentes industriales", "Accidentes químicos", "Explosiones", "Otros accidentes técnicos"],
+  it: ["Probabilità di frana", "Probabilità moderata", "Probabilità elevata", "Frane cartografate", "Incidenti industriali e tecnologici", "Gravi incidenti industriali e chimici", "Incidenti industriali", "Incidenti chimici", "Esplosioni", "Altri incidenti tecnici"],
+  pt: ["Probabilidade de deslizamento", "Probabilidade moderada", "Probabilidade elevada", "Deslizamentos cartografados", "Incidentes industriais e tecnológicos", "Grandes acidentes industriais e químicos", "Acidentes industriais", "Acidentes químicos", "Explosões", "Outros acidentes técnicos"],
+  nl: ["Kans op aardverschuiving", "Matige kans", "Hoge kans", "In kaart gebrachte aardverschuivingen", "Industriële en technologische incidenten", "Grote industriële en chemische ongevallen", "Industriële ongevallen", "Chemische ongevallen", "Explosies", "Andere technische ongevallen"],
+  bg: ["Вероятност за свлачище", "Умерена вероятност", "Висока вероятност", "Картирани свлачища", "Промишлени и технологични инциденти", "Големи промишлени и химически аварии", "Промишлени аварии", "Химически аварии", "Експлозии", "Други технически аварии"],
+  hr: ["Vjerojatnost klizišta", "Umjerena vjerojatnost", "Visoka vjerojatnost", "Kartirana klizišta", "Industrijski i tehnološki incidenti", "Velike industrijske i kemijske nesreće", "Industrijske nesreće", "Kemijske nesreće", "Eksplozije", "Druge tehničke nesreće"],
+  cs: ["Pravděpodobnost sesuvu", "Střední pravděpodobnost", "Vysoká pravděpodobnost", "Zmapované sesuvy", "Průmyslové a technologické události", "Závažné průmyslové a chemické havárie", "Průmyslové havárie", "Chemické havárie", "Výbuchy", "Jiné technické havárie"],
+  da: ["Sandsynlighed for jordskred", "Moderat sandsynlighed", "Høj sandsynlighed", "Kortlagte jordskred", "Industrielle og teknologiske hændelser", "Større industri- og kemikalieulykker", "Industriulykker", "Kemikalieulykker", "Eksplosioner", "Andre tekniske ulykker"],
+  et: ["Maalihke tõenäosus", "Mõõdukas tõenäosus", "Suur tõenäosus", "Kaardistatud maalihked", "Tööstus- ja tehnoloogiaintsidendid", "Suured tööstus- ja keemiaõnnetused", "Tööstusõnnetused", "Keemiaõnnetused", "Plahvatused", "Muud tehnilised õnnetused"],
+  fi: ["Maanvyörymän todennäköisyys", "Kohtalainen todennäköisyys", "Suuri todennäköisyys", "Kartoitetut maanvyörymiä", "Teollisuus- ja teknologiavahingot", "Vakavat teollisuus- ja kemikaalionnettomuuksia", "Teollisuusonnettomuudet", "Kemikaalionnettomuudet", "Räjähdykset", "Muut tekniset onnettomuudet"],
+  el: ["Πιθανότητα κατολίσθησης", "Μέτρια πιθανότητα", "Υψηλή πιθανότητα", "Χαρτογραφημένες κατολισθήσεις", "Βιομηχανικά και τεχνολογικά συμβάντα", "Μεγάλα βιομηχανικά και χημικά ατυχήματα", "Βιομηχανικά ατυχήματα", "Χημικά ατυχήματα", "Εκρήξεις", "Άλλα τεχνικά ατυχήματα"],
+  hu: ["Földcsuszamlás valószínűsége", "Mérsékelt valószínűség", "Nagy valószínűség", "Feltérképezett földcsuszamlások", "Ipari és technológiai események", "Súlyos ipari és vegyi balesetek", "Ipari balesetek", "Vegyi balesetek", "Robbanások", "Egyéb műszaki balesetek"],
+  ga: ["Dóchúlacht sciorrtha talún", "Dóchúlacht mheasartha", "Dóchúlacht ard", "Sciorrthaí talún mapáilte", "Teagmhais thionsclaíocha agus theicneolaíocha", "Mórthionóiscí tionsclaíocha agus ceimiceacha", "Tionóiscí tionsclaíocha", "Tionóiscí ceimiceacha", "Pléascanna", "Tionóiscí teicniúla eile"],
+  lv: ["Nogruvuma varbūtība", "Mērena varbūtība", "Augsta varbūtība", "Kartēti nogruvumi", "Rūpnieciskie un tehnoloģiskie incidenti", "Lielas rūpnieciskas un ķīmiskas avārijas", "Rūpnieciskās avārijas", "Ķīmiskās avārijas", "Sprādzieni", "Citas tehniskas avārijas"],
+  lt: ["Nuošliaužos tikimybė", "Vidutinė tikimybė", "Didelė tikimybė", "Kartografuotos nuošliaužos", "Pramoniniai ir technologiniai incidentai", "Didelės pramoninės ir cheminės avarijos", "Pramoninės avarijos", "Cheminės avarijos", "Sprogimai", "Kitos techninės avarijos"],
+  mt: ["Probabbiltà ta' valanga tal-ħamrija", "Probabbiltà moderata", "Probabbiltà għolja", "Valangi tal-ħamrija mmappjati", "Inċidenti industrijali u teknoloġiċi", "Inċidenti industrijali u kimiċi kbar", "Inċidenti industrijali", "Inċidenti kimiċi", "Splużjonijiet", "Inċidenti tekniċi oħra"],
+  pl: ["Prawdopodobieństwo osuwiska", "Umiarkowane prawdopodobieństwo", "Wysokie prawdopodobieństwo", "Zmapowane osuwiska", "Incydenty przemysłowe i technologiczne", "Poważne awarie przemysłowe i chemiczne", "Awarie przemysłowe", "Awarie chemiczne", "Eksplozje", "Inne awarie techniczne"],
+  ro: ["Probabilitate de alunecare", "Probabilitate moderată", "Probabilitate ridicată", "Alunecări cartografiate", "Incidente industriale și tehnologice", "Accidente industriale și chimice majore", "Accidente industriale", "Accidente chimice", "Explozii", "Alte accidente tehnice"],
+  sk: ["Pravdepodobnosť zosuvu", "Mierna pravdepodobnosť", "Vysoká pravdepodobnosť", "Zmapované zosuvy", "Priemyselné a technologické incidenty", "Závažné priemyselné a chemické havárie", "Priemyselné havárie", "Chemické havárie", "Výbuchy", "Iné technické havárie"],
+  sl: ["Verjetnost plazu", "Zmerna verjetnost", "Visoka verjetnost", "Kartirani plazovi", "Industrijski in tehnološki incidenti", "Večje industrijske in kemične nesreče", "Industrijske nesreče", "Kemične nesreče", "Eksplozije", "Druge tehnične nesreče"],
+  sv: ["Sannolikhet för jordskred", "Måttlig sannolikhet", "Hög sannolikhet", "Kartlagda jordskred", "Industriella och tekniska incidenter", "Stora industri- och kemikalieolyckor", "Industriolyckor", "Kemikalieolyckor", "Explosioner", "Andra tekniska olyckor"],
+};
+
 export const alertTranslations = Object.fromEntries(
   (Object.keys(baseAlertTranslations) as Locale[]).map((locale) => {
     const labels = geologicalLabels[locale];
+    const newLabels = landslideIndustrialLabels[locale];
     return [
       locale,
       {
@@ -147,6 +208,16 @@ export const alertTranslations = Object.fromEntries(
         volcanoUnrest: labels[7],
         volcanoEruption: labels[8],
         volcanoAsh: labels[9],
+        landslideLikelihood: newLabels[0],
+        landslideModerate: newLabels[1],
+        landslideHigh: newLabels[2],
+        mappedLandslides: newLabels[3],
+        industrialGroup: newLabels[4],
+        majorIndustrialIncidents: newLabels[5],
+        industrialAccidents: newLabels[6],
+        chemicalAccidents: newLabels[7],
+        industrialExplosions: newLabels[8],
+        otherTechnicalAccidents: newLabels[9],
       },
     ];
   }),

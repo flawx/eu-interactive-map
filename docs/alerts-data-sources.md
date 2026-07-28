@@ -134,3 +134,38 @@ when `NODE_ENV=production`.
 
 The application facilitates access to public information but does not replace
 local authorities, emergency services or national meteorological services.
+
+## Landslide likelihood and emergency-mapping activations
+
+NASA LHASA is displayed as a modelled landslide likelihood, never as an
+observed or confirmed incident. The current NASA Earthdata
+`LHASA_Hazard_Today` image service is refreshed by the connector every 30
+minutes. Moderate and high thresholds stay separate, and imagery is requested
+only for tiles intersecting the projectâ€™s European perimeter. The public
+service currently exposes no reliable acquisition timestamp in its metadata;
+the interface reports that limitation instead of inventing a validity time,
+affected place, impact area or casualty count.
+
+Copernicus EMS Rapid Mapping activations are a different product. An activation
+is an emergency-mapping request, not an exhaustive incident register or, by
+itself, official confirmation that an incident is ongoing. Categories are
+matched explicitly, European scope is applied centrally, and open activations
+remain distinct from recently closed ones. Products can arrive several hours
+after an event.
+
+An AOI is shown as an analysis area and is never presented as the observed
+event extent. Delineation, grading, monitoring and reference products remain
+separate; only their latest feasible public versions are retained. Official
+GeoJSON, vector-tile and COG links can be shown, but archives are not
+downloaded automatically. Areas and impacts appear only when the official
+product supplies a known meaning and unit, or an official event geometry
+supports the calculation.
+
+eMARS is documentary only and is not polled as a real-time feed. A report link
+may be attached only after a verified match of country, date, establishment and
+incident type; similarity of a city name is insufficient.
+
+Both connectors degrade safely: LHASA layers disappear while provider state
+remains visible, and reliable local Copernicus activation data is rendered
+immediately without an endless loading state. Attributions are NASA LHASA and
+European Union, Copernicus Emergency Management Service.

@@ -4,7 +4,9 @@ export type AlertCategory =
   | "weather"
   | "tropical_cyclone"
   | "earthquake"
-  | "volcano";
+  | "volcano"
+  | "landslide"
+  | "industrial_incident";
 
 export type AlertHazard =
   | "wildfire"
@@ -26,6 +28,13 @@ export type AlertHazard =
   | "volcanic_unrest"
   | "volcanic_eruption"
   | "ash_emission"
+  | "landslide_likelihood"
+  | "landslide_event"
+  | "industrial_accident"
+  | "chemical_accident"
+  | "explosion"
+  | "technical_accident"
+  | "unknown_industrial_incident"
   | "other_weather";
 
 export type AlertSeverity =
@@ -150,3 +159,40 @@ export type VolcanoAlertMetadata = {
 
 export type EarthquakeTimeMode = "1h" | "24h" | "7d";
 export type VolcanoTimeMode = "ongoing" | "72h" | "30d";
+export type CemsActivationTimeMode = "ongoing" | "72h" | "30d";
+
+export type LandslideAlertMetadata = {
+  dataType: "modelled_likelihood" | "mapped_event";
+  likelihood: "moderate" | "high" | "unknown";
+  modelName: string | null;
+  validAt: string | null;
+  publishedAt: string | null;
+  cemsActivationCode: string | null;
+  aoiCount: number | null;
+  productCount: number | null;
+  observedAreaSquareKilometers: number | null;
+  affectedPopulation: number | null;
+  observed: boolean;
+  forecast: boolean;
+};
+
+export type IndustrialIncidentMetadata = {
+  incidentType:
+    | "industrial_accident"
+    | "chemical_accident"
+    | "explosion"
+    | "technical_accident"
+    | "unknown";
+  cemsActivationCode: string;
+  eventTime: string | null;
+  activationTime: string;
+  closed: boolean;
+  aoiCount: number;
+  productCount: number;
+  affectedAreaSquareKilometers: number | null;
+  affectedBuildings: number | null;
+  affectedPopulation: number | null;
+  substances: string[];
+  officialInstructions: string | null;
+  emarsReportUrl: string | null;
+};

@@ -675,6 +675,77 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
               },
             ],
           },
+          {
+            id: "landslide-likelihood",
+            preferenceKey: "landslideLikelihood",
+            titleKey: { ns: "legend", key: "landslideLikelihood" },
+            icon: "landslide",
+            color: "#f97316",
+            filters: [
+              {
+                id: "landslide-likelihood-moderate",
+                preferenceKey: "landslideLikelihoodModerate",
+                titleKey: { ns: "legend", key: "landslideLikelihoodModerate" },
+                color: "#f97316",
+              },
+              {
+                id: "landslide-likelihood-high",
+                preferenceKey: "landslideLikelihoodHigh",
+                titleKey: { ns: "legend", key: "landslideLikelihoodHigh" },
+                color: "#dc2626",
+              },
+            ],
+          },
+          {
+            id: "mapped-landslide-events",
+            preferenceKey: "mappedLandslideEvents",
+            titleKey: { ns: "legend", key: "mappedLandslideEvents" },
+            icon: "landslide",
+            color: "#b45309",
+          },
+        ],
+      },
+      {
+        id: "alerts-industrial-technological-incidents",
+        titleKey: {
+          ns: "legend",
+          key: "groupIndustrialTechnologicalIncidents",
+        },
+        defaultExpanded: true,
+        layers: [
+          {
+            id: "major-industrial-incidents",
+            preferenceKey: "majorIndustrialIncidents",
+            titleKey: { ns: "legend", key: "majorIndustrialIncidents" },
+            icon: "industrial",
+            color: "#7c3aed",
+            filters: [
+              {
+                id: "industrial-accidents",
+                preferenceKey: "industrialAccidents",
+                titleKey: { ns: "legend", key: "industrialAccidents" },
+                color: "#7c3aed",
+              },
+              {
+                id: "chemical-accidents",
+                preferenceKey: "chemicalAccidents",
+                titleKey: { ns: "legend", key: "chemicalAccidents" },
+                color: "#0f766e",
+              },
+              {
+                id: "industrial-explosions",
+                preferenceKey: "industrialExplosions",
+                titleKey: { ns: "legend", key: "industrialExplosions" },
+                color: "#dc2626",
+              },
+              {
+                id: "other-technical-accidents",
+                preferenceKey: "otherTechnicalAccidents",
+                titleKey: { ns: "legend", key: "otherTechnicalAccidents" },
+                color: "#64748b",
+              },
+            ],
+          },
         ],
       },
     ],

@@ -7,6 +7,7 @@ import type {
   AlertConnectorStatus,
   EarthquakeTimeMode,
   VolcanoTimeMode,
+  CemsActivationTimeMode,
 } from "@/lib/alerts/types";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 
@@ -26,6 +27,11 @@ type Props = {
   volcanoEnabled?: boolean;
   volcanoMode?: VolcanoTimeMode;
   onVolcanoModeChange?: (mode: VolcanoTimeMode) => void;
+  showCems?: boolean;
+  cemsMode?: CemsActivationTimeMode;
+  onCemsModeChange?: (mode: CemsActivationTimeMode) => void;
+  showLhasa?: boolean;
+  lhasaValidAt?: string | null;
 };
 
 function statusLabel(
@@ -60,6 +66,11 @@ export default function AlertStatusPanel({
   volcanoEnabled = false,
   volcanoMode = "ongoing",
   onVolcanoModeChange,
+  showCems = false,
+  cemsMode = "ongoing",
+  onCemsModeChange,
+  showLhasa = false,
+  lhasaValidAt = null,
 }: Props) {
   const t = getMessages(locale).alertPanel;
   const acquisition = copernicus?.acquisitionTime
@@ -131,6 +142,27 @@ export default function AlertStatusPanel({
           </div>
         </div>
       )}
+      {showCems && (
+        <div className="mt-2">
+          <p className="mb-1 font-medium text-slate-200">Copernicus EMS Mapping</p>
+          <div className="flex gap-1 rounded-lg bg-white/5 p-1">
+            {([
+              ["ongoing", t.ongoingActivity],
+              ["72h", t.last72Hours],
+              ["30d", t.last30Days],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onCemsModeChange?.(value)}
+                className={`min-h-9 flex-1 rounded-md px-2 py-1 ${cemsMode === value ? "bg-amber-500/25 text-amber-100" : "text-slate-400 hover:bg-white/5"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {demoMode && (
         <p className="mt-2 rounded-md border border-amber-300/30 bg-amber-300/10 px-2 py-1 font-semibold text-amber-100">
           {t.demoData}
@@ -181,6 +213,35 @@ export default function AlertStatusPanel({
             </dd>
           </>
         )}
+        {showLhasa && (
+          <>
+            <dt className="font-medium text-slate-200">NASA LHASA</dt>
+            <dd className="text-right text-slate-400">
+              {statusLabel(statuses["nasa-lhasa"], 1, t)}
+              {lhasaValidAt
+                ? ` · ${new Intl.DateTimeFormat(locale, {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                    timeZone: "UTC",
+                  }).format(new Date(lhasaValidAt))} UTC`
+                : ""}
+            </dd>
+          </>
+        )}
+        {showCems && (
+          <>
+            <dt className="font-medium text-slate-200">Copernicus EMS Mapping</dt>
+            <dd className="text-right text-slate-400">
+              {statusLabel(
+                statuses["copernicus-emergency-mapping"],
+                1,
+                t,
+              )}
+            </dd>
+            <dt className="font-medium text-slate-200">eMARS</dt>
+            <dd className="text-right text-slate-400">Documentary source · not a live feed</dd>
+          </>
+        )}
         {demoMode && (
           <>
             <dt className="font-medium text-slate-200">
@@ -195,6 +256,11 @@ export default function AlertStatusPanel({
       {copernicus && (
         <p className="mt-2 border-t border-white/10 pt-2 text-[10px] text-cyan-100">
           {t.observationNotForecast}
+        </p>
+      )}
+      {showLhasa && (
+        <p className="mt-2 border-t border-white/10 pt-2 text-[10px] text-orange-100">
+          Modelled landslide likelihood. It does not confirm that a landslide occurred.
         </p>
       )}
     </section>

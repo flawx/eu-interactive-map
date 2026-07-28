@@ -27,6 +27,13 @@ export type VolcanoActivityFilters = {
   ashEmission: boolean;
 };
 
+export type IndustrialIncidentFilters = {
+  industrial: boolean;
+  chemical: boolean;
+  explosion: boolean;
+  technical: boolean;
+};
+
 export const ALERT_SOURCE_ID = "normalized-alerts";
 export const ALERT_FILL_LAYER_ID = "normalized-alert-zones-fill";
 export const ALERT_LINE_LAYER_ID = "normalized-alert-zones-line";
@@ -58,6 +65,19 @@ export const EARTHQUAKE_MARKER_LAYER_ID = "earthquake-marker";
 export const VOLCANO_MARKER_LAYER_ID = "volcano-marker";
 export const GEOLOGICAL_LABEL_LAYER_ID = "geological-alert-label";
 export const GEOLOGICAL_SELECTED_LAYER_ID = "geological-alert-selected";
+export const CEMS_LANDSLIDE_SOURCE_ID = "cems-landslide-activations";
+export const CEMS_INDUSTRIAL_SOURCE_ID = "cems-industrial-activations";
+export const CEMS_LANDSLIDE_CLUSTER_LAYER_ID = "cems-landslide-clusters";
+export const CEMS_INDUSTRIAL_CLUSTER_LAYER_ID = "cems-industrial-clusters";
+export const CEMS_LANDSLIDE_MARKER_LAYER_ID = "cems-landslide-markers";
+export const CEMS_INDUSTRIAL_MARKER_LAYER_ID = "cems-industrial-markers";
+export const CEMS_LANDSLIDE_LABEL_LAYER_ID = "cems-landslide-labels";
+export const CEMS_INDUSTRIAL_LABEL_LAYER_ID = "cems-industrial-labels";
+export const CEMS_AOI_SOURCE_ID = "cems-activation-aois";
+export const CEMS_AOI_FILL_LAYER_ID = "cems-activation-aois-fill";
+export const CEMS_AOI_LINE_LAYER_ID = "cems-activation-aois-line";
+export const CEMS_PRODUCT_SOURCE_ID = "cems-activation-products";
+export const CEMS_PRODUCT_LINE_LAYER_ID = "cems-activation-products-line";
 
 export function weatherHazardVisible(
   hazard: AlertHazard,
@@ -81,8 +101,11 @@ export function filterVisibleAlerts(
     storms: boolean;
     earthquakes: boolean;
     volcanoes: boolean;
+    mappedLandslides?: boolean;
+    industrialIncidents?: boolean;
     earthquakeFilters: EarthquakeMagnitudeFilters;
     volcanoFilters: VolcanoActivityFilters;
+    industrialFilters?: IndustrialIncidentFilters;
     weatherFilters: WeatherHazardFilters;
   },
 ): NormalizedAlert[] {
@@ -108,6 +131,25 @@ export function filterVisibleAlerts(
       if (activity === "ash_emission") return options.volcanoFilters.ashEmission;
       if (activity === "eruption") return options.volcanoFilters.eruption;
       return options.volcanoFilters.unrest;
+    }
+    if (alert.category === "landslide") return options.mappedLandslides ?? false;
+    if (alert.category === "industrial_incident") {
+      if (!options.industrialIncidents) return false;
+      const filters = options.industrialFilters ?? {
+        industrial: true,
+        chemical: true,
+        explosion: true,
+        technical: true,
+      };
+      if (alert.hazard === "chemical_accident") return filters.chemical;
+      if (alert.hazard === "explosion") return filters.explosion;
+      if (
+        alert.hazard === "technical_accident" ||
+        alert.hazard === "unknown_industrial_incident"
+      ) {
+        return filters.technical;
+      }
+      return filters.industrial;
     }
     return false;
   });
@@ -217,7 +259,10 @@ export function buildAlertFeatureCollection(
     features: alerts
       .filter(
         (alert) =>
-          alert.category !== "earthquake" && alert.category !== "volcano",
+          alert.category !== "earthquake" &&
+          alert.category !== "volcano" &&
+          alert.category !== "landslide" &&
+          alert.category !== "industrial_incident",
       )
       .filter((alert) => alert.geometry || alert.centroid)
       .map((alert) => ({
@@ -251,6 +296,88 @@ export function buildAlertFeatureCollection(
             coordinates: [alert.centroid!.longitude, alert.centroid!.latitude],
           } satisfies GeoJSON.Point),
       })),
+  };
+}
+
+function cemsMarkerColor(alert: NormalizedAlert): string {
+  if (alert.status === "ended") return "#64748b";
+  if (alert.category === "landslide") return "#b45309";
+  if (alert.hazard === "chemical_accident") return "#0f766e";
+  if (alert.hazard === "explosion") return "#dc2626";
+  if (alert.hazard === "technical_accident") return "#64748b";
+  return "#7c3aed";
+}
+
+export function buildCemsActivationMarkerCollection(
+  alerts: readonly NormalizedAlert[],
+  category: "landslide" | "industrial_incident",
+): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: alerts
+      .filter((alert) => alert.category === category && alert.centroid)
+      .map((alert) => ({
+        type: "Feature" as const,
+        id: alert.id,
+        properties: {
+          alertId: alert.id,
+          title: alert.title,
+          category: alert.category,
+          hazard: alert.hazard,
+          activationKind: alert.metadata.activationKind ?? alert.hazard,
+          code: alert.metadata.cemsActivationCode ?? alert.sourceEventId,
+          status: alert.status,
+          eventTime: alert.onsetAt,
+          updatedAt: alert.updatedAt,
+          aoiCount: alert.metadata.aoiCount ?? 0,
+          displayLocation:
+            alert.affectedAreaNames[0] ?? alert.countryCodes.join(", "),
+          sourceName: alert.officialSourceName,
+          markerColor: cemsMarkerColor(alert),
+          label: alert.title,
+        },
+        geometry: {
+          type: "Point" as const,
+          coordinates: [
+            alert.centroid!.longitude,
+            alert.centroid!.latitude,
+          ],
+        },
+      })),
+  };
+}
+
+export function buildCemsGeometryCollection(
+  alerts: readonly NormalizedAlert[],
+  selectedAlertId: string | null,
+  kind: "aoi" | "product",
+): GeoJSON.FeatureCollection {
+  const alert = alerts.find((candidate) => candidate.id === selectedAlertId);
+  if (!alert || (alert.category !== "landslide" && alert.category !== "industrial_incident")) {
+    return { type: "FeatureCollection", features: [] };
+  }
+  const values =
+    kind === "aoi"
+      ? (Array.isArray(alert.metadata.aois) ? alert.metadata.aois : [])
+      : (Array.isArray(alert.metadata.products) ? alert.metadata.products : []);
+  return {
+    type: "FeatureCollection",
+    features: values.flatMap((value, index) => {
+      if (!value || typeof value !== "object") return [];
+      const item = value as Record<string, unknown>;
+      const geometry = item.geometry as GeoJSON.Geometry | null;
+      if (!geometry) return [];
+      return [{
+        type: "Feature" as const,
+        properties: {
+          alertId: alert.id,
+          id: String(item.id ?? `${kind}-${index}`),
+          name: String(item.name ?? item.kind ?? kind),
+          kind: String(item.kind ?? kind),
+        },
+        geometry,
+      }];
+    }),
   };
 }
 

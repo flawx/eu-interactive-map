@@ -111,6 +111,16 @@ export type Messages = {
     volcanoUnrest: string;
     volcanoEruption: string;
     volcanoAshEmission: string;
+    landslideLikelihood: string;
+    landslideLikelihoodModerate: string;
+    landslideLikelihoodHigh: string;
+    mappedLandslideEvents: string;
+    groupIndustrialTechnologicalIncidents: string;
+    majorIndustrialIncidents: string;
+    industrialAccidents: string;
+    chemicalAccidents: string;
+    industrialExplosions: string;
+    otherTechnicalAccidents: string;
     categoryWeather: string;
     categorySportCulture: string;
     categoryEconomy: string;

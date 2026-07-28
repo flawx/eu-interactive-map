@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"likelihood":"moderate","model":"NASA LHASA","validAt":"2026-07-28T08:00:00Z","forecast":true,"observed":false},"geometry":{"type":"Polygon","coordinates":[[[7.0,44.0],[7.5,44.0],[7.5,44.4],[7.0,44.4],[7.0,44.0]]]}}]}

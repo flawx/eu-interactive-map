@@ -57,6 +57,15 @@ export type MapLayerPreferences = {
   volcanoUnrest: boolean;
   volcanoEruption: boolean;
   volcanoAshEmission: boolean;
+  landslideLikelihood: boolean;
+  landslideLikelihoodModerate: boolean;
+  landslideLikelihoodHigh: boolean;
+  mappedLandslideEvents: boolean;
+  majorIndustrialIncidents: boolean;
+  industrialAccidents: boolean;
+  chemicalAccidents: boolean;
+  industrialExplosions: boolean;
+  otherTechnicalAccidents: boolean;
   schengenExternalBorderCrossings: boolean;
   schengenTemporaryInternalControls: boolean;
   borderCrossingRoad: boolean;
@@ -124,6 +133,15 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   volcanoUnrest: true,
   volcanoEruption: true,
   volcanoAshEmission: true,
+  landslideLikelihood: false,
+  landslideLikelihoodModerate: true,
+  landslideLikelihoodHigh: true,
+  mappedLandslideEvents: false,
+  majorIndustrialIncidents: false,
+  industrialAccidents: true,
+  chemicalAccidents: true,
+  industrialExplosions: true,
+  otherTechnicalAccidents: true,
   schengenExternalBorderCrossings: false,
   schengenTemporaryInternalControls: false,
   borderCrossingRoad: true,
@@ -196,6 +214,15 @@ const LAYER_KEYS = [
   "volcanoUnrest",
   "volcanoEruption",
   "volcanoAshEmission",
+  "landslideLikelihood",
+  "landslideLikelihoodModerate",
+  "landslideLikelihoodHigh",
+  "mappedLandslideEvents",
+  "majorIndustrialIncidents",
+  "industrialAccidents",
+  "chemicalAccidents",
+  "industrialExplosions",
+  "otherTechnicalAccidents",
   "schengenExternalBorderCrossings",
   "schengenTemporaryInternalControls",
   "borderCrossingRoad",
@@ -314,6 +341,15 @@ export function saveMapLayerPreferences(
       volcanoUnrest: Boolean(preferences.volcanoUnrest),
       volcanoEruption: Boolean(preferences.volcanoEruption),
       volcanoAshEmission: Boolean(preferences.volcanoAshEmission),
+      landslideLikelihood: Boolean(preferences.landslideLikelihood),
+      landslideLikelihoodModerate: Boolean(preferences.landslideLikelihoodModerate),
+      landslideLikelihoodHigh: Boolean(preferences.landslideLikelihoodHigh),
+      mappedLandslideEvents: Boolean(preferences.mappedLandslideEvents),
+      majorIndustrialIncidents: Boolean(preferences.majorIndustrialIncidents),
+      industrialAccidents: Boolean(preferences.industrialAccidents),
+      chemicalAccidents: Boolean(preferences.chemicalAccidents),
+      industrialExplosions: Boolean(preferences.industrialExplosions),
+      otherTechnicalAccidents: Boolean(preferences.otherTechnicalAccidents),
       schengenExternalBorderCrossings: Boolean(
         preferences.schengenExternalBorderCrossings,
       ),
