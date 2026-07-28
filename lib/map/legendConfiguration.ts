@@ -316,6 +316,50 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
               },
             ],
           },
+          {
+            id: "major-civil-engineering-works",
+            preferenceKey: "majorCivilEngineeringWorks",
+            titleKey: { ns: "legend", key: "majorCivilEngineeringWorks" },
+            descriptionKey: {
+              ns: "legend",
+              key: "majorCivilEngineeringWorksDescription",
+            },
+            icon: "civil-engineering",
+            color: "#2563eb",
+            swatchClassName: "rounded-full",
+            filters: [
+              {
+                id: "civil-engineering-bridge",
+                preferenceKey: "civilEngineeringBridge",
+                titleKey: { ns: "legend", key: "civilEngineeringBridge" },
+                color: "#2563eb",
+              },
+              {
+                id: "civil-engineering-viaduct",
+                preferenceKey: "civilEngineeringViaduct",
+                titleKey: { ns: "legend", key: "civilEngineeringViaduct" },
+                color: "#7c3aed",
+              },
+              {
+                id: "civil-engineering-tunnel",
+                preferenceKey: "civilEngineeringTunnel",
+                titleKey: { ns: "legend", key: "civilEngineeringTunnel" },
+                color: "#475569",
+              },
+              {
+                id: "civil-engineering-dam",
+                preferenceKey: "civilEngineeringDam",
+                titleKey: { ns: "legend", key: "civilEngineeringDam" },
+                color: "#0891b2",
+              },
+              {
+                id: "civil-engineering-lock",
+                preferenceKey: "civilEngineeringCanalLock",
+                titleKey: { ns: "legend", key: "civilEngineeringCanalLock" },
+                color: "#0f766e",
+              },
+            ],
+          },
         ],
       },
       {

@@ -25,10 +25,12 @@ import { sl } from "./sl";
 import { sv } from "./sv";
 import type { Messages } from "./types";
 import { mountainTranslations } from "./mountainTranslations";
+import { civilEngineeringTranslations } from "./civilEngineeringTranslations";
 
 export function getMessages(locale: Locale): Messages {
   const localized = rawMessages[locale] as Partial<Messages> & typeof en;
   const mountain = mountainTranslations[locale];
+  const civil = civilEngineeringTranslations[locale];
   return {
     ...en,
     ...localized,
@@ -41,11 +43,19 @@ export function getMessages(locale: Locale): Messages {
       mountainDestination: mountain.destination,
       mountainIconicPeak: mountain.peak,
       mountainRange: mountain.range,
+      majorCivilEngineeringWorks: civil.layer,
+      majorCivilEngineeringWorksDescription: civil.description,
+      civilEngineeringBridge: civil.bridge,
+      civilEngineeringViaduct: civil.viaduct,
+      civilEngineeringTunnel: civil.tunnel,
+      civilEngineeringDam: civil.dam,
+      civilEngineeringCanalLock: civil.canalLock,
     },
     search: {
       ...en.search,
       ...localized.search,
       groupMountainPlaces: mountain.group,
+      groupCivilEngineeringWorks: civil.group,
     },
     mountainPanel: {
       ...en.mountainPanel,
@@ -68,6 +78,16 @@ export function getMessages(locale: Locale): Messages {
       snowReport: mountain.snowReport,
       officialWarning: mountain.warning,
       detailsUnavailable: mountain.unavailable,
+    },
+    civilEngineeringPanel: {
+      ...en.civilEngineeringPanel,
+      categories: {
+        bridge: civil.bridge,
+        viaduct: civil.viaduct,
+        tunnel: civil.tunnel,
+        dam: civil.dam,
+        canal_lock: civil.canalLock,
+      },
     },
     borderCrossingPanel:
       localized.borderCrossingPanel ?? en.borderCrossingPanel,

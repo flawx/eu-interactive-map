@@ -23,6 +23,12 @@ export type MapLayerPreferences = {
   mountainDestination: boolean;
   mountainIconicPeak: boolean;
   mountainRange: boolean;
+  majorCivilEngineeringWorks: boolean;
+  civilEngineeringBridge: boolean;
+  civilEngineeringViaduct: boolean;
+  civilEngineeringTunnel: boolean;
+  civilEngineeringDam: boolean;
+  civilEngineeringCanalLock: boolean;
   majorEuropeanAirports: boolean;
   eurostarStations: boolean;
   eurostarRoutes: boolean;
@@ -62,6 +68,12 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   mountainDestination: true,
   mountainIconicPeak: true,
   mountainRange: true,
+  majorCivilEngineeringWorks: false,
+  civilEngineeringBridge: true,
+  civilEngineeringViaduct: true,
+  civilEngineeringTunnel: true,
+  civilEngineeringDam: true,
+  civilEngineeringCanalLock: true,
   majorEuropeanAirports: false,
   eurostarStations: false,
   eurostarRoutes: false,
@@ -104,6 +116,12 @@ const LAYER_KEYS = [
   "mountainDestination",
   "mountainIconicPeak",
   "mountainRange",
+  "majorCivilEngineeringWorks",
+  "civilEngineeringBridge",
+  "civilEngineeringViaduct",
+  "civilEngineeringTunnel",
+  "civilEngineeringDam",
+  "civilEngineeringCanalLock",
   "majorEuropeanAirports",
   "eurostarStations",
   "eurostarRoutes",
@@ -186,6 +204,14 @@ export function saveMapLayerPreferences(
       mountainDestination: Boolean(preferences.mountainDestination),
       mountainIconicPeak: Boolean(preferences.mountainIconicPeak),
       mountainRange: Boolean(preferences.mountainRange),
+      majorCivilEngineeringWorks: Boolean(preferences.majorCivilEngineeringWorks),
+      civilEngineeringBridge: Boolean(preferences.civilEngineeringBridge),
+      civilEngineeringViaduct: Boolean(preferences.civilEngineeringViaduct),
+      civilEngineeringTunnel: Boolean(preferences.civilEngineeringTunnel),
+      civilEngineeringDam: Boolean(preferences.civilEngineeringDam),
+      civilEngineeringCanalLock: Boolean(
+        preferences.civilEngineeringCanalLock,
+      ),
       majorEuropeanAirports: Boolean(preferences.majorEuropeanAirports),
       eurostarStations: Boolean(preferences.eurostarStations),
       eurostarRoutes: Boolean(preferences.eurostarRoutes),

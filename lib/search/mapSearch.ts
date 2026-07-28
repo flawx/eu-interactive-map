@@ -21,6 +21,7 @@ import { MAJOR_TOURIST_PLACES } from "@/lib/tourism/majorTouristPlaces";
 import {
   getDisplayableMountainPlaces,
 } from "@/lib/tourism/europeanMountainDestinations";
+import { MAJOR_CIVIL_ENGINEERING_WORKS } from "@/lib/tourism/majorCivilEngineeringWorks";
 import { EUROPEAN_AIRPORTS } from "@/lib/transport/europeanAirports";
 import { EUROSTAR_STATIONS } from "@/lib/transport/eurostarNetwork";
 import {
@@ -39,6 +40,7 @@ export type MapSearchResultType =
   | "european_heritage_label"
   | "tourist_place"
   | "mountain_place"
+  | "civil_engineering_work"
   | "airport"
   | "eurostar_station"
   | "border_crossing"
@@ -54,6 +56,7 @@ export type MapSearchCategory =
   | "european_heritage_label_sites"
   | "tourist_places"
   | "mountain_places"
+  | "civil_engineering_works"
   | "airports"
   | "international_stations"
   | "borders_and_controls"
@@ -81,6 +84,7 @@ export type MapSearchResult = {
   ehlLocationId?: string;
   touristPlaceId?: string;
   mountainPlaceId?: string;
+  civilEngineeringWorkId?: string;
   airportId?: string;
   eurostarStationId?: string;
   borderCrossingId?: string;
@@ -551,6 +555,48 @@ function buildMountainPlaceSearchResults(locale: Locale): MapSearchResult[] {
   });
 }
 
+function buildCivilEngineeringSearchResults(locale: Locale): MapSearchResult[] {
+  const t = getMessages(locale);
+  return MAJOR_CIVIL_ENGINEERING_WORKS.map((item) => {
+    const countryNames = item.countryCodes.map((code) =>
+      countryDisplayName(code === "EL" ? "GR" : code, locale),
+    );
+    const categoryLabel =
+      t.civilEngineeringPanel.categories[item.category];
+    return {
+      id: `civil-engineering:${item.id}`,
+      type: "civil_engineering_work",
+      category: "civil_engineering_works",
+      title: item.name,
+      subtitle: [item.regionOrCity, countryNames.join(", "), categoryLabel]
+        .filter(Boolean)
+        .join(" · "),
+      longitude: item.longitude,
+      latitude: item.latitude,
+      icon: `civil-engineering-${item.category}`,
+      countryCode: item.countryCodes[0],
+      civilEngineeringWorkId: item.id,
+      source: "local",
+      metadata: {
+        category: item.category,
+        searchText: [
+          item.name,
+          ...item.aliases,
+          item.regionOrCity,
+          ...item.countryCodes,
+          ...countryNames,
+          categoryLabel,
+          item.carries,
+          "civil engineering",
+          "infrastructure",
+          "bridge viaduct tunnel dam canal lock",
+          item.summary,
+        ].join(" "),
+      },
+    } satisfies MapSearchResult;
+  });
+}
+
 function buildAirportSearchResults(locale: Locale): MapSearchResult[] {
   return EUROPEAN_AIRPORTS.map((airport) => {
     const countryName = countryDisplayName(
@@ -919,6 +965,7 @@ function buildStaticLocalIndex(
   results.push(...buildEuropeanHeritageLabelSearchResults(locale));
   results.push(...buildTouristPlaceSearchResults(locale));
   results.push(...buildMountainPlaceSearchResults(locale));
+  results.push(...buildCivilEngineeringSearchResults(locale));
   results.push(...buildAirportSearchResults(locale));
   results.push(...buildEurostarStationSearchResults(locale));
   results.push(...buildBorderCrossingSearchResults(locale));
@@ -1020,6 +1067,7 @@ export function searchLocalIndex(
     "european_heritage_label_sites",
     "tourist_places",
     "mountain_places",
+    "civil_engineering_works",
     "airports",
     "international_stations",
     "borders_and_controls",

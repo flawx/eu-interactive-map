@@ -15,6 +15,7 @@ import UnescoSitePanel from "@/components/tourism/UnescoSitePanel";
 import EuropeanHeritageLabelPanel from "@/components/tourism/EuropeanHeritageLabelPanel";
 import TouristPlacePanel from "@/components/tourism/TouristPlacePanel";
 import MountainPlacePanel from "@/components/tourism/MountainPlacePanel";
+import CivilEngineeringWorkPanel from "@/components/tourism/CivilEngineeringWorkPanel";
 import AirportPanel from "@/components/transport/AirportPanel";
 import EurostarStationPanel from "@/components/transport/EurostarStationPanel";
 import BorderCrossingPointPanel from "@/components/security/BorderCrossingPointPanel";
@@ -39,6 +40,10 @@ import {
   getEuropeanMountainPlaceById,
   type MountainPlaceCategory,
 } from "@/lib/tourism/europeanMountainDestinations";
+import {
+  getMajorCivilEngineeringWorkById,
+  type CivilEngineeringWorkCategory,
+} from "@/lib/tourism/majorCivilEngineeringWorks";
 import { getEuropeanAirportById } from "@/lib/transport/europeanAirports";
 import {
   getActiveTemporaryControls,
@@ -253,6 +258,23 @@ export default function MapInterface() {
   const [selectedMountainPlaceId, setSelectedMountainPlaceId] = useState<
     string | null
   >(null);
+  const [showMajorCivilEngineeringWorks, setShowMajorCivilEngineeringWorks] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.majorCivilEngineeringWorks);
+  const [showCivilEngineeringBridge, setShowCivilEngineeringBridge] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.civilEngineeringBridge,
+  );
+  const [showCivilEngineeringViaduct, setShowCivilEngineeringViaduct] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.civilEngineeringViaduct);
+  const [showCivilEngineeringTunnel, setShowCivilEngineeringTunnel] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.civilEngineeringTunnel,
+  );
+  const [showCivilEngineeringDam, setShowCivilEngineeringDam] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.civilEngineeringDam,
+  );
+  const [showCivilEngineeringCanalLock, setShowCivilEngineeringCanalLock] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.civilEngineeringCanalLock);
+  const [selectedCivilEngineeringWorkId, setSelectedCivilEngineeringWorkId] =
+    useState<string | null>(null);
   const [showMajorEuropeanAirports, setShowMajorEuropeanAirports] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.majorEuropeanAirports,
   );
@@ -435,6 +457,12 @@ export default function MapInterface() {
     setShowMountainDestinations(prefs.mountainDestination);
     setShowMountainIconicPeaks(prefs.mountainIconicPeak);
     setShowMountainRanges(prefs.mountainRange);
+    setShowMajorCivilEngineeringWorks(prefs.majorCivilEngineeringWorks);
+    setShowCivilEngineeringBridge(prefs.civilEngineeringBridge);
+    setShowCivilEngineeringViaduct(prefs.civilEngineeringViaduct);
+    setShowCivilEngineeringTunnel(prefs.civilEngineeringTunnel);
+    setShowCivilEngineeringDam(prefs.civilEngineeringDam);
+    setShowCivilEngineeringCanalLock(prefs.civilEngineeringCanalLock);
     setShowMajorEuropeanAirports(prefs.majorEuropeanAirports);
     setShowEurostarStations(prefs.eurostarStations);
     setShowEurostarRoutes(prefs.eurostarRoutes);
@@ -518,6 +546,12 @@ export default function MapInterface() {
       mountainDestination: showMountainDestinations,
       mountainIconicPeak: showMountainIconicPeaks,
       mountainRange: showMountainRanges,
+      majorCivilEngineeringWorks: showMajorCivilEngineeringWorks,
+      civilEngineeringBridge: showCivilEngineeringBridge,
+      civilEngineeringViaduct: showCivilEngineeringViaduct,
+      civilEngineeringTunnel: showCivilEngineeringTunnel,
+      civilEngineeringDam: showCivilEngineeringDam,
+      civilEngineeringCanalLock: showCivilEngineeringCanalLock,
       majorEuropeanAirports: showMajorEuropeanAirports,
       eurostarStations: showEurostarStations,
       eurostarRoutes: showEurostarRoutes,
@@ -557,6 +591,12 @@ export default function MapInterface() {
     showMountainDestinations,
     showMountainIconicPeaks,
     showMountainRanges,
+    showMajorCivilEngineeringWorks,
+    showCivilEngineeringBridge,
+    showCivilEngineeringViaduct,
+    showCivilEngineeringTunnel,
+    showCivilEngineeringDam,
+    showCivilEngineeringCanalLock,
     showMajorEuropeanAirports,
     showEurostarStations,
     showEurostarRoutes,
@@ -597,6 +637,12 @@ export default function MapInterface() {
       mountainDestination: showMountainDestinations,
       mountainIconicPeak: showMountainIconicPeaks,
       mountainRange: showMountainRanges,
+      majorCivilEngineeringWorks: showMajorCivilEngineeringWorks,
+      civilEngineeringBridge: showCivilEngineeringBridge,
+      civilEngineeringViaduct: showCivilEngineeringViaduct,
+      civilEngineeringTunnel: showCivilEngineeringTunnel,
+      civilEngineeringDam: showCivilEngineeringDam,
+      civilEngineeringCanalLock: showCivilEngineeringCanalLock,
       majorEuropeanAirports: showMajorEuropeanAirports,
       eurostarStations: showEurostarStations,
       eurostarRoutes: showEurostarRoutes,
@@ -635,6 +681,12 @@ export default function MapInterface() {
       showMountainDestinations,
       showMountainIconicPeaks,
       showMountainRanges,
+      showMajorCivilEngineeringWorks,
+      showCivilEngineeringBridge,
+      showCivilEngineeringViaduct,
+      showCivilEngineeringTunnel,
+      showCivilEngineeringDam,
+      showCivilEngineeringCanalLock,
       showMajorEuropeanAirports,
       showEurostarStations,
       showEurostarRoutes,
@@ -682,6 +734,12 @@ export default function MapInterface() {
       mountainDestination: setShowMountainDestinations,
       mountainIconicPeak: setShowMountainIconicPeaks,
       mountainRange: setShowMountainRanges,
+      majorCivilEngineeringWorks: setShowMajorCivilEngineeringWorks,
+      civilEngineeringBridge: setShowCivilEngineeringBridge,
+      civilEngineeringViaduct: setShowCivilEngineeringViaduct,
+      civilEngineeringTunnel: setShowCivilEngineeringTunnel,
+      civilEngineeringDam: setShowCivilEngineeringDam,
+      civilEngineeringCanalLock: setShowCivilEngineeringCanalLock,
       majorEuropeanAirports: setShowMajorEuropeanAirports,
       eurostarStations: setShowEurostarStations,
       eurostarRoutes: setShowEurostarRoutes,
@@ -720,6 +778,17 @@ export default function MapInterface() {
     setShowTouristNaturalLandscape(defaults.touristNaturalLandscape);
     setShowTouristCoastalDestination(defaults.touristCoastalDestination);
     setShowTouristMountainDestination(defaults.touristMountainDestination);
+    setShowEuropeanMountainPlaces(defaults.europeanMountainPlaces);
+    setShowMountainSkiResorts(defaults.mountainSkiResort);
+    setShowMountainDestinations(defaults.mountainDestination);
+    setShowMountainIconicPeaks(defaults.mountainIconicPeak);
+    setShowMountainRanges(defaults.mountainRange);
+    setShowMajorCivilEngineeringWorks(defaults.majorCivilEngineeringWorks);
+    setShowCivilEngineeringBridge(defaults.civilEngineeringBridge);
+    setShowCivilEngineeringViaduct(defaults.civilEngineeringViaduct);
+    setShowCivilEngineeringTunnel(defaults.civilEngineeringTunnel);
+    setShowCivilEngineeringDam(defaults.civilEngineeringDam);
+    setShowCivilEngineeringCanalLock(defaults.civilEngineeringCanalLock);
     setShowMajorEuropeanAirports(defaults.majorEuropeanAirports);
     setShowEurostarStations(defaults.eurostarStations);
     setShowEurostarRoutes(defaults.eurostarRoutes);
@@ -1574,9 +1643,14 @@ export default function MapInterface() {
     setSelectedMountainPlaceId(null);
   };
 
+  const clearCivilEngineeringWorkSelection = () => {
+    setSelectedCivilEngineeringWorkId(null);
+  };
+
   const clearTouristPlaceSelection = () => {
     setSelectedTouristPlaceId(null);
     clearMountainPlaceSelection();
+    clearCivilEngineeringWorkSelection();
   };
 
   const clearAirportSelection = () => {
@@ -2029,6 +2103,48 @@ export default function MapInterface() {
     });
   };
 
+  const enableCivilEngineeringCategory = (
+    category: CivilEngineeringWorkCategory,
+  ) => {
+    if (category === "bridge") setShowCivilEngineeringBridge(true);
+    if (category === "viaduct") setShowCivilEngineeringViaduct(true);
+    if (category === "tunnel") setShowCivilEngineeringTunnel(true);
+    if (category === "dam") setShowCivilEngineeringDam(true);
+    if (category === "canal_lock") setShowCivilEngineeringCanalLock(true);
+  };
+
+  const handleCivilEngineeringWorkSelect = (workId: string | null) => {
+    if (!workId) {
+      clearCivilEngineeringWorkSelection();
+      return;
+    }
+    const item = getMajorCivilEngineeringWorkById(workId);
+    if (!item) return;
+
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCapitalId(null);
+    setSelectedCountryCode(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearTemporaryPlace();
+
+    setShowMajorCivilEngineeringWorks(true);
+    enableCivilEngineeringCategory(item.category);
+    setSelectedCivilEngineeringWorkId(workId);
+    requestFocus({
+      kind: "point",
+      longitude: item.longitude,
+      latitude: item.latitude,
+      zoom: 10,
+    });
+  };
+
   const handleAirportSelect = (airportId: string | null) => {
     if (!airportId) {
       clearAirportSelection();
@@ -2265,6 +2381,14 @@ export default function MapInterface() {
       return;
     }
 
+    if (
+      result.type === "civil_engineering_work" &&
+      result.civilEngineeringWorkId
+    ) {
+      handleCivilEngineeringWorkSelect(result.civilEngineeringWorkId);
+      return;
+    }
+
     if (result.type === "airport" && result.airportId) {
       handleAirportSelect(result.airportId);
       return;
@@ -2374,6 +2498,16 @@ export default function MapInterface() {
           }}
           selectedMountainPlaceId={selectedMountainPlaceId}
           onMountainPlaceSelect={handleMountainPlaceSelect}
+          showMajorCivilEngineeringWorks={showMajorCivilEngineeringWorks}
+          civilEngineeringCategoryFilters={{
+            bridge: showCivilEngineeringBridge,
+            viaduct: showCivilEngineeringViaduct,
+            tunnel: showCivilEngineeringTunnel,
+            dam: showCivilEngineeringDam,
+            canal_lock: showCivilEngineeringCanalLock,
+          }}
+          selectedCivilEngineeringWorkId={selectedCivilEngineeringWorkId}
+          onCivilEngineeringWorkSelect={handleCivilEngineeringWorkSelect}
           showMajorEuropeanAirports={showMajorEuropeanAirports}
           selectedAirportId={selectedAirportId}
           onAirportSelect={handleAirportSelect}
@@ -2671,6 +2805,31 @@ export default function MapInterface() {
               onOpenTouristPlace={handleTouristPlaceSelect}
               onOpenUnescoSite={handleUnescoSiteSelect}
               onOpenCountry={handleCountrySelect}
+            />
+          )}
+
+        {selectedCivilEngineeringWorkId &&
+          !selectedTouristPlaceId &&
+          !selectedMountainPlaceId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <CivilEngineeringWorkPanel
+              workId={selectedCivilEngineeringWorkId}
+              locale={locale}
+              onClose={clearCivilEngineeringWorkSelection}
+              onOpenCountry={(countryCode) => {
+                clearCivilEngineeringWorkSelection();
+                handleCountrySelect(countryCode);
+              }}
             />
           )}
 

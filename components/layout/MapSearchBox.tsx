@@ -14,6 +14,7 @@ import {
   Building2,
   Camera,
   Car,
+  Construction,
   Flame,
   Landmark,
   Leaf,
@@ -74,6 +75,8 @@ function categoryLabel(category: MapSearchCategory, t: Messages): string {
       return t.search.groupTouristPlaces;
     case "mountain_places":
       return t.search.groupMountainPlaces;
+    case "civil_engineering_works":
+      return t.search.groupCivilEngineeringWorks;
     case "airports":
       return t.search.groupAirports;
     case "international_stations":
@@ -189,6 +192,26 @@ function ResultIcon({
         aria-hidden="true"
       >
         <Mountain className="h-3 w-3" strokeWidth={2.25} />
+      </span>
+    );
+  }
+
+  if (type === "civil_engineering_work") {
+    const category = String(metadata?.category ?? "bridge");
+    const colors: Record<string, string> = {
+      bridge: "#2563eb",
+      viaduct: "#7c3aed",
+      tunnel: "#475569",
+      dam: "#0891b2",
+      canal_lock: "#0f766e",
+    };
+    return (
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white text-white shadow-sm"
+        style={{ backgroundColor: colors[category] ?? "#2563eb" }}
+        aria-hidden="true"
+      >
+        <Construction className="h-3 w-3" strokeWidth={2.25} />
       </span>
     );
   }

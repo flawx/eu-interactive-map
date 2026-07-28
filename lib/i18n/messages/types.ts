@@ -53,6 +53,13 @@ export type Messages = {
     mountainDestination: string;
     mountainIconicPeak: string;
     mountainRange: string;
+    majorCivilEngineeringWorks: string;
+    majorCivilEngineeringWorksDescription: string;
+    civilEngineeringBridge: string;
+    civilEngineeringViaduct: string;
+    civilEngineeringTunnel: string;
+    civilEngineeringDam: string;
+    civilEngineeringCanalLock: string;
     internationalTransport: string;
     majorEuropeanAirports: string;
     majorEuropeanAirportsDescription: string;
@@ -273,6 +280,7 @@ export type Messages = {
     groupEuropeanHeritageLabel: string;
     groupTouristPlaces: string;
     groupMountainPlaces: string;
+    groupCivilEngineeringWorks: string;
     groupAirports: string;
     groupInternationalStations: string;
     groupBordersAndControls: string;
@@ -548,6 +556,45 @@ export type Messages = {
       iconic_peak: string;
       mountain_range: string;
     };
+  };
+  civilEngineeringPanel: {
+    badge: string;
+    overview: string;
+    engineeringFacts: string;
+    type: string;
+    status: string;
+    openingYear: string;
+    carries: string;
+    length: string;
+    height: string;
+    mainSpan: string;
+    depth: string;
+    location: string;
+    links: string;
+    officialWebsite: string;
+    wikipedia: string;
+    sourcesCredits: string;
+    detailsUnavailable: string;
+    loadingDetails: string;
+    photoCredit: string;
+    previousPhoto: string;
+    nextPhoto: string;
+    openCountry: string;
+    sourceOfficial: string;
+    sourceWikipedia: string;
+    sourceCommons: string;
+    categories: Record<
+      "bridge" | "viaduct" | "tunnel" | "dam" | "canal_lock",
+      string
+    >;
+    statuses: Record<
+      "planned" | "under_construction" | "open" | "closed",
+      string
+    >;
+    carriesValues: Record<
+      "road" | "rail" | "road_rail" | "pedestrian" | "water",
+      string
+    >;
   };
   airportPanel: {
     badge: string;

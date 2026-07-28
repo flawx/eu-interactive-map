@@ -65,6 +65,20 @@ import {
   type MountainCategoryFilters,
 } from "@/components/map/mountainMapLayers";
 import {
+  buildCivilEngineeringCollection,
+  CIVIL_ENGINEERING_CATEGORIES,
+  CIVIL_ENGINEERING_CLUSTER_COUNT_LAYER_ID,
+  CIVIL_ENGINEERING_CLUSTER_LAYER_ID,
+  CIVIL_ENGINEERING_LABEL_LAYER_ID,
+  CIVIL_ENGINEERING_SELECTED_LAYER_ID,
+  CIVIL_ENGINEERING_SOURCE_ID,
+  CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+  civilEngineeringIconImageId,
+  civilEngineeringSelectionCaseExpression,
+  createCivilEngineeringIcon,
+  type CivilEngineeringCategoryFilters,
+} from "@/components/map/civilEngineeringMapLayers";
+import {
   airportSelectionCaseExpression,
   buildAirportCollection,
   buildEurostarNetworkCollection,
@@ -868,6 +882,16 @@ export default function MapContainer({
   },
   selectedMountainPlaceId = null,
   onMountainPlaceSelect,
+  showMajorCivilEngineeringWorks = false,
+  civilEngineeringCategoryFilters = {
+    bridge: true,
+    viaduct: true,
+    tunnel: true,
+    dam: true,
+    canal_lock: true,
+  },
+  selectedCivilEngineeringWorkId = null,
+  onCivilEngineeringWorkSelect,
   showMajorEuropeanAirports = false,
   selectedAirportId = null,
   onAirportSelect,
@@ -948,6 +972,10 @@ export default function MapContainer({
   mountainCategoryFilters?: MountainCategoryFilters;
   selectedMountainPlaceId?: string | null;
   onMountainPlaceSelect?: (placeId: string | null) => void;
+  showMajorCivilEngineeringWorks?: boolean;
+  civilEngineeringCategoryFilters?: CivilEngineeringCategoryFilters;
+  selectedCivilEngineeringWorkId?: string | null;
+  onCivilEngineeringWorkSelect?: (workId: string | null) => void;
   showMajorEuropeanAirports?: boolean;
   selectedAirportId?: string | null;
   onAirportSelect?: (airportId: string | null) => void;
@@ -1075,11 +1103,29 @@ export default function MapContainer({
   selectedMountainPlaceIdRef.current = selectedMountainPlaceId;
   const onMountainPlaceSelectRef = useRef(onMountainPlaceSelect);
   onMountainPlaceSelectRef.current = onMountainPlaceSelect;
+  const showMajorCivilEngineeringWorksRef = useRef(
+    showMajorCivilEngineeringWorks,
+  );
+  showMajorCivilEngineeringWorksRef.current = showMajorCivilEngineeringWorks;
+  const civilEngineeringCategoryFiltersRef = useRef(
+    civilEngineeringCategoryFilters,
+  );
+  civilEngineeringCategoryFiltersRef.current =
+    civilEngineeringCategoryFilters;
+  const selectedCivilEngineeringWorkIdRef = useRef(
+    selectedCivilEngineeringWorkId,
+  );
+  selectedCivilEngineeringWorkIdRef.current = selectedCivilEngineeringWorkId;
+  const onCivilEngineeringWorkSelectRef = useRef(
+    onCivilEngineeringWorkSelect,
+  );
+  onCivilEngineeringWorkSelectRef.current = onCivilEngineeringWorkSelect;
   const onUnescoSiteSelectRef = useRef(onUnescoSiteSelect);
   onUnescoSiteSelectRef.current = onUnescoSiteSelect;
   const unescoPopupRef = useRef<Popup | null>(null);
   const touristPopupRef = useRef<Popup | null>(null);
   const mountainPopupRef = useRef<Popup | null>(null);
+  const civilEngineeringPopupRef = useRef<Popup | null>(null);
   const showMajorEuropeanAirportsRef = useRef(showMajorEuropeanAirports);
   showMajorEuropeanAirportsRef.current = showMajorEuropeanAirports;
   const selectedAirportIdRef = useRef(selectedAirportId);
@@ -1598,6 +1644,39 @@ export default function MapContainer({
       }
     };
 
+    const handleCivilEngineeringClusterClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const clusterId = feature?.properties?.cluster_id;
+      if (typeof clusterId !== "number") return;
+      const source = map.getSource(CIVIL_ENGINEERING_SOURCE_ID) as
+        | GeoJSONSource
+        | undefined;
+      if (!source) return;
+      source
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          if (!feature?.geometry || feature.geometry.type !== "Point") return;
+          const [lng, lat] = feature.geometry.coordinates;
+          map.easeTo({
+            center: [lng, lat],
+            zoom,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
+            duration: 500,
+          });
+        })
+        .catch(() => {
+          // Ignore expansion-zoom lookup failures.
+        });
+    };
+
+    const handleCivilEngineeringWorkClick = (e: MapLayerMouseEvent) => {
+      const workId = e.features?.[0]?.properties?.workId;
+      if (typeof workId === "string") {
+        onCivilEngineeringWorkSelectRef.current?.(workId);
+      }
+    };
+
     const handleAirportClusterClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
       const clusterId = feature?.properties?.cluster_id;
@@ -2044,6 +2123,40 @@ export default function MapContainer({
     const hideMountainPopup = () => {
       resetCursor();
       mountainPopupRef.current?.remove();
+    };
+
+    const showCivilEngineeringPopup = (e: MapLayerMouseEvent) => {
+      setPointerCursor();
+      const feature = e.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+      const { displayName, categoryLabel, regionOrCity, openingYear } =
+        feature.properties ?? {};
+      if (typeof displayName !== "string") return;
+      if (!civilEngineeringPopupRef.current) {
+        civilEngineeringPopupRef.current = new Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 14,
+          className: "civil-engineering-hover-popup",
+        });
+      }
+      const details = [categoryLabel, regionOrCity, openingYear]
+        .filter(Boolean)
+        .map((value) => escapeHtml(String(value)))
+        .join(" · ");
+      civilEngineeringPopupRef.current
+        .setLngLat(feature.geometry.coordinates.slice() as [number, number])
+        .setHTML(
+          `<div style="font:600 12px system-ui,sans-serif;color:#0f172a;max-width:200px;">${escapeHtml(
+            displayName,
+          )}</div><div style="font:11px system-ui,sans-serif;color:#475569;margin-top:2px;">${details}</div>`,
+        )
+        .addTo(map);
+    };
+
+    const hideCivilEngineeringPopup = () => {
+      resetCursor();
+      civilEngineeringPopupRef.current?.remove();
     };
 
     const handleEffisSnapshotClick = (event: MapLayerMouseEvent) => {
@@ -3598,6 +3711,126 @@ export default function MapContainer({
         });
       }
 
+      if (!map.getSource(CIVIL_ENGINEERING_SOURCE_ID)) {
+        map.addSource(CIVIL_ENGINEERING_SOURCE_ID, {
+          type: "geojson",
+          data: buildCivilEngineeringCollection(
+            localeRef.current,
+            civilEngineeringCategoryFiltersRef.current,
+          ),
+          promoteId: "workId",
+          cluster: true,
+          clusterMaxZoom: 7,
+          clusterRadius: 44,
+        });
+      }
+      for (const category of CIVIL_ENGINEERING_CATEGORIES) {
+        const imageId = civilEngineeringIconImageId(category);
+        if (!map.hasImage(imageId)) {
+          map.addImage(imageId, createCivilEngineeringIcon(category), {
+            pixelRatio: 2,
+          });
+        }
+      }
+      const civilVisibility = showMajorCivilEngineeringWorksRef.current
+        ? "visible"
+        : "none";
+      if (!map.getLayer(CIVIL_ENGINEERING_CLUSTER_LAYER_ID)) {
+        map.addLayer({
+          id: CIVIL_ENGINEERING_CLUSTER_LAYER_ID,
+          type: "circle",
+          source: CIVIL_ENGINEERING_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: { visibility: civilVisibility },
+          paint: {
+            "circle-color": "#2563eb",
+            "circle-opacity": 0.86,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-radius": ["step", ["get", "point_count"], 14, 10, 18, 30, 22],
+          },
+        });
+      }
+      if (!map.getLayer(CIVIL_ENGINEERING_CLUSTER_COUNT_LAYER_ID)) {
+        map.addLayer({
+          id: CIVIL_ENGINEERING_CLUSTER_COUNT_LAYER_ID,
+          type: "symbol",
+          source: CIVIL_ENGINEERING_SOURCE_ID,
+          filter: ["has", "point_count"],
+          layout: {
+            visibility: civilVisibility,
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-size": 12,
+            "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+          },
+          paint: { "text-color": "#ffffff" },
+        });
+      }
+      if (!map.getLayer(CIVIL_ENGINEERING_SELECTED_LAYER_ID)) {
+        map.addLayer({
+          id: CIVIL_ENGINEERING_SELECTED_LAYER_ID,
+          type: "circle",
+          source: CIVIL_ENGINEERING_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          layout: { visibility: civilVisibility },
+          paint: {
+            "circle-radius": civilEngineeringSelectionCaseExpression(
+              selectedCivilEngineeringWorkIdRef.current,
+              22,
+              0,
+            ),
+            "circle-color": "#7dd3fc",
+            "circle-opacity": 0.4,
+          },
+        });
+      }
+      if (!map.getLayer(CIVIL_ENGINEERING_SYMBOL_LAYER_ID)) {
+        map.addLayer({
+          id: CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+          type: "symbol",
+          source: CIVIL_ENGINEERING_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            visibility: civilVisibility,
+            "icon-image": ["get", "iconImageId"],
+            "icon-size": civilEngineeringSelectionCaseExpression(
+              selectedCivilEngineeringWorkIdRef.current,
+              1.15,
+              1,
+            ),
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-pitch-alignment": "viewport",
+            "icon-rotation-alignment": "viewport",
+          },
+        });
+      }
+      if (!map.getLayer(CIVIL_ENGINEERING_LABEL_LAYER_ID)) {
+        map.addLayer({
+          id: CIVIL_ENGINEERING_LABEL_LAYER_ID,
+          type: "symbol",
+          source: CIVIL_ENGINEERING_SOURCE_ID,
+          filter: ["!", ["has", "point_count"]],
+          minzoom: 7,
+          layout: {
+            visibility: civilVisibility,
+            "text-field": ["get", "displayName"],
+            "text-size": 11,
+            "text-offset": [0, 1.4],
+            "text-anchor": "top",
+            "text-optional": true,
+            "text-pitch-alignment": "viewport",
+            "text-rotation-alignment": "viewport",
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": "#1d4ed8",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          },
+        });
+      }
+
       if (!map.getSource("eurostar-network")) {
         map.addSource("eurostar-network", {
           type: "geojson",
@@ -4195,6 +4428,11 @@ export default function MapContainer({
         MOUNTAIN_LABEL_LAYER_ID,
         MOUNTAIN_CLUSTER_LAYER_ID,
         MOUNTAIN_CLUSTER_COUNT_LAYER_ID,
+        CIVIL_ENGINEERING_SELECTED_LAYER_ID,
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        CIVIL_ENGINEERING_LABEL_LAYER_ID,
+        CIVIL_ENGINEERING_CLUSTER_LAYER_ID,
+        CIVIL_ENGINEERING_CLUSTER_COUNT_LAYER_ID,
         "airport-clusters",
         "airport-cluster-count",
         "major-airport-selected",
@@ -4269,6 +4507,28 @@ export default function MapContainer({
       map.on("click", MOUNTAIN_SYMBOL_LAYER_ID, handleMountainPlaceClick);
       map.on("mouseenter", MOUNTAIN_SYMBOL_LAYER_ID, showMountainPopup);
       map.on("mouseleave", MOUNTAIN_SYMBOL_LAYER_ID, hideMountainPopup);
+      map.on(
+        "click",
+        CIVIL_ENGINEERING_CLUSTER_LAYER_ID,
+        handleCivilEngineeringClusterClick,
+      );
+      map.on("mouseenter", CIVIL_ENGINEERING_CLUSTER_LAYER_ID, setPointerCursor);
+      map.on("mouseleave", CIVIL_ENGINEERING_CLUSTER_LAYER_ID, resetCursor);
+      map.on(
+        "click",
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        handleCivilEngineeringWorkClick,
+      );
+      map.on(
+        "mouseenter",
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        showCivilEngineeringPopup,
+      );
+      map.on(
+        "mouseleave",
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        hideCivilEngineeringPopup,
+      );
       map.on("click", "airport-clusters", handleAirportClusterClick);
       map.on("mouseenter", "airport-clusters", setPointerCursor);
       map.on("mouseleave", "airport-clusters", resetCursor);
@@ -4376,6 +4636,29 @@ export default function MapContainer({
       map.off("mouseenter", MOUNTAIN_SYMBOL_LAYER_ID, showMountainPopup);
       map.off("mouseleave", MOUNTAIN_SYMBOL_LAYER_ID, hideMountainPopup);
       mountainPopupRef.current?.remove();
+      map.off(
+        "click",
+        CIVIL_ENGINEERING_CLUSTER_LAYER_ID,
+        handleCivilEngineeringClusterClick,
+      );
+      map.off("mouseenter", CIVIL_ENGINEERING_CLUSTER_LAYER_ID, setPointerCursor);
+      map.off("mouseleave", CIVIL_ENGINEERING_CLUSTER_LAYER_ID, resetCursor);
+      map.off(
+        "click",
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        handleCivilEngineeringWorkClick,
+      );
+      map.off(
+        "mouseenter",
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        showCivilEngineeringPopup,
+      );
+      map.off(
+        "mouseleave",
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        hideCivilEngineeringPopup,
+      );
+      civilEngineeringPopupRef.current?.remove();
       map.off("click", "airport-clusters", handleAirportClusterClick);
       map.off("mouseenter", "airport-clusters", setPointerCursor);
       map.off("mouseleave", "airport-clusters", resetCursor);
@@ -4989,6 +5272,64 @@ export default function MapContainer({
       );
     }
   }, [selectedMountainPlaceId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const visibility = showMajorCivilEngineeringWorks ? "visible" : "none";
+    for (const layerId of [
+      CIVIL_ENGINEERING_SELECTED_LAYER_ID,
+      CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+      CIVIL_ENGINEERING_LABEL_LAYER_ID,
+      CIVIL_ENGINEERING_CLUSTER_LAYER_ID,
+      CIVIL_ENGINEERING_CLUSTER_COUNT_LAYER_ID,
+    ] as const) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", visibility);
+      }
+    }
+  }, [showMajorCivilEngineeringWorks, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const source = map.getSource(CIVIL_ENGINEERING_SOURCE_ID) as
+      | GeoJSONSource
+      | undefined;
+    source?.setData(
+      buildCivilEngineeringCollection(
+        locale,
+        civilEngineeringCategoryFilters,
+      ),
+    );
+  }, [locale, civilEngineeringCategoryFilters, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (map.getLayer(CIVIL_ENGINEERING_SELECTED_LAYER_ID)) {
+      map.setPaintProperty(
+        CIVIL_ENGINEERING_SELECTED_LAYER_ID,
+        "circle-radius",
+        civilEngineeringSelectionCaseExpression(
+          selectedCivilEngineeringWorkId,
+          22,
+          0,
+        ),
+      );
+    }
+    if (map.getLayer(CIVIL_ENGINEERING_SYMBOL_LAYER_ID)) {
+      map.setLayoutProperty(
+        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
+        "icon-size",
+        civilEngineeringSelectionCaseExpression(
+          selectedCivilEngineeringWorkId,
+          1.15,
+          1,
+        ),
+      );
+    }
+  }, [selectedCivilEngineeringWorkId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;
