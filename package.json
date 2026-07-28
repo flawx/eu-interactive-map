@@ -13,7 +13,8 @@
     "heritage-label:update": "tsx scripts/update-european-heritage-label.ts",
     "data:audit-entities": "tsx scripts/audit-entity-enrichment.ts",
     "test:entity-resolver": "tsx scripts/test-entity-resolver.ts",
-    "test:entity-routes": "tsx scripts/test-entity-routes.ts"
+    "test:entity-routes": "tsx scripts/test-entity-routes.ts",
+    "test:ehl-entities": "tsx scripts/test-ehl-entity-routes.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",

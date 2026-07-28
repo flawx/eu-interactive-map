@@ -197,6 +197,9 @@ export default function EuropeanHeritageLabelPanel({
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-slate-300">
+                  {currentPhoto.representedLocationName
+                    ? `${currentPhoto.representedLocationName} · `
+                    : ""}
                   {tp.photoCredit}
                   {": "}
                   {[currentPhoto.author, currentPhoto.license]
@@ -225,7 +228,19 @@ export default function EuropeanHeritageLabelPanel({
           )}
         </section>
 
-        <section className="mb-4">
+        {details?.europeanSignificance ? (
+          <section className="mb-4">
+            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              {tp.europeanSignificance}
+            </h2>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-200">
+              {details.europeanSignificance}
+            </p>
+          </section>
+        ) : null}
+
+        {details?.description || loading || error ? (
+          <section className="mb-4">
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
             {tp.presentation}
           </h2>
@@ -241,16 +256,6 @@ export default function EuropeanHeritageLabelPanel({
               {details?.description ?? tp.detailsUnavailable}
             </p>
           )}
-        </section>
-
-        {details?.europeanSignificance ? (
-          <section className="mb-4">
-            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              {tp.europeanSignificance}
-            </h2>
-            <p className="text-sm leading-relaxed text-slate-200">
-              {details.europeanSignificance}
-            </p>
           </section>
         ) : null}
 
@@ -278,6 +283,9 @@ export default function EuropeanHeritageLabelPanel({
           <ul className="space-y-2">
             {site.locations.map((location) => {
               const isActive = locationId === location.id;
+              const locationDetails = details?.locations.find(
+                (item) => item.locationId === location.id,
+              );
               const countryLabel =
                 regionNames?.of(flagCode(location.countryCode)) ??
                 location.countryCode;
@@ -307,6 +315,28 @@ export default function EuropeanHeritageLabelPanel({
                         >
                           {tp.seeOnMap}
                         </button>
+                      ) : null}
+                      {locationDetails?.officialUrl ? (
+                        <a
+                          href={locationDetails.officialUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 mt-2 inline-flex items-center gap-1 text-[11px] text-sky-300 hover:underline"
+                        >
+                          {tp.officialWebsite}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : null}
+                      {locationDetails?.wikipediaUrl ? (
+                        <a
+                          href={locationDetails.wikipediaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 mt-2 inline-flex items-center gap-1 text-[11px] text-sky-300 hover:underline"
+                        >
+                          {tp.wikipedia}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
                       ) : null}
                     </div>
                   </div>

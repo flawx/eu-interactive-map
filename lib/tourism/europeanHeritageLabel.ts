@@ -2,6 +2,12 @@ import rawData from "@/data/european-heritage-label-sites.json";
 
 export type EuropeanHeritageLabelCoordinateConfidence = "official" | "verified";
 
+export type EuropeanHeritageLabelEntityIdentityType =
+  | "single-entity"
+  | "serial-site"
+  | "transnational-network"
+  | "official-only";
+
 export type EuropeanHeritageLabelLocation = {
   id: string;
   siteId: string;
@@ -13,6 +19,8 @@ export type EuropeanHeritageLabelLocation = {
   coordinateSourceUrl: string;
   coordinateConfidence: EuropeanHeritageLabelCoordinateConfidence;
   representativePoint: boolean;
+  wikidataId: string | null;
+  officialUrl: string | null;
 };
 
 export type EuropeanHeritageLabelSite = {
@@ -23,6 +31,8 @@ export type EuropeanHeritageLabelSite = {
   officialCommissionUrl: string;
   officialWebsite: string | null;
   wikidataId: string | null;
+  entityIdentityType: EuropeanHeritageLabelEntityIdentityType;
+  officialSummary: string | null;
   transnational: boolean;
   serial: boolean;
   locations: EuropeanHeritageLabelLocation[];
@@ -185,6 +195,29 @@ export function validateEuropeanHeritageLabelSites(
       errors.push(`Invalid officialCommissionUrl for ${site.id}`);
     }
 
+    if (
+      site.entityIdentityType === "single-entity" &&
+      (!site.wikidataId || site.locations.length !== 1)
+    ) {
+      errors.push(`Invalid single-entity identity for ${site.id}`);
+    }
+    if (
+      (site.entityIdentityType === "serial-site" ||
+        site.entityIdentityType === "transnational-network" ||
+        site.entityIdentityType === "official-only") &&
+      site.wikidataId !== null
+    ) {
+      errors.push(`Logical QID must be null for ${site.id}`);
+    }
+    if (
+      site.entityIdentityType === "transnational-network" &&
+      !site.transnational
+    ) {
+      errors.push(`Invalid transnational identity type for ${site.id}`);
+    }
+    if (site.entityIdentityType === "serial-site" && !site.serial) {
+      errors.push(`Invalid serial identity type for ${site.id}`);
+    }
     const expectedTransnational = site.countryCodes.length > 1;
     if (site.transnational !== expectedTransnational) {
       errors.push(
@@ -236,6 +269,18 @@ export function validateEuropeanHeritageLabelSites(
 
       if (!location.coordinateSourceUrl?.startsWith("https://")) {
         errors.push(`Invalid coordinateSourceUrl for ${location.id}`);
+      }
+      if (
+        location.wikidataId !== null &&
+        !/^Q[1-9]\d*$/.test(location.wikidataId)
+      ) {
+        errors.push(`Invalid location wikidataId for ${location.id}`);
+      }
+      if (
+        location.officialUrl !== null &&
+        !location.officialUrl.startsWith("https://")
+      ) {
+        errors.push(`Invalid location officialUrl for ${location.id}`);
       }
     }
   }

@@ -28,10 +28,14 @@
           "longitude": 24.7454,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "This association of German Hanseatic merchants was one of most important trading organisations of the medieval era times and played an important role in the history of trade and cultural exchanges in medieval northern Europe.\n\nThe Great Guild Hall, a typical example of Hanseatic architecture, is a public building in which countless trade and social exchanges have taken place since the Middle Ages.\n\nToday the hall hosts the Estonian History Museum which presents Estonian history in its European context."
     },
     {
       "id": "ehl-peace-palace-the-hague-the-netherlands",
@@ -56,10 +60,14 @@
           "longitude": 4.2896,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Peace Palace in The Hague traces the history of peace in Europe. Before the palace opened in 1913, The Hague was host to the First World Peace Conference in 1899 – the culmination of the nineteenth century peace movement nurtured by many European intellectuals.\n\nThe Peace Palace hosted international peace conferences in the early twentieth century from 1913 onwards, which aimed at regulating the arms race and settling international disputes by arbitration.\n\nThis work continues today as the Peace Palace is the seat of many judicial institutions (the International Court of Justice, the Permanent Court of Arbitration, the Hague Academy of International Law) and embodies the values of peace and justice. It is often called the seat of international law."
     },
     {
       "id": "ehl-camp-westerbork-the-netherlands",
@@ -84,10 +92,14 @@
           "longitude": 6.6122,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "It served as a refugee camp for Jews persecuted by the Nazis until 1942, and then became a transit camp from which Jews, Roma and Sinti were deported to Nazi extermination and concentration camps in Germany and occupied territories of Central and Eastern Europe.\n\nAfter World War II, Dutch nationals suspected of collaborating with the Nazis were imprisoned in the camp. Later, it hosted people returning to the Netherlands from the former Dutch colony of the East Indies, among them a large group of Moluccans.\n\nThanks to its history, Camp Westerbork has links to crucial topics in European history such as occupation, persecution, migration, decolonisation and multiculturalism.\n\nA museum (providing, among other activities, educational programmes) and monuments of remembrance (such as the National Westerbork Memorial) can today be found on the site of the former camp."
     },
     {
       "id": "ehl-archaeological-park-carnuntum-austria",
@@ -112,10 +124,14 @@
           "longitude": 16.8664,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Archaeological Park Carnuntum in the east of Austria brings Roman history to life. Carnuntum was an important Roman settlement founded in the middle of the first century AD at a crossing point of trade routes on the Danube.\n\nIt became one of the most important cities in the Roman Empire. The 400 years of Roman life in Carnuntum reflect a period of history that deeply influenced and shaped Europe’s development.\n\nToday visitors to the park can view reconstructed Roman houses and visit a museum with educational programmes."
     },
     {
       "id": "ehl-hambach-castle-germany",
@@ -126,7 +142,7 @@
       ],
       "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/hambach-castle-germany",
       "officialWebsite": null,
-      "wikidataId": null,
+      "wikidataId": "Q523286",
       "transnational": false,
       "serial": false,
       "locations": [
@@ -140,10 +156,14 @@
           "longitude": 8.1152,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": "Q523286",
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "single-entity",
+      "officialSummary": "Built in the Middle Ages, Hambach Castle gained outstanding importance in the nineteenth century. Following a period of political repression, around 30,000 people from Germany, France and Poland came together at the castle on 27 May 1832 to celebrate the Hambach Festival (Hambacher Fest).\n\nThe attendants spoke out for fundamental rights and political freedoms and for equality, tolerance and democracy in Germany and Europe, making the castle a symbol of the struggle for civil liberties in Europe."
     },
     {
       "id": "ehl-munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany",
@@ -168,7 +188,9 @@
           "longitude": 7.6261,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-munster-and-osnabruck-sites-of-the-peace-of-westphalia-germany-loc-2",
@@ -180,10 +202,14 @@
           "longitude": 8.0472,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "serial-site",
+      "officialSummary": "The Peace of Westphalia describes the totality of the peace treaties that were negotiated and agreed upon in the cities of Münster and Osnabrück in 1648.\n\nThey brought an end to the Thirty Years' War (AD 1618-1648), in which all major European powers were involved and which was not only a conflict between states, but also between religions.\n\nMoreover, the conflict also concluded the Dutch War of Independence (AD 1568-1648) from Spain. The Peace of Westphalia was a seminal event in the development of the state and of international law. The principles there developed remain in effect and decisively shaped the order of today's Europe."
     },
     {
       "id": "ehl-the-heart-of-ancient-athens-greece",
@@ -208,10 +234,14 @@
           "longitude": 23.7267,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Acropolis and the surrounding archaeological sites constitute an architectural ensemble of outstanding significance. The complex of up to a hundred monuments represents the core of ancient Athens, spanning a period of more than 3,000 years.\n\nAs an outstanding example of ancient architectural development, the site comprises the Acropolis hill, its north, south and east slopes, the Ancient Agora, the Roman Agora, the Library of Hadrian the Hills, the Pnyx, Areopagus, Philopappos (Muses) and Nymphs (Observatory) as well as the Kerameikos workshops and cemetery.\n\nPhilosophy, democracy and political theory, theatre and music were practiced and developed in these sites, making them the cradle of essential aspects and values of European culture and civilization."
     },
     {
       "id": "ehl-archive-of-the-crown-of-aragon-barcelona-spain",
@@ -236,10 +266,14 @@
           "longitude": 2.1925,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Founded in 1318, the Archives of the Crown of Aragon served as a centralised deposit system for the administrative, economic and political memory of the Crown of Aragon's monarchy.\n\nOver the following centuries, the archives drew their stocks from the documents that were generated by the administrative apparatus of the state and other entities, allowing us today to reconstruct the history of the region and of great events in European history.\n\nIt is one of the largest and most important documentary collections of medieval Europe, and also of modern and contemporary times."
     },
     {
       "id": "ehl-residencia-de-estudiantes-madrid-spain",
@@ -264,10 +298,14 @@
           "longitude": -3.6866,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Serving as a residence, a conference venue and a place for the exchange of ideas, some of the leading personalities of European inter-war arts, philosophy and science gathered here for debate and dialogue.\n\nUpholding the values of free-thinking, cooperation and exchange, the Residencia de Estudiantes remains a centre renowned throughout Europe for encouraging communication and understanding among generations, cultures, and disciplines."
     },
     {
       "id": "ehl-abbey-of-cluny-france",
@@ -292,10 +330,14 @@
           "longitude": 4.6588,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Founded in AD 910, the Abbey of Cluny grew to become the spiritual and administrative centre of one of the largest monastic networks in European history, facilitating the circulation of people, books, artistic ideas and scientific knowledge across national borders.\n\nConsequently, the Cluniac order exerted an important influence on the Christian world of Western Europe throughout the Middle Ages.\n\nToday many initiatives contribute to keeping the European Cluniac spirit alive such as the invitation of researchers from all over Europe and the keeping of the site open for the general public."
     },
     {
       "id": "ehl-robert-schumans-house-scy-chazelles-france",
@@ -306,7 +348,7 @@
       ],
       "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/robert-schumans-house-scy-chazelles-france",
       "officialWebsite": null,
-      "wikidataId": null,
+      "wikidataId": "Q3279544",
       "transnational": false,
       "serial": false,
       "locations": [
@@ -320,10 +362,14 @@
           "longitude": 6.1064,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": "Q3279544",
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "single-entity",
+      "officialSummary": "Robert Schuman (1886-1963) is considered as one of the founding figures of the European Union, a \"Father of Europe\". With his declaration of 9 May 1950, commemorated annually as Europe Day, he laid the foundations for the European Coal and Steel Community and for all the European institutions to come.\n\nHe bought the house in 1926 and, from 1960 onwards, spent the years of his retirement there. Today it hosts a museum and contains many objects that belonged to Robert Schuman and which prove his attachment to the European ideal."
     },
     {
       "id": "ehl-pan-european-picnic-memorial-park-sopron-hungary",
@@ -348,10 +394,14 @@
           "longitude": 16.5892,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Memorial Park commemorates the civil initiative of the Pan-European Picnic peace demonstration, which was held here on 19 August 1989.\n\nThe temporary opening of the Hungarian-Austrian border during the demonstration gave nearly 600 citizens of the German Democratic Republic the opportunity to flee across the Hungarian border to the West, making the event the beginning of the destruction of the Iron Curtain.\n\nHaving divided Europe ideologically and economically into two separate areas, the Curtain's fall led to the reunification of Germany and the EU's Eastern enlargement in 2004.\n\nThe Memorial Park therefore stands for the post-1989 borderless and unified Europe."
     },
     {
       "id": "ehl-museo-casa-alcide-de-gasperi-pieve-tesino-italy",
@@ -376,10 +426,14 @@
           "longitude": 11.6841,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Alcide de Gasperi (1881-1954), one of the \"Fathers of Europe\", was born in this house which today is a museum highlighting his contribution to the construction of Europe after World War II.\n\nHe served as Foreign Affairs Minister and Italian Prime Minister from 1945 to 1953, supported Schuman's plans and then led the European Coal and Steel Community (ECSC).\n\nFurthermore, he was an inspiring force in the creation of the European Economic Community."
     },
     {
       "id": "ehl-kaunas-of-1919-1940-lithuania",
@@ -404,10 +458,14 @@
           "longitude": 23.9036,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "During the interwar period, the city of Kaunas was the \"temporary capital\" of Lithuania and developed into a modern, vibrant and dynamic cultural centre of the country.\n\nMany Lithuanians, who studied in other European countries, brought back knowledge and ideas to Kaunas, where a fruitful mix of modern tendencies and old traditions prompted the country's prosperous development in the city's architecture of the period."
     },
     {
       "id": "ehl-the-historic-gdansk-shipyard-poland",
@@ -418,7 +476,7 @@
       ],
       "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/the-historic-gdansk-shipyard-poland",
       "officialWebsite": null,
-      "wikidataId": null,
+      "wikidataId": "Q1736541",
       "transnational": false,
       "serial": false,
       "locations": [
@@ -432,10 +490,14 @@
           "longitude": 18.6564,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": "Q1736541",
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "single-entity",
+      "officialSummary": "The historic Gdańsk Shipyard was the birthplace of the Solidarity movement. The movement's origins date back to the workers' strike of 1970, which was bloodily suppressed by the socialist authorities.\n\nTen years later, a new wave of strikes prompted the government to give in and sign the historic August Agreements in 1980 with Lech Wałęsa.\n\nThe accords were signed in the premises of the shipyard and allowed the first independent trade union in the Eastern Bloc: NSZZ \"Solidarność.\n\nFrom this moment on, Solidarity continuously promoted democracy and civil liberties in Poland and triggered similar social movements across Eastern European countries in the 1980s."
     },
     {
       "id": "ehl-union-of-lublin-poland",
@@ -460,10 +522,14 @@
           "longitude": 22.5684,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Union of Lublin, established in 1569, tied together the Kingdom of Poland and the Grand Duchy of Lithuania, creating the so-called Commonwealth of Both Nations, characterized by a single monarch, a common parliament and one currency.\n\nIt is commemorated by the three historic monuments located in Lublin which are parts of the site.\n\nThe Union was an exceptional case of the democratic integration of two countries with peaceful and inclusive coexistence of people from various ethnic and religious backgrounds."
     },
     {
       "id": "ehl-the-may-3-1791-constitution-warsaw-poland",
@@ -488,10 +554,14 @@
           "longitude": 21.0141,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Constitution of May 3 1791 was adopted by the Polish–Lithuanian Commonwealth, to ensure more freedom and political equality on its territory and introduce the constitutional monarchy system.\n\nIt reflects enlightenment influences, which gave primacy to reason, law and freedom, as well as religious tolerance, and is considered as one of the first constitutions of its type in Europe."
     },
     {
       "id": "ehl-charter-of-law-of-abolition-of-the-death-penalty-lisbon-portugal",
@@ -516,10 +586,14 @@
           "longitude": -9.1607,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Charter of Law of Abolition of the Death Penalty was approved in 1867 and is preserved in the National Archives of Torre do Tombo in Lisbon, Portugal.\n\nIt is one of the first examples of the permanent suspension of the death penalty being codified in a national legal system.\n\nPortugal is considered a pioneer in this regard. This document promotes values which are part of the Charter of Fundamental Rights of the European Union."
     },
     {
       "id": "ehl-general-library-of-the-university-of-coimbra-portugal",
@@ -544,10 +618,14 @@
           "longitude": -8.4257,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The General Library of the University of Coimbra was established before 1513 and contains one of the most remarkable and innovative library buildings of Europe of the early eighteenth century, the Joanina library.\n\nIt was one of the first libraries in Europe to provide subject catalogues (1743) and never allowed any censorship in darker periods. Many documents of European significance are kept here."
     },
     {
       "id": "ehl-franja-partisan-hospital-slovenia",
@@ -572,10 +650,14 @@
           "longitude": 13.8944,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Franja Hospital was a secret World War II hospital run by the Slovenian partisans as part of a broadly organized resistance movement against the occupying Nazi forces.\n\nThe refuge treated wounded soldiers from both the Allied and the Axis powers and the physicians came from various European countries.\n\nThe hospital was run and kept secret thanks to the support of local people. Today, it has been turned into a museum promoting solidarity, democratic values and human rights."
     },
     {
       "id": "ehl-krapina-neanderthal-site",
@@ -600,10 +682,14 @@
           "longitude": 15.8747,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "In 1899 at this site were found the largest number of Neanderthal fossil bones in Europe, some nine hundred human remains from about eighty individuals, as well as bones of various animals dating back 125 000 BC. Experts from all over the world have conducted research on the collection and their interpretation of the Krapina findings influenced different scientific theories about human development, the genesis of our civilisation and about how human communities in Europe lived during the Pleistocene period.\n\nNext to the archaeological site, the Krapina Neanderthal Museum presents today and in an interactive way the origin of life on Earth and the evolution of humankind."
     },
     {
       "id": "ehl-olomouc-premyslid-castle-and-archdiocesan-museum-olomouc-czech-republic",
@@ -628,10 +714,14 @@
           "longitude": 17.2517,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Archdiocesan Museum is devoted to the conservation of works of art of the Olomouc Archdiocese. Its collections are shown in the Chapter Deanery at the Premyslid Castle, a location representing thousand years of history, from the remnants of the Bishop's and Prince's Palaces to Baroque and Rococo.\n\nThe Olomouc Premyslid Castle and Archdiocesan Museum are a focal point of Moravian presence in European history. It is an early centre of Christianity, a place that preserves and highlights the high level of artistic patronage of the archbishops of Moravia, and a fine example of heritage conservation in the region."
     },
     {
       "id": "ehl-sagres-promontory-portugal",
@@ -656,10 +746,14 @@
           "longitude": -8.9438,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Sagres Promontory is a rich cultural and historical landscape located at the south-west corner of the Iberian Peninsula. It comprises a series of significant archaeological remains, urban structures, and monuments testifying its strategic location and importance over the centuries.\n\nThe Promontory became the headquarters of Prince Henry the Navigator for his projects of maritime expansion during the fifteen century, a key location of the Age of Discoveries that marked the expansion of European culture, science, exploration and commerce both towards the Atlantic and the Mediterranean, setting European civilisation on its path to the global projection that came to define the modern world."
     },
     {
       "id": "ehl-the-imperial-palace-vienna-austria",
@@ -684,10 +778,14 @@
           "longitude": 16.3657,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Initiated in 1240, the Imperial Palace is a complex of buildings and gardens which used to serve as the residence of the Habsburgs, a ruling family of large parts of Europe during some 700 years. The Habsburg Empire was a multi-ethnical and a multi-religious empire that had a strong political, administrative, social and economic impact on territories that include large parts of today`s Central and Eastern Europe.\n\nToday, the Imperial Palace is home to the seat of the Austrian Federal President, five world-class museum organisations as well as other cultural institutions."
     },
     {
       "id": "ehl-historic-ensemble-of-the-university-of-tartu-tartu-estonia",
@@ -712,10 +810,14 @@
           "longitude": 26.7228,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The historic ensemble of the University of Tartu is a campus designed at the beginning of the nineteenth century under the motto \"A university in the city, a university in the park\". It embodies the ideas of a university in the Age of Enlightenment. Linking science and learning and reflects the European tradition in education.\n\nEstablished in 1632 by the Swedish King Gustav II Adolf, and though it changed hands between the various political powers in the region including Sweden, Poland, Germany, Russia, the Soviet Union and Estonia, Tartu University has always remained a beacon of progressive ideas."
     },
     {
       "id": "ehl-liszt-ferenc-academy-of-music-budapest-hungary",
@@ -740,10 +842,14 @@
           "longitude": 19.0634,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Liszt Ferenc Academy of Music was established in 1875 by the outstanding composer and musician himself. It is a multi-faceted institution: an educational institution, an international university of musical arts and a concert centre. It brings our music heritage to the fore whilst holding true to its spirit of openness, creativity and innovation and its European and international character.\n\nThe Academy is housed in a 1907 building by Flóris Korb and Kálman Giergl, which is considered to be a masterpiece of Hungarian Secession. It integrates inter alia the Liszt Ferenc Memorial Museum and Research Centre, the Kodály Institute and the Kodály Museum."
     },
     {
       "id": "ehl-mundaneum-mons-belgium",
@@ -768,10 +874,14 @@
           "longitude": 3.9558,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Mundaneum is a landmark in the intellectual and social fabric of Europe. Its founders, Henri La Fontaine and Paul Otlet, were advocates of peace through dialogue and sharing knowledge at European and international level with the means of bibliographic enquiry. The Mundaneum's aim was to gather all information available in the world, regardless of its medium (books, newspapers, postcards…), and to classify it according to a system they developed, the Universal Decimal Classification.\n\nThe Mundaneum provides the foundations of present-day information science and is considered today as a precursor of internet search engines."
     },
     {
       "id": "ehl-world-war-i-eastern-front-cemetery-no-123-luzna-pustki-poland",
@@ -796,10 +906,14 @@
           "longitude": 21.1225,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Wartime cemetery No 123, established in 1918 on the Pustki hill is the scene of one of the largest battles of World War I on the Eastern front between the Austro-Hungarian and German armies and the Russian Army: the battle of Gorlice, also called the Verdun of the East. The cemetery is the final resting place for soldiers from these three armed forces, coming from territories that are part of today’s Austria, Hungary, Germany, Poland, Ukraine, Russia, Slovenia,.. and from different religious and linguistic backgrounds.\n\nThe World War I Eastern Front Cemetery No 123 is a place of remembrance embodying the idea of ecumenism, with its identical treatment of the fallen, regardless of their military, ethnic or religious affiliation."
     },
     {
       "id": "ehl-european-district-of-strasbourg-strasbourg-france",
@@ -824,10 +938,14 @@
           "longitude": 7.7683,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Since its creation after the Second World War, the European District of Strasbourg is the home to the Council of Europe, its European Court of Human Rights and the European Parliament of the European Union. It bears witness to European integration, the defence of human rights, democracy and the rule of law."
     },
     {
       "id": "ehl-leipzigs-musical-heritage-sites-germany",
@@ -852,7 +970,9 @@
           "longitude": 12.3745,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": "Q170402",
+          "officialUrl": null
         },
         {
           "id": "ehl-leipzigs-musical-heritage-sites-germany-loc-2",
@@ -864,7 +984,9 @@
           "longitude": 12.3803,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": "Q519613",
+          "officialUrl": null
         },
         {
           "id": "ehl-leipzigs-musical-heritage-sites-germany-loc-3",
@@ -876,7 +998,9 @@
           "longitude": 12.3742,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-leipzigs-musical-heritage-sites-germany-loc-4",
@@ -888,10 +1012,14 @@
           "longitude": 12.3839,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "serial-site",
+      "officialSummary": "Leipzig’s Musical Heritage Sites is a series of nine locations in Leipzig representing various episodes in its musical history including churches and educational institutions, ensembles and individual composers. They showcase the range of musical activities which have taken place in Leipzig since the thirteenth century.\n\nThis site embodies the dynamic continuity of a specific European tradition in music and civic engagement."
     },
     {
       "id": "ehl-dohany-street-synagogue-complex-hungary",
@@ -916,10 +1044,14 @@
           "longitude": 19.0625,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Built in the 1850s', the Dohány Street Synagogue is the largest synagogue in Europe and the second largest one in the world. Its surroundings include a museum and archives, a memorial for 10,000 Jewish Hungarian soldiers who lost their lives in WWI, a garden used as a cemetery for the victims of the Holocaust as well as the Wallenberg Memorial Park. The Dohány Street Synagogue Complex is a symbol of integration, remembrance and openness to dialogue."
     },
     {
       "id": "ehl-fort-cadine-italy",
@@ -944,10 +1076,14 @@
           "longitude": 11.0872,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Fort Cadine, a representative fortification of the defensive system of about 80 such monuments built between 1860 and 1915 in the Trento region, is a reminder of historical divisions, military conflicts and changing borders, and provides the necessary context to better understand the value of open borders and free circulation."
     },
     {
       "id": "ehl-javorca-memorial-church-and-its-cultural-landscape-slovenia",
@@ -972,10 +1108,14 @@
           "longitude": 13.7672,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Javorca Memorial Church is a unique piece of Art Nouveau built in the mountains by soldiers of the WWI Isonzo Front to remember fallen soldiers regardless of their origin and culture. Today the church and its cultural landscape continue to symbolise this call for reconciliation and the unifying power of collaborative artistic creation and construction."
     },
     {
       "id": "ehl-memorial-of-the-natzweiler-struthof-concentration-camp",
@@ -1000,10 +1140,14 @@
           "longitude": 7.1256,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Memorial of the Natzweiler-Struthof Concentration Camp, site of the former Natzweiler Nazi concentration camp and its c. 50 satellite work camps, operated between 1941 and 1945 on both banks of the Rhine which then belonged to the Third Reich and now is part of present-day France and Germany.\n\nIn the Natzweiler network of camps, prisoners from almost all European countries were subject to Nazi terror. Many of the prisoners were originally resistance fighters who were exploited in forced labour. It is today both a place of remembrance and citizen’s education."
     },
     {
       "id": "ehl-sighet-memorial-romania",
@@ -1028,10 +1172,14 @@
           "longitude": 23.8887,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Sighet Memorial is housed in a former Stalinist prison in Sighet that was used to imprison schoolchildren, students and peasants from the resistance (1948-1950), political opponents, journalists and clergymen (1950-1955) and common criminals until the seventies. It is today a memorial to the victims of communist regimes and displays the development and effects of communist regimes in Romania and other countries of Eastern Europe. The Memorial provides insight on the repression by communist regimes in Europe throughout the 20th century, including the resultant death and suffering experienced inside and outside the prison walls."
     },
     {
       "id": "ehl-bois-du-cazier-belgium",
@@ -1056,10 +1204,14 @@
           "longitude": 4.4661,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Bois du Cazier coal mining site portrays the working classes and immigration to Wallonia (Belgium) in the 20th century. In 1956, the entirety of the site, from the pithead to the slag heaps, was the scene of a disaster in which 262 people of 12 different nationalities died. Whilst mining activity stopped in 1967, since 2002 the site has been transformed into a museum dedicated to the coal, iron and glass industry. It recalls European solidarity as demonstrated in the aftermath of the 1956 disaster which also triggered the creation of a health and safety body by the European Coal and Steel Community."
     },
     {
       "id": "ehl-village-of-schengen-luxembourg",
@@ -1070,7 +1222,7 @@
       ],
       "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/village-of-schengen-luxembourg",
       "officialWebsite": null,
-      "wikidataId": null,
+      "wikidataId": "Q3916795",
       "transnational": false,
       "serial": false,
       "locations": [
@@ -1084,10 +1236,14 @@
           "longitude": 6.3633,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": "Q3916795",
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "single-entity",
+      "officialSummary": "Schengen is a village situated at the banks of the Moselle River, in the border triangle of Luxembourg, Germany and France. It is here that the Schengen Agreement and the Schengen Implementation Convention were signed on a river cruise ship in 1985 and 1990. In the village, several places recall the Agreement, including the European Centre of Schengen with its museum. Schengen has become the eponym of free movement in Europe since the signature of the Schengen Agreement."
     },
     {
       "id": "ehl-maastricht-treaty-the-netherlands",
@@ -1112,10 +1268,14 @@
           "longitude": 5.6881,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Maastricht Treaty (1991-1992) was a milestone for European integration: it was in Maastricht that the then 12 Member States agreed to proceed with the economic and monetary union leading to the introduction of the Euro, to reinforce the democratic representation, and to extend the competences to new areas such as culture. The Province building in which the treaty was negotiated and then signed on 7th February 1992 is today its visitor and exhibitions centre."
     },
     {
       "id": "ehl-archaeological-area-of-ostia-antica-italy",
@@ -1140,10 +1300,14 @@
           "longitude": 12.2892,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Archaeological Area of Ostia Antica consists of the remains of a Roman settlement originally located at the mouth of the River Tiber on the west coast of Italy. Due to changes in the river channel and the coastline, the remains are now about 4 km from the sea. Ostia was founded in the 6th century BC, but the earliest fortifications date from 4th century. The main function of the settlement was originally to protect the mouth of the river Tiber, but later with the construction of a new harbour by Claudius and Trajan the city developed in an active commercial centre that spread beyond the city walls. As the principal port of Rome, Ostia became a place of great strategic and commercial importance in the Mediterranean area. By the end of the 2nd century A.D. the city was still thriving and hosted a population of more than 50.000. It went into decline for the middle of the 3rd century A.D. as the focus of the Empire moved eastwards.\n\nThe Archaeological Area of Ostia Antica is a place where goods circulated and different cultures and religions mingled. As a gateway to Rome Ostia was a melting pot of the different people who lived under the Roman Empire and a place with far-reaching influence on land, across the Mediterranean basin and beyond. Evidence of the trade, the exchanges and the diverse population is still visible today in the mosaic floors, the archaeological remains and funeral inscriptions."
     },
     {
       "id": "ehl-underwater-cultural-heritage-of-the-azores-portugal",
@@ -1168,10 +1332,14 @@
           "longitude": -27.2166,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Azores’ Underwater Cultural Heritage consists of a network of 30 public dive sites centred on a range of shipwrecks dating between the 15th and 20th centuries. These sites are representative of the overall underwater heritage of Azores, which is made up of more than 1000 documented shipwrecks, including about 100 identified underwater archaeological sites.\n\nThe Azores archipelago was of strategic importance for transatlantic voyages. The 30 shipwrecks in the application are connected to different aspects of European history and trade from the 16th to 20th centuries:\n\nexploration expeditions such as the famous Beagle voyage on which Charles Darwin travelled around South America. Azores’ Underwater Cultural Heritage as represented through the sample of these 30 shipwrecks bears witness to the role of the Azores in European history as “the world’s bottleneck” for transcontinental sailing over many centuries. The Azores’ shipwrecks provide material evidence of the expansion of Europeans across oceans and the early starting points to globalisation in terms of trade, military actions, migration, etc. The shipwrecks are presented as time capsules of European history, symbolic of different times and different territories. The European dimension, the cross-border nature, and the role and place in European history are well articulated in the site’s narrative."
     },
     {
       "id": "ehl-colonies-of-benevolence-belgium-the-netherlands",
@@ -1197,7 +1365,9 @@
           "longitude": 6.2144,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-2",
@@ -1209,7 +1379,9 @@
           "longitude": 6.2306,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-3",
@@ -1221,7 +1393,9 @@
           "longitude": 6.5386,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-4",
@@ -1233,7 +1407,9 @@
           "longitude": 4.8886,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-colonies-of-benevolence-belgium-the-netherlands-loc-5",
@@ -1245,10 +1421,14 @@
           "longitude": 4.85,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/colonies-of-benevolence-belgium-the-netherlands",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "transnational-network",
+      "officialSummary": "‘Colonies of Benevolence’ is a transnational application including seven sub-sites in Belgium and the Netherlands, established in the 19th century to reduce poverty through social employment in new agricultural settlements. They were created as a social experiment in what was then the Kingdom of the Netherlands with borders resulting from the Congress of Vienna, at a time when Europe was extremely impoverished. The colonies were established either as ‘free’ - for families who received the chance to run small farms, or ‘unfree’ - as large collective structures for vagrants and orphans. Their original functioning was suspended.\n\nThe Colonies of Benevolence pioneered a new public private approach based on investments in agriculture on barren land, providing access to education and employment, and preserving ‘peace and order' in society on the one hand, but also “false assumptions about the make-ability and productivity of people and land” on the other. The 175 years of their history reveal the long evolution in European thought concerning socially marginalised people and their scarcely recognised rights as full members of society, enshrined now in the Charter of Fundamental rights."
     },
     {
       "id": "ehl-living-heritage-of-szentendre-hungary",
@@ -1273,10 +1453,14 @@
           "longitude": 19.0779,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The city of Szentendre dates back to Roman times but its appearance today has mainly been influenced by Serbian refugees since the end of the 17th century. The character of the city has been shaped by the influence of the cross-border political and cultural connections. It has experienced a culture-led urban development in which cultural heritage played a major role and enabled the city to function as a bridge between different European cultural areas from East and West, the Balkan and the Carpathian Basin, and Catholic and Orthodox Christianity. The proximity to Budapest has posed a constant challenge to the city.\n\nSzentendre is characterised by the spirit of multi-ethnic and religious tolerance, urban resilience and creativity since the end of the 17th century, deriving from its cross-border location. The connections along the Danube river and the prolific cohabitation of its Hungarian and Serbian population and other cultures resulted in a place of peaceful coexistence, integration and productive exchange, shaping a unique architectural design. The blending of Eastern and Western cultures in an emblematic locality of artistic freedom during totalitarian regimes determines the spirit of the town and the living heritage can still be experienced today."
     },
     {
       "id": "ehl-kynzvart-castle-place-of-diplomatic-meetings-czech-republic",
@@ -1301,10 +1485,14 @@
           "longitude": 12.5661,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The castle has been opened to the public since 1828. In 1840, it was at the centre of a diplomatic initiative, the Peace League Proposal. This proposal represented an important moment in the search for a lasting balance of power in Europe.\n\nDue to its ownership by a very well-known historical figure, Chancellor Metternich, Kynžvart Castle was the location for many discussions and negotiations of European diplomacy. The castle represents a place of memory of European diplomacy attentive to the search for a balance between the main European States. This is the focus of the site rather than the personal involvement in history of Metternich – whose own role should be the subject of critical discussion."
     },
     {
       "id": "ehl-site-of-remembrance-in-lambinowice-poland",
@@ -1329,10 +1517,14 @@
           "longitude": 17.7269,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Site of Remembrance in Łambinowice consists of several places along the ‘Road of Remembrance’: the Old Cemetery of the Prisoners of War (POW), the areas of formers Stalags VIII B (344) and 318/VIII F (344) Lamsdorf, the Cemetery of Soviet POWs, the area of the former Labour Camp and its Cemetery, and the Central Museum of Prisoners-of-War.\n\nA Museum was established in 1964 to commemorate and to study the camps and issues surrounding the POW, established during the Franco-Prussian War in 1870-71 and used during World War I and World War II. Over 7000 POWs from several European nationalities are buried at the Old Cemetery. During WWII, many anti-Nazi and freedom fighters were imprisoned in the camps. After the wars, the camps were used for migrating civilians.\n\nThe Site of Remembrance in Łambinowice has transnational gravitas because the camps were used by different states and because of the provenance of the POWs themselves. The site bears witness to the perspectives of thousands of Europeans on important European historical events, starting from the Franco- Prussian War up to the mass-migrations after WW II. It plays an important role for commemorating, studying - by popular and comparative research - and interpreting these lesser known parts of Europe’s history. The application emphasises the need to look into different perspectives and establish a link with the present."
     },
     {
       "id": "ehl-zdravljica-the-message-of-the-european-spring-of-nations-slovenia",
@@ -1357,10 +1549,14 @@
           "longitude": 14.5051,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "official",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "\"Zdravljica\" is a poem written in 1844 by the Slovenian poet France Prešeren. It was only published in 1848, after the abolishment of censorship in the Habsburg Empire as part of the Spring of Nations. Written in Slovenian, it hainfluenced the development of Slovenian identity, and more generally the promotion of freedom of expression. The continued importance of Zdravlijca was illustrated in 1944 when the partisans resisting Nazi-fascism re-printed \"Zdravljica\", and when it was sung on various occasions in the 1980’s and early 1990’s during the period of democratisation leading to the independence of Slovenia.\n\nIn 1991 in the new Slovenian Republic, the 7th verse of the poem was chosen as the national anthem. In this verse the poem expresses the ideal of a peaceful co-existence of all nations. A quotation from the poem is stamped onto the national €2 coin and also engraved on a memorial erected in 2008 in front of the Justus Lipsius building of the Council of the EU in Brussels, during the Slovenian EU Presidency.\n\n\"Zdravljica\" is representative of 1848 - the Spring of Nations or Year of Revolution, an important movement in European history. The role of literature, written in national or minority languages, in kindling nationalist feelings, and shaping demands for the removal of censorship and the right of freedom of expression, was reflected across Europe. Whilst the literary achievements of the poem’s author, France Prešeren, are of central importance to the creation of a Slovenian nation via language and literature, the poem simultaneously promoted the message of peaceful coexistence of nations.\n\nThe positive reception of the poem and its transmission across Europe through German and Scandinavian translations since the 1860s/ 1880s, and English and other languages s"
     },
     {
       "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland",
@@ -1388,7 +1584,9 @@
           "longitude": 16.2794,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-2",
@@ -1400,7 +1598,9 @@
           "longitude": 14.3903,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-3",
@@ -1412,7 +1612,9 @@
           "longitude": 16.5847,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-4",
@@ -1424,7 +1626,9 @@
           "longitude": 9.166,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-werkbund-estates-in-europe-austria-czech-republic-germany-poland-loc-5",
@@ -1436,10 +1640,14 @@
           "longitude": 17.0885,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/werkbund-estates-in-europe-austria-czech-republic-germany-poland",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "transnational-network",
+      "officialSummary": "The Werkbund Estates in Europe 1927-1932 is a transnational site, comprising 4 countries (Germany, Poland, Czech Republic, Austria) and 5 towns (Stuttgart, Wroclaw, Brno and Prague, Vienna). After World War I, there was an urgent problem across Europe of a wide-spread lack of suitable housing. In response under the banner “New Objectivity” avantgarde architects from different parts of Europe wished to find affordable solutions that met social need with well-designed, high quality buildings.\n\nThe first Werkbund Estate, Weissenhof, was built in Stuttgart in 1927, and it inspired others to adopt modernist principles to similar projects. The other estates followed from 1928 to 1932. All faced difficulties in conveying their progressive ideas to a broader public. Under the Nazi regime the buildings were derided for their modernism. Post WW II, with some Werkbund Estates behind the Iron Curtain, the estates went in separate ways. In 2013 a network of the estates was formed to promote exchanges of good practice and advice for their preservation. The Werkbund Estate in Zürich (Switzerland) is part of the 2013 network.\n\nThe Werkbund Estates in Europe 1927-1932 started as an architectural experiment but had a profound influence on 20th century modernist architecture by allowing architects from different European countries to put their modernist theories into practice. The Estates are a manifestation of the European origins of this movement with substantial developments in 5 countries.\n\nThe Werkbund Estates have an important place in the history of architecture in Europe, but the evolution of the settlements over time also reflects the various political and social situations between the East and the West. Their social, emancipatory, aesthetic and technical aspirations and the less"
     },
     {
       "id": "ehl-lieu-de-memoire-au-chambon-sur-lignon-france",
@@ -1464,10 +1672,14 @@
           "longitude": 4.2947,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Chambon-sur-Lignon is a memorial area opened in 2013 presenting the rescue operations provided by the locals during World War II. From December 1940 to September 1944 the inhabitants of Le Chambon-sur-Lignon and the villages of the surrounding plateau provided shelter for an estimated 3000 people of Jewish origin (including many children), as well as Spanish republicans, anti-Nazi Germans, members of the French resistance and others.\n\nThe site consists of an interpretative/history trail on various resistance activities against the Nazis during WWII. It includes a memorial space with testimonies from former refugees and the Righteous (non-Jews who risked their lives to help Jews during the Holocaust), rooms for exhibitions and educational activities; and a memory garden designed by Louis Benech, the landscape artist. The extraordinary role played by the inhabitants of Chambon was recognised by means of an honorary diploma from the Institute Yad Vashem (Jerusalem) in 1990.\n\nIn the 1930s a group of Protestant clergy and people involved in European and international peace networks from outside France moved to Chambon-sur-Lignon. Combined with the attitudes of the then mayor and other clergy to stand up against the Nazis and the Vichy regime, this helped to shape Chambon-sur-Lignon and the surrounding villages into a place of active resistance and a refuge for those people these regimes sought to eliminate. As such this site has important tangible and intangible dimensions."
     },
     {
       "id": "ehl-the-three-brothers-latvia",
@@ -1492,10 +1704,14 @@
           "longitude": 24.0972,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The “Three Brothers” is a complex of three houses in Riga built between the 15th and 17th centuries. Amongst the three is the oldest known surviving stonebuilt house in Riga and a building with a façade based on drawings by Hans Vredeman de Vries. The buildings are characteristic of dwelling houses found in Hanseatic towns in the Baltic Region. Over the centuries they have undergone changes. The most recent intervention took place in the 1950s under the architect Peteris Saulīis. In this restoration campaign, parts from other destroyed and lost buildings were integrated into the ensemble.\n\nDuring the Soviet occupation of Latvia the complex was one of the first sites to be restored, building on the preservation philosophy and practice originating from the Latvian Republic in the inter-war period. This philosophy which aims to retain a maximum of historic material, including wear and tear, also informed other restoration projects, despite the threats and pressure from the Soviet occupiers. The pivotal role of the site in heritage preservation in Latvia continues as it is the home of the National Heritage Board and the Latvia Museum of Architecture.\n\nHeritage preservation and the concepts that informed its practice were instrumental in building resistance to the destruction of Latvian culture during the Soviet occupation, and for sustaining the link with Europe and the value of freedom during this period. The “Three Brothers” was at the centre of this movement. After independence in 1991, high priority was given to heritage policy, which was based on the principles for cultural heritage preservation developed in Europe. This continues up to the present, with the new dimension of heritage policies integrated into a long-term vision based on the example of protecting histori"
     },
     {
       "id": "ehl-vucedol-culture-museum-and-archaeological-site",
@@ -1520,10 +1736,14 @@
           "longitude": 19.0233,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Vučedol Culture Museum and Archaeological Site bears testimony to one of the earliest Indo-European cultures on the right bank of the Danube River in eastern Croatia. Its Museum and Archaeological Site bear testimony to one of the earliest Neolithic Indo-European cultures along the Danube basin, leading the way to innovations such as four-wheel carriages, saws and casting techniques."
     },
     {
       "id": "ehl-archaeological-site-of-nemea",
@@ -1548,10 +1768,14 @@
           "longitude": 22.7136,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The archaeological site of Nemea is emblematic due to the organisation of the Nemean Games in antiquity. The site includes the sport roots of Europe and the ideals of classical sports as an element for the comprehensive education of young people. The first Panhellenic Nemean games took place in 573 BC on a two years basis. In mythology, Hercules’s victory against the lion of Nemea, often found in ancient Greek art and literature, inextricably connects the hero with the site. The Archaeological Site of Nemea is a complex of well-preserved and exhibited archaeological remains, emblematic due to Nemean Sports Games."
     },
     {
       "id": "ehl-thracian-art-in-eastern-rhodopes-aleksandrovo-tomb-bulgaria",
@@ -1576,10 +1800,14 @@
           "longitude": 25.6803,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Thracians were the creators of one of the ancient civilizations in so-called Ancient Europe and were the ancestors of following ancient European cultures. The Museum Centre “Thracian Art in the Eastern Rhodopes” is located next to the Aleksandrovo mound and promotes the understanding of the Thracian culture via the exhibition at the Museum Centre \"Thracian Art in the Eastern Rhodopes\"."
     },
     {
       "id": "ehl-almaden-mining-park-spain",
@@ -1604,10 +1832,14 @@
           "longitude": -4.8297,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Almadén Mining Park, originally operated as mercury mine, is a complex of twenty buildings and infrastructures located in Spain.\n\nAs a centre of applied technological innovation for the last 500 years, it has become a model in the evolution of mining. The site is a UNESCO World Heritage Site and member of The European Industrial Heritage Association as well as an Anchor Point on the European Route of Industrial Heritage. It exemplifies the long-standing European Industrial Heritage and its significance in the European citizenship and economic development process."
     },
     {
       "id": "ehl-echternach-saint-willibrord-heritage-luxembourg",
@@ -1632,10 +1864,14 @@
           "longitude": 6.4211,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Echternach Saint Willibrord Heritage is a site of tangible artefacts and intangible legacies of the Anglo-Saxon Irish Benedictine monk Saint Willibrord (658-739). It embodies the process of early unification of medieval Europe based on faith, diplomacy and cultural exchanges. The heritage site includes natural and built heritage elements as the crypt, in which the Willibrord Fountain and the Sarcophagus of the Saint are to be found, the former monastic housing with the Abbey Museum, the Echternach Scriptorium and the annual Hopping Procession, dating back almost to the Saint Willibrord’s death, now an intangible cultural heritage on the UNESCO representative list."
     },
     {
       "id": "ehl-historic-centre-of-turaida-latvia",
@@ -1660,10 +1896,14 @@
           "longitude": 24.8497,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "As a crossroad of historical events, the Historic Centre of Turaida played a role in the integration of the Baltic States into Europe also by using western Christianity as a means for social integration.\n\nThis cultural heritage consists of the Turaida medieval castle, the Folk Song Park at Dianu Hill, the Cultural and Historical Heritage of Gauja Livs (one of the ancient tribes of Latvia), the Church Hill and Wooden Church (1750), one of the oldest of its kind in the country.\n\nThe Historic Centre of Turaida played an important role in the spread of Christianity and was one place where the “Singing Revolution” contributed to the reintegration of Latvia to Europe representing European values of freedom and cultural diversity."
     },
     {
       "id": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia",
@@ -1688,7 +1928,9 @@
           "longitude": 20.2669,
           "coordinateSourceUrl": "https://gotickacesta.sk/en/medieval-murals-awarded-european-heritage-label/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia-loc-2",
@@ -1700,7 +1942,9 @@
           "longitude": 20.3903,
           "coordinateSourceUrl": "https://gotickacesta.sk/en/medieval-murals-awarded-european-heritage-label/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-medieval-wall-painting-in-gemer-and-malohont-regions-slovakia-loc-3",
@@ -1712,10 +1956,14 @@
           "longitude": 19.8967,
           "coordinateSourceUrl": "https://gotickacesta.sk/en/medieval-murals-awarded-european-heritage-label/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "serial-site",
+      "officialSummary": "The Medieval wall painting in the Gemer and Malohont regions is a national thematic site of twelve medieval churches decorated with figural paintings. They represent the international character of European art and lively cultural contacts across Europe in the Gothic period.\n\nThe Medieval wall painting in Gemer and Malohont Regions bear witness to economic, cultural and artistic exchanges across Medieval Europe. They represent a shared artistic language understood by members of different ethnicities and degrees of literacy."
     },
     {
       "id": "ehl-the-oderbruch-germany",
@@ -1740,10 +1988,14 @@
           "longitude": 14.1333,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Oderbruch exemplifies anthropogenically formed landscape as a product of European history. The settled river polder features a water system defined by immigration and expresses the tradition of ecological care and social participation in European past and present. The Oderbruch landscape is the result of civic and state actions resolved in democratic processes of communication."
     },
     {
       "id": "ehl-palace-of-the-european-commission-of-the-danube-romania",
@@ -1768,10 +2020,14 @@
           "longitude": 28.0475,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Danube is a historical building in Galaţi, Romania, purpose-built to serve as the headquarters of the European Commission of the Danube (ECD). The institution was established after the 1856 Peace Congress of Paris to regulate the navigation regime on the river system. The ECD eventually developed into a more complex organisation. This site was the headquarters of a significant international organisation that contributed to increasing the European integrity and to establish a peaceful development of Europe."
     },
     {
       "id": "ehl-seminaarinmaki-campus-finland",
@@ -1796,10 +2052,14 @@
           "longitude": 25.7472,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Based on the tradition of the first Finnish-speaking teachers’ college created in 1863, the school transforms into the multidisciplinary University of Jyväskylä (JYU) in the twentieth century. It represents the Finnish education system and the high-quality teachers’ training promoting equality of all people. The Seminaarinmäki Campus provides a foundation for a democratic European social system that prevents social exclusion and maintains diversity and peaceful coexistence of people."
     },
     {
       "id": "ehl-ventotene-italy",
@@ -1810,7 +2070,7 @@
       ],
       "officialCommissionUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/ventotene-italy",
       "officialWebsite": null,
-      "wikidataId": null,
+      "wikidataId": "Q128230",
       "transnational": false,
       "serial": false,
       "locations": [
@@ -1824,10 +2084,14 @@
           "longitude": 13.4306,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": "Q128230",
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "single-entity",
+      "officialSummary": "An area of confinement since ancient times, Ventotene has always been a place where cultures meet, becoming a political laboratory for reflection on European values of democracy and freedom. The outcome of this encounter was the Ventotene Manifesto, which, by envisaging a federal government, laid the foundations for the modern idea of a united Europe. The Ventotene Manifesto, officially entitled “For a free and United Europe”, was signed in 1941 by Altiero Spinelli and Ernesto Rossi who both were kept in the prison camp in Ventotene that was built in 1939 to exile opponents of the fascist regime. The Ventotene Manifesto is a key document, encompassing values such as democracy, solidarity and freedom into a future foundation of a common and strong Europe. ​Nowadays, the city of Ventotene continues to develop initiatives that confirm this role so as to become a place of education on Europe and of reflection on how to develop the federalist perspective suggested in the Manifesto itself."
     },
     {
       "id": "ehl-migratiemuseummigration-mmm-belgium",
@@ -1852,10 +2116,14 @@
           "longitude": 4.3437,
           "coordinateSourceUrl": "https://en.wikipedia.org/wiki/MigratieMuseumMigration",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "MigratieMuseumMigration (MMM) is a project by Foyer vzw, opened in 2019 at Molenbeek (Brussels) in a typical migration ”arrival area” in the Brussels canal zone. The MMM gives a clear view of the various waves of migrants and refugees to Europe after WW2. It shows how migrants and migration have contributed substantially to the development and promotion of Europe, especially on common values such as multicultural diversity and multilingualism that underpin European integration."
     },
     {
       "id": "ehl-cisterscapes",
@@ -1884,7 +2152,9 @@
           "longitude": 10.4919,
           "coordinateSourceUrl": "https://cisterscapes.eu/en/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-cisterscapes-loc-2",
@@ -1896,7 +2166,9 @@
           "longitude": 15.3389,
           "coordinateSourceUrl": "https://cisterscapes.eu/en/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-cisterscapes-loc-3",
@@ -1908,7 +2180,9 @@
           "longitude": 14.3167,
           "coordinateSourceUrl": "https://cisterscapes.eu/en/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-cisterscapes-loc-4",
@@ -1920,7 +2194,9 @@
           "longitude": 17.1958,
           "coordinateSourceUrl": "https://cisterscapes.eu/en/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-cisterscapes-loc-5",
@@ -1932,10 +2208,14 @@
           "longitude": 14.8083,
           "coordinateSourceUrl": "https://cisterscapes.eu/en/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "transnational-network",
+      "officialSummary": "The site Cisterscapes – Cistercian Landscapes Connecting Europe is a transnational site which connects 17 monastic landscapes in Germany, Austria, Czechia, Poland, Slovenia.\n\nThe Cistercian monastic Order, derived from the Benedictines and founded in Citeaux (France), in 1098 has spread widely throughout Europe, especially in Central Europe from the Morimond lineage.\n\nThey made major contributions to culture and technology in medieval Europe, funding abbeys in many European countries under the principle of economic self-sufficiency. In Sharing knowledge and practices is part of the Cistercians model as the abbeys established cross-border culture, bringing a common identity and narrative through a “uniform and unifying structure of organisation, economy, and landscape”.\n\nThe Cisterscapes network has, therefore, a historic pan-European nature, contributed to European history and integration and contributed to shaping some of the European values, such as the balance between unity and diversity, and the sustainable use of natural resources."
     },
     {
       "id": "ehl-monastery-of-san-jeronimo-de-yuste",
@@ -1960,10 +2240,14 @@
           "longitude": -5.7889,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Monastery of San Jerónimo de Yuste, managed by the public body Patrimonio Nacional, is located in the province of Cáceres, in the autonomous community of Extremadura, Spain.\n\nIt was founded by the Hieronymite Order in 1402. In 1556, Charles V, the Holy Roman Emperor settled here after his abdication and remained until his death two years later. A palace was built for him and his court, which is now integral part of the site, along with surrounding gardens.\n\nThe activity of the Yuste Foundation, which has its headquarters at the site, is aimed at promoting European integration and values such as democracy or respect for human rights. Its work includes debating on the current and future challenges of the European Union and its relationship with Ibero-America. Its flagship project is the Carlos V European Award given to prominent European leaders and politicians."
     },
     {
       "id": "ehl-our-lord-in-the-attic-museum",
@@ -1988,10 +2272,14 @@
           "longitude": 4.8975,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The hidden church at Amsterdam’s Our Lord in the Attic Museum testifies how freedom of conscience and religion in Europe in the XVII century that was guaranteed in several European treaties intended to end the cycle of war and violence and laid the foundation for the free democracy in Europe.\n\nFreedom of thought, conscience and religion are central to the European idea of rule of law, anchored in Article 9 of the European Convention on Human Rights. Europe has a long history of religious strife, to which the many examples of hidden places of worship attest."
     },
     {
       "id": "ehl-royal-theatre-toone",
@@ -2016,10 +2304,14 @@
           "longitude": 4.3542,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "As puppet theatres, where “poechenelles” (puppets) replaced actors, became places of popular entertainment, they used their satirical messages to create a space for freedom of expression during the period of oppression in former Flanders. Thus, the Royal Theatre Toone transmits and maintains not only the rod marionette art but also the associated freedom of expression."
     },
     {
       "id": "ehl-the-kalevala-living-epic-heritage",
@@ -2044,10 +2336,14 @@
           "longitude": 29.5158,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Kalevala is one of the most influential epics of 19th century, it is based on Karelian and Finnish vernacular tradition and influenced the nation building in Finland.\n\nThe publication of the Kalevala was part of the transnational movement of National Romanticism, which led to the search for specific mythologies for all European nations.\n\nToday, the Kalevala is a source of inspiration for contemporary European culture, including popular forms of youth culture (metal music, fantasy literature, tattoos). While the Kalevala is highly respected as heritage of Finland, it also showcases the interchange and multi-layered nature of European cultures and identities."
     },
     {
       "id": "ehl-romanian-athenaeum",
@@ -2072,10 +2368,14 @@
           "longitude": 26.0973,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Romanian Athenaeum is a major Bucharest landmark. It was built by the Romanian Athenaeum Society at the end of the 19th century to host a public library, conferences, classical music concerts, exhibitions, and other cultural-artistic activities as part of its mission to spread culture by any means.\n\nSince 1889, the Athenaeum has been home to the Romanian Philharmonic Society (now the “George Enescu” Philharmonic), founded nearly two decades previously to disseminate musical culture and popularize the masterpieces of classical composers. These cultural societies and their emblematic building are part of the modernisation process in the United Principalities of Romania, declared a Kingdom in 1881 after gaining state independence from the Ottoman Empire at the end of the Russo-Turkish War (1877-1878).\n\nHosting concerts by great European composers and orchestras, the Romanian Athenaeum has been instrumental in disseminating European classical music since its creation. Since 1958, the Romanian Athenaeum has been hosting one of the world’s most important classical music events, the \"George Enescu\" International Festival and Competition, named in honor of the great Romanian composer.\n\nThe Athenaeum also hosts public lectures by Nobel Prize laureates, renowned writers, and professionals from all over Europe, highlighting democracy and European values, and promoting culture and science."
     },
     {
       "id": "ehl-santanna-di-stazzema",
@@ -2100,10 +2400,14 @@
           "longitude": 10.3222,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Sant’Anna di Stazzema is a site of remembrance. It is a small village located in the hinterland of the Tuscan Apennines where, on 12 August 1944, one of the most dramatic civilian bloodsheds of World War II took place. Over 500 people, including 130 children, were fiercely killed by an SS Division. This tragic event is commemorated every year.\n\nNowadays, Sant'Anna di Stazzema hosts the National Park of Peace, founded in year 2000, with the aim of keeping the memory alive and the purpose of educating the new generation in the values of democracy, justice and respect among people and Nations.\n\nThe Park hosts more than 30,000 visitors on a yearly basis with 250 school visits and it organises debates, workshops and exhibitions focusing on remembrance and peace."
     },
     {
       "id": "ehl-the-landeszeughaus",
@@ -2128,10 +2432,14 @@
           "longitude": 15.4383,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Landeszeughaus in Graz, the world’s largest preserved historical armoury, is repositioned through its European Heritage Label project as an active European site of reflection, education and cooperation.\n\nBuilding on its role as a former crossroads of Central and South-Eastern Europe, the site uses its history of conflict to address shared European values today. By linking preservation, education and transnational collaboration, the Landeszeughaus contributes to Europe as a common cultural space—transforming a legacy of war into a platform for dialogue, learning and peace."
     },
     {
       "id": "ehl-domain-royal-museum-of-mariemont",
@@ -2156,10 +2464,14 @@
           "longitude": 4.2461,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Domain & Royal Museum of Mariemont is a key European site for interpreting power, culture and exchange across time. Building on its Renaissance origins as a Habsburg residence and its transformation into a public museum of world cultures, the project translates this layered history into concrete European action.\n\nFlagship exhibitions, notably Mary of Hungary. Art & Power in the Renaissance, connect Mariemont to major European research, lending institutions and cultural programmes. Through multilingual interpretation, digital innovation, education programmes for young people, and cooperation within European cultural routes and Creative Europe projects, Mariemont strengthens access to our shared European heritage."
     },
     {
       "id": "ehl-provadia-salt-production-and-urban-centre",
@@ -2184,10 +2496,14 @@
           "longitude": 27.4361,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Provadia Salt-Production and Urban Centre is repositioned through its European Heritage Label project as a key reference point for understanding Europe’s earliest economic, technological and social networks. As one of the oldest salt-production and fortified urban centres in Europe, the site demonstrates how shared resources, innovation and long-distance trade shaped early European connections.\n\nThe action plan brings clear European added value through multilingual digital interpretation, innovative use of AR and 3D visualisations, and the creation of a European-focused Visitor Centre linking salt production to the emergence of trade routes and early urban societies across the Balkans and beyond.\n\nBy developing European Salt Routes, Provadia contributes to our understanding of Europe as a space of shared origins—highlighting how cooperation, exchange and technological innovation laid the foundations of European civilisation."
     },
     {
       "id": "ehl-free-speech-space",
@@ -2212,7 +2528,9 @@
           "longitude": 14.4378,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/free-speech-space",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-free-speech-space-loc-2",
@@ -2224,10 +2542,14 @@
           "longitude": 14.9875,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label/european-heritage-label-sites/free-speech-space",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "serial-site",
+      "officialSummary": "Free Speech Space is a thematic site that brings together 14 landmark places across Czechia to tell a European story of resistance to censorship and the struggle for freedom of expression under 20th-century totalitarian regimes. The site functions as a networked European space of remembrance, reflecting experiences common to many countries across Europe during the Cold War and beyond.\n\nThe action plan addresses contemporary European challenges such as disinformation, media freedom and democratic resilience. By operating as a connected European site Free Speech Space demonstrates how freedom of expression is a shared European achievement and responsibility, reinforcing democracy, human rights and pluralism at a continental scale."
     },
     {
       "id": "ehl-pader-urban-river-landscape",
@@ -2252,10 +2574,14 @@
           "longitude": 8.7619,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": true
+          "representativePoint": true,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Pader Urban River Landscape is a thematic European Heritage Label site that interprets Europe’s long and shared history of living with water through a concentrated urban river system. Although located in Paderborn, the site brings together many places along the Pader river to address water management, technical innovation and sustainable use as a common European challenge.\n\nThrough its European Heritage Label action plan, the site functions as a European laboratory for water culture, connecting heritage, science, education and civic engagement. The “Pader for Europe” programme links local learning sites to European universities, cultural institutions and Erasmus+ projects, sharing knowledge across borders on sustainable urban water management. By combining multilingual digital tools, immersive technologies and education programmes for young people, the site contributes to Europe as a shared space of ecological responsibility, historical awareness and sustainable futures."
     },
     {
       "id": "ehl-la-nau-cultural-centre",
@@ -2280,10 +2606,14 @@
           "longitude": -0.3763,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The La Nau Cultural Centre embodies the European intellectual tradition that emerged from Renaissance humanism and continues to shape Europe’s cultural and democratic life. Founded in 1499 as the historic seat of the University of Valencia, La Nau has for more than five centuries been a place of learning, debate and cultural transmission closely connected to major European intellectual movements.\n\nClosely associated with figures such as Luis Vives, whose ideas circulated widely across Europe alongside those of Erasmus and Thomas More, La Nau reflects the spread of humanist thought and civic responsibility that underpinned the development of European universities.\n\nToday, as a living university heritage site, La Nau represents Europe’s shared commitment to education, critical thinking and cultural dialogue. It illustrates how universities have functioned as transnational spaces of ideas, values and innovation, contributing decisively to the formation of a common European intellectual and cultural identity."
     },
     {
       "id": "ehl-the-industrial-heritage-of-varkaus",
@@ -2308,10 +2638,14 @@
           "longitude": 27.8833,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Varkaus embodies a shared European story of industrialisation, social reform and community-building from the late 19th century to the present. Emerging as an industrial town in a remote, water-rich region of eastern Finland, Varkaus illustrates how industrial development reshaped Europe’s peripheral areas through technology, labour mobility and new social models.\n\nThe industrial community of Varkaus was shaped by ideas that circulated widely across Europe: improved living conditions for workers, access to education and healthcare, and the integration of culture and civic life into industrial environments. The town’s urban planning and housing reforms, including the early adoption of affordable, functional housing designed by Alvar Aalto, reflect broader European debates on social welfare, modern living and human-centred design.\n\nVarkaus also represents Europe’s transition from heavy industry to sustainability with its evolution from traditional manufacturing to circular-economy practices."
     },
     {
       "id": "ehl-rashi-of-troyes-places-of-remembrance",
@@ -2336,7 +2670,9 @@
           "longitude": 4.0744,
           "coordinateSourceUrl": "https://gip-rachi.eu/en/european-heritage-label-award/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-rashi-of-troyes-places-of-remembrance-loc-2",
@@ -2348,10 +2684,14 @@
           "longitude": 4.2681,
           "coordinateSourceUrl": "https://gip-rachi.eu/en/european-heritage-label-award/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "serial-site",
+      "officialSummary": "Rashi of Troyes represents one of the most enduring intellectual legacies of medieval Europe. Born in the 11th century in Troyes, Rashi (Rabbi Shlomo Yitzhaki) produced foundational commentaries on the Hebrew Bible and the Talmud that spread rapidly across Europe and have been studied continuously for nearly a thousand years. His works circulated through extensive manuscript networks reaching far beyond present-day France, shaping Jewish learning from Western to Eastern Europe.\n\nBeyond theology, Rashi’s legacy conveys values central to Europe’s historical development: respect for learning, freedom of interpretation, tolerance and the transmission of knowledge across generations and borders. The places associated with Rashi in Troyes preserve the memory of Jewish presence as an integral part of European history, highlighting the contribution of Jewish thought and culture to Europe’s pluralistic identity from the Middle Ages to the present."
     },
     {
       "id": "ehl-places-of-peace",
@@ -2381,7 +2721,9 @@
           "longitude": 15.2313,
           "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-places-of-peace-loc-2",
@@ -2393,7 +2735,9 @@
           "longitude": 27.0308,
           "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-places-of-peace-loc-3",
@@ -2405,7 +2749,9 @@
           "longitude": -8.1544,
           "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-places-of-peace-loc-4",
@@ -2417,7 +2763,9 @@
           "longitude": -7.6669,
           "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-places-of-peace-loc-5",
@@ -2429,7 +2777,9 @@
           "longitude": -6.3897,
           "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-places-of-peace-loc-6",
@@ -2441,7 +2791,9 @@
           "longitude": 16.7911,
           "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         },
         {
           "id": "ehl-places-of-peace-loc-7",
@@ -2453,10 +2805,14 @@
           "longitude": 18.0367,
           "coordinateSourceUrl": "https://placesofpeace.eu/ehl/",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "transnational-network",
+      "officialSummary": "Places of Peace is a transnational European heritage ensemble linking sites across Portugal, Spain, Hungary, Slovakia, Croatia and Bulgaria where peace treaties were concluded between the 13th and 19th centuries. Together, these places bear witness to Europe’s long and complex history of conflict resolution, diplomacy and negotiated coexistence across borders.\n\nAlthough rooted in diverse political, cultural and architectural contexts, the sites are united by their role in formalising peace agreements that reshaped territories, power relations and systems of governance throughout Europe. These treaties introduced principles of dialogue, compromise and legal order that gradually replaced violent confrontation as a means of resolving disputes between states and communities.\n\nAs a collective heritage site, Places of Peace illustrates peace not as a single event but as a recurring European process. The ensemble highlights the emergence of diplomacy, international law and mutual recognition as shared foundations of European history, underscoring peace as one of Europe’s most enduring and defining values."
     },
     {
       "id": "ehl-bosco-delle-querce",
@@ -2481,10 +2837,14 @@
           "longitude": 9.1428,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "Bosco delle Querce, located in Seveso and Meda in northern Italy, is a powerful European symbol of environmental responsibility and collective resilience. The park was created on land contaminated by the 1976 ICMESA industrial accident, one of the most serious environmental disasters in modern European history. What was once a site of ecological devastation has been transformed into a protected natural park and a place of memory.\n\nThe Seveso disaster marked a turning point in Europe’s approach to industrial risk and environmental protection. It directly contributed to the development of the Seveso Directive, a cornerstone of European legislation on industrial safety and the prevention of major accidents. Bosco delle Querce thus represents the translation of tragedy into shared European learning, regulation and environmental awareness.\n\nAs a regenerated landscape, the park embodies Europe’s capacity to respond collectively to crisis through science, policy and civic engagement. It stands as a tangible reminder that environmental protection, public health and sustainability are central to Europe’s common responsibility and future."
     },
     {
       "id": "ehl-saint-pauls-catacombs",
@@ -2509,10 +2869,14 @@
           "longitude": 14.4014,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "St. Paul’s Catacombs constitute one of the most extensive and complex early Christian burial sites in the Mediterranean. Developed from the Punic and Roman periods and continuously reused through Late Antiquity and the Middle Ages, the catacombs reflect Malta’s position at the crossroads of European and Mediterranean cultures.\n\nThe site is exceptional for illustrating the coexistence of different religious communities over time. Polytheist, Jewish and Christian burial practices are all present within the same underground complex, demonstrating a space shaped by tolerance, interaction and gradual cultural transformation. Inscriptions, burial forms and ritual practices reveal a layered history of belief, equality in death and social inclusion, regardless of gender or age.\n\nSt. Paul’s Catacombs also bear witness to the wider European process of Christianisation and the transmission of religious traditions across borders."
     },
     {
       "id": "ehl-krzysztof-penderecki-european-centre-for-music",
@@ -2537,10 +2901,14 @@
           "longitude": 20.6167,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Krzysztof Penderecki European Centre for Music embodies Europe’s rich musical heritage as a space of creation, transmission and intercultural dialogue. Located in Lusławice, the site is closely associated with composer and conductor Krzysztof Penderecki, one of the most influential figures in European contemporary music. His work bridged avant-garde experimentation with deep engagement in Europe’s musical traditions, resonating across borders during the Cold War and beyond.\n\nPenderecki’s music emerged from and responded to Europe’s 20th-century history, shaped by war, totalitarianism and the search for artistic freedom. Performed and commissioned throughout Europe, his compositions became part of a shared European soundscape, engaging with universal themes of memory, suffering, reconciliation and human dignity."
     },
     {
       "id": "ehl-lagar-velho-rockshelter",
@@ -2565,10 +2933,14 @@
           "longitude": -8.7972,
           "coordinateSourceUrl": "https://culture.ec.europa.eu/cultural-heritage/initiatives-and-success-stories/european-heritage-label",
           "coordinateConfidence": "verified",
-          "representativePoint": false
+          "representativePoint": false,
+          "wikidataId": null,
+          "officialUrl": null
         }
       ],
-      "importedAt": "2026-07-27T14:46:47.593Z"
+      "importedAt": "2026-07-27T14:46:47.593Z",
+      "entityIdentityType": "official-only",
+      "officialSummary": "The Lagar Velho Rockshelter, located in the Lapedo Valley in central Portugal, is one of Europe’s most significant prehistoric archaeological sites. Dating to around 29,000 years ago, it is best known for the discovery of the burial of the “Lapedo Child,” one of the most important human remains ever found in Europe from the Upper Palaeolithic period.\n\nThe child’s skeleton displays a unique combination of anatomical features associated with both anatomically modern humans and Neanderthals. This discovery transformed scientific understanding of human evolution in Europe, demonstrating that interaction and interbreeding between populations played a key role in the formation of early European communities.\n\nLagar Velho Rockshelter represents Europe’s deep biological and cultural interconnectedness. It shows that diversity, integration and cultural exchange are not modern phenomena but foundational elements of European identity, rooted in the continent’s earliest human history."
     }
   ],
   "unresolved": []

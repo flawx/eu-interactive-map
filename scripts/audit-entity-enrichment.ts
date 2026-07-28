@@ -14,6 +14,7 @@ type AuditedItem = {
   dataset: string;
   id: string;
   expected: ExpectedEntity;
+  qidRequired?: boolean;
 };
 
 type AuditResult = Awaited<ReturnType<typeof auditExpectedEntities>>[number];
@@ -111,12 +112,18 @@ const items: AuditedItem[] = [
       expected: {
         wikidataId: site.wikidataId,
         canonicalName: site.canonicalName,
-        aliases: site.locations.map((location) => location.name),
+        aliases: site.locations.flatMap((location) => [
+          location.name,
+          location.name
+            .replace(/^the historic\s+/i, "")
+            .replace(/^village of\s+/i, ""),
+        ]),
         countryCode: site.countryCodes.length === 1 ? site.countryCodes[0] : null,
         latitude: representative?.latitude ?? null,
         longitude: representative?.longitude ?? null,
         distanceThresholdKm: site.serial || site.transnational ? 150 : 60,
       },
+      qidRequired: site.entityIdentityType === "single-entity",
     };
   }),
 ];
@@ -161,8 +168,11 @@ async function main(): Promise<void> {
   const anomalies = items.flatMap((item, index) => {
     const result = completedResults[index];
     const reasons: string[] = [];
-    if (!item.expected.wikidataId) reasons.push("missing_qid");
-    else if (!result.validQid) reasons.push("invalid_qid");
+    if (!item.expected.wikidataId) {
+      if (item.qidRequired) reasons.push("missing_qid");
+    } else if (!result.validQid) {
+      reasons.push("invalid_qid");
+    }
     if (result.validQid && !result.nameMatches) reasons.push("name_mismatch");
     if (result.validQid && !result.countryMatches) reasons.push("country_mismatch");
     if (
@@ -171,7 +181,13 @@ async function main(): Promise<void> {
     ) {
       reasons.push(`coordinate_mismatch_${Math.round(result.distanceKm)}km`);
     }
-    if (result.validQid && !result.hasSitelink) reasons.push("missing_sitelink");
+    if (
+      item.dataset !== "europeanHeritageLabel" &&
+      result.validQid &&
+      !result.hasSitelink
+    ) {
+      reasons.push("missing_sitelink");
+    }
     return reasons.length
       ? [{ dataset: item.dataset, id: item.id, qid: item.expected.wikidataId, reasons }]
       : [];

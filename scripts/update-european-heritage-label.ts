@@ -1185,6 +1185,15 @@ async function main() {
   const sites: EuropeanHeritageLabelSite[] = [];
   const unresolved: EuropeanHeritageLabelUnresolvedEntry[] = [];
   const usedIds = new Set<string>();
+  const previousSitesById = new Map<string, EuropeanHeritageLabelSite>();
+  if (fs.existsSync(OUTPUT_PATH)) {
+    const previousDataset = JSON.parse(
+      fs.readFileSync(OUTPUT_PATH, "utf8"),
+    ) as EuropeanHeritageLabelDataset;
+    for (const site of previousDataset.sites ?? []) {
+      previousSitesById.set(site.id, site);
+    }
+  }
 
   for (const entry of scraped) {
     const slug = slugFromHref(entry.href);
@@ -1204,6 +1213,7 @@ async function main() {
       suffix += 1;
     }
     usedIds.add(id);
+    const previousSite = previousSitesById.get(id);
 
     const officialCommissionUrl = entry.href
       ? entry.href.startsWith("http")
@@ -1224,8 +1234,11 @@ async function main() {
         awardYear: entry.year,
         countryCodes: [],
         officialCommissionUrl,
-        officialWebsite: null,
-        wikidataId: null,
+        officialWebsite: previousSite?.officialWebsite ?? null,
+        wikidataId: previousSite?.wikidataId ?? null,
+        entityIdentityType:
+          previousSite?.entityIdentityType ?? "official-only",
+        officialSummary: previousSite?.officialSummary ?? null,
         transnational: false,
         serial: false,
         locations: [],
@@ -1235,28 +1248,52 @@ async function main() {
     }
 
     const locations: EuropeanHeritageLabelLocation[] = curated.locations.map(
-      (loc, index) => ({
-        id: `${id}-loc-${index + 1}`,
-        siteId: id,
-        name: loc.name,
-        cityOrRegion: loc.cityOrRegion,
-        countryCode: loc.countryCode,
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        coordinateSourceUrl: loc.coordinateSourceUrl,
-        coordinateConfidence: loc.coordinateConfidence,
-        representativePoint: loc.representativePoint ?? false,
-      }),
+      (loc, index) => {
+        const locationId = `${id}-loc-${index + 1}`;
+        const previousLocation =
+          previousSite?.locations.find((item) => item.id === locationId) ??
+          previousSite?.locations.find(
+            (item) =>
+              item.name === loc.name && item.countryCode === loc.countryCode,
+          );
+        return {
+          id: locationId,
+          siteId: id,
+          name: loc.name,
+          cityOrRegion: loc.cityOrRegion,
+          countryCode: loc.countryCode,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          coordinateSourceUrl: loc.coordinateSourceUrl,
+          coordinateConfidence: loc.coordinateConfidence,
+          representativePoint: loc.representativePoint ?? false,
+          wikidataId: previousLocation?.wikidataId ?? null,
+          officialUrl: previousLocation?.officialUrl ?? null,
+        };
+      },
     );
 
+    const wikidataId =
+      previousSite?.wikidataId ?? curated.wikidataId ?? null;
     sites.push({
       id,
       canonicalName: entry.name,
       awardYear: entry.year,
       countryCodes: curated.countryCodes,
       officialCommissionUrl,
-      officialWebsite: curated.officialWebsite ?? null,
-      wikidataId: curated.wikidataId ?? null,
+      officialWebsite:
+        previousSite?.officialWebsite ?? curated.officialWebsite ?? null,
+      wikidataId,
+      entityIdentityType:
+        previousSite?.entityIdentityType ??
+        (curated.countryCodes.length > 1
+          ? "transnational-network"
+          : locations.length > 1
+            ? "serial-site"
+            : wikidataId
+              ? "single-entity"
+              : "official-only"),
+      officialSummary: previousSite?.officialSummary ?? null,
       transnational: curated.countryCodes.length > 1,
       serial: locations.length > 1,
       locations,

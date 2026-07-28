@@ -1,4 +1,7 @@
-import { getEuropeanHeritageLabelSiteById } from "@/lib/tourism/europeanHeritageLabel";
+import {
+  getEuropeanHeritageLabelSiteById,
+  type EuropeanHeritageLabelLocation,
+} from "@/lib/tourism/europeanHeritageLabel";
 import type {
   EuropeanHeritageLabelDetails,
   EuropeanHeritageLabelImage,
@@ -13,53 +16,11 @@ import { getMessages } from "@/lib/i18n/messages";
 import {
   ENTITY_RESOLVER_VERSION,
   resolveEntityEnrichment,
+  type ResolvedEntityEnrichment,
 } from "@/lib/enrichment/wikimediaEntityResolver";
 
-const USER_AGENT =
-  "EUInteractiveMap/0.1 (educational; contact: local-dev)";
-const FETCH_TIMEOUT_MS = 10_000;
 const CACHE_CONTROL =
   "public, s-maxage=86400, stale-while-revalidate=604800";
-const REVALIDATE_SECONDS = 86_400;
-
-const PHOTO_EXCLUSION_TERMS = [
-  "flag",
-  "coat of arms",
-  "coat_of_arms",
-  "emblem",
-  "logo",
-  "locator",
-  "location map",
-  "blank map",
-  "icon",
-  "signature",
-  "symbol",
-  "map.svg",
-  "diagram",
-  "portrait",
-] as const;
-
-/**
- * Loose keyword heuristic used to decide whether a Wikipedia extract
- * genuinely discusses the site's European significance / the European
- * Heritage Label itself, rather than just being a generic description.
- * We never fabricate this field from the site name alone.
- */
-const EUROPEAN_SIGNIFICANCE_MARKERS = [
-  "european heritage label",
-  "european significance",
-  "european integration",
-  "european identity",
-  "european history",
-  "european union",
-  "symbol of europe",
-  "european ideal",
-  "european values",
-  "history of europe",
-  "european unification",
-  "construction of europe",
-  "european citizenship",
-] as const;
 
 function resolveLocale(requested: string | null): Locale {
   return (
@@ -67,297 +28,35 @@ function resolveLocale(requested: string | null): Locale {
   );
 }
 
-function isAllowedWikipediaLang(lang: string): boolean {
-  return lang === "en" || supportedLocales.includes(lang as Locale);
+function truncate(value: string | null, max = 900): string | null {
+  if (!value) return null;
+  return value.length <= max
+    ? value
+    : `${value.slice(0, max).trim()}…`;
 }
 
-function stripHtml(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const cleaned = value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return cleaned || null;
-}
-
-function metadataValue(
-  extmetadata: Record<string, unknown> | null,
-  key: string,
-): string | null {
-  if (!extmetadata || !(key in extmetadata)) return null;
-  const entry = extmetadata[key];
-  if (!entry || typeof entry !== "object" || !("value" in entry)) return null;
-  return stripHtml(entry.value);
-}
-
-function truncateDescription(value: string, max = 900): string {
-  if (value.length <= max) return value;
-  return `${value.slice(0, max).trim()}…`;
-}
-
-/**
- * Returns a truncated excerpt of the extract only when it actually mentions
- * European significance / the Label itself — otherwise null. Never invented
- * from the site name.
- */
-function extractEuropeanSignificance(extract: string | null): string | null {
-  if (!extract) return null;
-  const normalized = extract.toLowerCase();
-  const mentioned = EUROPEAN_SIGNIFICANCE_MARKERS.some((marker) =>
-    normalized.includes(marker),
-  );
-  if (!mentioned) return null;
-  return truncateDescription(extract, 600);
-}
-
-function buildLocalDetails(
-  site: ReturnType<typeof getEuropeanHeritageLabelSiteById>,
-  locale: Locale,
-): EuropeanHeritageLabelDetails {
-  if (!site) {
-    throw new Error("Unknown European Heritage Label site");
-  }
-  const t = getMessages(locale).ehlPanel;
+function expectedLocation(location: EuropeanHeritageLabelLocation) {
   return {
-    siteId: site.id,
-    name: site.canonicalName,
-    awardYear: site.awardYear,
-    countryCodes: [...site.countryCodes],
-    transnational: site.transnational,
-    serial: site.serial,
-    europeanSignificance: null,
-    description: null,
-    wikipediaUrl: null,
-    images: [],
-    sources: [
-      { label: t.dataCommission, url: site.officialCommissionUrl },
-    ],
-    fetchedAt: new Date().toISOString(),
+    wikidataId: location.wikidataId,
+    canonicalName: location.name,
+    aliases: [location.cityOrRegion],
+    countryCode: location.countryCode,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    expectedTypes: ["historic_area"],
+    distanceThresholdKm: 10,
   };
 }
 
-async function fetchWikipediaSummary(
-  lang: string,
-  title: string,
-): Promise<{
-  extract: string | null;
-  wikipediaUrl: string | null;
-  image: EuropeanHeritageLabelImage | null;
-}> {
-  const empty = { extract: null, wikipediaUrl: null, image: null };
-  if (!isAllowedWikipediaLang(lang)) return empty;
-
-  try {
-    const response = await fetch(
-      `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
-      {
-        headers: { Accept: "application/json", "User-Agent": USER_AGENT },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        next: { revalidate: REVALIDATE_SECONDS },
-      },
-    );
-    if (!response.ok) return empty;
-    const data: unknown = await response.json();
-    if (!data || typeof data !== "object") return empty;
-
-    const extract =
-      "extract" in data &&
-      typeof data.extract === "string" &&
-      data.extract.trim()
-        ? data.extract.trim()
-        : null;
-
-    const desktopPage =
-      "content_urls" in data &&
-      data.content_urls &&
-      typeof data.content_urls === "object" &&
-      "desktop" in data.content_urls &&
-      data.content_urls.desktop &&
-      typeof data.content_urls.desktop === "object" &&
-      "page" in data.content_urls.desktop &&
-      typeof data.content_urls.desktop.page === "string"
-        ? data.content_urls.desktop.page
-        : null;
-
-    const wikipediaUrl =
-      desktopPage?.startsWith(`https://${lang}.wikipedia.org/`)
-        ? desktopPage
-        : `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title)}`;
-
-    let image: EuropeanHeritageLabelImage | null = null;
-    const original =
-      "originalimage" in data &&
-      data.originalimage &&
-      typeof data.originalimage === "object"
-        ? data.originalimage
-        : null;
-    const thumbnail =
-      "thumbnail" in data &&
-      data.thumbnail &&
-      typeof data.thumbnail === "object"
-        ? data.thumbnail
-        : null;
-    const imageSource = original ?? thumbnail;
-    if (
-      imageSource &&
-      "source" in imageSource &&
-      typeof imageSource.source === "string" &&
-      imageSource.source.startsWith("https://")
-    ) {
-      image = {
-        url: imageSource.source,
-        thumbnailUrl:
-          thumbnail &&
-          "source" in thumbnail &&
-          typeof thumbnail.source === "string"
-            ? thumbnail.source
-            : null,
-        width:
-          "width" in imageSource && typeof imageSource.width === "number"
-            ? imageSource.width
-            : null,
-        height:
-          "height" in imageSource && typeof imageSource.height === "number"
-            ? imageSource.height
-            : null,
-        title: null,
-        author: null,
-        license: null,
-        licenseUrl: null,
-        sourceUrl: wikipediaUrl,
-      };
-    }
-
-    return { extract, wikipediaUrl, image };
-  } catch {
-    return empty;
-  }
-}
-
-async function fetchWikipediaPhotos(
-  lang: string,
-  title: string,
-): Promise<EuropeanHeritageLabelImage[]> {
-  if (!isAllowedWikipediaLang(lang)) return [];
-
-  try {
-    const params = new URLSearchParams({
-      action: "query",
-      format: "json",
-      formatversion: "2",
-      generator: "images",
-      titles: title,
-      gimlimit: "40",
-      prop: "imageinfo",
-      iiprop: "url|mime|size|extmetadata",
-      iiurlwidth: "1200",
-      iiextmetadatafilter: "Artist|LicenseShortName|LicenseUrl",
-      origin: "*",
-    });
-
-    const response = await fetch(
-      `https://${lang}.wikipedia.org/w/api.php?${params.toString()}`,
-      {
-        headers: { Accept: "application/json", "User-Agent": USER_AGENT },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        next: { revalidate: REVALIDATE_SECONDS },
-      },
-    );
-    if (!response.ok) return [];
-
-    const photosData: unknown = await response.json();
-    if (
-      !photosData ||
-      typeof photosData !== "object" ||
-      !("query" in photosData) ||
-      !photosData.query ||
-      typeof photosData.query !== "object" ||
-      !("pages" in photosData.query) ||
-      !Array.isArray(photosData.query.pages)
-    ) {
-      return [];
-    }
-
-    const uniquePhotos: EuropeanHeritageLabelImage[] = [];
-
-    for (const page of photosData.query.pages) {
-      if (!page || typeof page !== "object") continue;
-      const pageTitle =
-        "title" in page && typeof page.title === "string" ? page.title : null;
-      if (!pageTitle) continue;
-      const normalizedTitle = pageTitle.toLowerCase();
-      if (
-        PHOTO_EXCLUSION_TERMS.some((term) => normalizedTitle.includes(term))
-      ) {
-        continue;
-      }
-
-      const imageInfo =
-        "imageinfo" in page && Array.isArray(page.imageinfo)
-          ? page.imageinfo[0]
-          : null;
-      if (!imageInfo || typeof imageInfo !== "object") continue;
-
-      const mime =
-        "mime" in imageInfo && typeof imageInfo.mime === "string"
-          ? imageInfo.mime
-          : null;
-      if (
-        mime !== "image/jpeg" &&
-        mime !== "image/png" &&
-        mime !== "image/webp"
-      ) {
-        continue;
-      }
-
-      const thumburl =
-        "thumburl" in imageInfo && typeof imageInfo.thumburl === "string"
-          ? imageInfo.thumburl
-          : null;
-      const url =
-        "url" in imageInfo && typeof imageInfo.url === "string"
-          ? imageInfo.url
-          : null;
-      const photoUrl = thumburl ?? url;
-      if (!photoUrl?.startsWith("https://")) continue;
-      if (uniquePhotos.some((photo) => photo.url === photoUrl)) continue;
-
-      const extmetadata =
-        "extmetadata" in imageInfo &&
-        imageInfo.extmetadata &&
-        typeof imageInfo.extmetadata === "object"
-          ? (imageInfo.extmetadata as Record<string, unknown>)
-          : null;
-
-      const licenseUrlValue = metadataValue(extmetadata, "LicenseUrl");
-      const license = metadataValue(extmetadata, "LicenseShortName");
-      if (!license && !licenseUrlValue) continue;
-
-      uniquePhotos.push({
-        url: photoUrl,
-        thumbnailUrl: thumburl,
-        width:
-          "width" in imageInfo && typeof imageInfo.width === "number"
-            ? imageInfo.width
-            : null,
-        height:
-          "height" in imageInfo && typeof imageInfo.height === "number"
-            ? imageInfo.height
-            : null,
-        title: pageTitle.replace(/^File:/i, ""),
-        author: metadataValue(extmetadata, "Artist"),
-        license,
-        licenseUrl: licenseUrlValue,
-        sourceUrl: `https://commons.wikimedia.org/wiki/${encodeURIComponent(pageTitle)}`,
-      });
-
-      if (uniquePhotos.length >= 5) break;
-    }
-
-    return uniquePhotos;
-  } catch {
-    return [];
-  }
+function locationImages(
+  enrichment: ResolvedEntityEnrichment,
+  location: EuropeanHeritageLabelLocation,
+): EuropeanHeritageLabelImage[] {
+  return enrichment.images.map((image) => ({
+    ...image,
+    representedLocationId: location.id,
+    representedLocationName: location.name,
+  }));
 }
 
 export async function GET(
@@ -373,57 +72,103 @@ export async function GET(
     );
   }
 
-  const { searchParams } = new URL(request.url);
-  const locale = resolveLocale(searchParams.get("locale"));
+  const locale = resolveLocale(new URL(request.url).searchParams.get("locale"));
   const t = getMessages(locale).ehlPanel;
-  const details = buildLocalDetails(site, locale);
+  const signal = AbortSignal.any([
+    request.signal,
+    AbortSignal.timeout(15_000),
+  ]);
+  const sources: EuropeanHeritageLabelSource[] = [
+    { label: t.dataCommission, url: site.officialCommissionUrl },
+  ];
+  if (site.officialWebsite) {
+    sources.push({ label: t.officialWebsite, url: site.officialWebsite });
+  }
+
+  const locationDetails: EuropeanHeritageLabelDetails["locations"] =
+    site.locations.map((location) => ({
+      locationId: location.id,
+      name: location.name,
+      countryCode: location.countryCode,
+      cityOrRegion: location.cityOrRegion,
+      description: null,
+      wikipediaUrl: null,
+      officialUrl: location.officialUrl,
+    }));
+  const images: EuropeanHeritageLabelImage[] = [];
+  let description: string | null = null;
+  let wikipediaUrl: string | null = null;
 
   try {
-    const representative = site.locations.find((location) => location.representativePoint) ??
-      site.locations[0] ??
-      null;
-    const enrichment = await resolveEntityEnrichment(
-      {
-        wikidataId: site.wikidataId,
-        canonicalName: site.canonicalName,
-        aliases: site.locations.map((location) => location.name),
-        countryCode: site.countryCodes.length === 1 ? site.countryCodes[0] : null,
-        latitude: representative?.latitude ?? null,
-        longitude: representative?.longitude ?? null,
-        searchContext: `European Heritage Label ${site.countryCodes.join(" ")}`,
-        expectedTypes: ["historic_area"],
-        distanceThresholdKm: site.serial || site.transnational ? 150 : 60,
-      },
-      locale,
-      AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      5,
-    );
-    details.description = enrichment.entity?.extract
-      ? truncateDescription(enrichment.entity.extract)
-      : null;
-    details.europeanSignificance = extractEuropeanSignificance(
-      enrichment.entity?.extract ?? null,
-    );
-    details.images = enrichment.images;
-    const wikipediaUrl = enrichment.entity?.pageUrl ?? null;
-    details.wikipediaUrl = wikipediaUrl;
-
-    const sources: EuropeanHeritageLabelSource[] = [
-      { label: t.dataCommission, url: site.officialCommissionUrl },
-    ];
-    if (wikipediaUrl) {
-      sources.push({ label: t.wikipedia, url: wikipediaUrl });
+    if (site.entityIdentityType === "single-entity" && site.wikidataId) {
+      const location = site.locations[0];
+      const enrichment = await resolveEntityEnrichment(
+        {
+          ...expectedLocation(location),
+          wikidataId: site.wikidataId,
+          canonicalName: location.name,
+        },
+        locale,
+        signal,
+        5,
+      );
+      description = truncate(enrichment.entity?.extract ?? null);
+      wikipediaUrl = enrichment.entity?.pageUrl ?? null;
+      images.push(...locationImages(enrichment, location));
+      locationDetails[0].description = description;
+      locationDetails[0].wikipediaUrl = wikipediaUrl;
+    } else {
+      const enrichableLocations = site.locations
+        .filter((location) => location.wikidataId)
+        .slice(0, 5);
+      for (const location of enrichableLocations) {
+        if (signal.aborted) break;
+        const enrichment = await resolveEntityEnrichment(
+          expectedLocation(location),
+          locale,
+          signal,
+          1,
+        );
+        const detail = locationDetails.find(
+          (item) => item.locationId === location.id,
+        );
+        if (detail) {
+          detail.description = truncate(enrichment.entity?.extract ?? null, 500);
+          detail.wikipediaUrl = enrichment.entity?.pageUrl ?? null;
+        }
+        images.push(...locationImages(enrichment, location));
+      }
     }
-    if (details.images.some((image) => image.sourceUrl?.includes("commons"))) {
-      sources.push({
-        label: "Wikimedia Commons",
-        url: "https://commons.wikimedia.org/",
-      });
-    }
-    details.sources = sources;
   } catch {
-    // Keep local fallback.
+    // Official local data remains available when Wikimedia is unavailable.
   }
+
+  if (wikipediaUrl) {
+    sources.push({ label: t.wikipedia, url: wikipediaUrl });
+  }
+  if (images.some((image) => image.sourceUrl?.includes("commons.wikimedia"))) {
+    sources.push({
+      label: "Wikimedia Commons",
+      url: "https://commons.wikimedia.org/",
+    });
+  }
+
+  const details: EuropeanHeritageLabelDetails = {
+    siteId: site.id,
+    name: site.canonicalName,
+    awardYear: site.awardYear,
+    countryCodes: [...site.countryCodes],
+    transnational: site.transnational,
+    serial: site.serial,
+    entityIdentityType: site.entityIdentityType,
+    europeanSignificance: site.officialSummary,
+    description,
+    wikipediaUrl,
+    images,
+    locations: locationDetails,
+    sources,
+    fetchedAt: new Date().toISOString(),
+  };
 
   return Response.json(details, {
     headers: {
