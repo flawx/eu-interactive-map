@@ -66,6 +66,21 @@ export type MapLayerPreferences = {
   chemicalAccidents: boolean;
   industrialExplosions: boolean;
   otherTechnicalAccidents: boolean;
+  liveTrafficFlow: boolean;
+  roadTrafficIncidents: boolean;
+  trafficAccidents: boolean;
+  trafficMajorJams: boolean;
+  trafficBrokenVehicles: boolean;
+  trafficHazards: boolean;
+  trafficRoadWeather: boolean;
+  trafficOtherIncidents: boolean;
+  roadClosuresRestrictions: boolean;
+  trafficRoadClosures: boolean;
+  trafficLaneClosures: boolean;
+  trafficRestrictions: boolean;
+  roadworks: boolean;
+  trafficActiveRoadworks: boolean;
+  trafficPlannedRoadworks: boolean;
   schengenExternalBorderCrossings: boolean;
   schengenTemporaryInternalControls: boolean;
   borderCrossingRoad: boolean;
@@ -142,6 +157,21 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   chemicalAccidents: true,
   industrialExplosions: true,
   otherTechnicalAccidents: true,
+  liveTrafficFlow: false,
+  roadTrafficIncidents: false,
+  trafficAccidents: true,
+  trafficMajorJams: true,
+  trafficBrokenVehicles: true,
+  trafficHazards: true,
+  trafficRoadWeather: true,
+  trafficOtherIncidents: true,
+  roadClosuresRestrictions: false,
+  trafficRoadClosures: true,
+  trafficLaneClosures: true,
+  trafficRestrictions: true,
+  roadworks: false,
+  trafficActiveRoadworks: true,
+  trafficPlannedRoadworks: true,
   schengenExternalBorderCrossings: false,
   schengenTemporaryInternalControls: false,
   borderCrossingRoad: true,
@@ -223,6 +253,21 @@ const LAYER_KEYS = [
   "chemicalAccidents",
   "industrialExplosions",
   "otherTechnicalAccidents",
+  "liveTrafficFlow",
+  "roadTrafficIncidents",
+  "trafficAccidents",
+  "trafficMajorJams",
+  "trafficBrokenVehicles",
+  "trafficHazards",
+  "trafficRoadWeather",
+  "trafficOtherIncidents",
+  "roadClosuresRestrictions",
+  "trafficRoadClosures",
+  "trafficLaneClosures",
+  "trafficRestrictions",
+  "roadworks",
+  "trafficActiveRoadworks",
+  "trafficPlannedRoadworks",
   "schengenExternalBorderCrossings",
   "schengenTemporaryInternalControls",
   "borderCrossingRoad",
@@ -350,6 +395,21 @@ export function saveMapLayerPreferences(
       chemicalAccidents: Boolean(preferences.chemicalAccidents),
       industrialExplosions: Boolean(preferences.industrialExplosions),
       otherTechnicalAccidents: Boolean(preferences.otherTechnicalAccidents),
+      liveTrafficFlow: Boolean(preferences.liveTrafficFlow),
+      roadTrafficIncidents: Boolean(preferences.roadTrafficIncidents),
+      trafficAccidents: Boolean(preferences.trafficAccidents),
+      trafficMajorJams: Boolean(preferences.trafficMajorJams),
+      trafficBrokenVehicles: Boolean(preferences.trafficBrokenVehicles),
+      trafficHazards: Boolean(preferences.trafficHazards),
+      trafficRoadWeather: Boolean(preferences.trafficRoadWeather),
+      trafficOtherIncidents: Boolean(preferences.trafficOtherIncidents),
+      roadClosuresRestrictions: Boolean(preferences.roadClosuresRestrictions),
+      trafficRoadClosures: Boolean(preferences.trafficRoadClosures),
+      trafficLaneClosures: Boolean(preferences.trafficLaneClosures),
+      trafficRestrictions: Boolean(preferences.trafficRestrictions),
+      roadworks: Boolean(preferences.roadworks),
+      trafficActiveRoadworks: Boolean(preferences.trafficActiveRoadworks),
+      trafficPlannedRoadworks: Boolean(preferences.trafficPlannedRoadworks),
       schengenExternalBorderCrossings: Boolean(
         preferences.schengenExternalBorderCrossings,
       ),

@@ -1,0 +1,28 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [[4.21, 50.88], [4.28, 50.90]],
+          [[4.28, 50.90], [4.35, 50.91]]
+        ]
+      },
+      "properties": {
+        "id": "fixture-jam-e40",
+        "iconCategory": "jam",
+        "magnitudeOfDelay": "major",
+        "events": [{"code": 101, "description": "Stationary traffic", "iconCategory": "jam"}],
+        "startTime": "2026-07-28T07:50:00Z",
+        "from": "Brussels",
+        "to": "Leuven",
+        "lengthInMeters": 6200,
+        "delayInSeconds": 1080,
+        "roadNumbers": ["E40"],
+        "timeValidity": "present",
+        "lastReportTime": "2026-07-28T08:36:00Z"
+      }
+    }
+  ]
+}

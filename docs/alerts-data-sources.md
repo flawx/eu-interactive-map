@@ -169,3 +169,50 @@ Both connectors degrade safely: LHASA layers disappear while provider state
 remains visible, and reliable local Copernicus activation data is rendered
 immediately without an endless loading state. Attributions are NASA LHASA and
 European Union, Copernicus Emergency Management Service.
+
+## Live road traffic
+
+The first road-traffic provider is TomTom Traffic Orbis v2. Traffic flow and
+incident overview use official vector tiles; the detail endpoint supplies
+individual incidents and their exact Point, LineString or MultiLineString
+geometry when available. The application does not manufacture an affected
+radius or extend a point incident along a road.
+
+TomTom updates its traffic model approximately every minute. The server reuses
+the provider traffic-model identifier for a short lifetime so that flow and
+incident tiles remain temporally coherent. Browser requests target only local
+application routes. `TOMTOM_API_KEY` is read on the server and sent in the
+`TomTom-Api-Key` header; it is never placed in a public tile URL or client
+payload. When the key is absent the legend reports configuration required and
+the layers cannot be enabled.
+
+The public map separates four concepts:
+
+- live observed traffic flow, coloured from fluid to stationary traffic;
+- current incidents such as accidents, congestion, hazards and broken-down
+  vehicles;
+- closures and restrictions;
+- current or provider-announced planned roadworks.
+
+Delay, incident length, current speed, free-flow speed, travel time, lane
+counts, emergency-service presence and estimated clearance are shown only when
+the provider supplies those exact fields. An incident end time is a provider
+estimate, not a guarantee that normal traffic has resumed. Weather-related
+road conditions are descriptive observations and do not replace official road
+authority or weather warnings.
+
+Viewport detail requests are debounced, cancelled when superseded, restricted
+to the central project Europe perimeter, and capped to the provider's maximum
+detail area. Vector tile requests outside Europe return an empty successful
+tile without contacting TomTom. Provider throttling and outages are represented
+as a connector state instead of triggering per-tile error storms.
+
+The provider interface is intentionally independent from TomTom so national
+DATEX II feeds can be integrated later without changing the normalized alert
+model. Their identifiers and claims must remain separately attributed.
+
+In development, `ALERTS_DEMO_MODE=true` enables deterministic flow, accident,
+major congestion, closure, lane closure, current and planned roadworks,
+broken-down vehicle, ended incident and unavailable-provider scenarios. A
+visible demonstration badge prevents these fixtures from being confused with
+production data.

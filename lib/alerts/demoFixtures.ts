@@ -556,3 +556,226 @@ export function demoCemsAlerts(): NormalizedAlert[] {
     }),
   );
 }
+
+type DemoTrafficInput = {
+  id: string;
+  hazard: NormalizedAlert["hazard"];
+  title: string;
+  geometry: GeoJSON.Point | GeoJSON.LineString | GeoJSON.MultiLineString;
+  road: string;
+  status?: "active" | "upcoming" | "ended";
+  delaySeconds?: number | null;
+  lengthMeters?: number | null;
+  magnitude?: "minor" | "moderate" | "major" | null;
+  from?: string | null;
+  to?: string | null;
+  countryCode?: string;
+};
+
+function demoTrafficAlert(input: DemoTrafficInput): NormalizedAlert {
+  const now = new Date();
+  const updatedAt = new Date(now.getTime() - 4 * 60 * 1000).toISOString();
+  const coordinates =
+    input.geometry.type === "Point"
+      ? input.geometry.coordinates
+      : input.geometry.type === "LineString"
+        ? input.geometry.coordinates[Math.floor(input.geometry.coordinates.length / 2)]
+        : input.geometry.coordinates[0][
+            Math.floor(input.geometry.coordinates[0].length / 2)
+          ];
+  const status = input.status ?? "active";
+  const startAt =
+    status === "upcoming"
+      ? new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString()
+      : new Date(now.getTime() - 35 * 60 * 1000).toISOString();
+  const endAt =
+    status === "upcoming"
+      ? new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString()
+      : status === "ended"
+        ? new Date(now.getTime() - 60 * 60 * 1000).toISOString()
+        : null;
+  return {
+    id: `demo:tomtom:${input.id}`,
+    source: "tomtom-traffic",
+    sourceEventId: input.id,
+    category: "road_traffic",
+    hazard: input.hazard,
+    title: input.title,
+    description:
+      input.hazard === "road_accident"
+        ? "Traffic incident reported by the demonstration provider."
+        : input.title,
+    instructions: null,
+    severity:
+      input.magnitude === "major"
+        ? "severe"
+        : input.magnitude === "moderate"
+          ? "moderate"
+          : "minor",
+    status,
+    certainty: "certain",
+    urgency: null,
+    effectiveAt: startAt,
+    onsetAt: startAt,
+    expiresAt: endAt,
+    updatedAt,
+    fetchedAt: now.toISOString(),
+    countryCodes: [input.countryCode ?? "FR"],
+    affectedAreaNames: [input.from, input.to].filter(
+      (value): value is string => Boolean(value),
+    ),
+    geometry: input.geometry,
+    centroid: { longitude: coordinates[0], latitude: coordinates[1] },
+    sourceUrl: "https://www.tomtom.com/products/traffic-and-travel-information/",
+    officialSourceName: "TomTom Traffic demonstration",
+    observed: true,
+    forecast: status === "upcoming",
+    metadata: {
+      providerIncidentId: input.id,
+      incidentType: input.hazard,
+      status:
+        status === "upcoming" ? "planned" : status === "ended" ? "ended" : "active",
+      roadNumbers: [input.road],
+      fromLocation: input.from ?? null,
+      toLocation: input.to ?? null,
+      direction: input.to ?? null,
+      lengthMeters: input.lengthMeters ?? null,
+      delaySeconds: input.delaySeconds ?? null,
+      currentSpeedKph: input.hazard === "traffic_jam" ? 18 : null,
+      freeFlowSpeedKph: input.hazard === "traffic_jam" ? 90 : null,
+      currentTravelTimeSeconds: input.delaySeconds
+        ? 900 + input.delaySeconds
+        : null,
+      freeFlowTravelTimeSeconds: input.delaySeconds ? 900 : null,
+      magnitudeOfDelay:
+        input.magnitude === "major" ? 3 : input.magnitude === "moderate" ? 2 : 1,
+      magnitudeOfDelayLabel: input.magnitude ?? "minor",
+      probabilityOfOccurrence: "certain",
+      confidence: null,
+      numberOfReports: null,
+      roadClosed: input.hazard === "road_closure" ? true : null,
+      lanesClosed: input.hazard === "lane_closure" ? 1 : null,
+      totalLanes: input.hazard === "lane_closure" ? 3 : null,
+      startAt,
+      endAt,
+      lastReportAt: updatedAt,
+      updatedAt,
+      providerModelId: "demo-traffic-model",
+      emergencyServices: null,
+      estimatedClearanceAt: null,
+      providerEvents: [{ code: null, description: input.title, iconCategory: null }],
+      dataNature: "instrumental-observation",
+      demo: true,
+    },
+  };
+}
+
+export function demoTrafficAlerts(): NormalizedAlert[] {
+  return [
+    demoTrafficAlert({
+      id: "accident-a7",
+      hazard: "road_accident",
+      title: "Accident — A7",
+      geometry: {
+        type: "LineString",
+        coordinates: [[4.82, 45.62], [4.84, 45.65], [4.86, 45.68]],
+      },
+      road: "A7",
+      delaySeconds: 22 * 60,
+      lengthMeters: 3_400,
+      magnitude: "major",
+      from: "Vienne",
+      to: "Lyon",
+    }),
+    demoTrafficAlert({
+      id: "accident-no-details",
+      hazard: "road_accident",
+      title: "Accident reported",
+      geometry: { type: "Point", coordinates: [2.31, 48.87] },
+      road: "Boulevard périphérique",
+      magnitude: null,
+    }),
+    demoTrafficAlert({
+      id: "major-jam-e40",
+      hazard: "traffic_jam",
+      title: "Major congestion — E40",
+      geometry: {
+        type: "MultiLineString",
+        coordinates: [
+          [[4.21, 50.88], [4.28, 50.9]],
+          [[4.28, 50.9], [4.35, 50.91]],
+        ],
+      },
+      road: "E40",
+      delaySeconds: 18 * 60,
+      lengthMeters: 6_200,
+      magnitude: "major",
+      from: "Brussels",
+      to: "Leuven",
+      countryCode: "BE",
+    }),
+    demoTrafficAlert({
+      id: "road-closure-a10",
+      hazard: "road_closure",
+      title: "Road closed — A10",
+      geometry: {
+        type: "LineString",
+        coordinates: [[2.04, 48.73], [2.1, 48.75]],
+      },
+      road: "A10",
+      magnitude: "major",
+      from: "Saint-Quentin-en-Yvelines",
+      to: "Paris",
+    }),
+    demoTrafficAlert({
+      id: "lane-closure-m25",
+      hazard: "lane_closure",
+      title: "Lane closed — M25",
+      geometry: { type: "Point", coordinates: [-0.42, 51.47] },
+      road: "M25",
+      magnitude: "moderate",
+      countryCode: "GB",
+    }),
+    demoTrafficAlert({
+      id: "roadworks-active",
+      hazard: "roadworks",
+      title: "Roadworks — A1",
+      geometry: {
+        type: "LineString",
+        coordinates: [[2.52, 49.01], [2.56, 49.04]],
+      },
+      road: "A1",
+      magnitude: "moderate",
+      from: "Roissy",
+      to: "Senlis",
+    }),
+    demoTrafficAlert({
+      id: "roadworks-planned",
+      hazard: "roadworks",
+      title: "Planned roadworks — A6",
+      geometry: { type: "Point", coordinates: [2.45, 48.61] },
+      road: "A6",
+      status: "upcoming",
+      magnitude: "minor",
+    }),
+    demoTrafficAlert({
+      id: "broken-vehicle",
+      hazard: "broken_down_vehicle",
+      title: "Broken-down vehicle — A4",
+      geometry: { type: "Point", coordinates: [6.08, 49.61] },
+      road: "A4",
+      magnitude: "minor",
+      countryCode: "LU",
+    }),
+    demoTrafficAlert({
+      id: "recent-ended",
+      hazard: "road_hazard",
+      title: "Recently ended road hazard",
+      geometry: { type: "Point", coordinates: [7.43, 43.74] },
+      road: "A8",
+      status: "ended",
+      magnitude: "minor",
+      countryCode: "MC",
+    }),
+  ];
+}

@@ -8,6 +8,7 @@ import type {
   EarthquakeTimeMode,
   VolcanoTimeMode,
   CemsActivationTimeMode,
+  TrafficIncidentTimeMode,
 } from "@/lib/alerts/types";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 
@@ -32,6 +33,17 @@ type Props = {
   onCemsModeChange?: (mode: CemsActivationTimeMode) => void;
   showLhasa?: boolean;
   lhasaValidAt?: string | null;
+  trafficEnabled?: boolean;
+  trafficMode?: TrafficIncidentTimeMode;
+  onTrafficModeChange?: (mode: TrafficIncidentTimeMode) => void;
+  trafficCounts?: {
+    visible: number;
+    active: number;
+    accidents: number;
+    jams: number;
+    closures: number;
+    roadworks: number;
+  };
 };
 
 function statusLabel(
@@ -71,6 +83,17 @@ export default function AlertStatusPanel({
   onCemsModeChange,
   showLhasa = false,
   lhasaValidAt = null,
+  trafficEnabled = false,
+  trafficMode = "current",
+  onTrafficModeChange,
+  trafficCounts = {
+    visible: 0,
+    active: 0,
+    accidents: 0,
+    jams: 0,
+    closures: 0,
+    roadworks: 0,
+  },
 }: Props) {
   const t = getMessages(locale).alertPanel;
   const acquisition = copernicus?.acquisitionTime
@@ -163,6 +186,27 @@ export default function AlertStatusPanel({
           </div>
         </div>
       )}
+      {trafficEnabled && (
+        <div className="mt-2">
+          <p className="mb-1 font-medium text-slate-200">Road traffic</p>
+          <div className="grid grid-cols-3 gap-1 rounded-lg bg-white/5 p-1">
+            {([
+              ["current", "Current"],
+              ["planned", "Planned"],
+              ["recent", "Recently ended"],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onTrafficModeChange?.(value)}
+                className={`min-h-10 rounded-md px-2 py-1 ${trafficMode === value ? "bg-orange-500/25 text-orange-100" : "text-slate-400 hover:bg-white/5"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {demoMode && (
         <p className="mt-2 rounded-md border border-amber-300/30 bg-amber-300/10 px-2 py-1 font-semibold text-amber-100">
           {t.demoData}
@@ -240,6 +284,25 @@ export default function AlertStatusPanel({
             </dd>
             <dt className="font-medium text-slate-200">eMARS</dt>
             <dd className="text-right text-slate-400">Documentary source · not a live feed</dd>
+          </>
+        )}
+        {trafficEnabled && (
+          <>
+            <dt className="font-medium text-slate-200">TomTom Traffic</dt>
+            <dd className="text-right text-slate-400">
+              {statusLabel(
+                statuses["tomtom-traffic"],
+                trafficCounts.visible,
+                t,
+              )}
+            </dd>
+            <dt className="font-medium text-slate-200">Visible incidents</dt>
+            <dd className="text-right text-slate-400">
+              {trafficCounts.active} active / {trafficCounts.visible} visible ·{" "}
+              {trafficCounts.accidents} accidents ·{" "}
+              {trafficCounts.jams} jams · {trafficCounts.closures} closures ·{" "}
+              {trafficCounts.roadworks} roadworks
+            </dd>
           </>
         )}
         {demoMode && (

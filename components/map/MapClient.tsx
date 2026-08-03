@@ -18,11 +18,15 @@ import type {
   MapBaseMode,
   MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
+import type { CameraSnapshot } from "@/lib/map/cameraSnapshot";
 import type { MountainCategoryFilters } from "@/components/map/mountainMapLayers";
 import type { CivilEngineeringCategoryFilters } from "@/components/map/civilEngineeringMapLayers";
 import type { UserLocation } from "@/lib/map/userLocation";
 import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
-import type { NormalizedAlert } from "@/lib/alerts/types";
+import type {
+  NormalizedAlert,
+  TrafficIncidentTimeMode,
+} from "@/lib/alerts/types";
 import type { WildfireWind } from "@/lib/alerts/wind";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 import type { LandslideNowcastLayerStatus } from "@/lib/alerts/landslideNowcast";
@@ -32,6 +36,10 @@ import type {
   IndustrialIncidentFilters,
   WeatherHazardFilters,
 } from "@/components/map/alertMapLayers";
+import type {
+  TrafficFilters,
+  TrafficParentLayers,
+} from "@/components/map/trafficMapLayers";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -121,6 +129,20 @@ type MapClientProps = {
   showMappedLandslideEvents: boolean;
   showMajorIndustrialIncidents: boolean;
   industrialIncidentFilters: IndustrialIncidentFilters;
+  showLiveTrafficFlow: boolean;
+  trafficParentLayers: TrafficParentLayers;
+  trafficFilters: TrafficFilters;
+  trafficTimeMode: TrafficIncidentTimeMode;
+  trafficStatus: {
+    connectorStatus: "operational" | "delayed" | "unavailable" | "misconfigured";
+    configured: boolean;
+    demoMode: boolean;
+    flowTileTemplate: string;
+    incidentTileTemplate: string;
+    bounds: [number, number, number, number];
+    maxZoom: number;
+  } | null;
+  onTrafficAlertsChange: (alerts: NormalizedAlert[]) => void;
   selectedAlertId: string | null;
   onAlertSelect: (alertId: string | null) => void;
   onSatelliteObservationSelect: (alert: NormalizedAlert) => void;
@@ -140,11 +162,7 @@ type MapClientProps = {
   mapCommandsRef?: MutableRefObject<MapCameraCommands | null>;
   baseMode?: MapBaseMode;
   dimensionMode?: MapDimensionMode;
-  onCameraChange?: (snapshot: {
-    pitch: number;
-    bearing: number;
-    zoom: number;
-  }) => void;
+  onCameraChange?: (snapshot: CameraSnapshot) => void;
   onTerrainReadyChange?: (ready: boolean) => void;
   userLocation?: UserLocation | null;
   focusUserLocationRef?: MutableRefObject<
@@ -237,6 +255,12 @@ export default function MapClient({
   showMappedLandslideEvents,
   showMajorIndustrialIncidents,
   industrialIncidentFilters,
+  showLiveTrafficFlow,
+  trafficParentLayers,
+  trafficFilters,
+  trafficTimeMode,
+  trafficStatus,
+  onTrafficAlertsChange,
   selectedAlertId,
   onAlertSelect,
   onSatelliteObservationSelect,
@@ -347,6 +371,12 @@ export default function MapClient({
       showMappedLandslideEvents={showMappedLandslideEvents}
       showMajorIndustrialIncidents={showMajorIndustrialIncidents}
       industrialIncidentFilters={industrialIncidentFilters}
+      showLiveTrafficFlow={showLiveTrafficFlow}
+      trafficParentLayers={trafficParentLayers}
+      trafficFilters={trafficFilters}
+      trafficTimeMode={trafficTimeMode}
+      trafficStatus={trafficStatus}
+      onTrafficAlertsChange={onTrafficAlertsChange}
       selectedAlertId={selectedAlertId}
       onAlertSelect={onAlertSelect}
       onSatelliteObservationSelect={onSatelliteObservationSelect}

@@ -97,6 +97,15 @@ import {
 } from "@/components/map/schengenBorderMapLayers";
 import type { TemporaryInternalBorderControl } from "@/lib/security/schengenBorders";
 import type { NormalizedAlert } from "@/lib/alerts/types";
+import {
+  dedupeTrafficAlertsById,
+  trafficAlertsSignature,
+} from "@/lib/alerts/trafficAlertEquality";
+import {
+  areCameraSnapshotsEqual,
+  normalizeBearing,
+  type CameraSnapshot,
+} from "@/lib/map/cameraSnapshot";
 import type { WildfireWind } from "@/lib/alerts/wind";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 import {
@@ -157,6 +166,27 @@ import {
   type IndustrialIncidentFilters,
 } from "@/components/map/alertMapLayers";
 import type { LandslideNowcastLayerStatus } from "@/lib/alerts/landslideNowcast";
+import type { TrafficIncidentTimeMode } from "@/lib/alerts/types";
+import {
+  buildTrafficLineCollection,
+  buildTrafficMarkerCollection,
+  filterTrafficAlerts,
+  TRAFFIC_CLUSTER_COUNT_LAYER_ID,
+  TRAFFIC_CLUSTER_LAYER_ID,
+  TRAFFIC_DETAILS_SOURCE_ID,
+  TRAFFIC_FLOW_TILE_LAYER_ID,
+  TRAFFIC_FLOW_TILE_SOURCE_ID,
+  TRAFFIC_INCIDENT_TILE_LINE_LAYER_ID,
+  TRAFFIC_INCIDENT_TILE_SOURCE_ID,
+  TRAFFIC_LABEL_LAYER_ID,
+  TRAFFIC_LINE_CASING_LAYER_ID,
+  TRAFFIC_LINE_LAYER_ID,
+  TRAFFIC_LINES_SOURCE_ID,
+  TRAFFIC_MARKER_LAYER_ID,
+  TRAFFIC_SELECTED_LAYER_ID,
+  type TrafficFilters,
+  type TrafficParentLayers,
+} from "@/components/map/trafficMapLayers";
 import type {
   MapFocusRequest,
   TemporaryMapMarker,
@@ -1019,6 +1049,28 @@ export default function MapContainer({
     explosion: true,
     technical: true,
   },
+  showLiveTrafficFlow = false,
+  trafficParentLayers = {
+    incidents: false,
+    closures: false,
+    roadworks: false,
+  },
+  trafficFilters = {
+    accidents: true,
+    majorJams: true,
+    brokenVehicles: true,
+    hazards: true,
+    roadWeather: true,
+    otherIncidents: true,
+    roadClosures: true,
+    laneClosures: true,
+    restrictions: true,
+    activeRoadworks: true,
+    plannedRoadworks: true,
+  },
+  trafficTimeMode = "current",
+  trafficStatus = null,
+  onTrafficAlertsChange,
   selectedAlertId = null,
   onAlertSelect,
   onSatelliteObservationSelect,
@@ -1125,6 +1177,20 @@ export default function MapContainer({
   showMappedLandslideEvents?: boolean;
   showMajorIndustrialIncidents?: boolean;
   industrialIncidentFilters?: IndustrialIncidentFilters;
+  showLiveTrafficFlow?: boolean;
+  trafficParentLayers?: TrafficParentLayers;
+  trafficFilters?: TrafficFilters;
+  trafficTimeMode?: TrafficIncidentTimeMode;
+  trafficStatus?: {
+    connectorStatus: "operational" | "delayed" | "unavailable" | "misconfigured";
+    configured: boolean;
+    demoMode: boolean;
+    flowTileTemplate: string;
+    incidentTileTemplate: string;
+    bounds: [number, number, number, number];
+    maxZoom: number;
+  } | null;
+  onTrafficAlertsChange?: (alerts: NormalizedAlert[]) => void;
   selectedAlertId?: string | null;
   onAlertSelect?: (alertId: string | null) => void;
   onSatelliteObservationSelect?: (alert: NormalizedAlert) => void;
@@ -1144,11 +1210,7 @@ export default function MapContainer({
   mapCommandsRef?: MutableRefObject<MapCameraCommands | null>;
   baseMode?: MapBaseMode;
   dimensionMode?: MapDimensionMode;
-  onCameraChange?: (snapshot: {
-    pitch: number;
-    bearing: number;
-    zoom: number;
-  }) => void;
+  onCameraChange?: (snapshot: CameraSnapshot) => void;
   onTerrainReadyChange?: (ready: boolean) => void;
   userLocation?: UserLocation | null;
   focusUserLocationRef?: MutableRefObject<
@@ -1335,6 +1397,10 @@ export default function MapContainer({
   dimensionModeRef.current = dimensionMode;
   const onCameraChangeRef = useRef(onCameraChange);
   onCameraChangeRef.current = onCameraChange;
+  const lastCameraSnapshotRef = useRef<CameraSnapshot | null>(null);
+  const onTrafficAlertsChangeRef = useRef(onTrafficAlertsChange);
+  onTrafficAlertsChangeRef.current = onTrafficAlertsChange;
+  const lastTrafficSignatureRef = useRef<string | null>(null);
   const onTerrainReadyChangeRef = useRef(onTerrainReadyChange);
   onTerrainReadyChangeRef.current = onTerrainReadyChange;
   const onUserMapGestureRef = useRef(onUserMapGesture);
@@ -1509,16 +1575,25 @@ export default function MapContainer({
     map.on("error", handleMapError);
 
     const emitCameraChange = () => {
-      onCameraChangeRef.current?.({
-        pitch: map.getPitch(),
-        bearing: map.getBearing(),
+      const center = map.getCenter();
+      const snapshot: CameraSnapshot = {
+        longitude: center.lng,
+        latitude: center.lat,
         zoom: map.getZoom(),
-      });
+        pitch: map.getPitch(),
+        bearing: normalizeBearing(map.getBearing()),
+      };
+      if (areCameraSnapshotsEqual(lastCameraSnapshotRef.current, snapshot)) {
+        return;
+      }
+      lastCameraSnapshotRef.current = snapshot;
+      onCameraChangeRef.current?.(snapshot);
     };
 
-    map.on("rotate", emitCameraChange);
-    map.on("move", emitCameraChange);
-    map.on("pitch", emitCameraChange);
+    map.on("moveend", emitCameraChange);
+    map.on("rotateend", emitCameraChange);
+    map.on("pitchend", emitCameraChange);
+    map.on("zoomend", emitCameraChange);
     emitCameraChange();
 
     const handleUserGesture = () => {
@@ -4830,9 +4905,10 @@ export default function MapContainer({
       gdacsFlameMarkersRef.current = [];
       map.off("zoom", updateEuOpacity);
       map.off("error", handleMapError);
-      map.off("rotate", emitCameraChange);
-      map.off("move", emitCameraChange);
-      map.off("pitch", emitCameraChange);
+      map.off("moveend", emitCameraChange);
+      map.off("rotateend", emitCameraChange);
+      map.off("pitchend", emitCameraChange);
+      map.off("zoomend", emitCameraChange);
       map.off("dragstart", handleUserGesture);
       map.off("zoomstart", handleUserGesture);
       map.off("rotatestart", handleUserGesture);
@@ -6814,6 +6890,485 @@ export default function MapContainer({
     industrialIncidentFilters,
     showOfficialWeatherWarnings,
     weatherHazardFilters,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+    const anyDetailedLayer =
+      trafficParentLayers.incidents ||
+      trafficParentLayers.closures ||
+      trafficParentLayers.roadworks;
+    const providerAvailable =
+      trafficStatus?.configured &&
+      trafficStatus.connectorStatus !== "misconfigured" &&
+      trafficStatus.connectorStatus !== "unavailable";
+    const vectorTilesAvailable = providerAvailable && !trafficStatus.demoMode;
+    const beforeLayer = map.getLayer(ALERT_FILL_LAYER_ID)
+      ? ALERT_FILL_LAYER_ID
+      : undefined;
+
+    if (
+      vectorTilesAvailable &&
+      trafficStatus.flowTileTemplate &&
+      !map.getSource(TRAFFIC_FLOW_TILE_SOURCE_ID)
+    ) {
+      map.addSource(TRAFFIC_FLOW_TILE_SOURCE_ID, {
+        type: "vector",
+        tiles: [trafficStatus.flowTileTemplate],
+        minzoom: 0,
+        maxzoom: trafficStatus.maxZoom,
+        bounds: trafficStatus.bounds,
+        attribution: "TomTom Traffic",
+      });
+    }
+    if (
+      vectorTilesAvailable &&
+      trafficStatus.incidentTileTemplate &&
+      !map.getSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID)
+    ) {
+      map.addSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID, {
+        type: "vector",
+        tiles: [trafficStatus.incidentTileTemplate],
+        minzoom: 0,
+        maxzoom: trafficStatus.maxZoom,
+        bounds: trafficStatus.bounds,
+        attribution: "TomTom Traffic",
+      });
+    }
+    if (trafficStatus?.demoMode && !map.getSource(TRAFFIC_FLOW_TILE_SOURCE_ID)) {
+      map.addSource(TRAFFIC_FLOW_TILE_SOURCE_ID, {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: { relative_speed: 0.82, display_class: 1 },
+              geometry: {
+                type: "LineString",
+                coordinates: [[4.69, 45.51], [4.82, 45.62], [4.94, 45.74]],
+              },
+            },
+            {
+              type: "Feature",
+              properties: { relative_speed: 0.22, display_class: 1 },
+              geometry: {
+                type: "LineString",
+                coordinates: [[4.21, 50.88], [4.28, 50.9], [4.35, 50.91]],
+              },
+            },
+          ],
+        },
+        attribution: "TomTom Traffic demonstration",
+      });
+    }
+
+    if (map.getSource(TRAFFIC_FLOW_TILE_SOURCE_ID) && !map.getLayer(TRAFFIC_FLOW_TILE_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: TRAFFIC_FLOW_TILE_LAYER_ID,
+          type: "line",
+          source: TRAFFIC_FLOW_TILE_SOURCE_ID,
+          ...(vectorTilesAvailable ? { "source-layer": "Traffic flow" } : {}),
+          minzoom: 4,
+          paint: {
+            "line-color": [
+              "step",
+              ["coalesce", ["get", "relative_speed"], 1],
+              "#7f1d1d",
+              0.15,
+              "#dc2626",
+              0.35,
+              "#f59e0b",
+              0.75,
+              "#22c55e",
+            ],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1, 9, 3, 16, 7],
+            "line-opacity": ["interpolate", ["linear"], ["zoom"], 4, 0.55, 10, 0.8],
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        },
+        beforeLayer,
+      );
+    }
+    if (
+      map.getSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID) &&
+      !map.getLayer(TRAFFIC_INCIDENT_TILE_LINE_LAYER_ID)
+    ) {
+      map.addLayer(
+        {
+          id: TRAFFIC_INCIDENT_TILE_LINE_LAYER_ID,
+          type: "line",
+          source: TRAFFIC_INCIDENT_TILE_SOURCE_ID,
+          "source-layer": "Traffic incident flow",
+          minzoom: 4,
+          maxzoom: 9,
+          paint: {
+            "line-color": [
+              "match",
+              ["get", "icon_category_0"],
+              "roadClosed",
+              "#7f1d1d",
+              "roadWorks",
+              "#f59e0b",
+              "jam",
+              "#991b1b",
+              "accident",
+              "#ef4444",
+              "#f97316",
+            ],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.5, 9, 4],
+            "line-opacity": 0.75,
+          },
+        },
+        beforeLayer,
+      );
+    }
+
+    if (!map.getSource(TRAFFIC_DETAILS_SOURCE_ID)) {
+      map.addSource(TRAFFIC_DETAILS_SOURCE_ID, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+        cluster: true,
+        clusterMaxZoom: 8,
+        clusterRadius: 44,
+      });
+    }
+    if (!map.getSource(TRAFFIC_LINES_SOURCE_ID)) {
+      map.addSource(TRAFFIC_LINES_SOURCE_ID, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+    }
+    const visibleTraffic = filterTrafficAlerts(
+      normalizedAlerts,
+      trafficParentLayers,
+      trafficFilters,
+    );
+    (
+      map.getSource(TRAFFIC_DETAILS_SOURCE_ID) as GeoJSONSource | undefined
+    )?.setData(buildTrafficMarkerCollection(visibleTraffic));
+    (
+      map.getSource(TRAFFIC_LINES_SOURCE_ID) as GeoJSONSource | undefined
+    )?.setData(buildTrafficLineCollection(visibleTraffic));
+
+    if (!map.getLayer(TRAFFIC_LINE_CASING_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: TRAFFIC_LINE_CASING_LAYER_ID,
+          type: "line",
+          source: TRAFFIC_LINES_SOURCE_ID,
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 7, 4, 15, 9],
+            "line-opacity": 0.9,
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        },
+        beforeLayer,
+      );
+    }
+    if (!map.getLayer(TRAFFIC_LINE_LAYER_ID)) {
+      map.addLayer(
+        {
+          id: TRAFFIC_LINE_LAYER_ID,
+          type: "line",
+          source: TRAFFIC_LINES_SOURCE_ID,
+          paint: {
+            "line-color": ["coalesce", ["get", "markerColor"], "#f97316"],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 7, 2, 15, 6],
+            "line-opacity": ["case", ["==", ["get", "status"], "ended"], 0.45, 0.9],
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        },
+        beforeLayer,
+      );
+    }
+    if (!map.getLayer(TRAFFIC_CLUSTER_LAYER_ID)) {
+      map.addLayer({
+        id: TRAFFIC_CLUSTER_LAYER_ID,
+        type: "circle",
+        source: TRAFFIC_DETAILS_SOURCE_ID,
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": "#f97316",
+          "circle-radius": ["step", ["get", "point_count"], 16, 10, 21, 40, 27],
+          "circle-stroke-color": "#ffffff",
+          "circle-stroke-width": 2,
+        },
+      });
+    }
+    if (!map.getLayer(TRAFFIC_CLUSTER_COUNT_LAYER_ID)) {
+      map.addLayer({
+        id: TRAFFIC_CLUSTER_COUNT_LAYER_ID,
+        type: "symbol",
+        source: TRAFFIC_DETAILS_SOURCE_ID,
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": ["get", "point_count_abbreviated"],
+          "text-size": 12,
+          "text-allow-overlap": true,
+        },
+        paint: { "text-color": "#ffffff" },
+      });
+    }
+    if (!map.getLayer(TRAFFIC_MARKER_LAYER_ID)) {
+      map.addLayer({
+        id: TRAFFIC_MARKER_LAYER_ID,
+        type: "symbol",
+        source: TRAFFIC_DETAILS_SOURCE_ID,
+        filter: ["!", ["has", "point_count"]],
+        minzoom: 7,
+        layout: {
+          "text-field": ["get", "markerGlyph"],
+          "text-size": 16,
+          "text-font": ["Open Sans Bold"],
+          "text-allow-overlap": true,
+          "text-ignore-placement": true,
+          "text-rotation-alignment": "viewport",
+          "text-pitch-alignment": "viewport",
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": ["coalesce", ["get", "markerColor"], "#f97316"],
+          "text-halo-width": 8,
+          "text-halo-blur": 0.5,
+        },
+      });
+    }
+    if (!map.getLayer(TRAFFIC_SELECTED_LAYER_ID)) {
+      map.addLayer({
+        id: TRAFFIC_SELECTED_LAYER_ID,
+        type: "circle",
+        source: TRAFFIC_DETAILS_SOURCE_ID,
+        filter: ["==", ["get", "alertId"], selectedAlertId ?? ""],
+        paint: {
+          "circle-radius": 18,
+          "circle-color": "rgba(125,211,252,0.22)",
+          "circle-stroke-color": "#7dd3fc",
+          "circle-stroke-width": 3,
+        },
+      });
+    } else {
+      map.setFilter(TRAFFIC_SELECTED_LAYER_ID, [
+        "==",
+        ["get", "alertId"],
+        selectedAlertId ?? "",
+      ]);
+    }
+    if (!map.getLayer(TRAFFIC_LABEL_LAYER_ID)) {
+      map.addLayer({
+        id: TRAFFIC_LABEL_LAYER_ID,
+        type: "symbol",
+        source: TRAFFIC_DETAILS_SOURCE_ID,
+        filter: ["!", ["has", "point_count"]],
+        minzoom: 10,
+        layout: {
+          "text-field": ["get", "label"],
+          "text-size": 11,
+          "text-offset": [0, 2],
+          "text-anchor": "top",
+          "text-optional": true,
+          "text-pitch-alignment": "viewport",
+          "text-rotation-alignment": "viewport",
+        },
+        paint: {
+          "text-color": "#0f172a",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 1.5,
+        },
+      });
+    }
+    for (const layerId of [
+      TRAFFIC_LINE_CASING_LAYER_ID,
+      TRAFFIC_LINE_LAYER_ID,
+      TRAFFIC_CLUSTER_LAYER_ID,
+      TRAFFIC_CLUSTER_COUNT_LAYER_ID,
+      TRAFFIC_MARKER_LAYER_ID,
+      TRAFFIC_SELECTED_LAYER_ID,
+      TRAFFIC_LABEL_LAYER_ID,
+    ]) {
+      applyLayerVisibility(map, layerId, anyDetailedLayer);
+    }
+    applyLayerVisibility(
+      map,
+      TRAFFIC_FLOW_TILE_LAYER_ID,
+      Boolean(showLiveTrafficFlow && providerAvailable),
+    );
+    applyLayerVisibility(
+      map,
+      TRAFFIC_INCIDENT_TILE_LINE_LAYER_ID,
+      Boolean(anyDetailedLayer && vectorTilesAvailable),
+    );
+
+    const handleCluster = async (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      const clusterId = Number(feature?.properties?.cluster_id);
+      const source = map.getSource(TRAFFIC_DETAILS_SOURCE_ID) as
+        | GeoJSONSource
+        | undefined;
+      if (!feature || feature.geometry.type !== "Point" || !source || !Number.isFinite(clusterId)) {
+        return;
+      }
+      const zoom = await source.getClusterExpansionZoom(clusterId);
+      map.easeTo({
+        center: feature.geometry.coordinates as [number, number],
+        zoom,
+        duration: 650,
+        bearing: map.getBearing(),
+        pitch: map.getPitch(),
+      });
+    };
+    const handleIncident = (event: MapLayerMouseEvent) => {
+      const alertId = String(event.features?.[0]?.properties?.alertId ?? "");
+      if (alertId) onAlertSelect?.(alertId);
+    };
+    let popup: Popup | null = null;
+    const showTooltip = (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature) return;
+      const p = feature.properties ?? {};
+      const lines = [
+        p.title,
+        p.roadNumbers,
+        p.direction,
+        p.status,
+        typeof p.delaySeconds === "number" && p.delaySeconds > 0
+          ? `Estimated delay: ${Math.round(p.delaySeconds / 60)} min`
+          : null,
+        typeof p.lengthMeters === "number" && p.lengthMeters > 0
+          ? `Affected section: ${(p.lengthMeters / 1_000).toFixed(1)} km`
+          : null,
+        p.updatedAt ? `Updated: ${p.updatedAt}` : null,
+        p.sourceName,
+      ].filter(Boolean);
+      const content = document.createElement("div");
+      content.className = "space-y-1 text-xs";
+      lines.forEach((value) => {
+        const line = document.createElement("p");
+        line.textContent = String(value);
+        content.appendChild(line);
+      });
+      popup?.remove();
+      popup = new Popup({ closeButton: false, closeOnClick: false, offset: 14 })
+        .setLngLat(event.lngLat)
+        .setDOMContent(content)
+        .addTo(map);
+    };
+    const pointer = () => {
+      map.getCanvas().style.cursor = "pointer";
+    };
+    const reset = () => {
+      map.getCanvas().style.cursor = "";
+      popup?.remove();
+    };
+    map.on("click", TRAFFIC_CLUSTER_LAYER_ID, handleCluster);
+    for (const layerId of [TRAFFIC_MARKER_LAYER_ID, TRAFFIC_LINE_LAYER_ID]) {
+      map.on("click", layerId, handleIncident);
+      map.on("mouseenter", layerId, pointer);
+      map.on("mousemove", layerId, showTooltip);
+      map.on("mouseleave", layerId, reset);
+    }
+    return () => {
+      popup?.remove();
+      map.off("click", TRAFFIC_CLUSTER_LAYER_ID, handleCluster);
+      for (const layerId of [TRAFFIC_MARKER_LAYER_ID, TRAFFIC_LINE_LAYER_ID]) {
+        map.off("click", layerId, handleIncident);
+        map.off("mouseenter", layerId, pointer);
+        map.off("mousemove", layerId, showTooltip);
+        map.off("mouseleave", layerId, reset);
+      }
+    };
+  }, [
+    mapSourcesReadyVersion,
+    normalizedAlerts,
+    onAlertSelect,
+    selectedAlertId,
+    showLiveTrafficFlow,
+    trafficFilters,
+    trafficParentLayers,
+    trafficStatus,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+
+    const emitTrafficAlerts = (alerts: NormalizedAlert[]) => {
+      const stableTrafficAlerts = dedupeTrafficAlertsById(alerts);
+      const trafficSignature = trafficAlertsSignature(stableTrafficAlerts);
+      if (trafficSignature === lastTrafficSignatureRef.current) {
+        return;
+      }
+      lastTrafficSignatureRef.current = trafficSignature;
+      onTrafficAlertsChangeRef.current?.(stableTrafficAlerts);
+    };
+
+    const enabled =
+      trafficParentLayers.incidents ||
+      trafficParentLayers.closures ||
+      trafficParentLayers.roadworks;
+    if (!enabled || trafficStatus?.connectorStatus === "misconfigured") {
+      emitTrafficAlerts([]);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    let controller: AbortController | null = null;
+    const loadVisible = () => {
+      if (map.getZoom() < 7) {
+        emitTrafficAlerts([]);
+        return;
+      }
+      controller?.abort();
+      controller = new AbortController();
+      const bounds = map.getBounds();
+      const bbox = [
+        bounds.getWest(),
+        bounds.getSouth(),
+        bounds.getEast(),
+        bounds.getNorth(),
+      ].join(",");
+      fetch(
+        `/api/alerts/traffic/incidents?bbox=${encodeURIComponent(bbox)}&mode=${encodeURIComponent(trafficTimeMode)}&locale=${encodeURIComponent(locale)}`,
+        { signal: controller.signal },
+      )
+        .then(async (response) => {
+          if (!response.ok) throw new Error(`traffic_incidents_http_${response.status}`);
+          return (await response.json()) as { alerts?: NormalizedAlert[] };
+        })
+        .then((payload) => emitTrafficAlerts(payload.alerts ?? []))
+        .catch((error: unknown) => {
+          if (
+            !(
+              error instanceof DOMException &&
+              error.name === "AbortError"
+            )
+          ) {
+            emitTrafficAlerts([]);
+          }
+        });
+    };
+    const schedule = () => {
+      if (timeoutId != null) window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(loadVisible, 350);
+    };
+    schedule();
+    map.on("moveend", schedule);
+    return () => {
+      if (timeoutId != null) window.clearTimeout(timeoutId);
+      controller?.abort();
+      map.off("moveend", schedule);
+    };
+  }, [
+    locale,
+    mapSourcesReadyVersion,
+    trafficParentLayers.closures,
+    trafficParentLayers.incidents,
+    trafficParentLayers.roadworks,
+    trafficStatus?.connectorStatus,
+    trafficTimeMode,
   ]);
 
   useEffect(() => {

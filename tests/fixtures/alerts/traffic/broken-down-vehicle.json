@@ -1,0 +1,18 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [6.08, 49.61]},
+      "properties": {
+        "id": "fixture-broken-vehicle-a4",
+        "iconCategory": "brokenDownVehicle",
+        "magnitudeOfDelay": "minor",
+        "events": [{"description": "Broken-down vehicle", "iconCategory": "brokenDownVehicle"}],
+        "startTime": "2026-07-28T08:20:00Z",
+        "roadNumbers": ["A4"],
+        "timeValidity": "present",
+        "lastReportTime": "2026-07-28T08:31:00Z"
+      }
+    }
+  ]
+}

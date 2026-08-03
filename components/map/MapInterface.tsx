@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import EffisBurnedAreaPanel from "@/components/incidents/EffisBurnedAreaPanel";
 import WildfireIncidentPanel from "@/components/incidents/WildfireIncidentPanel";
 import AlertDetailsPanel from "@/components/alerts/AlertDetailsPanel";
 import AlertStatusPanel from "@/components/alerts/AlertStatusPanel";
 import CopernicusActivationPanel from "@/components/alerts/CopernicusActivationPanel";
+import TrafficIncidentPanel from "@/components/alerts/TrafficIncidentPanel";
 import AppHeader from "@/components/layout/AppHeader";
 import TemporaryPlaceCard from "@/components/layout/TemporaryPlaceCard";
 import CapitalCityPanel from "@/components/europe/CapitalCityPanel";
@@ -109,6 +110,7 @@ import type {
   NormalizedAlert,
   VolcanoTimeMode,
   CemsActivationTimeMode,
+  TrafficIncidentTimeMode,
 } from "@/lib/alerts/types";
 import {
   countActiveAlerts,
@@ -122,6 +124,16 @@ import {
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 import type { LandslideNowcastLayerStatus } from "@/lib/alerts/landslideNowcast";
 import type { WildfireWind } from "@/lib/alerts/wind";
+import { filterTrafficAlerts } from "@/components/map/trafficMapLayers";
+import {
+  areTrafficAlertsEqual,
+  dedupeTrafficAlertsById,
+} from "@/lib/alerts/trafficAlertEquality";
+import {
+  angularDifference,
+  normalizeBearing,
+  type CameraSnapshot,
+} from "@/lib/map/cameraSnapshot";
 
 const FIRMS_UNAVAILABLE_TIMEOUT_MS = 20_000;
 const FIRMS_HISTORY_UNAVAILABLE_TIMEOUT_MS = 25_000;
@@ -450,6 +462,50 @@ export default function MapInterface() {
   const [showOtherTechnicalAccidents, setShowOtherTechnicalAccidents] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.otherTechnicalAccidents,
   );
+  const [showLiveTrafficFlow, setShowLiveTrafficFlow] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.liveTrafficFlow,
+  );
+  const [showRoadTrafficIncidents, setShowRoadTrafficIncidents] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.roadTrafficIncidents,
+  );
+  const [showTrafficAccidents, setShowTrafficAccidents] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficAccidents,
+  );
+  const [showTrafficMajorJams, setShowTrafficMajorJams] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficMajorJams,
+  );
+  const [showTrafficBrokenVehicles, setShowTrafficBrokenVehicles] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficBrokenVehicles,
+  );
+  const [showTrafficHazards, setShowTrafficHazards] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficHazards,
+  );
+  const [showTrafficRoadWeather, setShowTrafficRoadWeather] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficRoadWeather,
+  );
+  const [showTrafficOtherIncidents, setShowTrafficOtherIncidents] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficOtherIncidents,
+  );
+  const [showRoadClosuresRestrictions, setShowRoadClosuresRestrictions] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.roadClosuresRestrictions);
+  const [showTrafficRoadClosures, setShowTrafficRoadClosures] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficRoadClosures,
+  );
+  const [showTrafficLaneClosures, setShowTrafficLaneClosures] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficLaneClosures,
+  );
+  const [showTrafficRestrictions, setShowTrafficRestrictions] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficRestrictions,
+  );
+  const [showRoadworks, setShowRoadworks] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.roadworks,
+  );
+  const [showTrafficActiveRoadworks, setShowTrafficActiveRoadworks] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficActiveRoadworks,
+  );
+  const [showTrafficPlannedRoadworks, setShowTrafficPlannedRoadworks] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.trafficPlannedRoadworks,
+  );
   const [normalizedAlerts, setNormalizedAlerts] = useState<NormalizedAlert[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [alertActivityMode, setAlertActivityMode] =
@@ -460,6 +516,17 @@ export default function MapInterface() {
     useState<VolcanoTimeMode>("ongoing");
   const [cemsTimeMode, setCemsTimeMode] =
     useState<CemsActivationTimeMode>("ongoing");
+  const [trafficTimeMode, setTrafficTimeMode] =
+    useState<TrafficIncidentTimeMode>("current");
+  const [trafficStatus, setTrafficStatus] = useState<{
+    connectorStatus: AlertConnectorStatus;
+    configured: boolean;
+    demoMode: boolean;
+    flowTileTemplate: string;
+    incidentTileTemplate: string;
+    bounds: [number, number, number, number];
+    maxZoom: number;
+  } | null>(null);
   const [alertsDemoMode, setAlertsDemoMode] = useState(false);
   const [alertConnectorStatus, setAlertConnectorStatus] = useState<
     Record<string, AlertConnectorStatus>
@@ -558,7 +625,8 @@ export default function MapInterface() {
           alert.category !== "earthquake" &&
           alert.category !== "volcano" &&
           alert.category !== "landslide" &&
-          alert.category !== "industrial_incident",
+          alert.category !== "industrial_incident" &&
+          alert.category !== "road_traffic",
       ),
       alertActivityMode,
     );
@@ -582,6 +650,7 @@ export default function MapInterface() {
           .filter((value): value is string => Boolean(value))
           .some((value) => Date.parse(value) >= cutoff);
       }),
+      ...normalizedAlerts.filter((alert) => alert.category === "road_traffic"),
     ];
   }, [
     alertActivityMode,
@@ -607,6 +676,59 @@ export default function MapInterface() {
       ),
     [normalizedAlerts],
   );
+  const trafficCounts = useMemo(() => {
+    const traffic = filterTrafficAlerts(
+      activityFilteredAlerts,
+      {
+        incidents: showRoadTrafficIncidents,
+        closures: showRoadClosuresRestrictions,
+        roadworks: showRoadworks,
+      },
+      {
+        accidents: showTrafficAccidents,
+        majorJams: showTrafficMajorJams,
+        brokenVehicles: showTrafficBrokenVehicles,
+        hazards: showTrafficHazards,
+        roadWeather: showTrafficRoadWeather,
+        otherIncidents: showTrafficOtherIncidents,
+        roadClosures: showTrafficRoadClosures,
+        laneClosures: showTrafficLaneClosures,
+        restrictions: showTrafficRestrictions,
+        activeRoadworks: showTrafficActiveRoadworks,
+        plannedRoadworks: showTrafficPlannedRoadworks,
+      },
+    );
+    return {
+      visible: traffic.length,
+      active: traffic.filter((alert) => alert.status === "active").length,
+      accidents: traffic.filter((alert) => alert.hazard === "road_accident")
+        .length,
+      jams: traffic.filter((alert) => alert.hazard === "traffic_jam").length,
+      closures: traffic.filter(
+        (alert) =>
+          alert.hazard === "road_closure" ||
+          alert.hazard === "lane_closure" ||
+          alert.hazard === "traffic_restriction",
+      ).length,
+      roadworks: traffic.filter((alert) => alert.hazard === "roadworks").length,
+    };
+  }, [
+    activityFilteredAlerts,
+    showRoadClosuresRestrictions,
+    showRoadTrafficIncidents,
+    showRoadworks,
+    showTrafficAccidents,
+    showTrafficActiveRoadworks,
+    showTrafficBrokenVehicles,
+    showTrafficHazards,
+    showTrafficLaneClosures,
+    showTrafficMajorJams,
+    showTrafficOtherIncidents,
+    showTrafficPlannedRoadworks,
+    showTrafficRestrictions,
+    showTrafficRoadClosures,
+    showTrafficRoadWeather,
+  ]);
 
   const selectedTemporaryControl = useMemo(
     () =>
@@ -702,6 +824,21 @@ export default function MapInterface() {
     setShowChemicalAccidents(prefs.chemicalAccidents);
     setShowIndustrialExplosions(prefs.industrialExplosions);
     setShowOtherTechnicalAccidents(prefs.otherTechnicalAccidents);
+    setShowLiveTrafficFlow(prefs.liveTrafficFlow);
+    setShowRoadTrafficIncidents(prefs.roadTrafficIncidents);
+    setShowTrafficAccidents(prefs.trafficAccidents);
+    setShowTrafficMajorJams(prefs.trafficMajorJams);
+    setShowTrafficBrokenVehicles(prefs.trafficBrokenVehicles);
+    setShowTrafficHazards(prefs.trafficHazards);
+    setShowTrafficRoadWeather(prefs.trafficRoadWeather);
+    setShowTrafficOtherIncidents(prefs.trafficOtherIncidents);
+    setShowRoadClosuresRestrictions(prefs.roadClosuresRestrictions);
+    setShowTrafficRoadClosures(prefs.trafficRoadClosures);
+    setShowTrafficLaneClosures(prefs.trafficLaneClosures);
+    setShowTrafficRestrictions(prefs.trafficRestrictions);
+    setShowRoadworks(prefs.roadworks);
+    setShowTrafficActiveRoadworks(prefs.trafficActiveRoadworks);
+    setShowTrafficPlannedRoadworks(prefs.trafficPlannedRoadworks);
     setLayerPrefsHydrated(true);
   }, []);
 
@@ -820,6 +957,21 @@ export default function MapInterface() {
       chemicalAccidents: showChemicalAccidents,
       industrialExplosions: showIndustrialExplosions,
       otherTechnicalAccidents: showOtherTechnicalAccidents,
+      liveTrafficFlow: showLiveTrafficFlow,
+      roadTrafficIncidents: showRoadTrafficIncidents,
+      trafficAccidents: showTrafficAccidents,
+      trafficMajorJams: showTrafficMajorJams,
+      trafficBrokenVehicles: showTrafficBrokenVehicles,
+      trafficHazards: showTrafficHazards,
+      trafficRoadWeather: showTrafficRoadWeather,
+      trafficOtherIncidents: showTrafficOtherIncidents,
+      roadClosuresRestrictions: showRoadClosuresRestrictions,
+      trafficRoadClosures: showTrafficRoadClosures,
+      trafficLaneClosures: showTrafficLaneClosures,
+      trafficRestrictions: showTrafficRestrictions,
+      roadworks: showRoadworks,
+      trafficActiveRoadworks: showTrafficActiveRoadworks,
+      trafficPlannedRoadworks: showTrafficPlannedRoadworks,
     });
   }, [
     layerPrefsHydrated,
@@ -896,6 +1048,21 @@ export default function MapInterface() {
     showChemicalAccidents,
     showIndustrialExplosions,
     showOtherTechnicalAccidents,
+    showLiveTrafficFlow,
+    showRoadTrafficIncidents,
+    showTrafficAccidents,
+    showTrafficMajorJams,
+    showTrafficBrokenVehicles,
+    showTrafficHazards,
+    showTrafficRoadWeather,
+    showTrafficOtherIncidents,
+    showRoadClosuresRestrictions,
+    showTrafficRoadClosures,
+    showTrafficLaneClosures,
+    showTrafficRestrictions,
+    showRoadworks,
+    showTrafficActiveRoadworks,
+    showTrafficPlannedRoadworks,
   ]);
 
   const legendPreferences = useMemo<MapLayerPreferences>(
@@ -973,6 +1140,21 @@ export default function MapInterface() {
       chemicalAccidents: showChemicalAccidents,
       industrialExplosions: showIndustrialExplosions,
       otherTechnicalAccidents: showOtherTechnicalAccidents,
+      liveTrafficFlow: showLiveTrafficFlow,
+      roadTrafficIncidents: showRoadTrafficIncidents,
+      trafficAccidents: showTrafficAccidents,
+      trafficMajorJams: showTrafficMajorJams,
+      trafficBrokenVehicles: showTrafficBrokenVehicles,
+      trafficHazards: showTrafficHazards,
+      trafficRoadWeather: showTrafficRoadWeather,
+      trafficOtherIncidents: showTrafficOtherIncidents,
+      roadClosuresRestrictions: showRoadClosuresRestrictions,
+      trafficRoadClosures: showTrafficRoadClosures,
+      trafficLaneClosures: showTrafficLaneClosures,
+      trafficRestrictions: showTrafficRestrictions,
+      roadworks: showRoadworks,
+      trafficActiveRoadworks: showTrafficActiveRoadworks,
+      trafficPlannedRoadworks: showTrafficPlannedRoadworks,
     }),
     [
       showEurozone,
@@ -1048,6 +1230,21 @@ export default function MapInterface() {
       showChemicalAccidents,
       showIndustrialExplosions,
       showOtherTechnicalAccidents,
+      showLiveTrafficFlow,
+      showRoadTrafficIncidents,
+      showTrafficAccidents,
+      showTrafficMajorJams,
+      showTrafficBrokenVehicles,
+      showTrafficHazards,
+      showTrafficRoadWeather,
+      showTrafficOtherIncidents,
+      showRoadClosuresRestrictions,
+      showTrafficRoadClosures,
+      showTrafficLaneClosures,
+      showTrafficRestrictions,
+      showRoadworks,
+      showTrafficActiveRoadworks,
+      showTrafficPlannedRoadworks,
     ],
   );
 
@@ -1059,6 +1256,18 @@ export default function MapInterface() {
       key === "officialWeatherWarnings" &&
       value &&
       alertConnectorStatus.meteoalarm === "misconfigured"
+    ) {
+      return;
+    }
+    if (
+      value &&
+      trafficStatus?.connectorStatus === "misconfigured" &&
+      [
+        "liveTrafficFlow",
+        "roadTrafficIncidents",
+        "roadClosuresRestrictions",
+        "roadworks",
+      ].includes(key)
     ) {
       return;
     }
@@ -1133,6 +1342,21 @@ export default function MapInterface() {
       chemicalAccidents: setShowChemicalAccidents,
       industrialExplosions: setShowIndustrialExplosions,
       otherTechnicalAccidents: setShowOtherTechnicalAccidents,
+      liveTrafficFlow: setShowLiveTrafficFlow,
+      roadTrafficIncidents: setShowRoadTrafficIncidents,
+      trafficAccidents: setShowTrafficAccidents,
+      trafficMajorJams: setShowTrafficMajorJams,
+      trafficBrokenVehicles: setShowTrafficBrokenVehicles,
+      trafficHazards: setShowTrafficHazards,
+      trafficRoadWeather: setShowTrafficRoadWeather,
+      trafficOtherIncidents: setShowTrafficOtherIncidents,
+      roadClosuresRestrictions: setShowRoadClosuresRestrictions,
+      trafficRoadClosures: setShowTrafficRoadClosures,
+      trafficLaneClosures: setShowTrafficLaneClosures,
+      trafficRestrictions: setShowTrafficRestrictions,
+      roadworks: setShowRoadworks,
+      trafficActiveRoadworks: setShowTrafficActiveRoadworks,
+      trafficPlannedRoadworks: setShowTrafficPlannedRoadworks,
       schengenExternalBorderCrossings: setShowSchengenExternalBorderCrossings,
       schengenTemporaryInternalControls:
         setShowSchengenTemporaryInternalControls,
@@ -1438,6 +1662,123 @@ export default function MapInterface() {
       });
     return () => controller.abort();
   }, [locale]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/alerts/traffic/status", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`traffic_status_http_${response.status}`);
+        return (await response.json()) as {
+          connectorStatus: AlertConnectorStatus;
+          configured: boolean;
+          demoMode: boolean;
+          flowTileTemplate: string;
+          incidentTileTemplate: string;
+          bounds: [number, number, number, number];
+          maxZoom: number;
+        };
+      })
+      .then((value) => {
+        setTrafficStatus(value);
+        setAlertConnectorStatus((current) => ({
+          ...current,
+          "tomtom-traffic": value.connectorStatus,
+        }));
+        if (value.demoMode) setAlertsDemoMode(true);
+        if (value.connectorStatus === "misconfigured") {
+          setShowLiveTrafficFlow(false);
+          setShowRoadTrafficIncidents(false);
+          setShowRoadClosuresRestrictions(false);
+          setShowRoadworks(false);
+        }
+      })
+      .catch((error: unknown) => {
+        if (isAbortError(error)) return;
+        setTrafficStatus((current) =>
+          current
+            ? { ...current, connectorStatus: "unavailable" }
+            : null,
+        );
+        setAlertConnectorStatus((current) => ({
+          ...current,
+          "tomtom-traffic": "unavailable",
+        }));
+      });
+    return () => controller.abort();
+  }, []);
+
+  const handleTrafficAlertsChange = useCallback(
+    (nextTrafficAlerts: NormalizedAlert[]) => {
+      const deduped = dedupeTrafficAlertsById(nextTrafficAlerts);
+      setNormalizedAlerts((current) => {
+        const currentTraffic = current.filter(
+          (alert) => alert.category === "road_traffic",
+        );
+        if (areTrafficAlertsEqual(currentTraffic, deduped)) {
+          return current;
+        }
+        return [
+          ...current.filter((alert) => alert.category !== "road_traffic"),
+          ...deduped,
+        ];
+      });
+    },
+    [],
+  );
+
+  const handleCameraChange = useCallback((snapshot: CameraSnapshot) => {
+    setMapPitch((current) =>
+      Math.abs(current - snapshot.pitch) < 0.01 ? current : snapshot.pitch,
+    );
+    setMapBearing((current) => {
+      const normalized = normalizeBearing(snapshot.bearing);
+      return angularDifference(current, normalized) < 0.01
+        ? current
+        : normalized;
+    });
+  }, []);
+
+  const trafficParentLayers = useMemo(
+    () => ({
+      incidents: showRoadTrafficIncidents,
+      closures: showRoadClosuresRestrictions,
+      roadworks: showRoadworks,
+    }),
+    [
+      showRoadTrafficIncidents,
+      showRoadClosuresRestrictions,
+      showRoadworks,
+    ],
+  );
+
+  const trafficFilters = useMemo(
+    () => ({
+      accidents: showTrafficAccidents,
+      majorJams: showTrafficMajorJams,
+      brokenVehicles: showTrafficBrokenVehicles,
+      hazards: showTrafficHazards,
+      roadWeather: showTrafficRoadWeather,
+      otherIncidents: showTrafficOtherIncidents,
+      roadClosures: showTrafficRoadClosures,
+      laneClosures: showTrafficLaneClosures,
+      restrictions: showTrafficRestrictions,
+      activeRoadworks: showTrafficActiveRoadworks,
+      plannedRoadworks: showTrafficPlannedRoadworks,
+    }),
+    [
+      showTrafficAccidents,
+      showTrafficMajorJams,
+      showTrafficBrokenVehicles,
+      showTrafficHazards,
+      showTrafficRoadWeather,
+      showTrafficOtherIncidents,
+      showTrafficRoadClosures,
+      showTrafficLaneClosures,
+      showTrafficRestrictions,
+      showTrafficActiveRoadworks,
+      showTrafficPlannedRoadworks,
+    ],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -3291,9 +3632,30 @@ export default function MapInterface() {
         result.type === "earthquake_alert" ||
         result.type === "volcano_alert" ||
         result.type === "landslide_activation" ||
-        result.type === "industrial_incident_activation") &&
+        result.type === "industrial_incident_activation" ||
+        result.type === "traffic_incident" ||
+        result.type === "road_closure" ||
+        result.type === "roadworks") &&
       result.alertId
     ) {
+      if (
+        result.type === "traffic_incident" ||
+        result.type === "road_closure" ||
+        result.type === "roadworks"
+      ) {
+        if (result.type === "road_closure") {
+          setShowRoadClosuresRestrictions(true);
+          setShowTrafficRoadClosures(true);
+          setShowTrafficLaneClosures(true);
+          setShowTrafficRestrictions(true);
+        } else if (result.type === "roadworks") {
+          setShowRoadworks(true);
+          setShowTrafficActiveRoadworks(true);
+          setShowTrafficPlannedRoadworks(true);
+        } else {
+          setShowRoadTrafficIncidents(true);
+        }
+      }
       handleAlertSelect(result.alertId);
     }
   };
@@ -3451,6 +3813,12 @@ export default function MapInterface() {
             explosion: showIndustrialExplosions,
             technical: showOtherTechnicalAccidents,
           }}
+          showLiveTrafficFlow={showLiveTrafficFlow}
+          trafficParentLayers={trafficParentLayers}
+          trafficFilters={trafficFilters}
+          trafficTimeMode={trafficTimeMode}
+          trafficStatus={trafficStatus}
+          onTrafficAlertsChange={handleTrafficAlertsChange}
           selectedAlertId={selectedAlertId}
           onAlertSelect={handleAlertSelect}
           onSatelliteObservationSelect={handleSatelliteObservationSelect}
@@ -3480,10 +3848,7 @@ export default function MapInterface() {
           mapCommandsRef={mapCommandsRef}
           baseMode={baseMode}
           dimensionMode={dimensionMode}
-          onCameraChange={(snapshot) => {
-            setMapPitch(snapshot.pitch);
-            setMapBearing(snapshot.bearing);
-          }}
+          onCameraChange={handleCameraChange}
           onTerrainReadyChange={setTerrainReady}
           userLocation={userLocation}
           focusUserLocationRef={focusUserLocationRef}
@@ -3609,6 +3974,34 @@ export default function MapInterface() {
                     )
                   ? t.alertPanel.connectorOperational
                   : t.alertPanel.providerNoEvents,
+            liveTrafficFlow:
+              trafficStatus?.connectorStatus === "misconfigured"
+                ? t.alertPanel.configurationRequired
+                : trafficStatus?.connectorStatus === "unavailable"
+                  ? t.alertPanel.connectorUnavailable
+                  : t.alertPanel.connectorOperational,
+            roadTrafficIncidents:
+              trafficStatus?.connectorStatus === "misconfigured"
+                ? t.alertPanel.configurationRequired
+                : trafficStatus?.connectorStatus === "unavailable"
+                  ? t.alertPanel.connectorUnavailable
+                  : activityFilteredAlerts.some(
+                        (alert) => alert.category === "road_traffic",
+                      )
+                    ? t.alertPanel.connectorOperational
+                    : t.alertPanel.providerNoEvents,
+            roadClosuresRestrictions:
+              trafficStatus?.connectorStatus === "misconfigured"
+                ? t.alertPanel.configurationRequired
+                : trafficStatus?.connectorStatus === "unavailable"
+                  ? t.alertPanel.connectorUnavailable
+                  : t.alertPanel.connectorOperational,
+            roadworks:
+              trafficStatus?.connectorStatus === "misconfigured"
+                ? t.alertPanel.configurationRequired
+                : trafficStatus?.connectorStatus === "unavailable"
+                  ? t.alertPanel.connectorUnavailable
+                  : t.alertPanel.connectorOperational,
           }}
         />
 
@@ -3620,7 +4013,11 @@ export default function MapInterface() {
           showMajorVolcanicActivity ||
           showLandslideLikelihood ||
           showMappedLandslideEvents ||
-          showMajorIndustrialIncidents) && (
+          showMajorIndustrialIncidents ||
+          showLiveTrafficFlow ||
+          showRoadTrafficIncidents ||
+          showRoadClosuresRestrictions ||
+          showRoadworks) && (
           <AlertStatusPanel
             locale={locale}
             mode={alertActivityMode}
@@ -3656,6 +4053,15 @@ export default function MapInterface() {
             }
             showLhasa={showLandslideLikelihood}
             lhasaValidAt={landslideNowcastStatus?.validAt ?? null}
+            trafficEnabled={
+              showLiveTrafficFlow ||
+              showRoadTrafficIncidents ||
+              showRoadClosuresRestrictions ||
+              showRoadworks
+            }
+            trafficMode={trafficTimeMode}
+            onTrafficModeChange={setTrafficTimeMode}
+            trafficCounts={trafficCounts}
           />
         )}
 
@@ -4007,6 +4413,12 @@ export default function MapInterface() {
         (selectedAlert.category === "landslide" ||
           selectedAlert.category === "industrial_incident") ? (
           <CopernicusActivationPanel
+            alert={selectedAlert}
+            locale={locale}
+            onClose={() => setSelectedAlertId(null)}
+          />
+        ) : selectedAlert?.category === "road_traffic" ? (
+          <TrafficIncidentPanel
             alert={selectedAlert}
             locale={locale}
             onClose={() => setSelectedAlertId(null)}

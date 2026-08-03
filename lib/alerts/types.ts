@@ -6,7 +6,8 @@ export type AlertCategory =
   | "earthquake"
   | "volcano"
   | "landslide"
-  | "industrial_incident";
+  | "industrial_incident"
+  | "road_traffic";
 
 export type AlertHazard =
   | "wildfire"
@@ -35,6 +36,16 @@ export type AlertHazard =
   | "explosion"
   | "technical_accident"
   | "unknown_industrial_incident"
+  | "traffic_jam"
+  | "road_accident"
+  | "road_closure"
+  | "lane_closure"
+  | "roadworks"
+  | "broken_down_vehicle"
+  | "road_hazard"
+  | "road_weather"
+  | "traffic_restriction"
+  | "other_traffic_incident"
   | "other_weather";
 
 export type AlertSeverity =
@@ -160,6 +171,7 @@ export type VolcanoAlertMetadata = {
 export type EarthquakeTimeMode = "1h" | "24h" | "7d";
 export type VolcanoTimeMode = "ongoing" | "72h" | "30d";
 export type CemsActivationTimeMode = "ongoing" | "72h" | "30d";
+export type TrafficIncidentTimeMode = "current" | "planned" | "recent";
 
 export type LandslideAlertMetadata = {
   dataType: "modelled_likelihood" | "mapped_event";
@@ -195,4 +207,42 @@ export type IndustrialIncidentMetadata = {
   substances: string[];
   officialInstructions: string | null;
   emarsReportUrl: string | null;
+};
+
+export type TrafficIncidentStatus = "planned" | "active" | "ended" | "unknown";
+
+export type TrafficIncidentMetadata = {
+  providerIncidentId: string;
+  incidentType: AlertHazard;
+  status: TrafficIncidentStatus;
+  roadNumbers: string[];
+  fromLocation: string | null;
+  toLocation: string | null;
+  direction: string | null;
+  lengthMeters: number | null;
+  delaySeconds: number | null;
+  currentSpeedKph: number | null;
+  freeFlowSpeedKph: number | null;
+  currentTravelTimeSeconds: number | null;
+  freeFlowTravelTimeSeconds: number | null;
+  magnitudeOfDelay: number | null;
+  magnitudeOfDelayLabel: string | null;
+  probabilityOfOccurrence: string | null;
+  confidence: number | null;
+  numberOfReports: number | null;
+  roadClosed: boolean | null;
+  lanesClosed: number | null;
+  totalLanes: number | null;
+  startAt: string | null;
+  endAt: string | null;
+  lastReportAt: string | null;
+  updatedAt: string;
+  providerModelId: string | null;
+  emergencyServices: string[] | null;
+  estimatedClearanceAt: string | null;
+  providerEvents: Array<{
+    code: number | null;
+    description: string;
+    iconCategory: string | null;
+  }>;
 };

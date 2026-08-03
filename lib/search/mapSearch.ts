@@ -43,6 +43,9 @@ export type MapSearchResultType =
   | "volcano_alert"
   | "landslide_activation"
   | "industrial_incident_activation"
+  | "traffic_incident"
+  | "road_closure"
+  | "roadworks"
   | "eu_institution"
   | "unesco_site"
   | "european_heritage_label"
@@ -1048,6 +1051,14 @@ export function buildLocalSearchIndex(
                     ? "landslide_activation"
                     : alert.category === "industrial_incident"
                       ? "industrial_incident_activation"
+                      : alert.category === "road_traffic"
+                        ? alert.hazard === "road_closure" ||
+                          alert.hazard === "lane_closure" ||
+                          alert.hazard === "traffic_restriction"
+                          ? "road_closure"
+                          : alert.hazard === "roadworks"
+                            ? "roadworks"
+                            : "traffic_incident"
                   : "storm_alert",
         category: "active_alerts",
         title: alert.title,
@@ -1069,6 +1080,8 @@ export function buildLocalSearchIndex(
                     ? "landslide-activation"
                     : alert.category === "industrial_incident"
                       ? "industrial-incident-activation"
+                      : alert.category === "road_traffic"
+                        ? "traffic-incident"
                   : "storm-alert",
         countryCode: alert.countryCodes[0],
         alertId: alert.id,
@@ -1093,6 +1106,13 @@ export function buildLocalSearchIndex(
             alert.metadata.gdacsEventId,
             alert.metadata.volcanoName,
             alert.metadata.cemsActivationCode,
+            ...(Array.isArray(alert.metadata.roadNumbers)
+              ? alert.metadata.roadNumbers
+              : []),
+            alert.metadata.fromLocation,
+            alert.metadata.toLocation,
+            alert.metadata.direction,
+            alert.metadata.providerIncidentId,
             alert.metadata.category,
             alert.metadata.subCategory,
             ...(Array.isArray(alert.metadata.aois)

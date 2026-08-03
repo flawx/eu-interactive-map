@@ -1,0 +1,23 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[2.04, 48.73], [2.10, 48.75]]
+      },
+      "properties": {
+        "id": "fixture-road-closure-a10",
+        "iconCategory": "roadClosed",
+        "magnitudeOfDelay": "major",
+        "events": [{"description": "Road closed", "iconCategory": "roadClosed"}],
+        "startTime": "2026-07-28T06:00:00Z",
+        "from": "Saint-Quentin-en-Yvelines",
+        "to": "Paris",
+        "roadNumbers": ["A10"],
+        "timeValidity": "present",
+        "lastReportTime": "2026-07-28T08:30:00Z"
+      }
+    }
+  ]
+}

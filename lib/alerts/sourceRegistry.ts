@@ -91,6 +91,18 @@ export const ALERT_SOURCES = {
     dataNature: "satellite-observation",
     potentialDelay: "An activation is a mapping request; products can be delivered hours after the event.",
   },
+  tomtomTraffic: {
+    id: "tomtom-traffic",
+    name: "TomTom Traffic Orbis v2",
+    categories: ["road_traffic"],
+    updateIntervalMs: 60 * 1000,
+    attribution: "TomTom Traffic",
+    officialUrl:
+      "https://www.tomtom.com/products/traffic-and-travel-information/",
+    dataNature: "instrumental-observation",
+    potentialDelay:
+      "Traffic conditions and incident details can change between updates.",
+  },
 } as const satisfies Record<string, AlertSourceDefinition>;
 
 export function getAlertSource(id: keyof typeof ALERT_SOURCES): AlertSourceDefinition {

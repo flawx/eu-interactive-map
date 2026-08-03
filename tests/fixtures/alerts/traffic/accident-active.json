@@ -1,0 +1,26 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[4.82, 45.62], [4.84, 45.65], [4.86, 45.68]]
+      },
+      "properties": {
+        "id": "fixture-accident-a7",
+        "iconCategory": "accident",
+        "magnitudeOfDelay": "major",
+        "events": [{"code": 1, "description": "Accident", "iconCategory": "accident"}],
+        "startTime": "2026-07-28T08:00:00Z",
+        "from": "Vienne",
+        "to": "Lyon",
+        "lengthInMeters": 3400,
+        "delayInSeconds": 1320,
+        "roadNumbers": ["A7"],
+        "timeValidity": "present",
+        "numberOfReports": 3,
+        "lastReportTime": "2026-07-28T08:35:00Z"
+      }
+    }
+  ]
+}

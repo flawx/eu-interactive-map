@@ -748,6 +748,58 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
           },
         ],
       },
+      {
+        id: "alerts-road-traffic",
+        titleKey: { ns: "legend", key: "groupRoadTraffic" },
+        defaultExpanded: true,
+        layers: [
+          {
+            id: "live-road-traffic",
+            preferenceKey: "liveTrafficFlow",
+            titleKey: { ns: "legend", key: "liveTrafficFlow" },
+            icon: "transport",
+            color: "#22c55e",
+          },
+          {
+            id: "road-traffic-incidents",
+            preferenceKey: "roadTrafficIncidents",
+            titleKey: { ns: "legend", key: "roadTrafficIncidents" },
+            icon: "alert",
+            color: "#f97316",
+            filters: [
+              { id: "traffic-accidents", preferenceKey: "trafficAccidents", titleKey: { ns: "legend", key: "trafficAccidents" }, color: "#ef4444" },
+              { id: "traffic-major-jams", preferenceKey: "trafficMajorJams", titleKey: { ns: "legend", key: "trafficMajorJams" }, color: "#991b1b" },
+              { id: "traffic-broken-vehicles", preferenceKey: "trafficBrokenVehicles", titleKey: { ns: "legend", key: "trafficBrokenVehicles" }, color: "#eab308" },
+              { id: "traffic-hazards", preferenceKey: "trafficHazards", titleKey: { ns: "legend", key: "trafficHazards" }, color: "#f97316" },
+              { id: "traffic-road-weather", preferenceKey: "trafficRoadWeather", titleKey: { ns: "legend", key: "trafficRoadWeather" }, color: "#0ea5e9" },
+              { id: "traffic-other-incidents", preferenceKey: "trafficOtherIncidents", titleKey: { ns: "legend", key: "trafficOtherIncidents" }, color: "#64748b" },
+            ],
+          },
+          {
+            id: "road-closures-restrictions",
+            preferenceKey: "roadClosuresRestrictions",
+            titleKey: { ns: "legend", key: "roadClosuresRestrictions" },
+            icon: "alert",
+            color: "#7f1d1d",
+            filters: [
+              { id: "traffic-road-closures", preferenceKey: "trafficRoadClosures", titleKey: { ns: "legend", key: "trafficRoadClosures" }, color: "#7f1d1d" },
+              { id: "traffic-lane-closures", preferenceKey: "trafficLaneClosures", titleKey: { ns: "legend", key: "trafficLaneClosures" }, color: "#f97316" },
+              { id: "traffic-restrictions", preferenceKey: "trafficRestrictions", titleKey: { ns: "legend", key: "trafficRestrictions" }, color: "#a855f7" },
+            ],
+          },
+          {
+            id: "roadworks",
+            preferenceKey: "roadworks",
+            titleKey: { ns: "legend", key: "roadworks" },
+            icon: "transport",
+            color: "#f59e0b",
+            filters: [
+              { id: "traffic-active-roadworks", preferenceKey: "trafficActiveRoadworks", titleKey: { ns: "legend", key: "trafficActiveRoadworks" }, color: "#f59e0b" },
+              { id: "traffic-planned-roadworks", preferenceKey: "trafficPlannedRoadworks", titleKey: { ns: "legend", key: "trafficPlannedRoadworks" }, color: "#fde047" },
+            ],
+          },
+        ],
+      },
     ],
   },
   // Reserved empty categories (hidden until they have layers):

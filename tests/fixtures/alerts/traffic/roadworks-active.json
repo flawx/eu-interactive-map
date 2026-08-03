@@ -1,0 +1,23 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[2.52, 49.01], [2.56, 49.04]]
+      },
+      "properties": {
+        "id": "fixture-roadworks-a1",
+        "iconCategory": "roadWorks",
+        "magnitudeOfDelay": "moderate",
+        "events": [{"description": "Roadworks", "iconCategory": "roadWorks"}],
+        "startTime": "2026-07-28T05:00:00Z",
+        "from": "Roissy",
+        "to": "Senlis",
+        "roadNumbers": ["A1"],
+        "timeValidity": "present",
+        "lastReportTime": "2026-07-28T08:32:00Z"
+      }
+    }
+  ]
+}

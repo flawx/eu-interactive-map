@@ -1,0 +1,19 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [2.45, 48.61]},
+      "properties": {
+        "id": "fixture-roadworks-planned-a6",
+        "iconCategory": "roadWorks",
+        "magnitudeOfDelay": "minor",
+        "events": [{"description": "Planned roadworks", "iconCategory": "roadWorks"}],
+        "startTime": "2026-07-29T22:00:00Z",
+        "endTime": "2026-07-30T04:00:00Z",
+        "roadNumbers": ["A6"],
+        "timeValidity": "future",
+        "lastReportTime": "2026-07-28T08:00:00Z"
+      }
+    }
+  ]
+}

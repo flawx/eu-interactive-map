@@ -229,7 +229,10 @@ function ResultIcon({
     type === "earthquake_alert" ||
     type === "volcano_alert" ||
     type === "landslide_activation" ||
-    type === "industrial_incident_activation"
+    type === "industrial_incident_activation" ||
+    type === "traffic_incident" ||
+    type === "road_closure" ||
+    type === "roadworks"
   ) {
     const color =
       metadata?.severity === "extreme"
@@ -255,6 +258,12 @@ function ResultIcon({
           <Mountain className="h-3 w-3" />
         ) : type === "industrial_incident_activation" ? (
           <Building2 className="h-3 w-3" />
+        ) : type === "roadworks" ? (
+          <Construction className="h-3 w-3" />
+        ) : type === "road_closure" ? (
+          <ShieldAlert className="h-3 w-3" />
+        ) : type === "traffic_incident" ? (
+          <Car className="h-3 w-3" />
         ) : type === "storm_alert" ? (
           <Wind className="h-3 w-3" />
         ) : metadata?.hazard === "thunderstorm" ? (

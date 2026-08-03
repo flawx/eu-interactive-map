@@ -38,6 +38,22 @@ type AlertTranslation = {
   chemicalAccidents: string;
   industrialExplosions: string;
   otherTechnicalAccidents: string;
+  roadTrafficGroup: string;
+  liveTrafficFlow: string;
+  roadTrafficIncidents: string;
+  trafficAccidents: string;
+  trafficMajorJams: string;
+  trafficBrokenVehicles: string;
+  trafficHazards: string;
+  trafficRoadWeather: string;
+  trafficOtherIncidents: string;
+  roadClosuresRestrictions: string;
+  trafficRoadClosures: string;
+  trafficLaneClosures: string;
+  trafficRestrictions: string;
+  roadworks: string;
+  trafficActiveRoadworks: string;
+  trafficPlannedRoadworks: string;
 };
 const en: AlertTranslation = {
   group: "Floods and severe weather",
@@ -77,6 +93,22 @@ const en: AlertTranslation = {
   chemicalAccidents: "Chemical accidents",
   industrialExplosions: "Explosions",
   otherTechnicalAccidents: "Other technical accidents",
+  roadTrafficGroup: "Road traffic",
+  liveTrafficFlow: "Live road traffic",
+  roadTrafficIncidents: "Road incidents",
+  trafficAccidents: "Accidents",
+  trafficMajorJams: "Major traffic jams",
+  trafficBrokenVehicles: "Broken-down vehicles",
+  trafficHazards: "Road hazards",
+  trafficRoadWeather: "Adverse road conditions",
+  trafficOtherIncidents: "Other incidents",
+  roadClosuresRestrictions: "Closures and restrictions",
+  trafficRoadClosures: "Road closures",
+  trafficLaneClosures: "Lane closures",
+  trafficRestrictions: "Traffic restrictions",
+  roadworks: "Roadworks",
+  trafficActiveRoadworks: "Current roadworks",
+  trafficPlannedRoadworks: "Planned roadworks",
 };
 
 function tr(values: Partial<AlertTranslation>): AlertTranslation {
@@ -190,10 +222,43 @@ const landslideIndustrialLabels: Record<Locale, LandslideIndustrialLabels> = {
   sv: ["Sannolikhet för jordskred", "Måttlig sannolikhet", "Hög sannolikhet", "Kartlagda jordskred", "Industriella och tekniska incidenter", "Stora industri- och kemikalieolyckor", "Industriolyckor", "Kemikalieolyckor", "Explosioner", "Andra tekniska olyckor"],
 };
 
+type TrafficLabels = readonly [
+  string, string, string, string, string, string, string, string,
+  string, string, string, string, string, string, string, string,
+];
+
+const trafficLabels: Record<Locale, TrafficLabels> = {
+  en: ["Road traffic", "Live road traffic", "Road incidents", "Accidents", "Major traffic jams", "Broken-down vehicles", "Road hazards", "Adverse road conditions", "Other incidents", "Closures and restrictions", "Road closures", "Lane closures", "Traffic restrictions", "Roadworks", "Current roadworks", "Planned roadworks"],
+  fr: ["Trafic routier", "Trafic routier en temps réel", "Incidents routiers", "Accidents", "Embouteillages majeurs", "Véhicules en panne", "Dangers routiers", "Mauvaises conditions routières", "Autres incidents", "Fermetures et restrictions", "Routes fermées", "Voies fermées", "Restrictions de circulation", "Travaux routiers", "Travaux en cours", "Travaux planifiés"],
+  de: ["Straßenverkehr", "Live-Straßenverkehr", "Verkehrsvorfälle", "Unfälle", "Schwere Staus", "Pannenfahrzeuge", "Straßengefahren", "Schlechte Straßenbedingungen", "Andere Vorfälle", "Sperrungen und Beschränkungen", "Straßensperrungen", "Fahrspursperrungen", "Verkehrsbeschränkungen", "Straßenarbeiten", "Laufende Arbeiten", "Geplante Arbeiten"],
+  es: ["Tráfico por carretera", "Tráfico en tiempo real", "Incidentes de tráfico", "Accidentes", "Atascos importantes", "Vehículos averiados", "Peligros en carretera", "Malas condiciones viales", "Otros incidentes", "Cierres y restricciones", "Carreteras cerradas", "Carriles cerrados", "Restricciones de tráfico", "Obras viales", "Obras en curso", "Obras planificadas"],
+  it: ["Traffico stradale", "Traffico in tempo reale", "Incidenti stradali", "Incidenti", "Grandi ingorghi", "Veicoli in panne", "Pericoli stradali", "Condizioni stradali avverse", "Altri incidenti", "Chiusure e restrizioni", "Strade chiuse", "Corsie chiuse", "Restrizioni al traffico", "Lavori stradali", "Lavori in corso", "Lavori pianificati"],
+  pt: ["Tráfego rodoviário", "Tráfego em tempo real", "Incidentes rodoviários", "Acidentes", "Grandes congestionamentos", "Veículos avariados", "Perigos rodoviários", "Condições rodoviárias adversas", "Outros incidentes", "Encerramentos e restrições", "Estradas encerradas", "Faixas encerradas", "Restrições de trânsito", "Obras rodoviárias", "Obras em curso", "Obras planeadas"],
+  nl: ["Wegverkeer", "Live wegverkeer", "Verkeersincidenten", "Ongevallen", "Grote files", "Voertuigen met pech", "Weggevaren", "Slechte wegomstandigheden", "Andere incidenten", "Afsluitingen en beperkingen", "Wegafsluitingen", "Rijstrookafsluitingen", "Verkeersbeperkingen", "Wegwerkzaamheden", "Lopende werkzaamheden", "Geplande werkzaamheden"],
+  bg: ["Пътен трафик", "Трафик в реално време", "Пътни инциденти", "Катастрофи", "Големи задръствания", "Повредени превозни средства", "Пътни опасности", "Лоши пътни условия", "Други инциденти", "Затваряния и ограничения", "Затворени пътища", "Затворени ленти", "Ограничения на движението", "Пътни работи", "Текущи работи", "Планирани работи"],
+  hr: ["Cestovni promet", "Promet uživo", "Prometni incidenti", "Nesreće", "Velike gužve", "Vozila u kvaru", "Opasnosti na cesti", "Loši uvjeti na cesti", "Ostali incidenti", "Zatvaranja i ograničenja", "Zatvorene ceste", "Zatvorene trake", "Prometna ograničenja", "Radovi na cesti", "Radovi u tijeku", "Planirani radovi"],
+  cs: ["Silniční doprava", "Doprava v reálném čase", "Dopravní události", "Nehody", "Velké kolony", "Porouchaná vozidla", "Nebezpečí na silnici", "Špatné silniční podmínky", "Jiné události", "Uzavírky a omezení", "Uzavřené silnice", "Uzavřené pruhy", "Dopravní omezení", "Silniční práce", "Probíhající práce", "Plánované práce"],
+  da: ["Vejtrafik", "Live vejtrafik", "Trafikhændelser", "Ulykker", "Store køer", "Havarerede køretøjer", "Vejfarer", "Dårlige vejforhold", "Andre hændelser", "Lukninger og restriktioner", "Vejlukninger", "Spærring af kørebaner", "Trafikrestriktioner", "Vejarbejde", "Igangværende arbejde", "Planlagt arbejde"],
+  et: ["Maanteeliiklus", "Reaalajas liiklus", "Liiklusjuhtumid", "Õnnetused", "Suured ummikud", "Rikkis sõidukid", "Teeohud", "Halvad teeolud", "Muud juhtumid", "Sulgemised ja piirangud", "Teede sulgemised", "Sõiduradade sulgemised", "Liikluspiirangud", "Teetööd", "Käimasolevad tööd", "Planeeritud tööd"],
+  fi: ["Tieliikenne", "Reaaliaikainen liikenne", "Liikennetapahtumat", "Onnettomuudet", "Suuret ruuhkat", "Rikkoutuneet ajoneuvot", "Tievaara", "Huonot tieolosuhteet", "Muut tapahtumat", "Sulut ja rajoitukset", "Tiesulut", "Kaistasulut", "Liikennerajoitukset", "Tietyöt", "Käynnissä olevat työt", "Suunnitellut työt"],
+  el: ["Οδική κυκλοφορία", "Κυκλοφορία σε πραγματικό χρόνο", "Οδικά συμβάντα", "Ατυχήματα", "Μεγάλη συμφόρηση", "Ακινητοποιημένα οχήματα", "Οδικοί κίνδυνοι", "Δυσμενείς οδικές συνθήκες", "Άλλα συμβάντα", "Κλεισίματα και περιορισμοί", "Κλειστοί δρόμοι", "Κλειστές λωρίδες", "Περιορισμοί κυκλοφορίας", "Οδικά έργα", "Εργασίες σε εξέλιξη", "Προγραμματισμένες εργασίες"],
+  hu: ["Közúti forgalom", "Élő közúti forgalom", "Közúti események", "Balesetek", "Nagy torlódások", "Lerobbant járművek", "Közúti veszélyek", "Rossz útviszonyok", "Egyéb események", "Lezárások és korlátozások", "Útlezárások", "Sávlezárások", "Forgalmi korlátozások", "Útmunkák", "Folyamatban lévő munkák", "Tervezett munkák"],
+  ga: ["Trácht bóthair", "Trácht beo", "Teagmhais bóthair", "Timpistí", "Mórphlódú tráchta", "Feithiclí briste", "Guaiseacha bóthair", "Droch-choinníollacha bóthair", "Teagmhais eile", "Dúnadh agus srianta", "Bóithre dúnta", "Lánaí dúnta", "Srianta tráchta", "Oibreacha bóthair", "Oibreacha reatha", "Oibreacha pleanáilte"],
+  lv: ["Ceļu satiksme", "Satiksme reāllaikā", "Ceļu incidenti", "Negadījumi", "Lieli sastrēgumi", "Bojāti transportlīdzekļi", "Ceļu apdraudējumi", "Slikti ceļa apstākļi", "Citi incidenti", "Slēgumi un ierobežojumi", "Slēgti ceļi", "Slēgtas joslas", "Satiksmes ierobežojumi", "Ceļu darbi", "Notiekošie darbi", "Plānotie darbi"],
+  lt: ["Kelių eismas", "Eismas realiuoju laiku", "Kelių įvykiai", "Avarijos", "Didelės spūstys", "Sugedusios transporto priemonės", "Kelių pavojai", "Blogos kelio sąlygos", "Kiti įvykiai", "Uždarymai ir apribojimai", "Uždaryti keliai", "Uždarytos juostos", "Eismo apribojimai", "Kelio darbai", "Vykstantys darbai", "Planuojami darbai"],
+  mt: ["Traffiku fit-toroq", "Traffiku dirett", "Inċidenti fit-toroq", "Inċidenti", "Konġestjoni kbira", "Vetturi bil-ħsara", "Perikli fit-triq", "Kundizzjonijiet ħżiena", "Inċidenti oħra", "Għeluq u restrizzjonijiet", "Toroq magħluqa", "Korsiji magħluqa", "Restrizzjonijiet tat-traffiku", "Xogħlijiet fit-toroq", "Xogħlijiet kurrenti", "Xogħlijiet ippjanati"],
+  pl: ["Ruch drogowy", "Ruch na żywo", "Zdarzenia drogowe", "Wypadki", "Duże korki", "Zepsute pojazdy", "Zagrożenia drogowe", "Złe warunki drogowe", "Inne zdarzenia", "Zamknięcia i ograniczenia", "Zamknięte drogi", "Zamknięte pasy", "Ograniczenia ruchu", "Roboty drogowe", "Trwające roboty", "Planowane roboty"],
+  ro: ["Trafic rutier", "Trafic în timp real", "Incidente rutiere", "Accidente", "Ambuteiaje majore", "Vehicule defecte", "Pericole rutiere", "Condiții rutiere nefavorabile", "Alte incidente", "Închideri și restricții", "Drumuri închise", "Benzi închise", "Restricții de circulație", "Lucrări rutiere", "Lucrări în curs", "Lucrări planificate"],
+  sk: ["Cestná doprava", "Doprava v reálnom čase", "Dopravné udalosti", "Nehody", "Veľké zápchy", "Pokazené vozidlá", "Nebezpečenstvá na ceste", "Zlé cestné podmienky", "Iné udalosti", "Uzávierky a obmedzenia", "Uzavreté cesty", "Uzavreté pruhy", "Dopravné obmedzenia", "Cestné práce", "Prebiehajúce práce", "Plánované práce"],
+  sl: ["Cestni promet", "Promet v živo", "Prometni dogodki", "Nesreče", "Veliki zastoji", "Pokvarjena vozila", "Nevarnosti na cesti", "Slabe cestne razmere", "Drugi dogodki", "Zaprtja in omejitve", "Zaprte ceste", "Zaprti pasovi", "Prometne omejitve", "Cestna dela", "Dela v teku", "Načrtovana dela"],
+  sv: ["Vägtrafik", "Vägtrafik i realtid", "Trafikhändelser", "Olyckor", "Stora köer", "Stillastående fordon", "Vägfaror", "Dåliga vägförhållanden", "Andra händelser", "Avstängningar och begränsningar", "Vägavstängningar", "Körfältsavstängningar", "Trafikbegränsningar", "Vägarbeten", "Pågående arbeten", "Planerade arbeten"],
+};
+
 export const alertTranslations = Object.fromEntries(
   (Object.keys(baseAlertTranslations) as Locale[]).map((locale) => {
     const labels = geologicalLabels[locale];
     const newLabels = landslideIndustrialLabels[locale];
+    const traffic = trafficLabels[locale];
     return [
       locale,
       {
@@ -218,6 +283,22 @@ export const alertTranslations = Object.fromEntries(
         chemicalAccidents: newLabels[7],
         industrialExplosions: newLabels[8],
         otherTechnicalAccidents: newLabels[9],
+        roadTrafficGroup: traffic[0],
+        liveTrafficFlow: traffic[1],
+        roadTrafficIncidents: traffic[2],
+        trafficAccidents: traffic[3],
+        trafficMajorJams: traffic[4],
+        trafficBrokenVehicles: traffic[5],
+        trafficHazards: traffic[6],
+        trafficRoadWeather: traffic[7],
+        trafficOtherIncidents: traffic[8],
+        roadClosuresRestrictions: traffic[9],
+        trafficRoadClosures: traffic[10],
+        trafficLaneClosures: traffic[11],
+        trafficRestrictions: traffic[12],
+        roadworks: traffic[13],
+        trafficActiveRoadworks: traffic[14],
+        trafficPlannedRoadworks: traffic[15],
       },
     ];
   }),
