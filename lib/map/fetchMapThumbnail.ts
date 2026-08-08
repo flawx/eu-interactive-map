@@ -39,6 +39,29 @@ export function classifyThumbnailHttpStatus(
   return "unknown";
 }
 
+export function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      (error as { name?: string }).name === "AbortError")
+  );
+}
+
+/** True for browser network rejections (not HTTP status, not abort). */
+export function isNetworkFetchError(error: unknown): boolean {
+  if (isAbortError(error)) return false;
+  if (!(error instanceof TypeError)) return false;
+  const message = error.message || "";
+  return (
+    /failed to fetch/i.test(message) ||
+    /networkerror/i.test(message) ||
+    /load failed/i.test(message) ||
+    /network request failed/i.test(message)
+  );
+}
+
 export function rememberThumbnailFailure(
   url: string,
   reason: ThumbnailFailureReason,
@@ -77,7 +100,7 @@ export function setInFlightThumbnail(
 
 /**
  * Controlled thumbnail fetch — avoids map.loadImage / <img> network console spam.
- * Returns null on failure (never rejects for HTTP errors).
+ * Returns null on failure (never rejects for HTTP or network errors).
  */
 export async function fetchMapThumbnailBitmap(
   url: string,
@@ -108,16 +131,14 @@ export async function fetchMapThumbnailBitmap(
       }
       return await createImageBitmap(blob);
     } catch (error) {
-      if (
-        (error instanceof DOMException && error.name === "AbortError") ||
-        (typeof error === "object" &&
-          error !== null &&
-          "name" in error &&
-          (error as { name?: string }).name === "AbortError")
-      ) {
+      if (isAbortError(error) || signal?.aborted) {
         return null;
       }
-      rememberThumbnailFailure(url, "timeout");
+      if (isNetworkFetchError(error)) {
+        rememberThumbnailFailure(url, "network");
+        return null;
+      }
+      rememberThumbnailFailure(url, "unknown");
       return null;
     }
   })();

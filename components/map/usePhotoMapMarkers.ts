@@ -8,6 +8,7 @@ import {
   isPhotoMarkerAbortError,
   sharedPhotoMarkerRegistry,
 } from "@/lib/map/photoMarkers";
+import { isNetworkFetchError } from "@/lib/map/fetchMapThumbnail";
 import {
   markerThumbnailKey,
   photoMarkerImageId,
@@ -144,6 +145,8 @@ async function fetchThumbnails(
     return cachedResults;
   } catch (error) {
     if (isAbortError(error)) return cachedResults;
+    // Transient network rejections must not become unhandled / console errors.
+    if (isNetworkFetchError(error)) return cachedResults;
     throw error;
   }
 }
@@ -531,25 +534,30 @@ export function usePhotoMapMarkers(options: {
 
       const runPrefetch = () => {
         void (async () => {
-          const results = await fetchThumbnails(
-            prefetchKeys,
-            optionsRef.current.locale,
-            new AbortController().signal,
-          );
-          await Promise.allSettled(
-            results.map(async (result) => {
-              if (!result.thumbnail.url) {
-                missingUrlKeysRef.current.add(requestKey(result));
-                return;
-              }
-              await sharedPhotoMarkerRegistry.ensure(map, {
-                category: result.category,
-                entityId: result.id,
-                remoteUrl: result.thumbnail.url,
-                priority: "prefetch",
-              });
-            }),
-          );
+          try {
+            const results = await fetchThumbnails(
+              prefetchKeys,
+              optionsRef.current.locale,
+              new AbortController().signal,
+            );
+            await Promise.allSettled(
+              results.map(async (result) => {
+                if (!result.thumbnail.url) {
+                  missingUrlKeysRef.current.add(requestKey(result));
+                  return;
+                }
+                await sharedPhotoMarkerRegistry.ensure(map, {
+                  category: result.category,
+                  entityId: result.id,
+                  remoteUrl: result.thumbnail.url,
+                  priority: "prefetch",
+                });
+              }),
+            );
+          } catch (error) {
+            if (isAbortError(error) || isNetworkFetchError(error)) return;
+            console.error("photo_markers_prefetch_failed", error);
+          }
         })();
       };
 
@@ -695,6 +703,10 @@ export function usePhotoMapMarkers(options: {
       } catch (error) {
         if (isAbortError(error)) {
           countersRef.current.abortedRuns += 1;
+          return;
+        }
+        if (isNetworkFetchError(error)) {
+          // Degrade silently — markers keep fallback icons until next schedule.
           return;
         }
         console.error("photo_markers_run_failed", error);

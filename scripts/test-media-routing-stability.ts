@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import {
   classifyThumbnailHttpStatus,
+  fetchMapThumbnailBitmap,
+  isAbortError,
+  isNetworkFetchError,
   isThumbnailNegativelyCached,
   rememberThumbnailFailure,
 } from "../lib/map/fetchMapThumbnail";
@@ -51,6 +54,80 @@ async function main() {
   const sample = "https://example.test/thumb-a";
   rememberThumbnailFailure(sample, "http_404");
   assert.equal(isThumbnailNegativelyCached(sample), true);
+
+  assert.equal(isNetworkFetchError(new TypeError("Failed to fetch")), true);
+  assert.equal(isNetworkFetchError(new TypeError("Load failed")), true);
+  assert.equal(isNetworkFetchError(new Error("Failed to fetch")), false);
+  assert.equal(
+    isAbortError(
+      Object.assign(new Error("aborted"), { name: "AbortError" }),
+    ),
+    true,
+  );
+  assert.equal(
+    isNetworkFetchError(
+      Object.assign(new Error("aborted"), { name: "AbortError" }),
+    ),
+    false,
+  );
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => {
+    throw new TypeError("Failed to fetch");
+  }) as typeof fetch;
+  try {
+    const bitmap = await fetchMapThumbnailBitmap(
+      "https://example.test/network-fail.png",
+    );
+    assert.equal(bitmap, null);
+    assert.equal(
+      isThumbnailNegativelyCached("https://example.test/network-fail.png"),
+      true,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  globalThis.fetch = (async () =>
+    new Response("not-an-image", {
+      status: 502,
+      headers: { "Content-Type": "text/plain" },
+    })) as typeof fetch;
+  try {
+    const bitmap = await fetchMapThumbnailBitmap(
+      "https://example.test/http-502.png",
+    );
+    assert.equal(bitmap, null);
+    assert.equal(
+      isThumbnailNegativelyCached("https://example.test/http-502.png"),
+      true,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const controller = new AbortController();
+  controller.abort();
+  globalThis.fetch = (async (_input, init) => {
+    if (init?.signal?.aborted) {
+      throw Object.assign(new Error("aborted"), { name: "AbortError" });
+    }
+    throw new TypeError("Failed to fetch");
+  }) as typeof fetch;
+  try {
+    const bitmap = await fetchMapThumbnailBitmap(
+      "https://example.test/aborted.png",
+      controller.signal,
+    );
+    assert.equal(bitmap, null);
+    // Abort must not poison the negative cache.
+    assert.equal(
+      isThumbnailNegativelyCached("https://example.test/aborted.png"),
+      false,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 
   console.log("test-media-routing-stability: ok");
 }

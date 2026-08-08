@@ -1631,6 +1631,17 @@ export default function MapContainer({
         return;
       }
 
+      // MapLibre tile/resource network failures surface as TypeError: Failed to fetch.
+      // They are degradable (basemap/EFFIS/terrain) — do not spam Next Dev Overlay.
+      if (
+        error instanceof TypeError &&
+        /failed to fetch|networkerror|load failed|network request failed/i.test(
+          message,
+        )
+      ) {
+        return;
+      }
+
       console.error(error);
     };
 
