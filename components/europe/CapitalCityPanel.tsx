@@ -10,6 +10,7 @@ import {
   Languages,
   MapPin,
   Mountain,
+  Route,
   Ruler,
   Users,
   X,
@@ -21,12 +22,14 @@ import {
   flagRegionCode,
   getEuCapitalById,
 } from "@/lib/europe/euCapitals";
+import type { RoutePoint } from "@/lib/routing/types";
 
 type CapitalCityPanelProps = {
   capitalId: string;
   locale: Locale;
   onClose: () => void;
   onOpenCountry: (countryCode: string) => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 type CountryLanguage = {
@@ -39,6 +42,7 @@ export default function CapitalCityPanel({
   locale,
   onClose,
   onOpenCountry,
+  onRouteToPlace,
 }: CapitalCityPanelProps) {
   const t = getMessages(locale);
   const capital = getEuCapitalById(capitalId) ?? null;
@@ -196,6 +200,23 @@ export default function CapitalCityPanel({
         <p className="mt-2 inline-flex rounded-full border border-[#003399]/40 bg-[#003399]/25 px-2 py-0.5 text-[10px] font-medium text-[#facc15]">
           {t.capitalPanel.badge}
         </p>
+        {onRouteToPlace && capital ? (
+          <button
+            type="button"
+            className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-100 hover:bg-white/10"
+            onClick={() =>
+              onRouteToPlace({
+                latitude: capital.latitude,
+                longitude: capital.longitude,
+                name: capital.canonicalName,
+                countryCode: capital.countryCode,
+              })
+            }
+          >
+            <Route className="h-4 w-4" aria-hidden />
+            {t.routePlanner.routeToPlace}
+          </button>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">

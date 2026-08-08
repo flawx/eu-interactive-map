@@ -169,6 +169,14 @@ type MapClientProps = {
     ((mode?: "fit" | "soft") => void) | null
   >;
   onUserMapGesture?: () => void;
+  routePlannerActive?: boolean;
+  routePlannerRoutes?: import("@/lib/routing/types").NormalizedRoute[];
+  routePlannerSelectedId?: string | null;
+  routePlannerPoints?: import("@/lib/routing/routeMapLayers").RoutePlannerMapPoint[];
+  routePlannerPickMode?: boolean;
+  onRoutePlannerMapPick?: (longitude: number, latitude: number) => void;
+  onRoutePlannerContextMenu?: (longitude: number, latitude: number) => void;
+  onRoutePlannerAlternativeClick?: (routeId: string) => void;
 };
 
 export default function MapClient({
@@ -283,6 +291,14 @@ export default function MapClient({
   userLocation = null,
   focusUserLocationRef,
   onUserMapGesture,
+  routePlannerActive = false,
+  routePlannerRoutes = [],
+  routePlannerSelectedId = null,
+  routePlannerPoints = [],
+  routePlannerPickMode = false,
+  onRoutePlannerMapPick,
+  onRoutePlannerContextMenu,
+  onRoutePlannerAlternativeClick,
 }: MapClientProps) {
   return (
     <MapContainer
@@ -399,6 +415,14 @@ export default function MapClient({
       userLocation={userLocation}
       focusUserLocationRef={focusUserLocationRef}
       onUserMapGesture={onUserMapGesture}
+      routePlannerActive={routePlannerActive}
+      routePlannerRoutes={routePlannerRoutes}
+      routePlannerSelectedId={routePlannerSelectedId}
+      routePlannerPoints={routePlannerPoints}
+      routePlannerPickMode={routePlannerPickMode}
+      onRoutePlannerMapPick={onRoutePlannerMapPick}
+      onRoutePlannerContextMenu={onRoutePlannerContextMenu}
+      onRoutePlannerAlternativeClick={onRoutePlannerAlternativeClick}
     />
   );
 }

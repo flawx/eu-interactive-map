@@ -12,6 +12,11 @@ import {
   type MapLayerMouseEvent,
 } from "maplibre-gl";
 import { usePhotoMapMarkers } from "@/components/map/usePhotoMapMarkers";
+import {
+  clearRoutePlannerLayers,
+  syncRoutePlannerLayers,
+} from "@/components/routing/useRoutePlannerLayers";
+import { ROUTE_PLANNER_LAYER_ALT } from "@/lib/routing/routeMapLayers";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import type {
   EffisBurnedArea,
@@ -1096,6 +1101,14 @@ export default function MapContainer({
   userLocation = null,
   focusUserLocationRef,
   onUserMapGesture,
+  routePlannerActive = false,
+  routePlannerRoutes = [],
+  routePlannerSelectedId = null,
+  routePlannerPoints = [],
+  routePlannerPickMode = false,
+  onRoutePlannerMapPick,
+  onRoutePlannerContextMenu,
+  onRoutePlannerAlternativeClick,
 }: {
   showEurozone: boolean;
   showNonEurozone: boolean;
@@ -1220,6 +1233,14 @@ export default function MapContainer({
     ((mode?: "fit" | "soft") => void) | null
   >;
   onUserMapGesture?: () => void;
+  routePlannerActive?: boolean;
+  routePlannerRoutes?: import("@/lib/routing/types").NormalizedRoute[];
+  routePlannerSelectedId?: string | null;
+  routePlannerPoints?: import("@/lib/routing/routeMapLayers").RoutePlannerMapPoint[];
+  routePlannerPickMode?: boolean;
+  onRoutePlannerMapPick?: (longitude: number, latitude: number) => void;
+  onRoutePlannerContextMenu?: (longitude: number, latitude: number) => void;
+  onRoutePlannerAlternativeClick?: (routeId: string) => void;
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -8067,6 +8088,77 @@ export default function MapContainer({
       temporaryMarkerRef.current = null;
     };
   }, [temporaryMarker, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+    syncRoutePlannerLayers(map, {
+      active: routePlannerActive,
+      routes: routePlannerRoutes,
+      selectedRouteId: routePlannerSelectedId,
+      points: routePlannerPoints,
+    });
+    if (!routePlannerActive) {
+      clearRoutePlannerLayers(map);
+    }
+  }, [
+    routePlannerActive,
+    routePlannerRoutes,
+    routePlannerSelectedId,
+    routePlannerPoints,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const handlePickClick = (event: MapLayerMouseEvent) => {
+      if (!routePlannerPickMode || !onRoutePlannerMapPick) return;
+      event.preventDefault();
+      onRoutePlannerMapPick(event.lngLat.lng, event.lngLat.lat);
+    };
+
+    const handleContextMenu = (event: MapLayerMouseEvent) => {
+      if (!onRoutePlannerContextMenu) return;
+      event.preventDefault();
+      onRoutePlannerContextMenu(event.lngLat.lng, event.lngLat.lat);
+    };
+
+    const handleAltClick = (event: MapLayerMouseEvent) => {
+      if (!onRoutePlannerAlternativeClick) return;
+      const feature = event.features?.[0];
+      const routeId = feature?.properties?.id;
+      if (typeof routeId === "string") {
+        onRoutePlannerAlternativeClick(routeId);
+      }
+    };
+
+    if (routePlannerPickMode) {
+      map.getCanvas().style.cursor = "crosshair";
+      map.on("click", handlePickClick);
+    }
+    map.on("contextmenu", handleContextMenu);
+    if (map.getLayer(ROUTE_PLANNER_LAYER_ALT)) {
+      map.on("click", ROUTE_PLANNER_LAYER_ALT, handleAltClick);
+    }
+
+    return () => {
+      map.getCanvas().style.cursor = "";
+      map.off("click", handlePickClick);
+      map.off("contextmenu", handleContextMenu);
+      if (map.getLayer(ROUTE_PLANNER_LAYER_ALT)) {
+        map.off("click", ROUTE_PLANNER_LAYER_ALT, handleAltClick);
+      }
+    };
+  }, [
+    routePlannerPickMode,
+    onRoutePlannerMapPick,
+    onRoutePlannerContextMenu,
+    onRoutePlannerAlternativeClick,
+    mapSourcesReadyVersion,
+    routePlannerActive,
+  ]);
 
   return (
     <div ref={mapContainerRef} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />

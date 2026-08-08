@@ -21,6 +21,8 @@ import {
   type TouristPlaceCategory,
 } from "@/lib/tourism/majorTouristPlaces";
 import type { TouristPlaceDetails } from "@/lib/tourism/touristPlaceDetails";
+import type { RoutePoint } from "@/lib/routing/types";
+import RouteToPlaceButton from "@/components/routing/RouteToPlaceButton";
 
 const CLIENT_FETCH_TIMEOUT_MS = 12_000;
 
@@ -29,6 +31,7 @@ type TouristPlacePanelProps = {
   locale: Locale;
   onClose: () => void;
   onOpenUnescoSite?: (unescoSiteId: string) => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function flagCode(countryCode: string): string {
@@ -84,6 +87,7 @@ export default function TouristPlacePanel({
   locale,
   onClose,
   onOpenUnescoSite,
+  onRouteToPlace,
 }: TouristPlacePanelProps) {
   const t = getMessages(locale);
   const tp = t.touristPlacePanel;
@@ -214,6 +218,20 @@ export default function TouristPlacePanel({
             {categoryLabel}
           </span>
         </div>
+        {onRouteToPlace ? (
+          <div className="mt-2">
+            <RouteToPlaceButton
+              locale={locale}
+              point={{
+                latitude: place.latitude,
+                longitude: place.longitude,
+                name: place.canonicalName,
+                countryCode: place.countryCode,
+              }}
+              onRouteToPlace={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">

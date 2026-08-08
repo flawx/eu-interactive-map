@@ -22,6 +22,7 @@
     "test:alerts-geological": "tsx scripts/test-geological-alerts.ts",
     "test:alerts-landslide-industrial": "tsx scripts/test-landslide-industrial-alerts.ts",
     "test:alerts-traffic": "tsx scripts/test-road-traffic-alerts.ts",
+    "test:routing": "tsx scripts/test-routing.ts",
     "test:photo-markers-wildfire-labels": "tsx scripts/test-photo-markers-wildfire-labels.ts"
   },
   "dependencies": {

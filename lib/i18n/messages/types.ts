@@ -857,4 +857,5 @@ export type Messages = {
     commissionLink: string;
     lastFetched: string;
   };
+  routePlanner: import("./routePlannerTranslations").RoutePlannerMessages;
 };

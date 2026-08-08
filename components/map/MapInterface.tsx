@@ -24,6 +24,9 @@ import AirportPanel from "@/components/transport/AirportPanel";
 import EurostarStationPanel from "@/components/transport/EurostarStationPanel";
 import BorderCrossingPointPanel from "@/components/security/BorderCrossingPointPanel";
 import TemporaryBorderControlPanel from "@/components/security/TemporaryBorderControlPanel";
+import RoutePlannerPanel, {
+  type RoutePlannerPickTarget,
+} from "@/components/routing/RoutePlannerPanel";
 import { getEuCapitalById } from "@/lib/europe/euCapitals";
 import {
   getEuInstitutionById,
@@ -76,6 +79,11 @@ import type {
 } from "@/lib/incidents/types";
 import type { MapCameraCommands } from "@/lib/map/mapCameraCommands";
 import type { MapFocusRequest } from "@/lib/map/focusRequest";
+import type { NormalizedRoute, RoutePoint } from "@/lib/routing/types";
+import type { RoutePlannerMapPoint } from "@/lib/routing/routeMapLayers";
+import {
+  readShareableRouteFromUrl,
+} from "@/lib/routing/shareableRoute";
 import {
   DEFAULT_MAP_LAYER_PREFERENCES,
   defaultLegendCollapsedForViewport,
@@ -220,6 +228,30 @@ export default function MapInterface() {
   const [selectedCapitalId, setSelectedCapitalId] = useState<string | null>(
     null,
   );
+  const [routePlannerOpen, setRoutePlannerOpen] = useState(false);
+  const [routePlannerRoutes, setRoutePlannerRoutes] = useState<NormalizedRoute[]>(
+    [],
+  );
+  const [routePlannerSelectedId, setRoutePlannerSelectedId] = useState<
+    string | null
+  >(null);
+  const [routePlannerPoints, setRoutePlannerPoints] = useState<
+    RoutePlannerMapPoint[]
+  >([]);
+  const [routePlannerPickTarget, setRoutePlannerPickTarget] =
+    useState<RoutePlannerPickTarget | null>(null);
+  const [routePlannerMapPick, setRoutePlannerMapPick] =
+    useState<RoutePoint | null>(null);
+  const [routePlannerInitialOrigin, setRoutePlannerInitialOrigin] =
+    useState<RoutePoint | null>(null);
+  const [routePlannerInitialDestination, setRoutePlannerInitialDestination] =
+    useState<RoutePoint | null>(null);
+  const [routeContextMenu, setRouteContextMenu] = useState<{
+    longitude: number;
+    latitude: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const [showEuMainInstitutions, setShowEuMainInstitutions] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.euMainInstitutions,
   );
@@ -2793,6 +2825,45 @@ export default function MapInterface() {
     }
   };
 
+  const openRoutePlanner = (options?: {
+    origin?: RoutePoint | null;
+    destination?: RoutePoint | null;
+  }) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearMountainPlaceSelection();
+    clearCivilEngineeringWorkSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearTemporaryPlace();
+    setSelectedAlertId(null);
+    setRouteContextMenu(null);
+    setRoutePlannerInitialOrigin(options?.origin ?? null);
+    setRoutePlannerInitialDestination(options?.destination ?? null);
+    setRoutePlannerOpen(true);
+  };
+
+  useEffect(() => {
+    const shared = readShareableRouteFromUrl();
+    if (!shared) return;
+    openRoutePlanner({
+      origin: shared.origin,
+      destination: shared.destination,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once from URL
+  }, []);
+
+  const handleRouteToPlace = (point: RoutePoint) => {
+    openRoutePlanner({ destination: point });
+  };
+
   const handleWildfireSelect = (incidentId: string | null) => {
     setSelectedCountryCode(null);
     setSelectedEffisBurnedArea(null);
@@ -3672,6 +3743,7 @@ export default function MapInterface() {
         onSelectSearchResult={handleSelectSearchResult}
         onGoEurope={handleGoEurope}
         onFocusLegend={handleFocusLegend}
+        onOpenRoutePlanner={() => openRoutePlanner()}
       />
 
       <div className="absolute inset-0">
@@ -3859,6 +3931,49 @@ export default function MapInterface() {
             ) {
               setLocationStatus("passive");
             }
+          }}
+          routePlannerActive={routePlannerOpen}
+          routePlannerRoutes={routePlannerRoutes}
+          routePlannerSelectedId={routePlannerSelectedId}
+          routePlannerPoints={routePlannerPoints}
+          routePlannerPickMode={routePlannerPickTarget != null}
+          onRoutePlannerMapPick={async (longitude, latitude) => {
+            let name: string | null = null;
+            let countryCode: string | null = null;
+            try {
+              const response = await fetch(
+                `/api/search/reverse?lat=${latitude}&lon=${longitude}&lang=${locale}`,
+              );
+              if (response.ok) {
+                const payload = (await response.json()) as {
+                  result?: {
+                    title?: string;
+                    countryCode?: string;
+                  } | null;
+                };
+                name = payload.result?.title ?? null;
+                countryCode = payload.result?.countryCode ?? null;
+              }
+            } catch {
+              // ignore reverse failures
+            }
+            setRoutePlannerMapPick({
+              latitude,
+              longitude,
+              name,
+              countryCode,
+            });
+          }}
+          onRoutePlannerContextMenu={(longitude, latitude) => {
+            setRouteContextMenu({
+              longitude,
+              latitude,
+              x: typeof window !== "undefined" ? window.innerWidth / 2 : 0,
+              y: typeof window !== "undefined" ? window.innerHeight / 2 : 0,
+            });
+          }}
+          onRoutePlannerAlternativeClick={(routeId) => {
+            setRoutePlannerSelectedId(routeId);
           }}
         />
         <MapControlDock
@@ -4122,7 +4237,146 @@ export default function MapInterface() {
           </div>
         )}
 
+        {routePlannerOpen ? (
+          <RoutePlannerPanel
+            locale={locale}
+            open={routePlannerOpen}
+            onClose={() => {
+              setRoutePlannerOpen(false);
+              setRoutePlannerRoutes([]);
+              setRoutePlannerSelectedId(null);
+              setRoutePlannerPoints([]);
+              setRoutePlannerPickTarget(null);
+              setRoutePlannerMapPick(null);
+              setRoutePlannerInitialOrigin(null);
+              setRoutePlannerInitialDestination(null);
+            }}
+            initialOrigin={routePlannerInitialOrigin}
+            initialDestination={routePlannerInitialDestination}
+            pickTarget={routePlannerPickTarget}
+            onPickTargetChange={setRoutePlannerPickTarget}
+            mapPickPoint={routePlannerMapPick}
+            onRoutesChange={(routes, selectedId) => {
+              setRoutePlannerRoutes(routes);
+              setRoutePlannerSelectedId(selectedId);
+            }}
+            onPointsChange={(origin, destination, waypoints) => {
+              const points: RoutePlannerMapPoint[] = [];
+              if (origin) {
+                points.push({
+                  id: "origin",
+                  role: "origin",
+                  longitude: origin.longitude,
+                  latitude: origin.latitude,
+                  label: "A",
+                  color: "#16a34a",
+                });
+              }
+              waypoints.forEach((waypoint, index) => {
+                points.push({
+                  id: `wp-${index}`,
+                  role: "waypoint",
+                  longitude: waypoint.longitude,
+                  latitude: waypoint.latitude,
+                  label: String(index + 1),
+                  color: "#2563eb",
+                });
+              });
+              if (destination) {
+                points.push({
+                  id: "destination",
+                  role: "destination",
+                  longitude: destination.longitude,
+                  latitude: destination.latitude,
+                  label: "B",
+                  color: "#dc2626",
+                });
+              }
+              setRoutePlannerPoints(points);
+            }}
+            onSelectIncident={(alertId) => {
+              handleAlertSelect(alertId);
+            }}
+            onFocusPoint={(longitude, latitude, zoom = 13) => {
+              requestFocus({ kind: "point", longitude, latitude, zoom });
+            }}
+            onFocusRoute={(coordinates) => {
+              if (coordinates.length < 2) return;
+              let west = Infinity;
+              let south = Infinity;
+              let east = -Infinity;
+              let north = -Infinity;
+              for (const [lon, lat] of coordinates) {
+                west = Math.min(west, lon);
+                south = Math.min(south, lat);
+                east = Math.max(east, lon);
+                north = Math.max(north, lat);
+              }
+              requestFocus({
+                kind: "bounds",
+                west,
+                south,
+                east,
+                north,
+                padding: 80,
+                maxZoom: 14,
+              });
+            }}
+          />
+        ) : null}
+
+        {routeContextMenu ? (
+          <div
+            className="pointer-events-auto absolute z-[50] w-56 rounded-xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl"
+            style={{ left: 16, bottom: 96 }}
+            role="menu"
+          >
+            <button
+              type="button"
+              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-slate-100 hover:bg-white/10"
+              onClick={() => {
+                openRoutePlanner({
+                  origin: {
+                    latitude: routeContextMenu.latitude,
+                    longitude: routeContextMenu.longitude,
+                    name: null,
+                    countryCode: null,
+                  },
+                });
+                setRouteContextMenu(null);
+              }}
+            >
+              {t.routePlanner.routeFromHere}
+            </button>
+            <button
+              type="button"
+              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-slate-100 hover:bg-white/10"
+              onClick={() => {
+                openRoutePlanner({
+                  destination: {
+                    latitude: routeContextMenu.latitude,
+                    longitude: routeContextMenu.longitude,
+                    name: null,
+                    countryCode: null,
+                  },
+                });
+                setRouteContextMenu(null);
+              }}
+            >
+              {t.routePlanner.routeToHere}
+            </button>
+            <button
+              type="button"
+              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-slate-400 hover:bg-white/10"
+              onClick={() => setRouteContextMenu(null)}
+            >
+              {t.routePlanner.close}
+            </button>
+          </div>
+        ) : null}
+
         {selectedCapitalId &&
+          !routePlannerOpen &&
           !selectedInstitutionId &&
           !selectedUnescoSiteId &&
           !selectedEhlSiteId &&
@@ -4142,6 +4396,7 @@ export default function MapInterface() {
                 setSelectedCapitalId(null);
                 handleCountrySelect(countryCode);
               }}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4236,6 +4491,7 @@ export default function MapInterface() {
                 clearTouristPlaceSelection();
                 handleUnescoSiteSelect(unescoSiteId);
               }}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 

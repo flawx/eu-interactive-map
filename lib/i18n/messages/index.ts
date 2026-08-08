@@ -28,6 +28,7 @@ import { mountainTranslations } from "./mountainTranslations";
 import { civilEngineeringTranslations } from "./civilEngineeringTranslations";
 import { alertTranslations } from "./alertTranslations";
 import { wildfireLabelTranslations } from "./wildfireLabelTranslations";
+import { routePlannerTranslations } from "./routePlannerTranslations";
 
 export function getMessages(locale: Locale): Messages {
   const localized = rawMessages[locale] as Partial<Messages> & typeof en;
@@ -35,9 +36,14 @@ export function getMessages(locale: Locale): Messages {
   const civil = civilEngineeringTranslations[locale];
   const alerts = alertTranslations[locale];
   const wildfireLabels = wildfireLabelTranslations[locale];
+  const routePlanner = routePlannerTranslations[locale];
   return {
     ...en,
     ...localized,
+    routePlanner: {
+      ...en.routePlanner,
+      ...routePlanner,
+    },
     wildfireLabels: {
       ...en.wildfireLabels,
       ...wildfireLabels,
