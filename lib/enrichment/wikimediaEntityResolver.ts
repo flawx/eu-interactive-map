@@ -245,20 +245,36 @@ async function fetchJson(
   url: string,
   signal?: AbortSignal,
 ): Promise<unknown | null> {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
       const response = await fetch(url, {
         headers: { Accept: "application/json", "User-Agent": USER_AGENT },
         signal,
         next: { revalidate: REVALIDATE_SECONDS },
       });
-      if (response.ok) return await response.json();
-      if (![429, 502, 503, 504].includes(response.status)) return null;
+      if (response.ok) {
+        const text = await response.text();
+        if (text.trimStart().startsWith("<")) {
+          // Wikimedia HTML error / rate-limit interstitial.
+          await new Promise((resolve) =>
+            setTimeout(resolve, 15_000 * (attempt + 1)),
+          );
+          continue;
+        }
+        return JSON.parse(text) as unknown;
+      }
+      if (response.status === 429) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 30_000 * (attempt + 1)),
+        );
+        continue;
+      }
+      if (![502, 503, 504].includes(response.status)) return null;
     } catch {
       if (signal?.aborted) return null;
     }
     await new Promise((resolve) =>
-      setTimeout(resolve, 400 * (attempt + 1)),
+      setTimeout(resolve, 800 * (attempt + 1)),
     );
   }
   return null;
@@ -709,7 +725,8 @@ export async function resolvePrimaryMarkerImage(
   if (!entity) return null;
   const p18 = claimMediaFilename(entity, "P18");
   if (!p18) return null;
-  const result = await fetchCommonsFile(p18, signal, 96);
+  // Wikimedia rejects non-step hotlink widths; 120 is an allowed production step.
+  const result = await fetchCommonsFile(p18, signal, 120);
   return result.image;
 }
 

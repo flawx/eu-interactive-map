@@ -12,15 +12,19 @@ type EnsureOptions = {
   entityId: string;
   remoteUrl: string;
   signal?: AbortSignal;
+  /** Visible markers take the high-concurrency lane. */
+  priority?: "visible" | "prefetch";
 };
 
 type RegistryEntry = {
   imageId: string;
   remoteUrl: string;
   status: "loading" | "ready" | "failed";
+  failedUntil?: number;
 };
 
 const PIXEL_RATIO = 2;
+const FAILURE_COOLDOWN_MS = 5 * 60_000;
 
 function isAbortError(error: unknown): boolean {
   return (
@@ -128,6 +132,11 @@ function loadHtmlImage(
   });
 }
 
+type QueueItem = {
+  priority: "visible" | "prefetch";
+  run: () => void;
+};
+
 /**
  * Shared MapLibre photo-marker image registry.
  * Distinguishes downloaded thumbnails from style-bound map.hasImage().
@@ -135,15 +144,16 @@ function loadHtmlImage(
 export class PhotoMarkerRegistry {
   private readonly entries = new Map<string, RegistryEntry>();
   private readonly pending = new Map<string, Promise<string | null>>();
-  /** Decoded ImageData kept so we can re-add after style reload. */
   private readonly imageDataCache = new Map<string, ImageData>();
   private readonly remoteByImageId = new Map<string, string>();
-  private queue: Array<() => void> = [];
+  private queue: QueueItem[] = [];
   private active = 0;
-  private readonly concurrency: number;
+  private readonly visibleConcurrency: number;
+  private readonly prefetchConcurrency: number;
 
-  constructor(concurrency = 6) {
-    this.concurrency = concurrency;
+  constructor(visibleConcurrency = 8, prefetchConcurrency = 3) {
+    this.visibleConcurrency = visibleConcurrency;
+    this.prefetchConcurrency = prefetchConcurrency;
   }
 
   clear() {
@@ -155,17 +165,19 @@ export class PhotoMarkerRegistry {
     this.active = 0;
   }
 
-  /** Allow retry after upstream/proxy fixes (do not wipe ready ImageData). */
   clearFailures() {
+    const now = Date.now();
     for (const [imageId, entry] of this.entries) {
-      if (entry.status === "failed") {
+      if (
+        entry.status === "failed" &&
+        (!entry.failedUntil || entry.failedUntil <= now)
+      ) {
         this.entries.delete(imageId);
         this.pending.delete(imageId);
       }
     }
   }
 
-  /** Style was replaced — MapLibre images are gone, keep downloaded bitmaps. */
   clearMapBindings() {
     for (const [imageId, entry] of this.entries) {
       if (entry.status === "ready") {
@@ -174,7 +186,6 @@ export class PhotoMarkerRegistry {
     }
   }
 
-  /** Re-add cached bitmaps after style changes without re-downloading. */
   rebindReadyImages(map: MapLibreMap): number {
     let added = 0;
     for (const [imageId, imageData] of this.imageDataCache) {
@@ -208,7 +219,12 @@ export class PhotoMarkerRegistry {
 
   failed(category: PhotoMarkerCategory, entityId: string): boolean {
     const entry = this.entries.get(photoMarkerImageId(category, entityId));
-    return entry?.status === "failed";
+    if (entry?.status !== "failed") return false;
+    if (entry.failedUntil && entry.failedUntil <= Date.now()) {
+      this.entries.delete(photoMarkerImageId(category, entityId));
+      return false;
+    }
+    return true;
   }
 
   async ensure(
@@ -216,6 +232,7 @@ export class PhotoMarkerRegistry {
     options: EnsureOptions,
   ): Promise<string | null> {
     const imageId = photoMarkerImageId(options.category, options.entityId);
+    const priority = options.priority ?? "visible";
     if (map.hasImage(imageId)) {
       this.entries.set(imageId, {
         imageId,
@@ -241,12 +258,17 @@ export class PhotoMarkerRegistry {
     }
 
     const existing = this.entries.get(imageId);
-    if (existing?.status === "failed") return null;
+    if (existing?.status === "failed") {
+      if (existing.failedUntil && existing.failedUntil > Date.now()) {
+        return null;
+      }
+      this.entries.delete(imageId);
+    }
 
     const pending = this.pending.get(imageId);
     if (pending) return pending;
 
-    const task = this.enqueue(async () => {
+    const task = this.enqueue(priority, async () => {
       if (options.signal?.aborted) {
         return null;
       }
@@ -260,7 +282,6 @@ export class PhotoMarkerRegistry {
           options.remoteUrl,
           typeof window !== "undefined" ? window.location.origin : undefined,
         );
-        // Always absolute for Image()/MapLibre.
         const absoluteUrl = proxyUrl.startsWith("http")
           ? proxyUrl
           : new URL(proxyUrl, window.location.origin).href;
@@ -280,7 +301,6 @@ export class PhotoMarkerRegistry {
         return imageId;
       } catch (error) {
         if (isAbortError(error)) {
-          // Do not permanently fail aborted loads.
           this.entries.delete(imageId);
           return null;
         }
@@ -288,6 +308,7 @@ export class PhotoMarkerRegistry {
           imageId,
           remoteUrl: options.remoteUrl,
           status: "failed",
+          failedUntil: Date.now() + FAILURE_COOLDOWN_MS,
         });
         return null;
       } finally {
@@ -299,7 +320,20 @@ export class PhotoMarkerRegistry {
     return task;
   }
 
-  private enqueue<T>(work: () => Promise<T>): Promise<T> {
+  private currentLimit(): number {
+    const hasVisibleQueued = this.queue.some(
+      (item) => item.priority === "visible",
+    );
+    // While visible work remains, keep the higher lane.
+    return hasVisibleQueued || this.active < this.visibleConcurrency
+      ? this.visibleConcurrency
+      : this.prefetchConcurrency;
+  }
+
+  private enqueue<T>(
+    priority: "visible" | "prefetch",
+    work: () => Promise<T>,
+  ): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       const run = () => {
         this.active += 1;
@@ -307,18 +341,30 @@ export class PhotoMarkerRegistry {
           .then(resolve, reject)
           .finally(() => {
             this.active -= 1;
-            const next = this.queue.shift();
-            if (next) next();
+            this.pump();
           });
       };
-      if (this.active < this.concurrency) {
-        run();
+      if (priority === "visible") {
+        this.queue.unshift({ priority, run });
       } else {
-        this.queue.push(run);
+        this.queue.push({ priority, run });
       }
+      this.pump();
     });
+  }
+
+  private pump() {
+    while (this.queue.length > 0 && this.active < this.currentLimit()) {
+      // Prefer visible jobs.
+      const visibleIndex = this.queue.findIndex(
+        (item) => item.priority === "visible",
+      );
+      const index = visibleIndex >= 0 ? visibleIndex : 0;
+      const next = this.queue.splice(index, 1)[0];
+      if (next) next.run();
+    }
   }
 }
 
-export const sharedPhotoMarkerRegistry = new PhotoMarkerRegistry(6);
+export const sharedPhotoMarkerRegistry = new PhotoMarkerRegistry(8, 3);
 export { isAbortError as isPhotoMarkerAbortError };

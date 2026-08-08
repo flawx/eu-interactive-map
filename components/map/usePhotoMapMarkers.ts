@@ -11,6 +11,7 @@ import {
 import {
   markerThumbnailKey,
   photoMarkerImageId,
+  type MapMarkerThumbnail,
   type MarkerThumbnailRequest,
   type PhotoMarkerCategory,
 } from "@/lib/map/mapMarkerThumbnail";
@@ -41,6 +42,10 @@ type CategoryStats = {
   fallback: number;
 };
 
+/** Session-level metadata cache — survives remounts within the same tab. */
+const sessionThumbnailCache = new Map<string, MapMarkerThumbnail | null>();
+let sessionCatalogVersion: number | null = null;
+
 function isAbortError(error: unknown): boolean {
   return isPhotoMarkerAbortError(error);
 }
@@ -61,26 +66,83 @@ function buildSignature(
   ].join("|");
 }
 
+function readSessionCache(key: string): MapMarkerThumbnail | null | undefined {
+  if (!sessionThumbnailCache.has(key)) return undefined;
+  return sessionThumbnailCache.get(key) ?? null;
+}
+
+function writeSessionCache(key: string, value: MapMarkerThumbnail | null) {
+  sessionThumbnailCache.set(key, value);
+}
+
 async function fetchThumbnails(
   items: MarkerThumbnailRequest[],
   locale: Locale,
   signal: AbortSignal,
 ): Promise<ThumbnailResult[]> {
   if (items.length === 0) return [];
+
+  const cachedResults: ThumbnailResult[] = [];
+  const missing: MarkerThumbnailRequest[] = [];
+  for (const item of items) {
+    const key = requestKey(item);
+    const cached = readSessionCache(key);
+    if (cached !== undefined) {
+      cachedResults.push({
+        ...item,
+        thumbnail: { url: cached?.url ?? null },
+      });
+    } else {
+      missing.push(item);
+    }
+  }
+
+  if (missing.length === 0) return cachedResults;
+
   try {
     const response = await fetch("/api/map/marker-thumbnails", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ locale, items }),
+      body: JSON.stringify({ locale, items: missing }),
       signal,
     });
-    if (!response.ok) return [];
+    if (!response.ok) {
+      return cachedResults;
+    }
     const payload = (await response.json()) as {
       results?: ThumbnailResult[];
+      catalogVersion?: number;
     };
-    return payload.results ?? [];
+    if (
+      typeof payload.catalogVersion === "number" &&
+      sessionCatalogVersion != null &&
+      payload.catalogVersion !== sessionCatalogVersion
+    ) {
+      sessionThumbnailCache.clear();
+    }
+    if (typeof payload.catalogVersion === "number") {
+      sessionCatalogVersion = payload.catalogVersion;
+    }
+    for (const result of payload.results ?? []) {
+      writeSessionCache(requestKey(result), {
+        url: result.thumbnail.url,
+        source: null,
+        width: null,
+        height: null,
+      });
+      cachedResults.push(result);
+    }
+    // Mark requested-but-absent entries as known-missing for this session.
+    for (const item of missing) {
+      const key = requestKey(item);
+      if (!sessionThumbnailCache.has(key)) {
+        writeSessionCache(key, null);
+        cachedResults.push({ ...item, thumbnail: { url: null } });
+      }
+    }
+    return cachedResults;
   } catch (error) {
-    if (isAbortError(error)) return [];
+    if (isAbortError(error)) return cachedResults;
     throw error;
   }
 }
@@ -417,9 +479,9 @@ export function usePhotoMapMarkers(options: {
       // Fair share across categories so capitals do not starve UNESCO/EHL/etc.
       const selected: MarkerThumbnailRequest[] = [];
       const queues = [...byCategory.values()].map((items) => [...items]);
-      while (selected.length < 40 && queues.some((q) => q.length > 0)) {
+      while (selected.length < 100 && queues.some((q) => q.length > 0)) {
         for (const queue of queues) {
-          if (selected.length >= 40) break;
+          if (selected.length >= 100) break;
           const next = queue.shift();
           if (next) selected.push(next);
         }
@@ -445,6 +507,64 @@ export function usePhotoMapMarkers(options: {
           `abortedRuns=${counters.abortedRuns} completedRuns=${counters.completedRuns} failedImages=${counters.failedImages}`,
         ].join("\n"),
       );
+    };
+
+    const scheduleIdlePrefetch = (configs: LayerConfig[]) => {
+      const capitalConfig = configs.find(
+        (config) => config.category === "capital" && config.enabled,
+      );
+      if (!capitalConfig?.loadAllApiIds?.length) return;
+
+      const prefetchKeys = capitalConfig.loadAllApiIds
+        .map((id) => ({ category: "capital" as const, id }))
+        .filter((item) => {
+          const key = requestKey(item);
+          return (
+            !completedKeysRef.current.has(key) &&
+            !missingUrlKeysRef.current.has(key)
+          );
+        })
+        .slice(0, 27);
+
+      if (prefetchKeys.length === 0) return;
+
+      const runPrefetch = () => {
+        void (async () => {
+          const results = await fetchThumbnails(
+            prefetchKeys,
+            optionsRef.current.locale,
+            new AbortController().signal,
+          );
+          await Promise.allSettled(
+            results.map(async (result) => {
+              if (!result.thumbnail.url) {
+                missingUrlKeysRef.current.add(requestKey(result));
+                return;
+              }
+              await sharedPhotoMarkerRegistry.ensure(map, {
+                category: result.category,
+                entityId: result.id,
+                remoteUrl: result.thumbnail.url,
+                priority: "prefetch",
+              });
+            }),
+          );
+        })();
+      };
+
+      const ric = (
+        window as Window & {
+          requestIdleCallback?: (
+            cb: () => void,
+            opts?: { timeout: number },
+          ) => number;
+        }
+      ).requestIdleCallback;
+      if (typeof ric === "function") {
+        ric(runPrefetch, { timeout: 2500 });
+      } else {
+        window.setTimeout(runPrefetch, 600);
+      }
     };
 
     const run = async (signature: string) => {
@@ -511,13 +631,13 @@ export function usePhotoMapMarkers(options: {
               entityId: imageEntityId,
               remoteUrl: result.thumbnail.url,
               signal: controller.signal,
+              priority: "visible",
             });
 
             if (!imageId) {
               if (!controller.signal.aborted) {
                 countersRef.current.failedImages += 1;
-                // Soft failure (rate-limit / transient): keep pending for a later retry.
-                // Permanent skips are only for missing thumbnail URLs.
+                // Soft failure: registry keeps a short negative cache.
               }
               return null;
             }
@@ -555,13 +675,12 @@ export function usePhotoMapMarkers(options: {
         const stillPending = collectPending(configs);
         if (stillPending.length > 0 && retryAttemptsRef.current < 5) {
           retryAttemptsRef.current += 1;
-          // Soft failures (e.g. Wikimedia 429): retry without abort thrash.
           sharedPhotoMarkerRegistry.clearFailures();
           lastScheduledSignatureRef.current = null;
           if (retryTimeoutId != null) window.clearTimeout(retryTimeoutId);
           retryTimeoutId = window.setTimeout(() => {
             schedule();
-          }, 1200 * retryAttemptsRef.current);
+          }, 800 * retryAttemptsRef.current);
         } else {
           if (stillPending.length > 0) {
             for (const item of stillPending) {
@@ -570,6 +689,7 @@ export function usePhotoMapMarkers(options: {
             }
           }
           logSummaryOnce();
+          scheduleIdlePrefetch(configs);
         }
       } catch (error) {
         if (isAbortError(error)) {

@@ -1,9 +1,9 @@
-import type { Locale } from "@/lib/i18n/config";
 import {
-  resolveMarkerThumbnails,
+  resolveMarkerThumbnailsFromCatalog,
   type MarkerThumbnailRequest,
 } from "@/lib/map/resolveMarkerThumbnails";
 import type { PhotoMarkerCategory } from "@/lib/map/mapMarkerThumbnail";
+import { getCatalogVersion } from "@/lib/map/mapMarkerThumbnailCatalog";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +15,7 @@ const CATEGORIES = new Set<PhotoMarkerCategory>([
   "civil",
 ]);
 
-function parseLocale(value: string | null): Locale {
-  return (value || "en") as Locale;
-}
+const MAX_BATCH = 200;
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
@@ -31,7 +29,7 @@ export async function POST(request: Request) {
 
   const items = Array.isArray(body?.items) ? body.items : [];
   const requests: MarkerThumbnailRequest[] = [];
-  for (const item of items.slice(0, 40)) {
+  for (const item of items.slice(0, MAX_BATCH)) {
     if (!item?.id || typeof item.id !== "string") continue;
     if (!item.category || !CATEGORIES.has(item.category as PhotoMarkerCategory)) {
       continue;
@@ -44,25 +42,22 @@ export async function POST(request: Request) {
     });
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45_000);
-  try {
-    const results = await resolveMarkerThumbnails(
-      requests,
-      parseLocale(body?.locale ?? null),
-      controller.signal,
-    );
-    return Response.json(
-      { results },
-      {
-        headers: {
-          "Cache-Control": "private, max-age=300, stale-while-revalidate=3600",
-        },
+  // Catalog lookup only — no Wikidata/Wikipedia/Commons network I/O.
+  const { results, stats } = resolveMarkerThumbnailsFromCatalog(requests);
+
+  return Response.json(
+    {
+      results,
+      catalogVersion: getCatalogVersion(),
+      stats,
+    },
+    {
+      headers: {
+        "Cache-Control":
+          "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800",
+        "X-Catalog-Version": String(getCatalogVersion()),
+        "X-Batch-Duration-Ms": String(stats.durationMs),
       },
-    );
-  } catch {
-    return Response.json({ results: [] }, { status: 200 });
-  } finally {
-    clearTimeout(timeout);
-  }
+    },
+  );
 }

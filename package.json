@@ -11,6 +11,7 @@
     "unesco:update": "tsx scripts/update-unesco-world-heritage.ts",
     "security:borders:update": "tsx scripts/update-schengen-border-data.ts",
     "heritage-label:update": "tsx scripts/update-european-heritage-label.ts",
+    "thumbnails:update": "tsx scripts/update-map-marker-thumbnails.ts",
     "data:audit-entities": "tsx scripts/audit-entity-enrichment.ts",
     "test:entity-resolver": "tsx scripts/test-entity-resolver.ts",
     "test:entity-routes": "tsx scripts/test-entity-routes.ts",

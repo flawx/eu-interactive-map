@@ -4,6 +4,7 @@ import {
   toCommonsFilePathThumbnailUrl,
   toOptimizedMarkerThumbnailUrl,
 } from "@/lib/map/mapMarkerThumbnail";
+import { createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,8 @@ const ALLOWED_HOSTS = new Set([
 ]);
 
 const MAX_BYTES = 1_500_000;
-const TIMEOUT_MS = 8_000;
+/** Keep upstream waits short so one bad URL cannot stall the map. */
+const TIMEOUT_MS = 2_800;
 
 function isAllowedUrl(raw: string): URL | null {
   try {
@@ -21,7 +23,6 @@ function isAllowedUrl(raw: string): URL | null {
     if (url.protocol !== "https:") return null;
     if (url.username || url.password) return null;
     if (!ALLOWED_HOSTS.has(url.hostname)) return null;
-    // Tracking params on Commons thumbs often break upstream fetches.
     url.search = "";
     url.hash = "";
     return url;
@@ -32,11 +33,14 @@ function isAllowedUrl(raw: string): URL | null {
 
 function candidateUrls(rawUrl: string, size: number): string[] {
   const thumbWidth = nearestWikimediaThumbWidth(size);
+  const altWidth = nearestWikimediaThumbWidth(Math.max(thumbWidth, 250));
   const optimized = toOptimizedMarkerThumbnailUrl(rawUrl, thumbWidth);
+  const optimizedAlt = toOptimizedMarkerThumbnailUrl(rawUrl, altWidth);
   const filePath = toCommonsFilePathThumbnailUrl(rawUrl, thumbWidth);
   const parsed = isAllowedUrl(rawUrl);
   const urls = [
     optimized,
+    optimizedAlt,
     filePath,
     parsed?.toString() ?? null,
   ].filter((value): value is string => Boolean(value));
@@ -70,43 +74,39 @@ export async function GET(request: Request) {
     let upstream: Response | null = null;
     let lastStatus = 0;
     for (const candidate of candidates) {
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        const response = await fetch(candidate, {
-          signal: controller.signal,
-          headers: {
-            Accept: "image/avif,image/webp,image/jpeg,image/png,*/*",
-            "User-Agent":
-              "EUInteractiveMap/0.2 (map thumbnails; contact: local-dev)",
-          },
-          // Follow Special:FilePath redirects to an allowed upload.wikimedia.org size.
-          redirect: "follow",
-          cache: "force-cache",
-        });
-        lastStatus = response.status;
-        if (response.ok) {
-          // Ensure the final URL stayed on an allowed host (SSRF guard).
-          const finalHost = new URL(response.url).hostname;
-          if (!ALLOWED_HOSTS.has(finalHost)) {
-            lastStatus = 502;
-            break;
-          }
-          upstream = response;
-          break;
-        }
-        // Wikimedia rate-limits bursty thumbnail traffic.
-        if (response.status === 429 && attempt < 2) {
-          await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+      const response = await fetch(candidate, {
+        signal: controller.signal,
+        headers: {
+          Accept: "image/avif,image/webp,image/jpeg,image/png,*/*",
+          "User-Agent":
+            "EUInteractiveMap/0.2 (map thumbnails; contact: local-dev)",
+        },
+        redirect: "follow",
+        cache: "force-cache",
+      });
+      lastStatus = response.status;
+      if (response.ok) {
+        const finalHost = new URL(response.url).hostname;
+        if (!ALLOWED_HOSTS.has(finalHost)) {
+          lastStatus = 502;
           continue;
         }
+        upstream = response;
         break;
       }
-      if (upstream) break;
+      // Do not retry 429 aggressively — fall through to next candidate / fail fast.
+      if (response.status === 429) break;
     }
 
     if (!upstream) {
       return Response.json(
         { error: `upstream_${lastStatus || "unavailable"}` },
-        { status: 502 },
+        {
+          status: 502,
+          headers: {
+            "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+          },
+        },
       );
     }
 
@@ -118,16 +118,38 @@ export async function GET(request: Request) {
     if (buffer.byteLength === 0 || buffer.byteLength > MAX_BYTES) {
       return Response.json({ error: "invalid_image_size" }, { status: 422 });
     }
+    const etag = `"${createHash("sha1").update(buffer).digest("hex")}"`;
+    const ifNoneMatch = request.headers.get("if-none-match");
+    if (ifNoneMatch && ifNoneMatch === etag) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: etag,
+          "Cache-Control":
+            "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=604800",
+        },
+      });
+    }
     return new Response(buffer, {
       status: 200,
       headers: {
         "Content-Type": contentType.split(";")[0]!,
-        "Cache-Control": "public, max-age=604800, stale-while-revalidate=86400",
+        ETag: etag,
+        "Cache-Control":
+          "public, max-age=86400, s-maxage=2592000, stale-while-revalidate=604800",
         "X-Content-Type-Options": "nosniff",
       },
     });
   } catch {
-    return Response.json({ error: "upstream_unavailable" }, { status: 502 });
+    return Response.json(
+      { error: "upstream_unavailable" },
+      {
+        status: 502,
+        headers: {
+          "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+        },
+      },
+    );
   } finally {
     clearTimeout(timeout);
   }
