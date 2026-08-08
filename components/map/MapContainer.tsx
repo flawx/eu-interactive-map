@@ -11,6 +11,8 @@ import {
   type GeoJSONSource,
   type MapLayerMouseEvent,
 } from "maplibre-gl";
+import { usePhotoMapMarkers } from "@/components/map/usePhotoMapMarkers";
+import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import type {
   EffisBurnedArea,
   WildfireIncident,
@@ -1411,6 +1413,19 @@ export default function MapContainer({
   const programmaticCameraRef = useRef(false);
   const pulseFrameRef = useRef<number | null>(null);
   const [mapSourcesReadyVersion, setMapSourcesReadyVersion] = useState(0);
+  const [relativeTimeNow, setRelativeTimeNow] = useState(() => Date.now());
+  const majorWildfireLabelMarkersRef = useRef<Marker[]>([]);
+
+  usePhotoMapMarkers({
+    mapRef,
+    mapReadyVersion: mapSourcesReadyVersion,
+    locale,
+    showEuCapitals,
+    showMajorTouristPlaces,
+    showUnescoWorldHeritage,
+    showEuropeanHeritageLabel,
+    showMajorCivilEngineeringWorks,
+  });
 
   const applyLayerVisibility = (
     map: MapLibreMap,
@@ -7790,10 +7805,6 @@ export default function MapContainer({
     ) as GeoJSONSource | undefined;
     if (!footprintsSource) return;
 
-    const incidentsById = new Map(
-      wildfireIncidents.map((incident) => [incident.id, incident]),
-    );
-
     const snapshots = Object.values(firmsSnapshotsByIncidentId).filter(
       (snapshot) => snapshot.geometry?.type === "MultiPolygon",
     );
@@ -7823,58 +7834,81 @@ export default function MapContainer({
       type: "FeatureCollection",
       features: footprintFeatures,
     });
+  }, [firmsSnapshotsByIncidentId]);
 
+  useEffect(() => {
+    if (!showWildfires || wildfireIncidents.length === 0) return;
+    const intervalId = window.setInterval(() => {
+      setRelativeTimeNow(Date.now());
+    }, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, [showWildfires, wildfireIncidents.length]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    for (const marker of majorWildfireLabelMarkersRef.current) {
+      marker.remove();
+    }
+    majorWildfireLabelMarkersRef.current = [];
+
+    // Clear legacy FIRMS-coupled floating labels if any remain.
     for (const marker of firmsLabelMarkersRef.current) {
       marker.remove();
     }
     firmsLabelMarkersRef.current = [];
 
-    if (!showSatelliteActiveFires) {
-      return;
-    }
+    if (!showWildfires) return;
 
-    const dateFormatter = new Intl.DateTimeFormat(locale, {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const messages = getMessages(locale).wildfireLabels;
 
-    for (const snapshot of snapshots) {
-      const incident = incidentsById.get(snapshot.incidentId);
-      if (!incident) continue;
+    for (const incident of wildfireIncidents) {
+      const location =
+        incident.countryName?.trim() ||
+        incident.countryCode?.trim() ||
+        incident.title;
+      const titleLine = `${messages.majorWildfire} · ${location}`;
 
-      const rawDate = snapshot.sourceUpdatedAt ?? snapshot.fetchedAt;
-      const parsedDate = rawDate ? new Date(rawDate) : null;
-      const shortDate =
-        parsedDate && !Number.isNaN(parsedDate.getTime())
-          ? dateFormatter.format(parsedDate)
+      const relative = formatRelativeUpdateTime(
+        incident.updatedAt,
+        locale,
+        relativeTimeNow,
+      );
+      const updateLine = relative
+        ? `${messages.lastUpdated} : ${relative}`
+        : messages.updateUnknown;
+
+      const areaLine =
+        incident.areaHectares != null &&
+        Number.isFinite(incident.areaHectares) &&
+        incident.areaHectares > 0
+          ? `${Math.round(incident.areaHectares).toLocaleString(locale)} ha`
           : null;
-      const label = shortDate
-        ? `${snapshot.incidentName} · ${shortDate}`
-        : snapshot.incidentName;
 
       const el = document.createElement("div");
-      el.textContent = label;
       el.style.cssText =
-        "cursor:pointer;pointer-events:auto;white-space:nowrap;font:700 14px/1.3 system-ui,sans-serif;color:#b91c1c;background:rgba(255,255,255,0.9);border:1px solid #fca5a5;border-radius:5px;padding:3px 6px;box-shadow:0 1px 4px rgba(0,0,0,0.25);";
+        "cursor:pointer;pointer-events:auto;max-width:220px;font:600 12px/1.35 system-ui,sans-serif;color:#7f1d1d;background:rgba(255,255,255,0.92);border:1px solid #fca5a5;border-radius:6px;padding:4px 7px;box-shadow:0 1px 4px rgba(0,0,0,0.22);";
+      el.innerHTML = `<div>${escapeHtml(titleLine)}</div><div style="font-weight:500;opacity:0.9">${escapeHtml(updateLine)}</div>${
+        areaLine
+          ? `<div style="font-weight:500;opacity:0.85">${escapeHtml(areaLine)}</div>`
+          : ""
+      }`;
       el.addEventListener("click", (event) => {
         event.stopPropagation();
-        onWildfireSelectRef.current(snapshot.incidentId);
+        onWildfireSelectRef.current(incident.id);
       });
 
-      // Sits to the right of the GDACS flame marker at the same coordinate.
-      const marker = new Marker({ element: el, anchor: "left", offset: [18, -18] })
+      const marker = new Marker({
+        element: el,
+        anchor: "left",
+        offset: [18, -18],
+      })
         .setLngLat([incident.longitude, incident.latitude])
         .addTo(map);
-      firmsLabelMarkersRef.current.push(marker);
+      majorWildfireLabelMarkersRef.current.push(marker);
     }
-  }, [
-    firmsSnapshotsByIncidentId,
-    wildfireIncidents,
-    locale,
-    showSatelliteActiveFires,
-  ]);
+  }, [wildfireIncidents, showWildfires, locale, relativeTimeNow]);
 
   useEffect(() => {
     const map = mapRef.current;

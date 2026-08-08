@@ -541,6 +541,7 @@ export function isRelevantTourismImage(
 async function fetchCommonsFile(
   filename: string,
   signal?: AbortSignal,
+  thumbWidth = 1280,
 ): Promise<{ image: ResolvedWikimediaImage | null; rejected: boolean }> {
   const title = filename.startsWith("File:") ? filename : `File:${filename}`;
   const params = new URLSearchParams({
@@ -550,7 +551,7 @@ async function fetchCommonsFile(
     titles: title,
     prop: "imageinfo",
     iiprop: "url|size|mime|extmetadata",
-    iiurlwidth: "1280",
+    iiurlwidth: String(thumbWidth),
     origin: "*",
   });
   const data = (await fetchJson(
@@ -697,6 +698,19 @@ export async function resolveEntityEnrichment(
     resolverVersion: ENTITY_RESOLVER_VERSION,
     imagesRejected,
   };
+}
+
+/** Fast path for map markers: Wikidata P18 only, small Commons thumb. */
+export async function resolvePrimaryMarkerImage(
+  wikidataId: string,
+  signal?: AbortSignal,
+): Promise<ResolvedWikimediaImage | null> {
+  const entity = await fetchWikidataEntity(wikidataId, signal);
+  if (!entity) return null;
+  const p18 = claimMediaFilename(entity, "P18");
+  if (!p18) return null;
+  const result = await fetchCommonsFile(p18, signal, 96);
+  return result.image;
 }
 
 export async function auditExpectedEntity(

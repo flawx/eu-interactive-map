@@ -312,6 +312,12 @@ export type Messages = {
     opsOfficialVerifiedAt: string;
     opsOfficialPartialUnavailable: string;
   };
+  wildfireLabels: {
+    majorWildfire: string;
+    lastUpdated: string;
+    area: string;
+    updateUnknown: string;
+  };
   search: {
     placeholder: string;
     resultsInApp: string;

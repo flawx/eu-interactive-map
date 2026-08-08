@@ -27,15 +27,21 @@ import type { Messages } from "./types";
 import { mountainTranslations } from "./mountainTranslations";
 import { civilEngineeringTranslations } from "./civilEngineeringTranslations";
 import { alertTranslations } from "./alertTranslations";
+import { wildfireLabelTranslations } from "./wildfireLabelTranslations";
 
 export function getMessages(locale: Locale): Messages {
   const localized = rawMessages[locale] as Partial<Messages> & typeof en;
   const mountain = mountainTranslations[locale];
   const civil = civilEngineeringTranslations[locale];
   const alerts = alertTranslations[locale];
+  const wildfireLabels = wildfireLabelTranslations[locale];
   return {
     ...en,
     ...localized,
+    wildfireLabels: {
+      ...en.wildfireLabels,
+      ...wildfireLabels,
+    },
     legend: {
       ...en.legend,
       ...localized.legend,

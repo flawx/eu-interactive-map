@@ -300,6 +300,12 @@ export const en = {
     opsTabSources: "Sources",
     opsStatus: "Status",
   },
+  wildfireLabels: {
+    majorWildfire: "Major wildfire",
+    lastUpdated: "Last updated",
+    area: "Area",
+    updateUnknown: "Update unknown",
+  },
   header: {
     openMenu: "Open menu",
     closeMenu: "Close menu",
