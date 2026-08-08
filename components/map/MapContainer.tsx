@@ -106,6 +106,7 @@ import {
   normalizeBearing,
   type CameraSnapshot,
 } from "@/lib/map/cameraSnapshot";
+import { resolveMapLibreTileTemplate } from "@/lib/map/resolveMapLibreUrl";
 import type { WildfireWind } from "@/lib/alerts/wind";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
 import {
@@ -1506,6 +1507,16 @@ export default function MapContainer({
       center: [15.2551, 54.5260],
       zoom: 4,
       maxPitch: 70,
+      // Relative "/api/..." tile URLs break MapLibre's Request constructor
+      // (especially in workers). Resolve them against the page origin.
+      transformRequest: (url) => {
+        if (!url.startsWith("/")) {
+          return { url };
+        }
+        return {
+          url: resolveMapLibreTileTemplate(url),
+        };
+      },
     });
 
     mapRef.current = map;
@@ -6908,33 +6919,45 @@ export default function MapContainer({
       ? ALERT_FILL_LAYER_ID
       : undefined;
 
-    if (
-      vectorTilesAvailable &&
-      trafficStatus.flowTileTemplate &&
-      !map.getSource(TRAFFIC_FLOW_TILE_SOURCE_ID)
-    ) {
-      map.addSource(TRAFFIC_FLOW_TILE_SOURCE_ID, {
-        type: "vector",
-        tiles: [trafficStatus.flowTileTemplate],
-        minzoom: 0,
-        maxzoom: trafficStatus.maxZoom,
-        bounds: trafficStatus.bounds,
-        attribution: "TomTom Traffic",
-      });
+    if (vectorTilesAvailable && trafficStatus.flowTileTemplate) {
+      const flowTiles = [
+        resolveMapLibreTileTemplate(trafficStatus.flowTileTemplate),
+      ];
+      const existingFlow = map.getSource(TRAFFIC_FLOW_TILE_SOURCE_ID) as
+        | { setTiles?: (tiles: string[]) => void }
+        | undefined;
+      if (!existingFlow) {
+        map.addSource(TRAFFIC_FLOW_TILE_SOURCE_ID, {
+          type: "vector",
+          tiles: flowTiles,
+          minzoom: 0,
+          maxzoom: trafficStatus.maxZoom,
+          bounds: trafficStatus.bounds,
+          attribution: "TomTom Traffic",
+        });
+      } else if (typeof existingFlow.setTiles === "function") {
+        existingFlow.setTiles(flowTiles);
+      }
     }
-    if (
-      vectorTilesAvailable &&
-      trafficStatus.incidentTileTemplate &&
-      !map.getSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID)
-    ) {
-      map.addSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID, {
-        type: "vector",
-        tiles: [trafficStatus.incidentTileTemplate],
-        minzoom: 0,
-        maxzoom: trafficStatus.maxZoom,
-        bounds: trafficStatus.bounds,
-        attribution: "TomTom Traffic",
-      });
+    if (vectorTilesAvailable && trafficStatus.incidentTileTemplate) {
+      const incidentTiles = [
+        resolveMapLibreTileTemplate(trafficStatus.incidentTileTemplate),
+      ];
+      const existingIncidents = map.getSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID) as
+        | { setTiles?: (tiles: string[]) => void }
+        | undefined;
+      if (!existingIncidents) {
+        map.addSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID, {
+          type: "vector",
+          tiles: incidentTiles,
+          minzoom: 0,
+          maxzoom: trafficStatus.maxZoom,
+          bounds: trafficStatus.bounds,
+          attribution: "TomTom Traffic",
+        });
+      } else if (typeof existingIncidents.setTiles === "function") {
+        existingIncidents.setTiles(incidentTiles);
+      }
     }
     if (trafficStatus?.demoMode && !map.getSource(TRAFFIC_FLOW_TILE_SOURCE_ID)) {
       map.addSource(TRAFFIC_FLOW_TILE_SOURCE_ID, {
@@ -7400,7 +7423,7 @@ export default function MapContainer({
       if (configuration.tiles && !map.getSource(configuration.sourceId)) {
         map.addSource(configuration.sourceId, {
           type: "raster",
-          tiles: [configuration.tiles],
+          tiles: [resolveMapLibreTileTemplate(configuration.tiles)],
           tileSize: 256,
           minzoom: 0,
           maxzoom: landslideNowcastStatus?.maxZoom ?? 10,
@@ -7448,7 +7471,9 @@ export default function MapContainer({
 
     if (available && time) {
       const tiles = [
-        `/api/alerts/flood-extent/tiles/{z}/{x}/{y}?time=${encodeURIComponent(time)}`,
+        resolveMapLibreTileTemplate(
+          `/api/alerts/flood-extent/tiles/{z}/{x}/{y}?time=${encodeURIComponent(time)}`,
+        ),
       ];
       const existing = map.getSource(sourceId) as
         | { setTiles?: (value: string[]) => void }

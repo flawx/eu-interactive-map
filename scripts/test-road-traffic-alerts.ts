@@ -398,12 +398,85 @@ async function main() {
   assert(mapInterface.includes("handleCameraChange"));
   assert(mapContainer.includes("lastTrafficSignatureRef"));
   assert(mapContainer.includes("areCameraSnapshotsEqual"));
+  assert(mapContainer.includes("resolveMapLibreTileTemplate"));
+  assert(mapContainer.includes("transformRequest"));
   assert(mapContainer.includes('map.on("moveend", emitCameraChange)'));
   assert(mapContainer.includes('map.on("rotateend", emitCameraChange)'));
   assert(mapContainer.includes('map.on("pitchend", emitCameraChange)'));
   assert(!mapContainer.includes('map.on("rotate", emitCameraChange)'));
   assert(!mapContainer.includes('map.on("move", emitCameraChange)'));
   assert(!mapContainer.includes('map.on("pitch", emitCameraChange)'));
+
+  const {
+    resolveMapLibreUrl,
+    resolveMapLibreTileTemplate,
+  } = await import("../lib/map/resolveMapLibreUrl");
+  const origin = "http://localhost:3000";
+  assert.equal(
+    resolveMapLibreUrl("/api/alerts/traffic/flow/tiles/5/16/11", origin),
+    "http://localhost:3000/api/alerts/traffic/flow/tiles/5/16/11",
+  );
+  assert.equal(
+    resolveMapLibreTileTemplate(
+      "/api/alerts/traffic/flow/tiles/{z}/{x}/{y}",
+      origin,
+    ),
+    "http://localhost:3000/api/alerts/traffic/flow/tiles/{z}/{x}/{y}",
+  );
+  assert.equal(
+    resolveMapLibreUrl(
+      "https://api.tomtom.com/maps/orbis/traffic/flow/vector/tile/5/16/11",
+      origin,
+    ),
+    "https://api.tomtom.com/maps/orbis/traffic/flow/vector/tile/5/16/11",
+  );
+  assert.equal(
+    resolveMapLibreUrl("http://localhost:3000/api/alerts/traffic/status", origin),
+    "http://localhost:3000/api/alerts/traffic/status",
+  );
+  assert.ok(
+    !resolveMapLibreTileTemplate(
+      "/api/alerts/traffic/incidents/tiles/{z}/{x}/{y}",
+      origin,
+    ).includes("%7B"),
+    "MapLibre placeholders must stay unencoded",
+  );
+
+  const flowRoute = await readFile(
+    new URL(
+      "../app/api/alerts/traffic/flow/tiles/[z]/[x]/[y]/route.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const incidentRoute = await readFile(
+    new URL(
+      "../app/api/alerts/traffic/incidents/tiles/[z]/[x]/[y]/route.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const tomTomSource = await readFile(
+    new URL("../lib/alerts/providers/traffic/tomTomTraffic.ts", import.meta.url),
+    "utf8",
+  );
+  assert(flowRoute.includes("getTrafficProvider().getTile(\"flow\""));
+  assert(incidentRoute.includes("getTrafficProvider().getTile(\"incidents\""));
+  assert(tomTomSource.includes("TomTom-Api-Key"));
+  assert(tomTomSource.includes("process.env.TOMTOM_API_KEY"));
+  assert(!tomTomSource.includes("NEXT_PUBLIC_TOMTOM_API_KEY"));
+  assert(!flowRoute.includes("TOMTOM_API_KEY"));
+  assert(!incidentRoute.includes("TOMTOM_API_KEY"));
+  assert(tomTomSource.includes("https://api.tomtom.com/maps/orbis/traffic"));
+  assert(tomTomSource.includes("application/vnd.mapbox-vector-tile"));
+
+  // Simulate absolute Request construction (the previous MapLibre failure mode).
+  const absoluteTile = resolveMapLibreUrl(
+    "/api/alerts/traffic/flow/tiles/5/16/11",
+    origin,
+  );
+  assert.doesNotThrow(() => new Request(absoluteTile));
+  assert.throws(() => new Request("/api/alerts/traffic/flow/tiles/5/16/11"));
 
   console.log(
     JSON.stringify({
@@ -421,6 +494,7 @@ async function main() {
         pitchEmit: true,
         bearingEmit: true,
       },
+      absoluteTileUrls: true,
       tests: "passed",
     }),
   );
