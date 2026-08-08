@@ -1,4 +1,9 @@
-import { MAP_MARKER_THUMB_SIZE } from "@/lib/map/mapMarkerThumbnail";
+import {
+  MAP_MARKER_WIKIMEDIA_FETCH_SIZE,
+  nearestWikimediaThumbWidth,
+  toCommonsFilePathThumbnailUrl,
+  toOptimizedMarkerThumbnailUrl,
+} from "@/lib/map/mapMarkerThumbnail";
 
 export const dynamic = "force-dynamic";
 
@@ -16,56 +21,95 @@ function isAllowedUrl(raw: string): URL | null {
     if (url.protocol !== "https:") return null;
     if (url.username || url.password) return null;
     if (!ALLOWED_HOSTS.has(url.hostname)) return null;
+    // Tracking params on Commons thumbs often break upstream fetches.
+    url.search = "";
+    url.hash = "";
     return url;
   } catch {
     return null;
   }
 }
 
+function candidateUrls(rawUrl: string, size: number): string[] {
+  const thumbWidth = nearestWikimediaThumbWidth(size);
+  const optimized = toOptimizedMarkerThumbnailUrl(rawUrl, thumbWidth);
+  const filePath = toCommonsFilePathThumbnailUrl(rawUrl, thumbWidth);
+  const parsed = isAllowedUrl(rawUrl);
+  const urls = [
+    optimized,
+    filePath,
+    parsed?.toString() ?? null,
+  ].filter((value): value is string => Boolean(value));
+  return [...new Set(urls)];
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawUrl = searchParams.get("url");
-  const sizeParam = Number(searchParams.get("size") ?? MAP_MARKER_THUMB_SIZE);
+  const sizeParam = Number(
+    searchParams.get("size") ?? MAP_MARKER_WIKIMEDIA_FETCH_SIZE,
+  );
   const size = Number.isFinite(sizeParam)
-    ? Math.min(128, Math.max(48, Math.round(sizeParam)))
-    : MAP_MARKER_THUMB_SIZE;
+    ? Math.min(1280, Math.max(40, Math.round(sizeParam)))
+    : MAP_MARKER_WIKIMEDIA_FETCH_SIZE;
 
   if (!rawUrl) {
     return Response.json({ error: "missing_url" }, { status: 400 });
   }
 
-  let target = isAllowedUrl(rawUrl);
-  if (!target) {
+  const parsed = isAllowedUrl(rawUrl);
+  if (!parsed) {
     return Response.json({ error: "host_not_allowed" }, { status: 400 });
   }
 
-  // Prefer an explicit small Wikimedia thumb when the caller passed a large one.
-  const path = target.pathname.replace(
-    /\/\d+px-([^/]+)$/,
-    `/${size}px-$1`,
-  );
-  if (path !== target.pathname) {
-    target = new URL(target.toString());
-    target.pathname = path;
-  }
-
+  const candidates = candidateUrls(rawUrl, size);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
   try {
-    const upstream = await fetch(target.toString(), {
-      signal: controller.signal,
-      headers: {
-        Accept: "image/avif,image/webp,image/jpeg,image/png,*/*",
-        "User-Agent": "EUInteractiveMap/0.2 (map thumbnails; contact: local-dev)",
-      },
-      next: { revalidate: 604_800 },
-    });
-    if (!upstream.ok) {
+    let upstream: Response | null = null;
+    let lastStatus = 0;
+    for (const candidate of candidates) {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const response = await fetch(candidate, {
+          signal: controller.signal,
+          headers: {
+            Accept: "image/avif,image/webp,image/jpeg,image/png,*/*",
+            "User-Agent":
+              "EUInteractiveMap/0.2 (map thumbnails; contact: local-dev)",
+          },
+          // Follow Special:FilePath redirects to an allowed upload.wikimedia.org size.
+          redirect: "follow",
+          cache: "force-cache",
+        });
+        lastStatus = response.status;
+        if (response.ok) {
+          // Ensure the final URL stayed on an allowed host (SSRF guard).
+          const finalHost = new URL(response.url).hostname;
+          if (!ALLOWED_HOSTS.has(finalHost)) {
+            lastStatus = 502;
+            break;
+          }
+          upstream = response;
+          break;
+        }
+        // Wikimedia rate-limits bursty thumbnail traffic.
+        if (response.status === 429 && attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+          continue;
+        }
+        break;
+      }
+      if (upstream) break;
+    }
+
+    if (!upstream) {
       return Response.json(
-        { error: `upstream_${upstream.status}` },
+        { error: `upstream_${lastStatus || "unavailable"}` },
         { status: 502 },
       );
     }
+
     const contentType = upstream.headers.get("content-type") ?? "";
     if (!/^image\/(jpeg|jpg|png|webp|avif)/i.test(contentType)) {
       return Response.json({ error: "invalid_content_type" }, { status: 415 });

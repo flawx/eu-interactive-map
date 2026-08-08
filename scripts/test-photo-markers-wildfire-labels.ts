@@ -30,7 +30,7 @@ function main() {
       "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Tour_Eiffel.jpg/1280px-Tour_Eiffel.jpg",
       96,
     ),
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Tour_Eiffel.jpg/96px-Tour_Eiffel.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Tour_Eiffel.jpg/120px-Tour_Eiffel.jpg",
   );
   assert.equal(
     toOptimizedMarkerThumbnailUrl("https://example.com/photo.jpg"),
@@ -45,7 +45,7 @@ function main() {
     height: 3000,
     sourceUrl: "https://commons.wikimedia.org/wiki/File:Tour_Eiffel.jpg",
   });
-  assert.ok(thumb.url?.includes("96px-"));
+  assert.ok(thumb.url?.includes("120px-"));
   assert.equal(thumb.source?.includes("commons.wikimedia.org"), true);
 
   assert.equal(photoMarkerImageId("capital", "paris"), "photo-marker:capital:paris");

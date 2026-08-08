@@ -22,6 +22,16 @@ type RegistryEntry = {
 
 const PIXEL_RATIO = 2;
 
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      (error as { name?: string }).name === "AbortError")
+  );
+}
+
 function drawRoundedPhoto(
   source: CanvasImageSource,
   category: PhotoMarkerCategory,
@@ -60,11 +70,10 @@ function drawRoundedPhoto(
   const scale = Math.max((size - inset * 2) / sw, (size - inset * 2) / sh);
   const dw = sw * scale;
   const dh = sh * scale;
-  const dx = inset + ((size - inset * 2) - dw) / 2;
-  const dy = inset + ((size - inset * 2) - dh) / 2;
+  const dx = inset + (size - inset * 2 - dw) / 2;
+  const dy = inset + (size - inset * 2 - dh) / 2;
   ctx.drawImage(source as CanvasImageSource, dx, dy, dw, dh);
 
-  // White inner border on top of the photo.
   ctx.beginPath();
   roundedRect(ctx, inset, inset, size - inset * 2, size - inset * 2, radius - 2);
   ctx.strokeStyle = accent.border;
@@ -96,6 +105,10 @@ function loadHtmlImage(
   signal?: AbortSignal,
 ): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
     const image = new Image();
     image.crossOrigin = "anonymous";
     const onAbort = () => {
@@ -117,11 +130,14 @@ function loadHtmlImage(
 
 /**
  * Shared MapLibre photo-marker image registry.
- * Deduplicates loadImage/addImage across capitals, tourism, UNESCO, EHL and civil works.
+ * Distinguishes downloaded thumbnails from style-bound map.hasImage().
  */
 export class PhotoMarkerRegistry {
   private readonly entries = new Map<string, RegistryEntry>();
   private readonly pending = new Map<string, Promise<string | null>>();
+  /** Decoded ImageData kept so we can re-add after style reload. */
+  private readonly imageDataCache = new Map<string, ImageData>();
+  private readonly remoteByImageId = new Map<string, string>();
   private queue: Array<() => void> = [];
   private active = 0;
   private readonly concurrency: number;
@@ -133,8 +149,56 @@ export class PhotoMarkerRegistry {
   clear() {
     this.entries.clear();
     this.pending.clear();
+    this.imageDataCache.clear();
+    this.remoteByImageId.clear();
     this.queue = [];
     this.active = 0;
+  }
+
+  /** Allow retry after upstream/proxy fixes (do not wipe ready ImageData). */
+  clearFailures() {
+    for (const [imageId, entry] of this.entries) {
+      if (entry.status === "failed") {
+        this.entries.delete(imageId);
+        this.pending.delete(imageId);
+      }
+    }
+  }
+
+  /** Style was replaced — MapLibre images are gone, keep downloaded bitmaps. */
+  clearMapBindings() {
+    for (const [imageId, entry] of this.entries) {
+      if (entry.status === "ready") {
+        this.entries.set(imageId, { ...entry, status: "loading" });
+      }
+    }
+  }
+
+  /** Re-add cached bitmaps after style changes without re-downloading. */
+  rebindReadyImages(map: MapLibreMap): number {
+    let added = 0;
+    for (const [imageId, imageData] of this.imageDataCache) {
+      if (map.hasImage(imageId)) {
+        this.entries.set(imageId, {
+          imageId,
+          remoteUrl: this.remoteByImageId.get(imageId) ?? "",
+          status: "ready",
+        });
+        continue;
+      }
+      try {
+        map.addImage(imageId, imageData, { pixelRatio: PIXEL_RATIO });
+        this.entries.set(imageId, {
+          imageId,
+          remoteUrl: this.remoteByImageId.get(imageId) ?? "",
+          status: "ready",
+        });
+        added += 1;
+      } catch {
+        // Ignore invalid bitmaps.
+      }
+    }
+    return added;
   }
 
   has(category: PhotoMarkerCategory, entityId: string): boolean {
@@ -160,24 +224,50 @@ export class PhotoMarkerRegistry {
       });
       return imageId;
     }
+
+    const cachedData = this.imageDataCache.get(imageId);
+    if (cachedData) {
+      try {
+        map.addImage(imageId, cachedData, { pixelRatio: PIXEL_RATIO });
+        this.entries.set(imageId, {
+          imageId,
+          remoteUrl: options.remoteUrl,
+          status: "ready",
+        });
+        return imageId;
+      } catch {
+        // Fall through to reload.
+      }
+    }
+
     const existing = this.entries.get(imageId);
     if (existing?.status === "failed") return null;
-    if (existing?.status === "ready" && map.hasImage(imageId)) return imageId;
 
     const pending = this.pending.get(imageId);
     if (pending) return pending;
 
     const task = this.enqueue(async () => {
-      if (options.signal?.aborted) return null;
+      if (options.signal?.aborted) {
+        return null;
+      }
       this.entries.set(imageId, {
         imageId,
         remoteUrl: options.remoteUrl,
         status: "loading",
       });
       try {
-        const proxyUrl = sameOriginThumbnailProxyUrl(options.remoteUrl);
-        const image = await loadHtmlImage(proxyUrl, options.signal);
+        const proxyUrl = sameOriginThumbnailProxyUrl(
+          options.remoteUrl,
+          typeof window !== "undefined" ? window.location.origin : undefined,
+        );
+        // Always absolute for Image()/MapLibre.
+        const absoluteUrl = proxyUrl.startsWith("http")
+          ? proxyUrl
+          : new URL(proxyUrl, window.location.origin).href;
+        const image = await loadHtmlImage(absoluteUrl, options.signal);
         const imageData = drawRoundedPhoto(image, options.category);
+        this.imageDataCache.set(imageId, imageData);
+        this.remoteByImageId.set(imageId, options.remoteUrl);
         if (map.hasImage(imageId)) {
           map.removeImage(imageId);
         }
@@ -188,7 +278,12 @@ export class PhotoMarkerRegistry {
           status: "ready",
         });
         return imageId;
-      } catch {
+      } catch (error) {
+        if (isAbortError(error)) {
+          // Do not permanently fail aborted loads.
+          this.entries.delete(imageId);
+          return null;
+        }
         this.entries.set(imageId, {
           imageId,
           remoteUrl: options.remoteUrl,
@@ -226,3 +321,4 @@ export class PhotoMarkerRegistry {
 }
 
 export const sharedPhotoMarkerRegistry = new PhotoMarkerRegistry(6);
+export { isAbortError as isPhotoMarkerAbortError };
