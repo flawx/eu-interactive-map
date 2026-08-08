@@ -1,5 +1,8 @@
 export type RouteMode = "car" | "bicycle" | "pedestrian";
 
+/** UI travel selector including public transit (TomTom stays road-only). */
+export type PlannerTravelMode = RouteMode | "transit";
+
 export type RoutePreference = "fastest" | "shortest" | "eco";
 
 export type RoutePoint = {

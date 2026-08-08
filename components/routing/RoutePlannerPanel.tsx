@@ -12,6 +12,7 @@ import {
   Navigation,
   Plus,
   Trash2,
+  TrainFront,
   X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
@@ -21,6 +22,7 @@ import {
   formatRouteDuration,
   formatTrafficDelay,
 } from "@/lib/routing/formatRoute";
+import { formatTransitClock, journeyCoordinates } from "@/lib/routing/formatTransit";
 import { isRoutingPointAllowed } from "@/lib/routing/routingGeofence";
 import {
   applyShareableRouteToUrl,
@@ -30,12 +32,17 @@ import {
   resolvedWaypoints,
   type RoutePlannerPointsState,
 } from "@/lib/routing/routePlannerPoints";
+import type {
+  TransitAllowedMode,
+  TransitJourney,
+  TransitRoutingPreference,
+} from "@/lib/routing/transit/types";
 import {
   DEFAULT_ROUTE_AVOID,
   MAX_ROUTE_WAYPOINTS_UI,
   type NormalizedRoute,
+  type PlannerTravelMode,
   type RouteAvoidOptions,
-  type RouteMode,
   type RoutePoint,
   type RoutePreference,
   type RoutingTiming,
@@ -47,6 +54,23 @@ import {
 } from "@/lib/routing/vehicleProfileStorage";
 import type { NormalizedAlert } from "@/lib/alerts/types";
 import UnifiedLocationField from "@/components/routing/UnifiedLocationField";
+
+const TRANSIT_MODE_CHIPS = [
+  ["BUS", "preferBus"],
+  ["SUBWAY", "preferMetro"],
+  ["LIGHT_RAIL", "preferTram"],
+  ["TRAIN", "preferTrain"],
+] as const satisfies readonly (readonly [TransitAllowedMode, string])[];
+
+function isAbortError(err: unknown): boolean {
+  return (
+    (err instanceof DOMException && err.name === "AbortError") ||
+    (typeof err === "object" &&
+      err !== null &&
+      "name" in err &&
+      (err as { name?: string }).name === "AbortError")
+  );
+}
 
 export type RoutePlannerPickTarget =
   | "origin"
@@ -69,6 +93,10 @@ type RoutePlannerPanelProps = {
   mapPickPoint: RoutePoint | null;
   onClearMapPick: () => void;
   onRoutesChange: (routes: NormalizedRoute[], selectedId: string | null) => void;
+  onTransitChange?: (
+    journeys: TransitJourney[],
+    selectedId: string | null,
+  ) => void;
   onSelectIncident: (alertId: string) => void;
   onFocusPoint: (longitude: number, latitude: number, zoom?: number) => void;
   onFocusRoute: (coordinates: [number, number][]) => void;
@@ -93,6 +121,8 @@ function errorMessage(
       return t.noRouteFound;
     case "aborted":
       return t.calculationAborted;
+    case "transit_date_out_of_range":
+      return t.transitDateOutOfRange;
     case "provider_not_entitled":
     case "provider_misconfigured":
     case "provider_rate_limited":
@@ -113,6 +143,7 @@ export default function RoutePlannerPanel({
   mapPickPoint,
   onClearMapPick,
   onRoutesChange,
+  onTransitChange,
   onSelectIncident,
   onFocusPoint,
   onFocusRoute,
@@ -122,7 +153,7 @@ export default function RoutePlannerPanel({
   const t = getMessages(locale).routePlanner;
   const { origin, destination } = points;
   const [waypointDrafts, setWaypointDrafts] = useState<WaypointDraft[]>([]);
-  const [mode, setMode] = useState<RouteMode>("car");
+  const [mode, setMode] = useState<PlannerTravelMode>("car");
   const [preference, setPreference] = useState<RoutePreference>("fastest");
   const [avoid, setAvoid] = useState<RouteAvoidOptions>({ ...DEFAULT_ROUTE_AVOID });
   const [timing, setTiming] = useState<RoutingTiming>({ kind: "depart_now" });
@@ -130,6 +161,13 @@ export default function RoutePlannerPanel({
   const [arriveAtLocal, setArriveAtLocal] = useState("");
   const [routes, setRoutes] = useState<NormalizedRoute[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
+  const [journeys, setJourneys] = useState<TransitJourney[]>([]);
+  const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
+  const [transitRoutingPreference, setTransitRoutingPreference] =
+    useState<TransitRoutingPreference>(null);
+  const [allowedTransitModes, setAllowedTransitModes] = useState<
+    TransitAllowedMode[] | null
+  >(null);
   const [incidents, setIncidents] = useState<NormalizedAlert[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +179,7 @@ export default function RoutePlannerPanel({
   const [devProviderHint, setDevProviderHint] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const autoCalcKeyRef = useRef<string | null>(null);
+  const prevModeRef = useRef<PlannerTravelMode>(mode);
 
   const bias = userLocation;
 
@@ -200,6 +239,25 @@ export default function RoutePlannerPanel({
     setFocusOrigin(focusOriginOnOpen);
   }, [focusOriginOnOpen, open]);
 
+  // Road (TomTom) and transit results are mutually exclusive on the map.
+  useEffect(() => {
+    if (prevModeRef.current === mode) return;
+    const wasTransit = prevModeRef.current === "transit";
+    const isTransit = mode === "transit";
+    if (wasTransit && !isTransit) {
+      setJourneys([]);
+      setSelectedJourneyId(null);
+      onTransitChange?.([], null);
+    }
+    if (!wasTransit && isTransit) {
+      setRoutes([]);
+      setSelectedRouteId(null);
+      setIncidents([]);
+      onRoutesChange([], null);
+    }
+    prevModeRef.current = mode;
+  }, [mode, onRoutesChange, onTransitChange]);
+
   const calculate = useCallback(async () => {
     if (!origin || !destination) {
       setError(!origin ? t.originRequired : t.destinationRequired);
@@ -210,7 +268,6 @@ export default function RoutePlannerPanel({
       return;
     }
 
-    const waypoints = resolvedWaypoints(points.waypoints);
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -223,6 +280,66 @@ export default function RoutePlannerPanel({
         : timing.kind === "arrive_at" && arriveAtLocal
           ? { kind: "arrive_at", at: new Date(arriveAtLocal).toISOString() }
           : { kind: "depart_now" };
+
+    if (mode === "transit") {
+      try {
+        const response = await fetch("/api/routing/transit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            origin,
+            destination,
+            timing: timingPayload,
+            allowedModes: allowedTransitModes,
+            routingPreference: transitRoutingPreference,
+            alternatives: true,
+            locale,
+          }),
+        });
+
+        const payload = (await response.json()) as {
+          journeys?: TransitJourney[];
+          error?: { code?: string };
+        };
+
+        if (!response.ok) {
+          setJourneys([]);
+          setSelectedJourneyId(null);
+          onTransitChange?.([], null);
+          setError(errorMessage(payload.error?.code, t));
+          setDevProviderHint(
+            process.env.NODE_ENV === "development" &&
+              payload.error?.code === "provider_misconfigured"
+              ? t.providerNotEntitledDev
+              : null,
+          );
+          return;
+        }
+
+        setDevProviderHint(null);
+        const nextJourneys = payload.journeys ?? [];
+        const selectedId = nextJourneys[0]?.id ?? null;
+        setJourneys(nextJourneys);
+        setSelectedJourneyId(selectedId);
+        setRoutes([]);
+        setSelectedRouteId(null);
+        setIncidents([]);
+        onRoutesChange([], null);
+        onTransitChange?.(nextJourneys, selectedId);
+        if (nextJourneys[0]) {
+          onFocusRoute(journeyCoordinates(nextJourneys[0]));
+        }
+      } catch (err) {
+        if (isAbortError(err)) return;
+        setError(t.serviceUnavailable);
+      } finally {
+        if (abortRef.current === controller) setLoading(false);
+      }
+      return;
+    }
+
+    const waypoints = resolvedWaypoints(points.waypoints);
 
     try {
       const response = await fetch("/api/routing/calculate", {
@@ -274,6 +391,9 @@ export default function RoutePlannerPanel({
       setSelectedRouteId(selectedId);
       setIncidents(payload.incidents ?? []);
       onRoutesChange(nextRoutes, selectedId);
+      setJourneys([]);
+      setSelectedJourneyId(null);
+      onTransitChange?.([], null);
       if (nextRoutes[0]) {
         onFocusRoute(nextRoutes[0].geometry.coordinates);
       }
@@ -287,15 +407,7 @@ export default function RoutePlannerPanel({
         timing: timingPayload,
       });
     } catch (err) {
-      if (
-        (err instanceof DOMException && err.name === "AbortError") ||
-        (typeof err === "object" &&
-          err !== null &&
-          "name" in err &&
-          (err as { name?: string }).name === "AbortError")
-      ) {
-        return;
-      }
+      if (isAbortError(err)) return;
       setError(t.serviceUnavailable);
     } finally {
       if (abortRef.current === controller) setLoading(false);
@@ -310,17 +422,31 @@ export default function RoutePlannerPanel({
     timing,
     departAtLocal,
     arriveAtLocal,
+    allowedTransitModes,
+    transitRoutingPreference,
     vehicle,
     locale,
     t,
     onFocusRoute,
     onRoutesChange,
+    onTransitChange,
   ]);
 
   // Auto-calc once per origin/destination/mode/options key when both points valid.
   useEffect(() => {
     if (!open || !origin || !destination) return;
-    if (waypointDrafts.some((draft) => draft.point == null)) return;
+    if (
+      mode !== "transit" &&
+      waypointDrafts.some((draft) => draft.point == null)
+    ) {
+      return;
+    }
+    const timingKey =
+      timing.kind === "depart_at"
+        ? `dep:${departAtLocal}`
+        : timing.kind === "arrive_at"
+          ? `arr:${arriveAtLocal}`
+          : "now";
     const key = [
       origin.latitude,
       origin.longitude,
@@ -332,6 +458,9 @@ export default function RoutePlannerPanel({
       mode,
       preference,
       JSON.stringify(avoid),
+      timingKey,
+      mode === "transit" ? (transitRoutingPreference ?? "none") : "",
+      mode === "transit" ? (allowedTransitModes ?? []).join(",") : "",
     ].join(";");
     if (autoCalcKeyRef.current === key) return;
     autoCalcKeyRef.current = key;
@@ -348,6 +477,11 @@ export default function RoutePlannerPanel({
     mode,
     preference,
     avoid,
+    timing,
+    departAtLocal,
+    arriveAtLocal,
+    transitRoutingPreference,
+    allowedTransitModes,
     calculate,
   ]);
 
@@ -413,7 +547,10 @@ export default function RoutePlannerPanel({
     setSelectedRouteId(null);
     setIncidents([]);
     setWaypointDrafts([]);
+    setJourneys([]);
+    setSelectedJourneyId(null);
     onRoutesChange([], null);
+    onTransitChange?.([], null);
     onPickTargetChange(null);
     clearShareableRouteFromUrl();
     onClose();
@@ -539,55 +676,57 @@ export default function RoutePlannerPanel({
             </button>
           </div>
 
-          {waypointDrafts.map((draft, index) => (
-            <div
-              key={draft.id}
-              className="rounded-xl border border-white/10 bg-slate-950/40 p-2.5"
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-slate-400">
-                  {t.stop} {index + 1}
-                </span>
-                <button
-                  type="button"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10"
-                  aria-label={t.removeStop}
-                  onClick={() => {
-                    setWaypointDrafts((prev) => {
-                      const next = prev.filter((_, i) => i !== index);
-                      publishWaypoints(next);
-                      return next;
-                    });
-                  }}
+          {mode !== "transit"
+            ? waypointDrafts.map((draft, index) => (
+                <div
+                  key={draft.id}
+                  className="rounded-xl border border-white/10 bg-slate-950/40 p-2.5"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <UnifiedLocationField
-                locale={locale}
-                label={t.stop}
-                valueLabel={draft.point?.name ?? ""}
-                bias={bias}
-                onSelect={(point) => {
-                  setWaypointDrafts((prev) => {
-                    const next = [...prev];
-                    next[index] = { ...next[index]!, point };
-                    publishWaypoints(next);
-                    return next;
-                  });
-                }}
-              />
-              <button
-                type="button"
-                className="mt-1 text-xs text-[#8ab4f8]"
-                onClick={() => onPickTargetChange(`waypoint-draft:${index}`)}
-              >
-                {t.chooseOnMap}
-              </button>
-            </div>
-          ))}
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs text-slate-400">
+                      {t.stop} {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10"
+                      aria-label={t.removeStop}
+                      onClick={() => {
+                        setWaypointDrafts((prev) => {
+                          const next = prev.filter((_, i) => i !== index);
+                          publishWaypoints(next);
+                          return next;
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <UnifiedLocationField
+                    locale={locale}
+                    label={t.stop}
+                    valueLabel={draft.point?.name ?? ""}
+                    bias={bias}
+                    onSelect={(point) => {
+                      setWaypointDrafts((prev) => {
+                        const next = [...prev];
+                        next[index] = { ...next[index]!, point };
+                        publishWaypoints(next);
+                        return next;
+                      });
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="mt-1 text-xs text-[#8ab4f8]"
+                    onClick={() => onPickTargetChange(`waypoint-draft:${index}`)}
+                  >
+                    {t.chooseOnMap}
+                  </button>
+                </div>
+              ))
+            : null}
 
-          {waypointDrafts.length < MAX_ROUTE_WAYPOINTS_UI ? (
+          {mode !== "transit" && waypointDrafts.length < MAX_ROUTE_WAYPOINTS_UI ? (
             <button
               type="button"
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-sm text-slate-200 hover:bg-white/5"
@@ -604,10 +743,11 @@ export default function RoutePlannerPanel({
           ) : null}
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-1.5" role="tablist">
+        <div className="mt-4 grid grid-cols-4 gap-1.5" role="tablist">
           {(
             [
               ["car", Car, t.car],
+              ["transit", TrainFront, t.transit],
               ["bicycle", Bike, t.bicycle],
               ["pedestrian", Footprints, t.pedestrian],
             ] as const
@@ -630,28 +770,78 @@ export default function RoutePlannerPanel({
           ))}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {(
-            [
-              ["fastest", t.fastest],
-              ["shortest", t.shortest],
-              ["eco", t.eco],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={`min-h-10 rounded-lg px-2.5 text-xs ${
-                preference === value
-                  ? "bg-white/15 text-white"
-                  : "bg-white/5 text-slate-300"
-              }`}
-              onClick={() => setPreference(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {mode === "transit" ? (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  ["depart_now", t.departNow],
+                  ["depart_at", t.departAt],
+                  ["arrive_at", t.arriveAt],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={timing.kind === value}
+                  className={`min-h-10 rounded-lg px-2.5 text-xs ${
+                    timing.kind === value
+                      ? "bg-white/15 text-white"
+                      : "bg-white/5 text-slate-300"
+                  }`}
+                  onClick={() =>
+                    setTiming(
+                      value === "depart_now"
+                        ? { kind: "depart_now" }
+                        : { kind: value, at: "" },
+                    )
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {timing.kind === "depart_at" ? (
+              <input
+                type="datetime-local"
+                className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+                value={departAtLocal}
+                onChange={(event) => setDepartAtLocal(event.target.value)}
+              />
+            ) : null}
+            {timing.kind === "arrive_at" ? (
+              <input
+                type="datetime-local"
+                className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+                value={arriveAtLocal}
+                onChange={(event) => setArriveAtLocal(event.target.value)}
+              />
+            ) : null}
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {(
+              [
+                ["fastest", t.fastest],
+                ["shortest", t.shortest],
+                ["eco", t.eco],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`min-h-10 rounded-lg px-2.5 text-xs ${
+                  preference === value
+                    ? "bg-white/15 text-white"
+                    : "bg-white/5 text-slate-300"
+                }`}
+                onClick={() => setPreference(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="mt-3 flex gap-2">
           <button
@@ -672,7 +862,83 @@ export default function RoutePlannerPanel({
           ) : null}
         </div>
 
-        {showOptions ? (
+        {showOptions && mode === "transit" ? (
+          <fieldset className="mt-2 space-y-3 rounded-xl border border-white/10 p-3">
+            <legend className="px-1 text-xs text-slate-400">{t.options}</legend>
+            <div>
+              <p className="mb-1.5 text-xs text-slate-400">{t.preference}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    ["fewer_transfers", t.fewerTransfers],
+                    ["less_walking", t.lessWalking],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`min-h-10 rounded-lg px-2.5 text-xs ${
+                      transitRoutingPreference === value
+                        ? "bg-white/15 text-white"
+                        : "bg-white/5 text-slate-300"
+                    }`}
+                    onClick={() =>
+                      setTransitRoutingPreference((prev) =>
+                        prev === value ? null : value,
+                      )
+                    }
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-1.5 text-xs text-slate-400">{t.transitModes}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  className={`min-h-10 rounded-lg px-2.5 text-xs ${
+                    allowedTransitModes === null
+                      ? "bg-white/15 text-white"
+                      : "bg-white/5 text-slate-300"
+                  }`}
+                  onClick={() => setAllowedTransitModes(null)}
+                >
+                  {t.allPublicTransport}
+                </button>
+                {TRANSIT_MODE_CHIPS.map(([value, labelKey]) => {
+                  const active = allowedTransitModes?.includes(value) ?? false;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`min-h-10 rounded-lg px-2.5 text-xs ${
+                        active
+                          ? "bg-white/15 text-white"
+                          : "bg-white/5 text-slate-300"
+                      }`}
+                      onClick={() =>
+                        setAllowedTransitModes((prev) => {
+                          const current = prev ?? [];
+                          if (current.includes(value)) {
+                            const next = current.filter((m) => m !== value);
+                            return next.length > 0 ? next : null;
+                          }
+                          return [...current, value];
+                        })
+                      }
+                    >
+                      {t[labelKey]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </fieldset>
+        ) : null}
+
+        {showOptions && mode !== "transit" ? (
           <fieldset className="mt-2 space-y-1.5 rounded-xl border border-white/10 p-3">
             <legend className="px-1 text-xs text-slate-400">{t.options}</legend>
             {(
@@ -755,7 +1021,114 @@ export default function RoutePlannerPanel({
           </div>
         ) : null}
 
-        {routes.length > 0 ? (
+        {mode === "transit" && journeys.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              {t.recommendedRoute}
+            </h3>
+            {journeys.map((journey, index) => {
+              const selected = journey.id === selectedJourneyId;
+              return (
+                <button
+                  key={journey.id}
+                  type="button"
+                  className={`w-full rounded-xl border p-3 text-left transition ${
+                    selected
+                      ? "border-[#1a73e8]/60 bg-[#1a73e8]/15"
+                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                  }`}
+                  onClick={() => {
+                    setSelectedJourneyId(journey.id);
+                    onTransitChange?.(journeys, journey.id);
+                    onFocusRoute(journeyCoordinates(journey));
+                  }}
+                >
+                  {index > 0 ? (
+                    <p className="mb-1 text-[11px] text-slate-400">
+                      {t.alternativeRoute} {index}
+                    </p>
+                  ) : null}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-lg font-semibold text-slate-50">
+                      {formatRouteDuration(journey.durationSeconds, locale)}
+                    </span>
+                    <span className="text-sm text-slate-300">
+                      {formatTransitClock(journey.departureAt)} →{" "}
+                      {formatTransitClock(journey.arrivalAt)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-300">
+                    <span>
+                      {journey.transfers}{" "}
+                      {journey.transfers === 1 ? t.transfer : t.transfers}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {journey.fare
+                        ? `${journey.fare.status === "confirmed" ? "" : `${t.fareEstimated} `}${journey.fare.amount.toFixed(2)} ${journey.fare.currency}`
+                        : t.fareUnavailable}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-slate-300">
+                    {journey.modeSummary.map((legMode, legModeIndex) => (
+                      <span
+                        key={`${journey.id}-${legMode}-${legModeIndex}`}
+                        className="flex items-center gap-1"
+                      >
+                        {legModeIndex > 0 ? (
+                          <span aria-hidden className="text-slate-500">
+                            →
+                          </span>
+                        ) : null}
+                        <span className="rounded-md bg-white/10 px-1.5 py-0.5 capitalize">
+                          {legMode.replace(/_/g, " ")}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {mode === "transit" &&
+        journeys.find((journey) => journey.id === selectedJourneyId) ? (
+          <div className="mt-3">
+            <h3 className="text-sm font-medium text-slate-100">
+              {t.instructions}
+            </h3>
+            <ol className="mt-2 max-h-56 space-y-1.5 overflow-auto pr-1">
+              {journeys
+                .find((journey) => journey.id === selectedJourneyId)!
+                .legs.map((leg) => (
+                  <li
+                    key={leg.id}
+                    className="rounded-lg bg-white/5 px-2 py-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-slate-100">
+                        {leg.mode === "walk"
+                          ? t.walking
+                          : (leg.line?.nameShort ?? leg.line?.name ?? leg.mode)}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {formatTransitClock(leg.departureAt)} →{" "}
+                        {formatTransitClock(leg.arrivalAt)}
+                      </span>
+                    </div>
+                    {leg.from.name || leg.to.name ? (
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        {leg.from.name ?? ""} → {leg.to.name ?? ""}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+            </ol>
+          </div>
+        ) : null}
+
+        {mode !== "transit" && routes.length > 0 ? (
           <div className="mt-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               {t.recommendedRoute}

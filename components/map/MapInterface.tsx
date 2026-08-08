@@ -83,7 +83,9 @@ import type {
   MapFocusRequest,
 } from "@/lib/map/focusRequest";
 import type { NormalizedRoute, RoutePoint } from "@/lib/routing/types";
+import type { TransitJourney } from "@/lib/routing/transit/types";
 import type { RoutePlannerMapPoint } from "@/lib/routing/routeMapLayers";
+import type { TransitMapPoint } from "@/lib/routing/transitMapLayers";
 import {
   areRoutePlannerPointsEqual,
   EMPTY_ROUTE_PLANNER_POINTS,
@@ -243,6 +245,10 @@ export default function MapInterface() {
   const [routePlannerSelectedId, setRoutePlannerSelectedId] = useState<
     string | null
   >(null);
+  const [transitJourneys, setTransitJourneys] = useState<TransitJourney[]>([]);
+  const [transitSelectedId, setTransitSelectedId] = useState<string | null>(
+    null,
+  );
   const [routePlannerPointsState, setRoutePlannerPointsState] =
     useState<RoutePlannerPointsState>(EMPTY_ROUTE_PLANNER_POINTS);
   const [routePlannerPickTarget, setRoutePlannerPickTarget] =
@@ -2842,6 +2848,22 @@ export default function MapInterface() {
     (routes: NormalizedRoute[], selectedId: string | null) => {
       setRoutePlannerRoutes(routes);
       setRoutePlannerSelectedId(selectedId);
+      if (routes.length > 0) {
+        setTransitJourneys([]);
+        setTransitSelectedId(null);
+      }
+    },
+    [],
+  );
+
+  const handleTransitChange = useCallback(
+    (journeys: TransitJourney[], selectedId: string | null) => {
+      setTransitJourneys(journeys);
+      setTransitSelectedId(selectedId);
+      if (journeys.length > 0) {
+        setRoutePlannerRoutes([]);
+        setRoutePlannerSelectedId(null);
+      }
     },
     [],
   );
@@ -2881,6 +2903,59 @@ export default function MapInterface() {
     }
     return points;
   }, [routePlannerPointsState]);
+
+  const selectedTransitJourney =
+    transitJourneys.find((journey) => journey.id === transitSelectedId) ??
+    transitJourneys[0] ??
+    null;
+
+  const transitMapPoints: TransitMapPoint[] = useMemo(() => {
+    const points: TransitMapPoint[] = [];
+    const { origin, destination } = routePlannerPointsState;
+    if (origin) {
+      points.push({
+        id: "transit-origin",
+        role: "origin",
+        longitude: origin.longitude,
+        latitude: origin.latitude,
+        label: "A",
+        color: "#16a34a",
+      });
+    }
+    if (selectedTransitJourney) {
+      selectedTransitJourney.legs.forEach((leg, index) => {
+        if (leg.mode === "walk") return;
+        if (
+          leg.from.longitude == null ||
+          leg.from.latitude == null ||
+          !Number.isFinite(leg.from.longitude) ||
+          !Number.isFinite(leg.from.latitude)
+        ) {
+          return;
+        }
+        if (index === 0) return;
+        points.push({
+          id: `transfer-${index}`,
+          role: "transfer",
+          longitude: leg.from.longitude,
+          latitude: leg.from.latitude,
+          label: String(points.filter((p) => p.role === "transfer").length + 1),
+          color: "#2563eb",
+        });
+      });
+    }
+    if (destination) {
+      points.push({
+        id: "transit-destination",
+        role: "destination",
+        longitude: destination.longitude,
+        latitude: destination.latitude,
+        label: "B",
+        color: "#dc2626",
+      });
+    }
+    return points;
+  }, [routePlannerPointsState, selectedTransitJourney]);
 
   const openRoutePlanner = (options?: {
     origin?: RoutePoint | null;
@@ -4062,6 +4137,8 @@ export default function MapInterface() {
           routePlannerRoutes={routePlannerRoutes}
           routePlannerSelectedId={routePlannerSelectedId}
           routePlannerPoints={routePlannerMapPoints}
+          transitJourney={selectedTransitJourney}
+          transitPoints={transitMapPoints}
           routePlannerPickMode={routePlannerPickTarget != null}
           onRoutePlannerMapPick={async (longitude, latitude) => {
             let name: string | null = null;
@@ -4371,6 +4448,8 @@ export default function MapInterface() {
               setRoutePlannerOpen(false);
               setRoutePlannerRoutes([]);
               setRoutePlannerSelectedId(null);
+              setTransitJourneys([]);
+              setTransitSelectedId(null);
               setRoutePlannerPointsState(EMPTY_ROUTE_PLANNER_POINTS);
               setRoutePlannerPickTarget(null);
               setRoutePlannerMapPick(null);
@@ -4383,6 +4462,7 @@ export default function MapInterface() {
             mapPickPoint={routePlannerMapPick}
             onClearMapPick={() => setRoutePlannerMapPick(null)}
             onRoutesChange={handleRoutePlannerRoutesChange}
+            onTransitChange={handleTransitChange}
             onSelectIncident={(alertId) => {
               handleAlertSelect(alertId);
             }}

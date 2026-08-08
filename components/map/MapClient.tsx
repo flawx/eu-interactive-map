@@ -173,6 +173,8 @@ type MapClientProps = {
   routePlannerRoutes?: import("@/lib/routing/types").NormalizedRoute[];
   routePlannerSelectedId?: string | null;
   routePlannerPoints?: import("@/lib/routing/routeMapLayers").RoutePlannerMapPoint[];
+  transitJourney?: import("@/lib/routing/transit/types").TransitJourney | null;
+  transitPoints?: import("@/lib/routing/transitMapLayers").TransitMapPoint[];
   routePlannerPickMode?: boolean;
   onRoutePlannerMapPick?: (longitude: number, latitude: number) => void;
   onRoutePlannerContextMenu?: (longitude: number, latitude: number) => void;
@@ -295,6 +297,8 @@ export default function MapClient({
   routePlannerRoutes = [],
   routePlannerSelectedId = null,
   routePlannerPoints = [],
+  transitJourney = null,
+  transitPoints = [],
   routePlannerPickMode = false,
   onRoutePlannerMapPick,
   onRoutePlannerContextMenu,
@@ -419,6 +423,8 @@ export default function MapClient({
       routePlannerRoutes={routePlannerRoutes}
       routePlannerSelectedId={routePlannerSelectedId}
       routePlannerPoints={routePlannerPoints}
+      transitJourney={transitJourney}
+      transitPoints={transitPoints}
       routePlannerPickMode={routePlannerPickMode}
       onRoutePlannerMapPick={onRoutePlannerMapPick}
       onRoutePlannerContextMenu={onRoutePlannerContextMenu}

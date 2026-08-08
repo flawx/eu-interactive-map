@@ -17,6 +17,10 @@ import {
   syncRoutePlannerLayers,
 } from "@/components/routing/useRoutePlannerLayers";
 import {
+  ensureTransitRoutingLayers,
+  syncTransitRouteLayers,
+} from "@/components/routing/useTransitRouteLayers";
+import {
   ROUTE_PLANNER_LAYER_ALT,
   ROUTE_PLANNER_LAYER_HALO,
   ROUTE_PLANNER_LAYER_MAIN,
@@ -24,6 +28,8 @@ import {
   ROUTE_PLANNER_LAYER_POINTS,
   ROUTE_PLANNER_LAYER_TRAFFIC,
 } from "@/lib/routing/routeMapLayers";
+import type { TransitJourney } from "@/lib/routing/transit/types";
+import type { TransitMapPoint } from "@/lib/routing/transitMapLayers";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
 import type {
@@ -1113,6 +1119,8 @@ export default function MapContainer({
   routePlannerRoutes = [],
   routePlannerSelectedId = null,
   routePlannerPoints = [],
+  transitJourney = null,
+  transitPoints = [],
   routePlannerPickMode = false,
   onRoutePlannerMapPick,
   onRoutePlannerContextMenu,
@@ -1245,6 +1253,8 @@ export default function MapContainer({
   routePlannerRoutes?: import("@/lib/routing/types").NormalizedRoute[];
   routePlannerSelectedId?: string | null;
   routePlannerPoints?: import("@/lib/routing/routeMapLayers").RoutePlannerMapPoint[];
+  transitJourney?: TransitJourney | null;
+  transitPoints?: TransitMapPoint[];
   routePlannerPickMode?: boolean;
   onRoutePlannerMapPick?: (longitude: number, latitude: number) => void;
   onRoutePlannerContextMenu?: (longitude: number, latitude: number) => void;
@@ -8138,14 +8148,20 @@ export default function MapContainer({
 
     let cancelled = false;
     let idleQueued = false;
+    const showTransit = Boolean(transitJourney);
 
     const apply = () => {
       if (cancelled) return;
       syncRoutePlannerLayers(map, {
-        active: routePlannerActive,
-        routes: routePlannerRoutes,
-        selectedRouteId: routePlannerSelectedId,
-        points: routePlannerPoints,
+        active: routePlannerActive && !showTransit,
+        routes: showTransit ? [] : routePlannerRoutes,
+        selectedRouteId: showTransit ? null : routePlannerSelectedId,
+        points: showTransit ? [] : routePlannerPoints,
+      });
+      syncTransitRouteLayers(map, {
+        active: routePlannerActive && showTransit,
+        journey: showTransit ? transitJourney : null,
+        points: showTransit ? transitPoints : [],
       });
     };
 
@@ -8169,7 +8185,8 @@ export default function MapContainer({
       // Runtime sources/layers are wiped on style reload — recreate + refill.
       if (routePlannerActive) {
         try {
-          ensureRoutingLayers(map);
+          if (!showTransit) ensureRoutingLayers(map);
+          if (showTransit) ensureTransitRoutingLayers(map);
         } catch {
           // Style may still be transitioning.
         }
@@ -8188,6 +8205,8 @@ export default function MapContainer({
     routePlannerRoutes,
     routePlannerSelectedId,
     routePlannerPoints,
+    transitJourney,
+    transitPoints,
     mapSourcesReadyVersion,
   ]);
 

@@ -98,6 +98,22 @@ export type RoutePlannerMessages = {
   resultTypePoi: string;
   resultTypeCity: string;
   providerNotEntitledDev: string;
+  transit: string;
+  transfers: string;
+  transfer: string;
+  fareUnavailable: string;
+  fareEstimated: string;
+  transitModes: string;
+  allPublicTransport: string;
+  preferBus: string;
+  preferMetro: string;
+  preferTram: string;
+  preferTrain: string;
+  fewerTransfers: string;
+  lessWalking: string;
+  transitDateOutOfRange: string;
+  waiting: string;
+  walking: string;
 };
 
 const en: RoutePlannerMessages = {
@@ -199,6 +215,22 @@ const en: RoutePlannerMessages = {
   resultTypeCity: "City",
   providerNotEntitledDev:
     "TomTom Routing API is not enabled for this API key",
+  transit: "Transit",
+  transfers: "transfers",
+  transfer: "transfer",
+  fareUnavailable: "Fare unavailable",
+  fareEstimated: "Estimated fare",
+  transitModes: "Public transport",
+  allPublicTransport: "All public transport",
+  preferBus: "Bus",
+  preferMetro: "Metro / Subway",
+  preferTram: "Tram / Light rail",
+  preferTrain: "Train / Rail",
+  fewerTransfers: "Fewer transfers",
+  lessWalking: "Less walking",
+  transitDateOutOfRange: "Transit schedules are not available for this date.",
+  waiting: "Waiting",
+  walking: "Walking",
 };
 
 const fr: RoutePlannerMessages = {
@@ -303,6 +335,23 @@ const fr: RoutePlannerMessages = {
   resultTypeCity: "Ville",
   providerNotEntitledDev:
     "L'API TomTom Routing n'est pas activée pour cette clé API",
+  transit: "Transports",
+  transfers: "correspondances",
+  transfer: "correspondance",
+  fareUnavailable: "Tarif indisponible",
+  fareEstimated: "Tarif estimé",
+  transitModes: "Transports publics",
+  allPublicTransport: "Tous les transports",
+  preferBus: "Bus",
+  preferMetro: "Métro",
+  preferTram: "Tram",
+  preferTrain: "Train",
+  fewerTransfers: "Moins de correspondances",
+  lessWalking: "Moins de marche",
+  transitDateOutOfRange:
+    "Les horaires de transport ne sont pas disponibles pour cette date.",
+  waiting: "Attente",
+  walking: "Marche",
 };
 
 const de: RoutePlannerMessages = {
@@ -333,6 +382,23 @@ const de: RoutePlannerMessages = {
   tollPriceUnavailable: "Exakter Preis nicht verfügbar",
   fuelEstimate: "Kraftstoffschätzung",
   energyEstimate: "Energieschätzung",
+  transit: "ÖPNV",
+  transfers: "Umstiege",
+  transfer: "Umstieg",
+  fareUnavailable: "Tarif nicht verfügbar",
+  fareEstimated: "Geschätzter Tarif",
+  transitModes: "Öffentliche Verkehrsmittel",
+  allPublicTransport: "Alle öffentlichen Verkehrsmittel",
+  preferBus: "Bus",
+  preferMetro: "U-Bahn / Metro",
+  preferTram: "Tram / Stadtbahn",
+  preferTrain: "Zug / Bahn",
+  fewerTransfers: "Weniger Umstiege",
+  lessWalking: "Weniger zu Fuß",
+  transitDateOutOfRange:
+    "Fahrpläne sind für dieses Datum nicht verfügbar.",
+  waiting: "Wartezeit",
+  walking: "Zu Fuß",
 };
 
 const es: RoutePlannerMessages = {

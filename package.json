@@ -25,6 +25,7 @@
     "test:routing": "tsx scripts/test-routing.ts",
     "test:tomtom-products": "tsx scripts/test-tomtom-products.ts",
     "test:media-routing-stability": "tsx scripts/test-media-routing-stability.ts",
+    "test:transit": "tsx scripts/test-transit.ts",
     "thumbnails:audit": "tsx scripts/audit-map-marker-thumbnails.ts",
     "test:photo-markers-wildfire-labels": "tsx scripts/test-photo-markers-wildfire-labels.ts"
   },
