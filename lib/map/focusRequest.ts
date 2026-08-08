@@ -1,3 +1,12 @@
+export type MapFocusPadding =
+  | number
+  | {
+      top: number;
+      right: number;
+      bottom: number;
+      left: number;
+    };
+
 export type MapFocusRequest =
   | { kind: "europe"; nonce: number }
   | { kind: "country"; countryCode: string; nonce: number }
@@ -14,7 +23,7 @@ export type MapFocusRequest =
       south: number;
       east: number;
       north: number;
-      padding?: number;
+      padding?: MapFocusPadding;
       maxZoom?: number;
       nonce: number;
     };

@@ -13,10 +13,17 @@ import {
 } from "maplibre-gl";
 import { usePhotoMapMarkers } from "@/components/map/usePhotoMapMarkers";
 import {
-  clearRoutePlannerLayers,
+  ensureRoutingLayers,
   syncRoutePlannerLayers,
 } from "@/components/routing/useRoutePlannerLayers";
-import { ROUTE_PLANNER_LAYER_ALT } from "@/lib/routing/routeMapLayers";
+import {
+  ROUTE_PLANNER_LAYER_ALT,
+  ROUTE_PLANNER_LAYER_HALO,
+  ROUTE_PLANNER_LAYER_MAIN,
+  ROUTE_PLANNER_LAYER_POINT_LABELS,
+  ROUTE_PLANNER_LAYER_POINTS,
+  ROUTE_PLANNER_LAYER_TRAFFIC,
+} from "@/lib/routing/routeMapLayers";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
 import type {
@@ -1559,6 +1566,11 @@ export default function MapContainer({
     });
 
     mapRef.current = map;
+    if (process.env.NODE_ENV !== "production") {
+      (
+        window as unknown as { __euMap?: MapLibreMap }
+      ).__euMap = map;
+    }
 
     const handleMapError = (event: MapLibreErrorEvent) => {
       const error = event.error;
@@ -4707,6 +4719,13 @@ export default function MapContainer({
         "user-location-halo",
         "user-location-pulse",
         "user-location-dot",
+        // Route planner lines must stay above basemap / admin / POI fills.
+        ROUTE_PLANNER_LAYER_ALT,
+        ROUTE_PLANNER_LAYER_HALO,
+        ROUTE_PLANNER_LAYER_MAIN,
+        ROUTE_PLANNER_LAYER_TRAFFIC,
+        ROUTE_PLANNER_LAYER_POINTS,
+        ROUTE_PLANNER_LAYER_POINT_LABELS,
       ];
 
       for (const layerId of layerStackOrder) {
@@ -8105,15 +8124,54 @@ export default function MapContainer({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || mapSourcesReadyVersion === 0) return;
-    syncRoutePlannerLayers(map, {
-      active: routePlannerActive,
-      routes: routePlannerRoutes,
-      selectedRouteId: routePlannerSelectedId,
-      points: routePlannerPoints,
-    });
-    if (!routePlannerActive) {
-      clearRoutePlannerLayers(map);
-    }
+
+    let cancelled = false;
+    let idleQueued = false;
+
+    const apply = () => {
+      if (cancelled) return;
+      syncRoutePlannerLayers(map, {
+        active: routePlannerActive,
+        routes: routePlannerRoutes,
+        selectedRouteId: routePlannerSelectedId,
+        points: routePlannerPoints,
+      });
+    };
+
+    const scheduleWhenReady = () => {
+      if (cancelled) return;
+      if (map.isStyleLoaded()) {
+        apply();
+        return;
+      }
+      if (idleQueued) return;
+      idleQueued = true;
+      map.once("idle", () => {
+        idleQueued = false;
+        apply();
+      });
+    };
+
+    scheduleWhenReady();
+
+    const onStyleLoad = () => {
+      // Runtime sources/layers are wiped on style reload — recreate + refill.
+      if (routePlannerActive) {
+        try {
+          ensureRoutingLayers(map);
+        } catch {
+          // Style may still be transitioning.
+        }
+      }
+      scheduleWhenReady();
+    };
+
+    map.on("style.load", onStyleLoad);
+
+    return () => {
+      cancelled = true;
+      map.off("style.load", onStyleLoad);
+    };
   }, [
     routePlannerActive,
     routePlannerRoutes,

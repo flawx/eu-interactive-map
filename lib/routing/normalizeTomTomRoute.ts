@@ -125,11 +125,19 @@ function flattenPoints(route: TomTomRoute): [number, number][] {
   for (const leg of route.legs ?? []) {
     for (const point of leg.points ?? []) {
       if (
-        Number.isFinite(point.latitude) &&
-        Number.isFinite(point.longitude)
+        !Number.isFinite(point.latitude) ||
+        !Number.isFinite(point.longitude)
       ) {
-        coords.push([point.longitude, point.latitude]);
+        continue;
       }
+      // TomTom points are lat/lon objects → GeoJSON [longitude, latitude].
+      const next: [number, number] = [point.longitude, point.latitude];
+      const prev = coords[coords.length - 1];
+      // Drop duplicate junction vertices when concatenating multiple legs.
+      if (prev && prev[0] === next[0] && prev[1] === next[1]) {
+        continue;
+      }
+      coords.push(next);
     }
   }
   return coords;

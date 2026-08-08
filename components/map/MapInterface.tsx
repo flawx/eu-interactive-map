@@ -78,7 +78,10 @@ import type {
   WildfireIncident,
 } from "@/lib/incidents/types";
 import type { MapCameraCommands } from "@/lib/map/mapCameraCommands";
-import type { MapFocusRequest } from "@/lib/map/focusRequest";
+import type {
+  MapFocusPadding,
+  MapFocusRequest,
+} from "@/lib/map/focusRequest";
 import type { NormalizedRoute, RoutePoint } from "@/lib/routing/types";
 import type { RoutePlannerMapPoint } from "@/lib/routing/routeMapLayers";
 import {
@@ -3009,7 +3012,7 @@ export default function MapInterface() {
           south: number;
           east: number;
           north: number;
-          padding?: number;
+          padding?: MapFocusPadding;
           maxZoom?: number;
         },
   ) => {
@@ -4398,13 +4401,17 @@ export default function MapInterface() {
                 east = Math.max(east, lon);
                 north = Math.max(north, lat);
               }
+              const isMobile =
+                typeof window !== "undefined" && window.innerWidth < 768;
               requestFocus({
                 kind: "bounds",
                 west,
                 south,
                 east,
                 north,
-                padding: 96,
+                padding: isMobile
+                  ? { top: 72, right: 48, bottom: 320, left: 48 }
+                  : { top: 80, right: 80, bottom: 80, left: 420 },
                 maxZoom: 14,
               });
             }}

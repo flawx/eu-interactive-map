@@ -204,6 +204,99 @@ async function main() {
   assert.equal(normalized[0]!.trafficDelaySeconds, 1080);
   assert.equal(normalized[0]!.instructions.length, 1);
   assert.ok(normalized[0]!.warnings.some((w) => w.code === "toll_detected"));
+  assert.equal(normalized[0]!.geometry.type, "LineString");
+  assert.equal(normalized[0]!.geometry.coordinates.length, 3);
+  // GeoJSON order is [longitude, latitude] (Bordeaux → mid → Paris).
+  assert.deepEqual(normalized[0]!.geometry.coordinates[0], [-0.5792, 44.8378]);
+  assert.deepEqual(normalized[0]!.geometry.coordinates[2], [2.3522, 48.8566]);
+
+  // Multi-leg concatenation drops duplicate junction vertices.
+  const multiLeg = normalizeTomTomRoutes(
+    {
+      routes: [
+        {
+          summary: {
+            lengthInMeters: 500000,
+            travelTimeInSeconds: 18000,
+          },
+          legs: [
+            {
+              summary: { lengthInMeters: 250000, travelTimeInSeconds: 9000 },
+              points: [
+                { latitude: 44.84, longitude: -0.58 },
+                { latitude: 47.39, longitude: 0.69 },
+              ],
+            },
+            {
+              summary: { lengthInMeters: 250000, travelTimeInSeconds: 9000 },
+              points: [
+                { latitude: 47.39, longitude: 0.69 },
+                { latitude: 48.86, longitude: 2.35 },
+              ],
+            },
+          ],
+          sections: [],
+        },
+      ],
+    },
+    baseRequest(),
+  );
+  assert.equal(multiLeg[0]!.geometry.coordinates.length, 3);
+  assert.deepEqual(multiLeg[0]!.geometry.coordinates[0], [-0.58, 44.84]);
+  assert.deepEqual(multiLeg[0]!.geometry.coordinates[1], [0.69, 47.39]);
+  assert.deepEqual(multiLeg[0]!.geometry.coordinates[2], [2.35, 48.86]);
+
+  const {
+    buildSelectedRouteCollection,
+    buildAlternativeRouteCollection,
+    clearRoutingGeometry,
+  } = await import("../components/routing/useRoutePlannerLayers");
+
+  const selectedCollection = buildSelectedRouteCollection(multiLeg[0]!);
+  assert.equal(selectedCollection.features.length, 1);
+  assert.equal(selectedCollection.features[0]!.geometry.type, "LineString");
+  assert.equal(
+    (selectedCollection.features[0]!.geometry as GeoJSON.LineString).coordinates
+      .length,
+    3,
+  );
+
+  const emptyRoute = buildSelectedRouteCollection({
+    ...multiLeg[0]!,
+    geometry: { type: "LineString", coordinates: [] },
+  });
+  assert.equal(emptyRoute.features.length, 0);
+
+  const invalidRoute = buildSelectedRouteCollection({
+    ...multiLeg[0]!,
+    geometry: {
+      type: "LineString",
+      coordinates: [[2.35, 48.85]],
+    },
+  });
+  assert.equal(invalidRoute.features.length, 0);
+
+  const altRoutes = [
+    multiLeg[0]!,
+    {
+      ...multiLeg[0]!,
+      id: "alt-1",
+      geometry: {
+        type: "LineString" as const,
+        coordinates: [
+          [-0.58, 44.84],
+          [1.0, 46.0],
+          [2.35, 48.86],
+        ] as [number, number][],
+      },
+    },
+  ];
+  const altCollection = buildAlternativeRouteCollection(altRoutes, multiLeg[0]!.id);
+  assert.equal(altCollection.features.length, 1);
+  assert.equal(altCollection.features[0]!.properties?.id, "alt-1");
+
+  // clearRoutingGeometry is a MapLibre-facing alias; ensure it is exported.
+  assert.equal(typeof clearRoutingGeometry, "function");
 
   // Identical origin/destination
   assert.throws(

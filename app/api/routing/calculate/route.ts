@@ -28,6 +28,18 @@ export async function POST(request: Request) {
       controller.signal,
     );
 
+    if (process.env.NODE_ENV !== "production" && result.routes[0]) {
+      const first = result.routes[0];
+      const coords = first.geometry.coordinates;
+      console.info("[routing geometry]", {
+        routes: result.routes.length,
+        "route[0].points": coords.length,
+        "route[0].geometryType": first.geometry.type,
+        firstCoordinate: coords[0] ?? null,
+        lastCoordinate: coords[coords.length - 1] ?? null,
+      });
+    }
+
     let incidents: unknown[] = [];
     if (routingRequest.mode === "car" && result.routes[0]) {
       try {
