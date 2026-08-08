@@ -17,6 +17,33 @@ const MAX_BYTES = 1_500_000;
 /** Keep upstream waits short so one bad URL cannot stall the map. */
 const TIMEOUT_MS = 2_800;
 
+type MetricKey = "200" | "404" | "429" | "5xx" | "timeout" | "other";
+
+const metrics: Record<MetricKey, number> = {
+  "200": 0,
+  "404": 0,
+  "429": 0,
+  "5xx": 0,
+  timeout: 0,
+  other: 0,
+};
+
+let lastMetricsLogAt = 0;
+
+function bump(key: MetricKey) {
+  metrics[key] += 1;
+  const now = Date.now();
+  if (process.env.NODE_ENV !== "production" && now - lastMetricsLogAt > 30_000) {
+    lastMetricsLogAt = now;
+    console.info(
+      "[thumbnail upstream]",
+      Object.entries(metrics)
+        .map(([k, v]) => `${k}=${v}`)
+        .join(" "),
+    );
+  }
+}
+
 function isAllowedUrl(raw: string): URL | null {
   try {
     const url = new URL(raw);
@@ -94,17 +121,21 @@ export async function GET(request: Request) {
         upstream = response;
         break;
       }
-      // Do not retry 429 aggressively — fall through to next candidate / fail fast.
       if (response.status === 429) break;
     }
 
     if (!upstream) {
+      if (lastStatus === 404) bump("404");
+      else if (lastStatus === 429) bump("429");
+      else if (lastStatus >= 500) bump("5xx");
+      else bump("other");
       return Response.json(
         { error: `upstream_${lastStatus || "unavailable"}` },
         {
           status: 502,
           headers: {
             "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+            "X-Thumbnail-Upstream-Status": String(lastStatus || 0),
           },
         },
       );
@@ -112,12 +143,15 @@ export async function GET(request: Request) {
 
     const contentType = upstream.headers.get("content-type") ?? "";
     if (!/^image\/(jpeg|jpg|png|webp|avif)/i.test(contentType)) {
+      bump("other");
       return Response.json({ error: "invalid_content_type" }, { status: 415 });
     }
     const buffer = Buffer.from(await upstream.arrayBuffer());
     if (buffer.byteLength === 0 || buffer.byteLength > MAX_BYTES) {
+      bump("other");
       return Response.json({ error: "invalid_image_size" }, { status: 422 });
     }
+    bump("200");
     const etag = `"${createHash("sha1").update(buffer).digest("hex")}"`;
     const ifNoneMatch = request.headers.get("if-none-match");
     if (ifNoneMatch && ifNoneMatch === etag) {
@@ -140,13 +174,21 @@ export async function GET(request: Request) {
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch {
+  } catch (error) {
+    const aborted =
+      (error instanceof DOMException && error.name === "AbortError") ||
+      (typeof error === "object" &&
+        error !== null &&
+        "name" in error &&
+        (error as { name?: string }).name === "AbortError");
+    bump(aborted ? "timeout" : "other");
     return Response.json(
-      { error: "upstream_unavailable" },
+      { error: aborted ? "upstream_timeout" : "upstream_unavailable" },
       {
         status: 502,
         headers: {
           "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+          "X-Thumbnail-Upstream-Status": aborted ? "timeout" : "error",
         },
       },
     );

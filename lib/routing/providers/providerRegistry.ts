@@ -17,7 +17,16 @@ export function setRoutingProviderForTests(
 
 export async function getRoutingProvidersStatus(): Promise<{
   providers: { tomtom: RoutingProviderStatus };
+  detail?: string | null;
 }> {
   const status = await getRoutingProvider().getStatus();
-  return { providers: { tomtom: status } };
+  return {
+    providers: { tomtom: status },
+    detail:
+      status === "not_entitled"
+        ? "TomTom Routing API is not enabled for this API key"
+        : status === "misconfigured"
+          ? "TOMTOM_API_KEY is missing"
+          : null,
+  };
 }

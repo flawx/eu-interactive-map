@@ -15,6 +15,7 @@ import {
   type MarkerThumbnailRequest,
   type PhotoMarkerCategory,
 } from "@/lib/map/mapMarkerThumbnail";
+import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
 
 type LayerConfig = {
   category: PhotoMarkerCategory;
@@ -253,7 +254,7 @@ function collectViewportRequests(
     [Math.max(sw.x, ne.x), Math.max(sw.y, ne.y)],
   ];
   if (!map.getLayer(config.symbolLayerId)) return items;
-  const features = map.queryRenderedFeatures(bbox, {
+  const features = safeQueryRenderedFeatures(map, bbox, {
     layers: [config.symbolLayerId],
   });
   for (const feature of features) {

@@ -18,6 +18,7 @@ import {
 } from "@/components/routing/useRoutePlannerLayers";
 import { ROUTE_PLANNER_LAYER_ALT } from "@/lib/routing/routeMapLayers";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
+import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
 import type {
   EffisBurnedArea,
   WildfireIncident,
@@ -2547,7 +2548,7 @@ export default function MapContainer({
       // so this global handler never sees those clicks.
 
       if (map.getLayer("effis-burned-area-snapshots-fill")) {
-        const snapshotHits = map.queryRenderedFeatures(event.point, {
+        const snapshotHits = safeQueryRenderedFeatures(map, event.point, {
           layers: ["effis-burned-area-snapshots-fill"],
         });
         if (snapshotHits.length > 0) return;
@@ -7556,7 +7557,7 @@ export default function MapContainer({
 
     const handleObservationClick = async (event: MapLayerMouseEvent) => {
       if (!available) return;
-      const vectorHits = map.queryRenderedFeatures(event.point, {
+      const vectorHits = safeQueryRenderedFeatures(map, event.point, {
         layers: [
           FLOOD_EVENT_CLUSTER_LAYER_ID,
           FLOOD_EVENT_MARKER_LAYER_ID,

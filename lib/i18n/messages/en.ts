@@ -982,5 +982,12 @@ export const en = {
     alternativeRoute: "Alternative",
     noResults: "No results",
     useMyLocationShort: "Use my location",
+    resultTypeAddress: "Address",
+    resultTypeStreet: "Street",
+    resultTypeIntersection: "Intersection",
+    resultTypePoi: "Point of interest",
+    resultTypeCity: "City",
+    providerNotEntitledDev:
+      "TomTom Routing API is not enabled for this API key",
   },
 };

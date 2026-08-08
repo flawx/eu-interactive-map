@@ -46,6 +46,11 @@ const LOCALE_TO_TOMTOM: Partial<Record<Locale, string>> & Record<string, string>
     sv: "sv-SE",
   };
 
+/** Cached entitlement after a confirmed 401/403 with correct query-key auth. */
+let cachedStatus: RoutingProviderStatus | null = null;
+let cachedStatusAt = 0;
+const STATUS_CACHE_MS = 10 * 60_000;
+
 function apiKey(): string | null {
   const value = process.env.TOMTOM_API_KEY?.trim();
   return value || null;
@@ -70,7 +75,6 @@ function buildAvoidParams(
   avoid: RouteAvoidOptions,
 ): string[] {
   if (mode !== "car") {
-    // Pedestrian/bicycle: only ferries/unpaved when meaningful
     const values: string[] = [];
     if (avoid.ferries) values.push("ferries");
     if (avoid.unpavedRoads) values.push("unpavedRoads");
@@ -101,6 +105,37 @@ function sectionTypesForMode(mode: RouteMode): string[] {
   return base;
 }
 
+function rememberStatus(status: RoutingProviderStatus) {
+  cachedStatus = status;
+  cachedStatusAt = Date.now();
+}
+
+function logUpstream(details: {
+  endpoint: string;
+  product: string;
+  method: string;
+  auth: string;
+  status: number;
+  contentType: string | null;
+  errorBody: string | null;
+}) {
+  if (process.env.NODE_ENV === "production") return;
+  console.info("[tomtom-routing]", {
+    endpoint: details.endpoint,
+    product: details.product,
+    method: details.method,
+    auth: details.auth,
+    upstreamStatus: details.status,
+    contentType: details.contentType,
+    errorBody: details.errorBody,
+  });
+}
+
+/**
+ * Build Routing API v1 URL.
+ * Auth: query param `key` only (NOT TomTom-Api-Key header — that is Orbis Traffic).
+ * Never return this URL to the browser.
+ */
 export function buildTomTomRouteUrl(
   request: RoutingRequest,
   key: string,
@@ -114,11 +149,11 @@ export function buildTomTomRouteUrl(
     .map((p) => formatLocation(p.latitude, p.longitude))
     .join(":");
 
-  const params = new URLSearchParams();
-  params.set("key", key);
-  params.set("travelMode", tomTomTravelMode(request.mode));
-  params.set("routeType", request.preference);
-  params.set(
+  const url = new URL(`${BASE_URL}/${locations}/json`);
+  url.searchParams.set("key", key);
+  url.searchParams.set("travelMode", tomTomTravelMode(request.mode));
+  url.searchParams.set("routeType", request.preference);
+  url.searchParams.set(
     "maxAlternatives",
     String(
       Math.max(
@@ -127,44 +162,48 @@ export function buildTomTomRouteUrl(
       ),
     ),
   );
-  params.set("instructionsType", "text");
-  params.set(
+  url.searchParams.set("instructionsType", "text");
+  url.searchParams.set(
     "language",
     LOCALE_TO_TOMTOM[request.locale ?? "en"] ?? "en-GB",
   );
-  params.set("computeBestOrder", "false");
-  params.set("routeRepresentation", "polyline");
-  params.set("computeTravelTimeFor", "all");
+  url.searchParams.set("computeBestOrder", "false");
+  url.searchParams.set("routeRepresentation", "polyline");
+  url.searchParams.set("computeTravelTimeFor", "all");
 
   if (request.mode === "car") {
-    params.set("traffic", "true");
+    url.searchParams.set("traffic", "true");
   } else {
-    params.set("traffic", "false");
+    url.searchParams.set("traffic", "false");
   }
 
   const timing = request.timing;
   if (timing?.kind === "depart_at") {
-    params.set("departAt", timing.at);
+    url.searchParams.set("departAt", timing.at);
   } else if (timing?.kind === "arrive_at" && request.mode === "car") {
-    params.set("arriveAt", timing.at);
+    url.searchParams.set("arriveAt", timing.at);
   } else if (
     request.departureTime &&
     request.departureTime !== "now" &&
     request.mode === "car"
   ) {
-    params.set("departAt", request.departureTime);
+    url.searchParams.set("departAt", request.departureTime);
   } else if (request.mode === "car") {
-    params.set("departAt", "now");
+    url.searchParams.set("departAt", "now");
   }
 
   for (const avoid of buildAvoidParams(request.mode, request.avoid)) {
-    params.append("avoid", avoid);
+    url.searchParams.append("avoid", avoid);
   }
   for (const sectionType of sectionTypesForMode(request.mode)) {
-    params.append("sectionType", sectionType);
+    url.searchParams.append("sectionType", sectionType);
   }
 
-  return `${BASE_URL}/${locations}/json?${params.toString()}`;
+  return url.toString();
+}
+
+export function redactTomTomUrl(url: string, key: string): string {
+  return url.split(key).join("***");
 }
 
 export class TomTomRoutingProvider implements RoutingProvider {
@@ -172,6 +211,12 @@ export class TomTomRoutingProvider implements RoutingProvider {
 
   async getStatus(): Promise<RoutingProviderStatus> {
     if (!apiKey()) return "misconfigured";
+    if (
+      cachedStatus &&
+      Date.now() - cachedStatusAt < STATUS_CACHE_MS
+    ) {
+      return cachedStatus;
+    }
     return "operational";
   }
 
@@ -181,6 +226,7 @@ export class TomTomRoutingProvider implements RoutingProvider {
   ): Promise<RoutingResult> {
     const key = apiKey();
     if (!key) {
+      rememberStatus("misconfigured");
       throw new RoutingError(
         "provider_misconfigured",
         "TOMTOM_API_KEY is missing",
@@ -189,6 +235,7 @@ export class TomTomRoutingProvider implements RoutingProvider {
     }
 
     const url = buildTomTomRouteUrl(request, key);
+    const endpointPath = `${BASE_URL}/…/json`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
     const onAbort = () => controller.abort();
@@ -202,10 +249,41 @@ export class TomTomRoutingProvider implements RoutingProvider {
         cache: "no-store",
       });
 
+      const contentType = response.headers.get("content-type");
+      let errorBody: string | null = null;
+      if (!response.ok) {
+        try {
+          errorBody = (await response.clone().text())
+            .slice(0, 240)
+            .replace(/\s+/g, " ")
+            .trim();
+        } catch {
+          errorBody = null;
+        }
+        logUpstream({
+          endpoint: endpointPath,
+          product: "Routing API v1",
+          method: "GET",
+          auth: "query param key",
+          status: response.status,
+          contentType,
+          errorBody,
+        });
+      }
+
       if (response.status === 401 || response.status === 403) {
+        rememberStatus("not_entitled");
         throw new RoutingError(
-          "provider_misconfigured",
-          "TomTom rejected the API key",
+          "provider_not_entitled",
+          "TomTom Routing API is not enabled for this API key",
+          503,
+        );
+      }
+      if (response.status === 429) {
+        rememberStatus("rate_limited");
+        throw new RoutingError(
+          "provider_rate_limited",
+          "TomTom routing rate limited",
           503,
         );
       }
@@ -216,7 +294,8 @@ export class TomTomRoutingProvider implements RoutingProvider {
           404,
         );
       }
-      if (response.status === 429 || response.status >= 500) {
+      if (response.status >= 500) {
+        rememberStatus("unavailable");
         throw new RoutingError(
           "provider_unavailable",
           "TomTom routing temporarily unavailable",
@@ -224,6 +303,7 @@ export class TomTomRoutingProvider implements RoutingProvider {
         );
       }
       if (!response.ok) {
+        rememberStatus("unavailable");
         throw new RoutingError(
           "provider_unavailable",
           `TomTom routing failed (${response.status})`,
@@ -241,6 +321,7 @@ export class TomTomRoutingProvider implements RoutingProvider {
         );
       }
 
+      rememberStatus("operational");
       const routes = normalizeTomTomRoutes(payload, request);
       return {
         routes,
@@ -252,6 +333,7 @@ export class TomTomRoutingProvider implements RoutingProvider {
         throw new RoutingError("aborted", "Route calculation aborted", 499);
       }
       if (error instanceof RoutingError) throw error;
+      rememberStatus("unavailable");
       throw new RoutingError(
         "provider_unavailable",
         "TomTom routing request failed",

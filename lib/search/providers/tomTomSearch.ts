@@ -41,7 +41,6 @@ function apiKey(): string | null {
   return process.env.TOMTOM_API_KEY?.trim() || null;
 }
 
-/** TomTom expects ISO alpha-2; project uses EL for Greece and UK for GB. */
 function tomTomCountrySet(): string {
   return UNESCO_MAP_COUNTRY_CODES.map((code) => {
     if (code === "EL") return "GR";
@@ -126,6 +125,12 @@ export type TomTomSearchOptions = {
   signal?: AbortSignal;
 };
 
+type FetchOutcome = {
+  results: ExternalLocationSearchResult[];
+  status: number;
+  entitled: boolean;
+};
+
 function parseResults(payload: TomTomSearchResponse): ExternalLocationSearchResult[] {
   const out: ExternalLocationSearchResult[] = [];
   for (const item of payload.results ?? []) {
@@ -135,22 +140,62 @@ function parseResults(payload: TomTomSearchResponse): ExternalLocationSearchResu
   return out;
 }
 
-async function fetchTomTomJson(
+function logSearchUpstream(details: {
+  endpoint: string;
+  product: string;
+  method: string;
+  auth: string;
+  status: number;
+  contentType: string | null;
+  errorBody: string | null;
+}) {
+  if (process.env.NODE_ENV === "production") return;
+  console.info("[tomtom-search]", details);
+}
+
+async function fetchClassicSearch(
   url: string,
-  headers: Record<string, string>,
   signal: AbortSignal,
-): Promise<ExternalLocationSearchResult[] | null> {
+): Promise<FetchOutcome> {
   const response = await fetch(url, {
-    headers: { Accept: "application/json", ...headers },
+    headers: { Accept: "application/json" },
     signal,
     cache: "no-store",
   });
-  if (response.status === 401 || response.status === 403) return null;
-  if (!response.ok) return [];
+  const contentType = response.headers.get("content-type");
+  if (response.status === 401 || response.status === 403) {
+    let errorBody: string | null = null;
+    try {
+      errorBody = (await response.text()).slice(0, 240).replace(/\s+/g, " ");
+    } catch {
+      errorBody = null;
+    }
+    logSearchUpstream({
+      endpoint: "https://api.tomtom.com/search/2/search/{query}.json",
+      product: "Search API v2",
+      method: "GET",
+      auth: "query param key",
+      status: response.status,
+      contentType,
+      errorBody,
+    });
+    return { results: [], status: response.status, entitled: false };
+  }
+  if (!response.ok) {
+    return { results: [], status: response.status, entitled: true };
+  }
   const payload = (await response.json()) as TomTomSearchResponse;
-  return parseResults(payload);
+  return {
+    results: parseResults(payload),
+    status: response.status,
+    entitled: true,
+  };
 }
 
+/**
+ * TomTom Search API v2 Fuzzy Search.
+ * Auth: query param `key` (classic Search docs) — not Orbis header auth.
+ */
 export async function searchTomTomLocations(
   options: TomTomSearchOptions,
 ): Promise<ExternalLocationSearchResult[]> {
@@ -160,53 +205,31 @@ export async function searchTomTomLocations(
   const q = options.query.trim();
   if (q.length < 2) return [];
 
-  const limit = String(Math.min(12, Math.max(1, options.limit ?? 8)));
-  const countrySet = tomTomCountrySet();
-  const language = options.locale ?? "en-GB";
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const onAbort = () => controller.abort();
   options.signal?.addEventListener("abort", onAbort);
 
-  const shared = new URLSearchParams();
-  shared.set("limit", limit);
-  shared.set("typeahead", "true");
-  shared.set("countrySet", countrySet);
-  shared.set("language", language);
-  shared.set("idxSet", "Addr,Geo,PAD,POI,Str,Xstr");
+  const params = new URLSearchParams();
+  params.set("key", key);
+  params.set("limit", String(Math.min(12, Math.max(1, options.limit ?? 8))));
+  params.set("typeahead", "true");
+  params.set("countrySet", tomTomCountrySet());
+  params.set("language", options.locale ?? "en-GB");
+  params.set("idxSet", "Addr,Geo,PAD,POI,Str,Xstr");
   if (
     Number.isFinite(options.latitude) &&
     Number.isFinite(options.longitude)
   ) {
-    shared.set("lat", String(options.latitude));
-    shared.set("lon", String(options.longitude));
-    shared.set(
-      "geobias",
-      `point:${options.latitude},${options.longitude}`,
-    );
+    params.set("lat", String(options.latitude));
+    params.set("lon", String(options.longitude));
   }
 
-  try {
-    // Prefer Orbis Places (same product family as Orbis Traffic), then classic Search v2.
-    const orbisParams = new URLSearchParams(shared);
-    orbisParams.set("apiVersion", "1");
-    const orbisUrl = `https://api.tomtom.com/maps/orbis/places/search/${encodeURIComponent(q)}.json?${orbisParams.toString()}`;
-    const orbis = await fetchTomTomJson(
-      orbisUrl,
-      {
-        "TomTom-Api-Key": key,
-        "TomTom-Api-Version": "1",
-      },
-      controller.signal,
-    );
-    if (orbis && orbis.length > 0) return orbis;
+  const url = `https://api.tomtom.com/search/2/search/${encodeURIComponent(q)}.json?${params.toString()}`;
 
-    const classicParams = new URLSearchParams(shared);
-    classicParams.set("key", key);
-    const classicUrl = `https://api.tomtom.com/search/2/search/${encodeURIComponent(q)}.json?${classicParams.toString()}`;
-    const classic = await fetchTomTomJson(classicUrl, {}, controller.signal);
-    if (classic) return classic;
-    return orbis ?? [];
+  try {
+    const outcome = await fetchClassicSearch(url, controller.signal);
+    return outcome.results;
   } catch {
     return [];
   } finally {

@@ -97,6 +97,7 @@ export type RoutePlannerMessages = {
   resultTypeIntersection: string;
   resultTypePoi: string;
   resultTypeCity: string;
+  providerNotEntitledDev: string;
 };
 
 const en: RoutePlannerMessages = {
@@ -196,6 +197,8 @@ const en: RoutePlannerMessages = {
   resultTypeIntersection: "Intersection",
   resultTypePoi: "Point of interest",
   resultTypeCity: "City",
+  providerNotEntitledDev:
+    "TomTom Routing API is not enabled for this API key",
 };
 
 const fr: RoutePlannerMessages = {
@@ -298,6 +301,8 @@ const fr: RoutePlannerMessages = {
   resultTypeIntersection: "Intersection",
   resultTypePoi: "Point d'intérêt",
   resultTypeCity: "Ville",
+  providerNotEntitledDev:
+    "L'API TomTom Routing n'est pas activée pour cette clé API",
 };
 
 const de: RoutePlannerMessages = {

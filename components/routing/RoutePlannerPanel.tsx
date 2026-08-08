@@ -93,6 +93,10 @@ function errorMessage(
       return t.noRouteFound;
     case "aborted":
       return t.calculationAborted;
+    case "provider_not_entitled":
+    case "provider_misconfigured":
+    case "provider_rate_limited":
+      return t.serviceUnavailable;
     default:
       return t.serviceUnavailable;
   }
@@ -134,6 +138,7 @@ export default function RoutePlannerPanel({
   const [showVehicle, setShowVehicle] = useState(false);
   const [vehicle, setVehicle] = useState<VehicleProfile>(() => loadVehicleProfile());
   const [focusOrigin, setFocusOrigin] = useState(false);
+  const [devProviderHint, setDevProviderHint] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const autoCalcKeyRef = useRef<string | null>(null);
 
@@ -252,9 +257,17 @@ export default function RoutePlannerPanel({
         setIncidents([]);
         onRoutesChange([], null);
         setError(errorMessage(payload.error?.code, t));
+        setDevProviderHint(
+          process.env.NODE_ENV === "development" &&
+            (payload.error?.code === "provider_not_entitled" ||
+              payload.error?.code === "provider_misconfigured")
+            ? t.providerNotEntitledDev
+            : null,
+        );
         return;
       }
 
+      setDevProviderHint(null);
       const nextRoutes = payload.routes ?? [];
       const selectedId = nextRoutes[0]?.id ?? null;
       setRoutes(nextRoutes);
@@ -729,12 +742,17 @@ export default function RoutePlannerPanel({
         </button>
 
         {error ? (
-          <p
+          <div
             className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100"
             role="alert"
           >
-            {error}
-          </p>
+            <p>{error}</p>
+            {devProviderHint ? (
+              <p className="mt-1 text-[11px] text-amber-200/80">
+                {devProviderHint}
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {routes.length > 0 ? (

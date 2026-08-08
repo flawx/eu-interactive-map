@@ -118,14 +118,16 @@ async function main() {
   assert.equal(energy.amount, 18);
   assert.equal(energy.costEur, 4.5);
 
-  // URL builder never embeds a public env key name
+  // URL builder uses Routing v1 query-key auth (not Orbis headers)
   const url = buildTomTomRouteUrl(baseRequest(), "secret-key");
+  assert.match(url, /[?&]key=secret-key/);
   assert.match(url, /travelMode=car/);
   assert.match(url, /traffic=true/);
   assert.match(url, /maxAlternatives=2/);
   assert.match(url, /sectionType=traffic/);
   assert.match(url, /sectionType=tollRoad/);
   assert.doesNotMatch(url, /NEXT_PUBLIC/);
+  assert.doesNotMatch(url, /TomTom-Api-Key/i);
 
   const bikeUrl = buildTomTomRouteUrl(
     baseRequest({ mode: "bicycle" }),

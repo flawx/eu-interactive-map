@@ -23,6 +23,9 @@
     "test:alerts-landslide-industrial": "tsx scripts/test-landslide-industrial-alerts.ts",
     "test:alerts-traffic": "tsx scripts/test-road-traffic-alerts.ts",
     "test:routing": "tsx scripts/test-routing.ts",
+    "test:tomtom-products": "tsx scripts/test-tomtom-products.ts",
+    "test:media-routing-stability": "tsx scripts/test-media-routing-stability.ts",
+    "thumbnails:audit": "tsx scripts/audit-map-marker-thumbnails.ts",
     "test:photo-markers-wildfire-labels": "tsx scripts/test-photo-markers-wildfire-labels.ts"
   },
   "dependencies": {
@@ -31,7 +34,7 @@
     "cheerio": "^1.1.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.26.0",
-    "maplibre-gl": "^6.0.0",
+    "maplibre-gl": "6.2.0",
     "next": "16.2.11",
     "pdf-parse": "^2.4.5",
     "react": "19.2.4",

@@ -6,6 +6,10 @@ import {
   sameOriginThumbnailProxyUrl,
   type PhotoMarkerCategory,
 } from "@/lib/map/mapMarkerThumbnail";
+import {
+  fetchMapThumbnailBitmap,
+  isThumbnailNegativelyCached,
+} from "@/lib/map/fetchMapThumbnail";
 
 type EnsureOptions = {
   category: PhotoMarkerCategory;
@@ -66,11 +70,15 @@ function drawRoundedPhoto(
   const sw =
     "naturalWidth" in source && typeof source.naturalWidth === "number"
       ? source.naturalWidth
-      : size;
+      : "width" in source && typeof source.width === "number"
+        ? source.width
+        : size;
   const sh =
     "naturalHeight" in source && typeof source.naturalHeight === "number"
       ? source.naturalHeight
-      : size;
+      : "height" in source && typeof source.height === "number"
+        ? source.height
+        : size;
   const scale = Math.max((size - inset * 2) / sw, (size - inset * 2) / sh);
   const dw = sw * scale;
   const dh = sh * scale;
@@ -102,34 +110,6 @@ function roundedRect(
   ctx.arcTo(x, y + h, x, y, radius);
   ctx.arcTo(x, y, x + w, y, radius);
   ctx.closePath();
-}
-
-function loadHtmlImage(
-  url: string,
-  signal?: AbortSignal,
-): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException("Aborted", "AbortError"));
-      return;
-    }
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    const onAbort = () => {
-      image.src = "";
-      reject(new DOMException("Aborted", "AbortError"));
-    };
-    signal?.addEventListener("abort", onAbort, { once: true });
-    image.onload = () => {
-      signal?.removeEventListener("abort", onAbort);
-      resolve(image);
-    };
-    image.onerror = () => {
-      signal?.removeEventListener("abort", onAbort);
-      reject(new Error("image_load_failed"));
-    };
-    image.src = url;
-  });
 }
 
 type QueueItem = {
@@ -285,20 +265,48 @@ export class PhotoMarkerRegistry {
         const absoluteUrl = proxyUrl.startsWith("http")
           ? proxyUrl
           : new URL(proxyUrl, window.location.origin).href;
-        const image = await loadHtmlImage(absoluteUrl, options.signal);
-        const imageData = drawRoundedPhoto(image, options.category);
-        this.imageDataCache.set(imageId, imageData);
-        this.remoteByImageId.set(imageId, options.remoteUrl);
-        if (map.hasImage(imageId)) {
-          map.removeImage(imageId);
+
+        if (isThumbnailNegativelyCached(absoluteUrl)) {
+          this.entries.set(imageId, {
+            imageId,
+            remoteUrl: options.remoteUrl,
+            status: "failed",
+            failedUntil: Date.now() + FAILURE_COOLDOWN_MS,
+          });
+          return null;
         }
-        map.addImage(imageId, imageData, { pixelRatio: PIXEL_RATIO });
-        this.entries.set(imageId, {
-          imageId,
-          remoteUrl: options.remoteUrl,
-          status: "ready",
-        });
-        return imageId;
+
+        const bitmap = await fetchMapThumbnailBitmap(
+          absoluteUrl,
+          options.signal,
+        );
+        if (!bitmap) {
+          this.entries.set(imageId, {
+            imageId,
+            remoteUrl: options.remoteUrl,
+            status: "failed",
+            failedUntil: Date.now() + FAILURE_COOLDOWN_MS,
+          });
+          return null;
+        }
+
+        try {
+          const imageData = drawRoundedPhoto(bitmap, options.category);
+          this.imageDataCache.set(imageId, imageData);
+          this.remoteByImageId.set(imageId, options.remoteUrl);
+          if (map.hasImage(imageId)) {
+            map.removeImage(imageId);
+          }
+          map.addImage(imageId, imageData, { pixelRatio: PIXEL_RATIO });
+          this.entries.set(imageId, {
+            imageId,
+            remoteUrl: options.remoteUrl,
+            status: "ready",
+          });
+          return imageId;
+        } finally {
+          bitmap.close();
+        }
       } catch (error) {
         if (isAbortError(error)) {
           this.entries.delete(imageId);
@@ -324,7 +332,6 @@ export class PhotoMarkerRegistry {
     const hasVisibleQueued = this.queue.some(
       (item) => item.priority === "visible",
     );
-    // While visible work remains, keep the higher lane.
     return hasVisibleQueued || this.active < this.visibleConcurrency
       ? this.visibleConcurrency
       : this.prefetchConcurrency;
@@ -355,7 +362,6 @@ export class PhotoMarkerRegistry {
 
   private pump() {
     while (this.queue.length > 0 && this.active < this.currentLimit()) {
-      // Prefer visible jobs.
       const visibleIndex = this.queue.findIndex(
         (item) => item.priority === "visible",
       );

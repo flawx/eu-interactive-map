@@ -152,6 +152,8 @@ export type RoutingResult = {
 export type RoutingProviderStatus =
   | "operational"
   | "misconfigured"
+  | "not_entitled"
+  | "rate_limited"
   | "unavailable";
 
 export type RoutingErrorCode =
@@ -163,6 +165,8 @@ export type RoutingErrorCode =
   | "no_route_found"
   | "provider_unavailable"
   | "provider_misconfigured"
+  | "provider_not_entitled"
+  | "provider_rate_limited"
   | "aborted"
   | "timeout";
 
