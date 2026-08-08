@@ -10,7 +10,6 @@ import {
   Languages,
   MapPin,
   Mountain,
-  Route,
   Ruler,
   Users,
   X,
@@ -23,6 +22,7 @@ import {
   getEuCapitalById,
 } from "@/lib/europe/euCapitals";
 import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 type CapitalCityPanelProps = {
   capitalId: string;
@@ -201,21 +201,16 @@ export default function CapitalCityPanel({
           {t.capitalPanel.badge}
         </p>
         {onRouteToPlace && capital ? (
-          <button
-            type="button"
-            className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-100 hover:bg-white/10"
-            onClick={() =>
-              onRouteToPlace({
-                latitude: capital.latitude,
-                longitude: capital.longitude,
-                name: capital.canonicalName,
-                countryCode: capital.countryCode,
-              })
-            }
-          >
-            <Route className="h-4 w-4" aria-hidden />
-            {t.routePlanner.routeToPlace}
-          </button>
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={capital.canonicalName}
+              latitude={capital.latitude}
+              longitude={capital.longitude}
+              countryCode={capital.countryCode}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
         ) : null}
       </header>
 

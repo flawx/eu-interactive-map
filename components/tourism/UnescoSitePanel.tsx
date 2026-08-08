@@ -19,11 +19,14 @@ import {
   getUnescoSiteById,
   type UnescoSiteCategory,
 } from "@/lib/tourism/unescoWorldHeritage";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 type UnescoSitePanelProps = {
   siteId: string;
   locale: Locale;
   onClose: () => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function categoryColor(category: UnescoSiteCategory): string {
@@ -57,6 +60,7 @@ export default function UnescoSitePanel({
   siteId,
   locale,
   onClose,
+  onRouteToPlace,
 }: UnescoSitePanelProps) {
   const t = getMessages(locale);
   const tp = t.unescoPanel;
@@ -144,6 +148,9 @@ export default function UnescoSitePanel({
   const formatNumber = (value: number) =>
     new Intl.NumberFormat(locale).format(value);
 
+  const placeHasCoords =
+    Number.isFinite(site.latitude) && Number.isFinite(site.longitude);
+
   return (
     <aside
       className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
@@ -207,6 +214,18 @@ export default function UnescoSitePanel({
             </span>
           ) : null}
         </div>
+        {onRouteToPlace && placeHasCoords ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={displayName}
+              latitude={site.latitude}
+              longitude={site.longitude}
+              countryCode={site.countryCodes[0] ?? null}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">

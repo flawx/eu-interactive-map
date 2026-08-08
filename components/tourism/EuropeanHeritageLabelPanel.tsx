@@ -14,6 +14,8 @@ import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { getEuropeanHeritageLabelSiteById } from "@/lib/tourism/europeanHeritageLabel";
 import type { EuropeanHeritageLabelDetails } from "@/lib/tourism/europeanHeritageLabelDetails";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 type EuropeanHeritageLabelPanelProps = {
   siteId: string;
@@ -24,6 +26,7 @@ type EuropeanHeritageLabelPanelProps = {
   onOpenCountry?: (countryCode: string) => void;
   onOpenUnescoSite?: (unescoSiteId: string) => void;
   onOpenTouristPlace?: (touristPlaceId: string) => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function flagCode(countryCode: string): string {
@@ -37,6 +40,7 @@ export default function EuropeanHeritageLabelPanel({
   onClose,
   onFocusLocation,
   onOpenCountry,
+  onRouteToPlace,
 }: EuropeanHeritageLabelPanelProps) {
   // `onOpenUnescoSite` / `onOpenTouristPlace` are accepted for API symmetry
   // with other tourism panels; the current dataset has no cross-reference
@@ -123,6 +127,16 @@ export default function EuropeanHeritageLabelPanel({
     (location) => location.representativePoint,
   );
 
+  const routeLocation =
+    site.locations.find((location) => location.id === locationId) ??
+    site.locations.find((location) => location.representativePoint) ??
+    site.locations[0] ??
+    null;
+  const placeHasCoords =
+    routeLocation != null &&
+    Number.isFinite(routeLocation.latitude) &&
+    Number.isFinite(routeLocation.longitude);
+
   return (
     <aside
       className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
@@ -170,6 +184,18 @@ export default function EuropeanHeritageLabelPanel({
             </span>
           ) : null}
         </div>
+        {onRouteToPlace && placeHasCoords && routeLocation ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={routeLocation.name}
+              latitude={routeLocation.latitude}
+              longitude={routeLocation.longitude}
+              countryCode={routeLocation.countryCode}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">

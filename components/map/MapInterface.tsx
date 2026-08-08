@@ -82,6 +82,11 @@ import type { MapFocusRequest } from "@/lib/map/focusRequest";
 import type { NormalizedRoute, RoutePoint } from "@/lib/routing/types";
 import type { RoutePlannerMapPoint } from "@/lib/routing/routeMapLayers";
 import {
+  areRoutePlannerPointsEqual,
+  EMPTY_ROUTE_PLANNER_POINTS,
+  type RoutePlannerPointsState,
+} from "@/lib/routing/routePlannerPoints";
+import {
   readShareableRouteFromUrl,
 } from "@/lib/routing/shareableRoute";
 import {
@@ -235,17 +240,13 @@ export default function MapInterface() {
   const [routePlannerSelectedId, setRoutePlannerSelectedId] = useState<
     string | null
   >(null);
-  const [routePlannerPoints, setRoutePlannerPoints] = useState<
-    RoutePlannerMapPoint[]
-  >([]);
+  const [routePlannerPointsState, setRoutePlannerPointsState] =
+    useState<RoutePlannerPointsState>(EMPTY_ROUTE_PLANNER_POINTS);
   const [routePlannerPickTarget, setRoutePlannerPickTarget] =
     useState<RoutePlannerPickTarget | null>(null);
   const [routePlannerMapPick, setRoutePlannerMapPick] =
     useState<RoutePoint | null>(null);
-  const [routePlannerInitialOrigin, setRoutePlannerInitialOrigin] =
-    useState<RoutePoint | null>(null);
-  const [routePlannerInitialDestination, setRoutePlannerInitialDestination] =
-    useState<RoutePoint | null>(null);
+  const [routePlannerFocusOrigin, setRoutePlannerFocusOrigin] = useState(false);
   const [routeContextMenu, setRouteContextMenu] = useState<{
     longitude: number;
     latitude: number;
@@ -2825,9 +2826,63 @@ export default function MapInterface() {
     }
   };
 
+  const handleRoutePlannerPointsChange = useCallback(
+    (next: RoutePlannerPointsState) => {
+      setRoutePlannerPointsState((current) =>
+        areRoutePlannerPointsEqual(current, next) ? current : next,
+      );
+    },
+    [],
+  );
+
+  const handleRoutePlannerRoutesChange = useCallback(
+    (routes: NormalizedRoute[], selectedId: string | null) => {
+      setRoutePlannerRoutes(routes);
+      setRoutePlannerSelectedId(selectedId);
+    },
+    [],
+  );
+
+  const routePlannerMapPoints: RoutePlannerMapPoint[] = useMemo(() => {
+    const points: RoutePlannerMapPoint[] = [];
+    const { origin, destination, waypoints } = routePlannerPointsState;
+    if (origin) {
+      points.push({
+        id: "origin",
+        role: "origin",
+        longitude: origin.longitude,
+        latitude: origin.latitude,
+        label: "A",
+        color: "#16a34a",
+      });
+    }
+    waypoints.forEach((waypoint, index) => {
+      points.push({
+        id: `wp-${index}`,
+        role: "waypoint",
+        longitude: waypoint.longitude,
+        latitude: waypoint.latitude,
+        label: String(index + 1),
+        color: "#2563eb",
+      });
+    });
+    if (destination) {
+      points.push({
+        id: "destination",
+        role: "destination",
+        longitude: destination.longitude,
+        latitude: destination.latitude,
+        label: "B",
+        color: "#dc2626",
+      });
+    }
+    return points;
+  }, [routePlannerPointsState]);
+
   const openRoutePlanner = (options?: {
     origin?: RoutePoint | null;
     destination?: RoutePoint | null;
+    focusOrigin?: boolean;
   }) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
@@ -2845,8 +2900,19 @@ export default function MapInterface() {
     clearTemporaryPlace();
     setSelectedAlertId(null);
     setRouteContextMenu(null);
-    setRoutePlannerInitialOrigin(options?.origin ?? null);
-    setRoutePlannerInitialDestination(options?.destination ?? null);
+    setRoutePlannerFocusOrigin(Boolean(options?.focusOrigin));
+    // Search-bar Route icon (no options) keeps previous points.
+    // Context menu may set only origin or only destination.
+    if (options && ("origin" in options || "destination" in options)) {
+      setRoutePlannerPointsState((current) => ({
+        origin: "origin" in options ? (options.origin ?? null) : current.origin,
+        destination:
+          "destination" in options
+            ? (options.destination ?? null)
+            : current.destination,
+        waypoints: [],
+      }));
+    }
     setRoutePlannerOpen(true);
   };
 
@@ -2860,8 +2926,57 @@ export default function MapInterface() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once from URL
   }, []);
 
+  const openDirectionsTo = useCallback(
+    (destination: RoutePoint) => {
+      const apply = (origin: RoutePoint | null, focusOrigin: boolean) => {
+        openRoutePlanner({
+          origin,
+          destination,
+          focusOrigin,
+        });
+      };
+
+      if (userLocation) {
+        apply(
+          {
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            name: null,
+            countryCode: null,
+          },
+          false,
+        );
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        apply(null, true);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          apply(
+            {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              name: null,
+              countryCode: null,
+            },
+            false,
+          );
+        },
+        () => apply(null, true),
+        { enableHighAccuracy: true, timeout: 10_000 },
+      );
+    },
+    // openRoutePlanner closes over latest clear* helpers
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userLocation],
+  );
+
   const handleRouteToPlace = (point: RoutePoint) => {
-    openRoutePlanner({ destination: point });
+    openDirectionsTo(point);
   };
 
   const handleWildfireSelect = (incidentId: string | null) => {
@@ -3744,6 +3859,14 @@ export default function MapInterface() {
         onGoEurope={handleGoEurope}
         onFocusLegend={handleFocusLegend}
         onOpenRoutePlanner={() => openRoutePlanner()}
+        onDirectionsToResult={(result) => {
+          openDirectionsTo({
+            latitude: result.latitude,
+            longitude: result.longitude,
+            name: result.title,
+            countryCode: result.countryCode ?? null,
+          });
+        }}
       />
 
       <div className="absolute inset-0">
@@ -3935,7 +4058,7 @@ export default function MapInterface() {
           routePlannerActive={routePlannerOpen}
           routePlannerRoutes={routePlannerRoutes}
           routePlannerSelectedId={routePlannerSelectedId}
-          routePlannerPoints={routePlannerPoints}
+          routePlannerPoints={routePlannerMapPoints}
           routePlannerPickMode={routePlannerPickTarget != null}
           onRoutePlannerMapPick={async (longitude, latitude) => {
             let name: string | null = null;
@@ -4245,55 +4368,18 @@ export default function MapInterface() {
               setRoutePlannerOpen(false);
               setRoutePlannerRoutes([]);
               setRoutePlannerSelectedId(null);
-              setRoutePlannerPoints([]);
+              setRoutePlannerPointsState(EMPTY_ROUTE_PLANNER_POINTS);
               setRoutePlannerPickTarget(null);
               setRoutePlannerMapPick(null);
-              setRoutePlannerInitialOrigin(null);
-              setRoutePlannerInitialDestination(null);
+              setRoutePlannerFocusOrigin(false);
             }}
-            initialOrigin={routePlannerInitialOrigin}
-            initialDestination={routePlannerInitialDestination}
+            points={routePlannerPointsState}
+            onPointsChange={handleRoutePlannerPointsChange}
             pickTarget={routePlannerPickTarget}
             onPickTargetChange={setRoutePlannerPickTarget}
             mapPickPoint={routePlannerMapPick}
-            onRoutesChange={(routes, selectedId) => {
-              setRoutePlannerRoutes(routes);
-              setRoutePlannerSelectedId(selectedId);
-            }}
-            onPointsChange={(origin, destination, waypoints) => {
-              const points: RoutePlannerMapPoint[] = [];
-              if (origin) {
-                points.push({
-                  id: "origin",
-                  role: "origin",
-                  longitude: origin.longitude,
-                  latitude: origin.latitude,
-                  label: "A",
-                  color: "#16a34a",
-                });
-              }
-              waypoints.forEach((waypoint, index) => {
-                points.push({
-                  id: `wp-${index}`,
-                  role: "waypoint",
-                  longitude: waypoint.longitude,
-                  latitude: waypoint.latitude,
-                  label: String(index + 1),
-                  color: "#2563eb",
-                });
-              });
-              if (destination) {
-                points.push({
-                  id: "destination",
-                  role: "destination",
-                  longitude: destination.longitude,
-                  latitude: destination.latitude,
-                  label: "B",
-                  color: "#dc2626",
-                });
-              }
-              setRoutePlannerPoints(points);
-            }}
+            onClearMapPick={() => setRoutePlannerMapPick(null)}
+            onRoutesChange={handleRoutePlannerRoutesChange}
             onSelectIncident={(alertId) => {
               handleAlertSelect(alertId);
             }}
@@ -4318,10 +4404,19 @@ export default function MapInterface() {
                 south,
                 east,
                 north,
-                padding: 80,
+                padding: 96,
                 maxZoom: 14,
               });
             }}
+            userLocation={
+              userLocation
+                ? {
+                    latitude: userLocation.latitude,
+                    longitude: userLocation.longitude,
+                  }
+                : null
+            }
+            focusOriginOnOpen={routePlannerFocusOrigin}
           />
         ) : null}
 
@@ -4421,6 +4516,7 @@ export default function MapInterface() {
               onOpenInstitution={(institutionId, siteId) =>
                 handleInstitutionSelect(institutionId, siteId)
               }
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4440,6 +4536,7 @@ export default function MapInterface() {
               siteId={selectedUnescoSiteId}
               locale={locale}
               onClose={clearUnescoSelection}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4467,6 +4564,7 @@ export default function MapInterface() {
                 clearEhlSelection();
                 handleCountrySelect(countryCode);
               }}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4515,6 +4613,7 @@ export default function MapInterface() {
               onOpenTouristPlace={handleTouristPlaceSelect}
               onOpenUnescoSite={handleUnescoSiteSelect}
               onOpenCountry={handleCountrySelect}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4540,6 +4639,7 @@ export default function MapInterface() {
                 clearCivilEngineeringWorkSelection();
                 handleCountrySelect(countryCode);
               }}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4559,6 +4659,7 @@ export default function MapInterface() {
               airportId={selectedAirportId}
               locale={locale}
               onClose={clearAirportSelection}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4578,6 +4679,7 @@ export default function MapInterface() {
               stationId={selectedEurostarStationId}
               locale={locale}
               onClose={clearEurostarSelection}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 
@@ -4597,6 +4699,7 @@ export default function MapInterface() {
               crossingId={selectedBorderCrossingId}
               locale={locale}
               onClose={clearBorderCrossingSelection}
+              onRouteToPlace={handleRouteToPlace}
             />
           )}
 

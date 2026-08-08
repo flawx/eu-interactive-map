@@ -1436,6 +1436,8 @@ export default function MapContainer({
   const [mapSourcesReadyVersion, setMapSourcesReadyVersion] = useState(0);
   const [relativeTimeNow, setRelativeTimeNow] = useState(() => Date.now());
   const majorWildfireLabelMarkersRef = useRef<Marker[]>([]);
+  const trafficFlowTilesRef = useRef<string | null>(null);
+  const trafficIncidentTilesRef = useRef<string | null>(null);
 
   usePhotoMapMarkers({
     mapRef,
@@ -6971,8 +6973,13 @@ export default function MapContainer({
           bounds: trafficStatus.bounds,
           attribution: "TomTom Traffic",
         });
-      } else if (typeof existingFlow.setTiles === "function") {
+        trafficFlowTilesRef.current = flowTiles[0] ?? null;
+      } else if (
+        typeof existingFlow.setTiles === "function" &&
+        trafficFlowTilesRef.current !== flowTiles[0]
+      ) {
         existingFlow.setTiles(flowTiles);
+        trafficFlowTilesRef.current = flowTiles[0] ?? null;
       }
     }
     if (vectorTilesAvailable && trafficStatus.incidentTileTemplate) {
@@ -6991,8 +6998,13 @@ export default function MapContainer({
           bounds: trafficStatus.bounds,
           attribution: "TomTom Traffic",
         });
-      } else if (typeof existingIncidents.setTiles === "function") {
+        trafficIncidentTilesRef.current = incidentTiles[0] ?? null;
+      } else if (
+        typeof existingIncidents.setTiles === "function" &&
+        trafficIncidentTilesRef.current !== incidentTiles[0]
+      ) {
         existingIncidents.setTiles(incidentTiles);
+        trafficIncidentTilesRef.current = incidentTiles[0] ?? null;
       }
     }
     if (trafficStatus?.demoMode && !map.getSource(TRAFFIC_FLOW_TILE_SOURCE_ID)) {

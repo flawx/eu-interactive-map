@@ -16,11 +16,14 @@ import {
   getSchengenBorderCrossingById,
   type BorderCrossingMode,
 } from "@/lib/security/schengenBorders";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 type BorderCrossingPointPanelProps = {
   crossingId: string;
   locale: Locale;
   onClose: () => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function flagCode(code: string): string {
@@ -40,6 +43,7 @@ export default function BorderCrossingPointPanel({
   crossingId,
   locale,
   onClose,
+  onRouteToPlace,
 }: BorderCrossingPointPanelProps) {
   const t = getMessages(locale);
   const tp = t.borderCrossingPanel;
@@ -61,6 +65,8 @@ export default function BorderCrossingPointPanel({
     ? regionNames?.of(flagCode(point.neighbouringCountryCode)) ??
       point.neighbouringCountryCode
     : null;
+  const placeHasCoords =
+    Number.isFinite(point.latitude) && Number.isFinite(point.longitude);
 
   return (
     <aside
@@ -98,6 +104,18 @@ export default function BorderCrossingPointPanel({
           <Shield className="h-3 w-3" />
           {tp.externalBadge}
         </p>
+        {onRouteToPlace && placeHasCoords ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={point.officialName}
+              latitude={point.latitude}
+              longitude={point.longitude}
+              countryCode={point.countryCode}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3 text-sm">

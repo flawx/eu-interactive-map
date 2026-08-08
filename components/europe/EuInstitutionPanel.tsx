@@ -18,6 +18,8 @@ import {
   type EuInstitutionId,
   type EuInstitutionSiteType,
 } from "@/lib/europe/euInstitutions";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 type EuInstitutionPanelProps = {
   institutionId: EuInstitutionId;
@@ -26,6 +28,7 @@ type EuInstitutionPanelProps = {
   onClose: () => void;
   onFocusSite: (siteId: string) => void;
   onOpenInstitution: (institutionId: EuInstitutionId, siteId?: string) => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function siteTypeLabel(
@@ -145,6 +148,7 @@ export default function EuInstitutionPanel({
   onClose,
   onFocusSite,
   onOpenInstitution,
+  onRouteToPlace,
 }: EuInstitutionPanelProps) {
   const t = getMessages(locale);
   const tp = t.institutionPanel;
@@ -243,6 +247,13 @@ export default function EuInstitutionPanel({
     source.url.includes("wikipedia.org"),
   );
 
+  const routeSite =
+    sites.find((site) => site.siteId === activeSiteId) ?? sites[0] ?? null;
+  const placeHasCoords =
+    routeSite != null &&
+    Number.isFinite(routeSite.latitude) &&
+    Number.isFinite(routeSite.longitude);
+
   return (
     <aside
       className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
@@ -277,6 +288,18 @@ export default function EuInstitutionPanel({
         <p className="mt-2 inline-flex rounded-full border border-[#003399]/40 bg-[#003399]/25 px-2 py-0.5 text-[10px] font-medium text-[#facc15]">
           {tp.badge}
         </p>
+        {onRouteToPlace && placeHasCoords && routeSite ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={routeSite.name}
+              latitude={routeSite.latitude}
+              longitude={routeSite.longitude}
+              countryCode={routeSite.countryCode}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">

@@ -18,6 +18,8 @@ import {
 } from "@/lib/tourism/majorCivilEngineeringWorks";
 import type { CivilEngineeringWorkDetails } from "@/lib/tourism/majorCivilEngineeringWorkDetails";
 import { CIVIL_ENGINEERING_CATEGORY_COLORS } from "@/components/map/civilEngineeringMapLayers";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -26,6 +28,7 @@ type Props = {
   locale: Locale;
   onClose: () => void;
   onOpenCountry?: (code: string) => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function CategoryIcon({ category }: { category: CivilEngineeringWorkCategory }) {
@@ -41,6 +44,7 @@ export default function CivilEngineeringWorkPanel({
   locale,
   onClose,
   onOpenCountry,
+  onRouteToPlace,
 }: Props) {
   const item = getMajorCivilEngineeringWorkById(workId);
   const t = getMessages(locale);
@@ -100,6 +104,8 @@ export default function CivilEngineeringWorkPanel({
     (code) => regionNames?.of(code === "EL" ? "GR" : code) ?? code,
   );
   const number = (value: number) => value.toLocaleString(locale);
+  const placeHasCoords =
+    Number.isFinite(item.latitude) && Number.isFinite(item.longitude);
 
   return (
     <aside
@@ -143,6 +149,18 @@ export default function CivilEngineeringWorkPanel({
             <X size={22} />
           </button>
         </div>
+        {onRouteToPlace && placeHasCoords ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={item.name}
+              latitude={item.latitude}
+              longitude={item.longitude}
+              countryCode={item.countryCodes[0] ?? null}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-3">

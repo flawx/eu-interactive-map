@@ -85,6 +85,18 @@ export type RoutePlannerMessages = {
   tunnelDetected: string;
   lezDetected: string;
   tollDetected: string;
+  searchAddressOrPlace: string;
+  calculateRoute: string;
+  calculatingRoute: string;
+  recommendedRoute: string;
+  alternativeRoute: string;
+  noResults: string;
+  useMyLocationShort: string;
+  resultTypeAddress: string;
+  resultTypeStreet: string;
+  resultTypeIntersection: string;
+  resultTypePoi: string;
+  resultTypeCity: string;
 };
 
 const en: RoutePlannerMessages = {
@@ -172,6 +184,18 @@ const en: RoutePlannerMessages = {
   tunnelDetected: "Tunnel section detected",
   lezDetected: "Low-emission zone on route",
   tollDetected: "Toll road detected — exact price not available",
+  searchAddressOrPlace: "Search for an address or place",
+  calculateRoute: "Calculate route",
+  calculatingRoute: "Calculating…",
+  recommendedRoute: "Recommended route",
+  alternativeRoute: "Alternative",
+  noResults: "No results",
+  useMyLocationShort: "Use my location",
+  resultTypeAddress: "Address",
+  resultTypeStreet: "Street",
+  resultTypeIntersection: "Intersection",
+  resultTypePoi: "Point of interest",
+  resultTypeCity: "City",
 };
 
 const fr: RoutePlannerMessages = {
@@ -262,6 +286,18 @@ const fr: RoutePlannerMessages = {
   tunnelDetected: "Section tunnel détectée",
   lezDetected: "Zone à faibles émissions sur le trajet",
   tollDetected: "Péage détecté — prix exact non disponible",
+  searchAddressOrPlace: "Rechercher une adresse ou un lieu",
+  calculateRoute: "Calculer l'itinéraire",
+  calculatingRoute: "Calcul en cours…",
+  recommendedRoute: "Itinéraire recommandé",
+  alternativeRoute: "Alternative",
+  noResults: "Aucun résultat",
+  useMyLocationShort: "Utiliser ma position",
+  resultTypeAddress: "Adresse",
+  resultTypeStreet: "Rue",
+  resultTypeIntersection: "Intersection",
+  resultTypePoi: "Point d'intérêt",
+  resultTypeCity: "Ville",
 };
 
 const de: RoutePlannerMessages = {

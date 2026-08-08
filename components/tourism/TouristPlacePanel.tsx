@@ -22,7 +22,7 @@ import {
 } from "@/lib/tourism/majorTouristPlaces";
 import type { TouristPlaceDetails } from "@/lib/tourism/touristPlaceDetails";
 import type { RoutePoint } from "@/lib/routing/types";
-import RouteToPlaceButton from "@/components/routing/RouteToPlaceButton";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 const CLIENT_FETCH_TIMEOUT_MS = 12_000;
 
@@ -220,15 +220,13 @@ export default function TouristPlacePanel({
         </div>
         {onRouteToPlace ? (
           <div className="mt-2">
-            <RouteToPlaceButton
+            <DirectionsToButton
               locale={locale}
-              point={{
-                latitude: place.latitude,
-                longitude: place.longitude,
-                name: place.canonicalName,
-                countryCode: place.countryCode,
-              }}
-              onRouteToPlace={onRouteToPlace}
+              name={place.canonicalName}
+              latitude={place.latitude}
+              longitude={place.longitude}
+              countryCode={place.countryCode}
+              onDirectionsTo={onRouteToPlace}
             />
           </div>
         ) : null}

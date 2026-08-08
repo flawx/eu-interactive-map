@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowDownUp,
   Bike,
@@ -34,6 +27,10 @@ import {
   clearShareableRouteFromUrl,
 } from "@/lib/routing/shareableRoute";
 import {
+  resolvedWaypoints,
+  type RoutePlannerPointsState,
+} from "@/lib/routing/routePlannerPoints";
+import {
   DEFAULT_ROUTE_AVOID,
   MAX_ROUTE_WAYPOINTS_UI,
   type NormalizedRoute,
@@ -49,41 +46,35 @@ import {
   saveVehicleProfile,
 } from "@/lib/routing/vehicleProfileStorage";
 import type { NormalizedAlert } from "@/lib/alerts/types";
-import { buildLocalSearchIndex, type MapSearchResult } from "@/lib/search/mapSearch";
+import UnifiedLocationField from "@/components/routing/UnifiedLocationField";
 
 export type RoutePlannerPickTarget =
   | "origin"
   | "destination"
-  | `waypoint:${number}`;
+  | `waypoint-draft:${number}`;
+
+type WaypointDraft = {
+  id: string;
+  point: RoutePoint | null;
+};
 
 type RoutePlannerPanelProps = {
   locale: Locale;
   open: boolean;
   onClose: () => void;
-  initialDestination?: RoutePoint | null;
-  initialOrigin?: RoutePoint | null;
+  points: RoutePlannerPointsState;
+  onPointsChange: (next: RoutePlannerPointsState) => void;
   pickTarget: RoutePlannerPickTarget | null;
   onPickTargetChange: (target: RoutePlannerPickTarget | null) => void;
   mapPickPoint: RoutePoint | null;
+  onClearMapPick: () => void;
   onRoutesChange: (routes: NormalizedRoute[], selectedId: string | null) => void;
-  onPointsChange: (
-    origin: RoutePoint | null,
-    destination: RoutePoint | null,
-    waypoints: RoutePoint[],
-  ) => void;
   onSelectIncident: (alertId: string) => void;
   onFocusPoint: (longitude: number, latitude: number, zoom?: number) => void;
   onFocusRoute: (coordinates: [number, number][]) => void;
+  userLocation?: { latitude: number; longitude: number } | null;
+  focusOriginOnOpen?: boolean;
 };
-
-function pointFromSearch(result: MapSearchResult): RoutePoint {
-  return {
-    latitude: result.latitude,
-    longitude: result.longitude,
-    name: result.title,
-    countryCode: result.countryCode ?? null,
-  };
-}
 
 function errorMessage(
   code: string | undefined,
@@ -102,9 +93,6 @@ function errorMessage(
       return t.noRouteFound;
     case "aborted":
       return t.calculationAborted;
-    case "provider_misconfigured":
-    case "provider_unavailable":
-      return t.serviceUnavailable;
     default:
       return t.serviceUnavailable;
   }
@@ -114,23 +102,22 @@ export default function RoutePlannerPanel({
   locale,
   open,
   onClose,
-  initialDestination = null,
-  initialOrigin = null,
+  points,
+  onPointsChange,
   pickTarget,
   onPickTargetChange,
   mapPickPoint,
+  onClearMapPick,
   onRoutesChange,
-  onPointsChange,
   onSelectIncident,
   onFocusPoint,
   onFocusRoute,
+  userLocation = null,
+  focusOriginOnOpen = false,
 }: RoutePlannerPanelProps) {
   const t = getMessages(locale).routePlanner;
-  const [origin, setOrigin] = useState<RoutePoint | null>(initialOrigin);
-  const [destination, setDestination] = useState<RoutePoint | null>(
-    initialDestination,
-  );
-  const [waypoints, setWaypoints] = useState<RoutePoint[]>([]);
+  const { origin, destination } = points;
+  const [waypointDrafts, setWaypointDrafts] = useState<WaypointDraft[]>([]);
   const [mode, setMode] = useState<RouteMode>("car");
   const [preference, setPreference] = useState<RoutePreference>("fastest");
   const [avoid, setAvoid] = useState<RouteAvoidOptions>({ ...DEFAULT_ROUTE_AVOID });
@@ -146,84 +133,79 @@ export default function RoutePlannerPanel({
   const [showOptions, setShowOptions] = useState(false);
   const [showVehicle, setShowVehicle] = useState(false);
   const [vehicle, setVehicle] = useState<VehicleProfile>(() => loadVehicleProfile());
-  const [originQuery, setOriginQuery] = useState("");
-  const [destinationQuery, setDestinationQuery] = useState("");
-  const [activeField, setActiveField] = useState<"origin" | "destination" | null>(
-    null,
-  );
+  const [focusOrigin, setFocusOrigin] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const debounceRef = useRef<number | null>(null);
-  const searchIndex = useMemo(
-    () => buildLocalSearchIndex(locale, [], [], []),
-    [locale],
+  const autoCalcKeyRef = useRef<string | null>(null);
+
+  const bias = userLocation;
+
+  const publishWaypoints = useCallback(
+    (drafts: WaypointDraft[], nextOrigin = origin, nextDestination = destination) => {
+      onPointsChange({
+        origin: nextOrigin,
+        destination: nextDestination,
+        waypoints: drafts
+          .map((draft) => draft.point)
+          .filter((point): point is RoutePoint => Boolean(point)),
+      });
+    },
+    [destination, onPointsChange, origin],
   );
-
-  useEffect(() => {
-    if (initialDestination) {
-      setDestination(initialDestination);
-      setDestinationQuery(initialDestination.name ?? "");
-    }
-  }, [initialDestination]);
-
-  useEffect(() => {
-    if (initialOrigin) {
-      setOrigin(initialOrigin);
-      setOriginQuery(initialOrigin.name ?? "");
-    }
-  }, [initialOrigin]);
 
   useEffect(() => {
     if (!mapPickPoint || !pickTarget) return;
     if (pickTarget === "origin") {
-      setOrigin(mapPickPoint);
-      setOriginQuery(mapPickPoint.name ?? t.origin);
+      onPointsChange({
+        origin: mapPickPoint,
+        destination,
+        waypoints: points.waypoints,
+      });
     } else if (pickTarget === "destination") {
-      setDestination(mapPickPoint);
-      setDestinationQuery(mapPickPoint.name ?? t.destination);
-    } else if (pickTarget.startsWith("waypoint:")) {
+      onPointsChange({
+        origin,
+        destination: mapPickPoint,
+        waypoints: points.waypoints,
+      });
+    } else if (pickTarget.startsWith("waypoint-draft:")) {
       const index = Number(pickTarget.split(":")[1]);
-      setWaypoints((prev) => {
+      setWaypointDrafts((prev) => {
         const next = [...prev];
-        if (Number.isFinite(index) && index >= 0 && index < next.length) {
-          next[index] = mapPickPoint;
+        if (next[index]) {
+          next[index] = { ...next[index]!, point: mapPickPoint };
         }
+        publishWaypoints(next);
         return next;
       });
     }
     onPickTargetChange(null);
-  }, [mapPickPoint, pickTarget, onPickTargetChange, t.origin, t.destination]);
+    onClearMapPick();
+  }, [
+    mapPickPoint,
+    pickTarget,
+    onPickTargetChange,
+    onClearMapPick,
+    onPointsChange,
+    origin,
+    destination,
+    points.waypoints,
+    publishWaypoints,
+  ]);
 
   useEffect(() => {
-    onPointsChange(origin, destination, waypoints);
-  }, [origin, destination, waypoints, onPointsChange]);
-
-  useEffect(() => {
-    onRoutesChange(routes, selectedRouteId);
-  }, [routes, selectedRouteId, onRoutesChange]);
-
-  const selectedRoute =
-    routes.find((route) => route.id === selectedRouteId) ?? routes[0] ?? null;
-
-  const suggestions = useMemo(() => {
-    const query = (activeField === "origin" ? originQuery : destinationQuery)
-      .trim()
-      .toLowerCase();
-    if (!query || query.length < 2) return [];
-    return searchIndex
-      .filter((item) => {
-        const hay = `${item.title} ${item.subtitle ?? ""}`.toLowerCase();
-        return hay.includes(query);
-      })
-      .slice(0, 8);
-  }, [activeField, originQuery, destinationQuery, searchIndex]);
+    setFocusOrigin(focusOriginOnOpen);
+  }, [focusOriginOnOpen, open]);
 
   const calculate = useCallback(async () => {
-    if (!origin || !destination) return;
+    if (!origin || !destination) {
+      setError(!origin ? t.originRequired : t.destinationRequired);
+      return;
+    }
     if (!isRoutingPointAllowed(origin) || !isRoutingPointAllowed(destination)) {
       setError(t.outsideCoverage);
       return;
     }
 
+    const waypoints = resolvedWaypoints(points.waypoints);
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -261,21 +243,24 @@ export default function RoutePlannerPanel({
       const payload = (await response.json()) as {
         routes?: NormalizedRoute[];
         incidents?: NormalizedAlert[];
-        error?: { code?: string; message?: string };
+        error?: { code?: string };
       };
 
       if (!response.ok) {
         setRoutes([]);
         setSelectedRouteId(null);
         setIncidents([]);
+        onRoutesChange([], null);
         setError(errorMessage(payload.error?.code, t));
         return;
       }
 
       const nextRoutes = payload.routes ?? [];
+      const selectedId = nextRoutes[0]?.id ?? null;
       setRoutes(nextRoutes);
-      setSelectedRouteId(nextRoutes[0]?.id ?? null);
+      setSelectedRouteId(selectedId);
       setIncidents(payload.incidents ?? []);
+      onRoutesChange(nextRoutes, selectedId);
       if (nextRoutes[0]) {
         onFocusRoute(nextRoutes[0].geometry.coordinates);
       }
@@ -300,14 +285,12 @@ export default function RoutePlannerPanel({
       }
       setError(t.serviceUnavailable);
     } finally {
-      if (abortRef.current === controller) {
-        setLoading(false);
-      }
+      if (abortRef.current === controller) setLoading(false);
     }
   }, [
     origin,
     destination,
-    waypoints,
+    points.waypoints,
     mode,
     preference,
     avoid,
@@ -318,36 +301,45 @@ export default function RoutePlannerPanel({
     locale,
     t,
     onFocusRoute,
+    onRoutesChange,
   ]);
 
+  // Auto-calc once per origin/destination/mode/options key when both points valid.
   useEffect(() => {
     if (!open || !origin || !destination) return;
-    if (debounceRef.current != null) window.clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => {
+    if (waypointDrafts.some((draft) => draft.point == null)) return;
+    const key = [
+      origin.latitude,
+      origin.longitude,
+      destination.latitude,
+      destination.longitude,
+      points.waypoints
+        .map((w) => `${w.latitude},${w.longitude}`)
+        .join("|"),
+      mode,
+      preference,
+      JSON.stringify(avoid),
+    ].join(";");
+    if (autoCalcKeyRef.current === key) return;
+    autoCalcKeyRef.current = key;
+    const timer = window.setTimeout(() => {
       void calculate();
-    }, 500);
-    return () => {
-      if (debounceRef.current != null) window.clearTimeout(debounceRef.current);
-    };
+    }, 450);
+    return () => window.clearTimeout(timer);
   }, [
     open,
     origin,
     destination,
-    waypoints,
+    points.waypoints,
+    waypointDrafts,
     mode,
     preference,
     avoid,
-    timing,
-    departAtLocal,
-    arriveAtLocal,
-    vehicle,
     calculate,
   ]);
 
   useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-    };
+    return () => abortRef.current?.abort();
   }, []);
 
   const useMyLocation = async (target: "origin" | "destination") => {
@@ -370,12 +362,12 @@ export default function RoutePlannerPanel({
           );
           if (response.ok) {
             const payload = (await response.json()) as {
-              result?: MapSearchResult | null;
+              result?: { title?: string } | null;
             };
             if (payload.result?.title) name = payload.result.title;
           }
         } catch {
-          // keep fallback name
+          // keep fallback
         }
         const point: RoutePoint = {
           latitude,
@@ -384,11 +376,17 @@ export default function RoutePlannerPanel({
           countryCode: null,
         };
         if (target === "origin") {
-          setOrigin(point);
-          setOriginQuery(name);
+          onPointsChange({
+            origin: point,
+            destination,
+            waypoints: points.waypoints,
+          });
         } else {
-          setDestination(point);
-          setDestinationQuery(name);
+          onPointsChange({
+            origin,
+            destination: point,
+            waypoints: points.waypoints,
+          });
         }
       },
       () => setError(t.geolocationDenied),
@@ -396,20 +394,13 @@ export default function RoutePlannerPanel({
     );
   };
 
-  const swapPoints = () => {
-    setOrigin(destination);
-    setDestination(origin);
-    setOriginQuery(destinationQuery);
-    setDestinationQuery(originQuery);
-  };
-
   const handleClose = () => {
     abortRef.current?.abort();
     setRoutes([]);
     setSelectedRouteId(null);
     setIncidents([]);
+    setWaypointDrafts([]);
     onRoutesChange([], null);
-    onPointsChange(null, null, []);
     onPickTargetChange(null);
     clearShareableRouteFromUrl();
     onClose();
@@ -417,75 +408,7 @@ export default function RoutePlannerPanel({
 
   if (!open) return null;
 
-  const renderPointField = (
-    kind: "origin" | "destination",
-    value: string,
-    onChange: (value: string) => void,
-    placeholder: string,
-  ) => (
-    <div className="relative">
-      <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
-        {placeholder}
-      </label>
-      <div className="flex gap-1.5">
-        <input
-          value={value}
-          onChange={(event) => {
-            onChange(event.target.value);
-            setActiveField(kind);
-          }}
-          onFocus={() => setActiveField(kind)}
-          placeholder={placeholder}
-          className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100 outline-none ring-[#1a73e8]/50 focus:ring-2"
-          aria-label={placeholder}
-        />
-      </div>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        <button
-          type="button"
-          className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
-          onClick={() => void useMyLocation(kind)}
-        >
-          <Navigation className="h-3.5 w-3.5" aria-hidden />
-          {t.useMyLocation}
-        </button>
-        <button
-          type="button"
-          className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
-          onClick={() => onPickTargetChange(kind)}
-        >
-          <MapPin className="h-3.5 w-3.5" aria-hidden />
-          {pickTarget === kind ? t.choosingOnMap : t.chooseOnMap}
-        </button>
-      </div>
-      {activeField === kind && suggestions.length > 0 ? (
-        <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-xl border border-white/10 bg-slate-950/95 shadow-xl">
-          {suggestions.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-white/10"
-                onClick={() => {
-                  const point = pointFromSearch(item);
-                  if (kind === "origin") {
-                    setOrigin(point);
-                    setOriginQuery(item.title);
-                  } else {
-                    setDestination(point);
-                    setDestinationQuery(item.title);
-                  }
-                  setActiveField(null);
-                }}
-              >
-                <span className="text-sm text-slate-100">{item.title}</span>
-                <span className="text-xs text-slate-400">{item.subtitle}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
-  );
+  const canCalculate = Boolean(origin && destination) && !loading;
 
   const content = (
     <>
@@ -520,30 +443,95 @@ export default function RoutePlannerPanel({
 
       <div className={`${mobileExpanded ? "block" : "hidden"} md:block`}>
         <div className="mt-4 space-y-3">
-          {renderPointField("origin", originQuery, setOriginQuery, t.origin)}
+          <UnifiedLocationField
+            locale={locale}
+            label={t.origin}
+            valueLabel={origin?.name ?? ""}
+            bias={bias}
+            autoFocus={focusOrigin}
+            onSelect={(point) => {
+              onPointsChange({
+                origin: point,
+                destination,
+                waypoints: points.waypoints,
+              });
+              setFocusOrigin(false);
+            }}
+          />
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              onClick={() => void useMyLocation("origin")}
+            >
+              <Navigation className="h-3.5 w-3.5" aria-hidden />
+              {t.useMyLocation}
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              onClick={() => onPickTargetChange("origin")}
+            >
+              <MapPin className="h-3.5 w-3.5" aria-hidden />
+              {pickTarget === "origin" ? t.choosingOnMap : t.chooseOnMap}
+            </button>
+          </div>
+
           <div className="flex justify-center">
             <button
               type="button"
               className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-200 hover:bg-white/10"
               aria-label={t.swap}
-              onClick={swapPoints}
+              onClick={() =>
+                onPointsChange({
+                  origin: destination,
+                  destination: origin,
+                  waypoints: [...points.waypoints].reverse(),
+                })
+              }
             >
               <ArrowDownUp className="h-4 w-4" />
             </button>
           </div>
-          {renderPointField(
-            "destination",
-            destinationQuery,
-            setDestinationQuery,
-            t.destination,
-          )}
 
-          {waypoints.map((waypoint, index) => (
+          <UnifiedLocationField
+            locale={locale}
+            label={t.destination}
+            valueLabel={destination?.name ?? ""}
+            bias={bias}
+            onSelect={(point) => {
+              onPointsChange({
+                origin,
+                destination: point,
+                waypoints: points.waypoints,
+              });
+            }}
+          />
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              onClick={() => void useMyLocation("destination")}
+            >
+              <Navigation className="h-3.5 w-3.5" aria-hidden />
+              {t.useMyLocation}
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              onClick={() => onPickTargetChange("destination")}
+            >
+              <MapPin className="h-3.5 w-3.5" aria-hidden />
+              {pickTarget === "destination" ? t.choosingOnMap : t.chooseOnMap}
+            </button>
+          </div>
+
+          {waypointDrafts.map((draft, index) => (
             <div
-              key={`wp-${index}`}
+              key={draft.id}
               className="rounded-xl border border-white/10 bg-slate-950/40 p-2.5"
             >
-              <div className="mb-1 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs text-slate-400">
                   {t.stop} {index + 1}
                 </span>
@@ -551,39 +539,50 @@ export default function RoutePlannerPanel({
                   type="button"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10"
                   aria-label={t.removeStop}
-                  onClick={() =>
-                    setWaypoints((prev) => prev.filter((_, i) => i !== index))
-                  }
+                  onClick={() => {
+                    setWaypointDrafts((prev) => {
+                      const next = prev.filter((_, i) => i !== index);
+                      publishWaypoints(next);
+                      return next;
+                    });
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-sm text-slate-100">
-                {waypoint.name ??
-                  `${waypoint.latitude.toFixed(4)}, ${waypoint.longitude.toFixed(4)}`}
-              </p>
+              <UnifiedLocationField
+                locale={locale}
+                label={t.stop}
+                valueLabel={draft.point?.name ?? ""}
+                bias={bias}
+                onSelect={(point) => {
+                  setWaypointDrafts((prev) => {
+                    const next = [...prev];
+                    next[index] = { ...next[index]!, point };
+                    publishWaypoints(next);
+                    return next;
+                  });
+                }}
+              />
               <button
                 type="button"
                 className="mt-1 text-xs text-[#8ab4f8]"
-                onClick={() => onPickTargetChange(`waypoint:${index}`)}
+                onClick={() => onPickTargetChange(`waypoint-draft:${index}`)}
               >
                 {t.chooseOnMap}
               </button>
             </div>
           ))}
 
-          {waypoints.length < MAX_ROUTE_WAYPOINTS_UI ? (
+          {waypointDrafts.length < MAX_ROUTE_WAYPOINTS_UI ? (
             <button
               type="button"
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-sm text-slate-200 hover:bg-white/5"
               onClick={() => {
-                const seed = destination ?? origin;
-                if (!seed) return;
-                setWaypoints((prev) => [
+                setWaypointDrafts((prev) => [
                   ...prev,
-                  { ...seed, name: `${t.stop} ${prev.length + 1}` },
+                  { id: `draft-${Date.now()}`, point: null },
                 ]);
-                onPickTargetChange(`waypoint:${waypoints.length}`);
               }}
             >
               <Plus className="h-4 w-4" />
@@ -592,11 +591,7 @@ export default function RoutePlannerPanel({
           ) : null}
         </div>
 
-        <div
-          className="mt-4 grid grid-cols-3 gap-1.5"
-          role="tablist"
-          aria-label={t.routes}
-        >
+        <div className="mt-4 grid grid-cols-3 gap-1.5" role="tablist">
           {(
             [
               ["car", Car, t.car],
@@ -645,64 +640,6 @@ export default function RoutePlannerPanel({
           ))}
         </div>
 
-        {mode === "car" ? (
-          <div className="mt-3 space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                className={`min-h-10 rounded-lg px-2.5 text-xs ${
-                  timing.kind === "depart_now"
-                    ? "bg-white/15 text-white"
-                    : "bg-white/5 text-slate-300"
-                }`}
-                onClick={() => setTiming({ kind: "depart_now" })}
-              >
-                {t.departNow}
-              </button>
-              <button
-                type="button"
-                className={`min-h-10 rounded-lg px-2.5 text-xs ${
-                  timing.kind === "depart_at"
-                    ? "bg-white/15 text-white"
-                    : "bg-white/5 text-slate-300"
-                }`}
-                onClick={() => setTiming({ kind: "depart_at", at: "" })}
-              >
-                {t.departAt}
-              </button>
-              <button
-                type="button"
-                className={`min-h-10 rounded-lg px-2.5 text-xs ${
-                  timing.kind === "arrive_at"
-                    ? "bg-white/15 text-white"
-                    : "bg-white/5 text-slate-300"
-                }`}
-                onClick={() => setTiming({ kind: "arrive_at", at: "" })}
-              >
-                {t.arriveAt}
-              </button>
-            </div>
-            {timing.kind === "depart_at" ? (
-              <input
-                type="datetime-local"
-                value={departAtLocal}
-                onChange={(event) => setDepartAtLocal(event.target.value)}
-                className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
-                aria-label={t.departAt}
-              />
-            ) : null}
-            {timing.kind === "arrive_at" ? (
-              <input
-                type="datetime-local"
-                value={arriveAtLocal}
-                onChange={(event) => setArriveAtLocal(event.target.value)}
-                className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
-                aria-label={t.arriveAt}
-              />
-            ) : null}
-          </div>
-        ) : null}
-
         <div className="mt-3 flex gap-2">
           <button
             type="button"
@@ -742,7 +679,9 @@ export default function RoutePlannerPanel({
                 <input
                   type="checkbox"
                   checked={avoid[key]}
-                  disabled={mode !== "car" && key !== "ferries" && key !== "unpavedRoads"}
+                  disabled={
+                    mode !== "car" && key !== "ferries" && key !== "unpavedRoads"
+                  }
                   onChange={(event) =>
                     setAvoid((prev) => ({
                       ...prev,
@@ -757,20 +696,17 @@ export default function RoutePlannerPanel({
         ) : null}
 
         {showVehicle && mode === "car" ? (
-          <form
-            className="mt-2 space-y-2 rounded-xl border border-white/10 p-3"
-            onSubmit={(event: FormEvent) => {
-              event.preventDefault();
-              saveVehicleProfile(vehicle);
-            }}
-          >
+          <div className="mt-2 space-y-2 rounded-xl border border-white/10 p-3">
             <label className="block text-xs text-slate-400">{t.propulsion}</label>
             <select
               className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm"
               value={vehicle.propulsion}
               onChange={(event) => {
-                const propulsion = event.target.value as VehicleProfile["propulsion"];
-                const next = { ...vehicle, propulsion };
+                const next = {
+                  ...vehicle,
+                  propulsion: event.target
+                    .value as VehicleProfile["propulsion"],
+                };
                 setVehicle(next);
                 saveVehicleProfile(next);
               }}
@@ -780,181 +716,98 @@ export default function RoutePlannerPanel({
               <option value="hybrid">{t.hybrid}</option>
               <option value="electric">{t.electric}</option>
             </select>
-            {vehicle.propulsion === "electric" ? (
-              <>
-                <label className="block text-xs text-slate-400">
-                  {t.consumption} (kWh/100 km)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm"
-                  value={vehicle.electricityConsumptionKwhPer100Km ?? ""}
-                  onChange={(event) => {
-                    const next = {
-                      ...vehicle,
-                      electricityConsumptionKwhPer100Km: Number(event.target.value),
-                    };
-                    setVehicle(next);
-                    saveVehicleProfile(next);
-                  }}
-                />
-                <label className="block text-xs text-slate-400">
-                  {t.electricityPrice} (€/kWh)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm"
-                  value={vehicle.electricityPricePerKwh ?? ""}
-                  onChange={(event) => {
-                    const next = {
-                      ...vehicle,
-                      electricityPricePerKwh: Number(event.target.value),
-                    };
-                    setVehicle(next);
-                    saveVehicleProfile(next);
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                <label className="block text-xs text-slate-400">
-                  {t.consumption} (L/100 km)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm"
-                  value={vehicle.consumptionPer100Km ?? ""}
-                  onChange={(event) => {
-                    const next = {
-                      ...vehicle,
-                      consumptionPer100Km: Number(event.target.value),
-                    };
-                    setVehicle(next);
-                    saveVehicleProfile(next);
-                  }}
-                />
-                <label className="block text-xs text-slate-400">
-                  {t.fuelPrice} (€/L)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm"
-                  value={vehicle.fuelPricePerLiter ?? ""}
-                  onChange={(event) => {
-                    const next = {
-                      ...vehicle,
-                      fuelPricePerLiter: Number(event.target.value),
-                    };
-                    setVehicle(next);
-                    saveVehicleProfile(next);
-                  }}
-                />
-              </>
-            )}
-          </form>
-        ) : null}
-
-        {loading ? (
-          <div
-            className="mt-4 animate-pulse space-y-2"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <div className="h-16 rounded-xl bg-white/5" />
-            <div className="h-16 rounded-xl bg-white/5" />
-            <p className="text-xs text-slate-400">{t.calculating}</p>
           </div>
         ) : null}
 
+        <button
+          type="button"
+          disabled={!canCalculate}
+          className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#1a73e8] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => void calculate()}
+        >
+          {loading ? t.calculatingRoute : t.calculateRoute}
+        </button>
+
         {error ? (
-          <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100" role="alert">
+          <p
+            className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100"
+            role="alert"
+          >
             {error}
           </p>
         ) : null}
 
-        <div className="mt-4 space-y-2">
-          {routes.map((route) => {
-            const selected = route.id === selectedRoute?.id;
-            return (
-              <button
-                key={route.id}
-                type="button"
-                className={`w-full rounded-xl border p-3 text-left transition ${
-                  selected
-                    ? "border-[#1a73e8]/60 bg-[#1a73e8]/15"
-                    : "border-white/10 bg-white/5 hover:bg-white/10"
-                }`}
-                onClick={() => {
-                  setSelectedRouteId(route.id);
-                  onFocusRoute(route.geometry.coordinates);
-                }}
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-lg font-semibold text-slate-50">
-                    {formatRouteDuration(route.durationSeconds, locale)}
-                  </span>
-                  <span className="text-sm text-slate-300">
-                    {formatRouteDistance(route.distanceMeters, locale)}
-                  </span>
-                </div>
-                {route.trafficDelaySeconds != null &&
-                route.trafficDelaySeconds >= 60 ? (
-                  <p className="mt-1 text-xs text-amber-200">
-                    {formatTrafficDelay(route.trafficDelaySeconds, locale)}{" "}
-                    {t.trafficDelayLabel}
-                  </p>
-                ) : null}
-                <div className="mt-2 flex flex-wrap gap-1">
+        {routes.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              {t.recommendedRoute}
+            </h3>
+            {routes.map((route, index) => {
+              const selected = route.id === selectedRouteId;
+              return (
+                <button
+                  key={route.id}
+                  type="button"
+                  className={`w-full rounded-xl border p-3 text-left transition ${
+                    selected
+                      ? "border-[#1a73e8]/60 bg-[#1a73e8]/15"
+                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                  }`}
+                  onClick={() => {
+                    setSelectedRouteId(route.id);
+                    onRoutesChange(routes, route.id);
+                    onFocusRoute(route.geometry.coordinates);
+                  }}
+                >
+                  {index > 0 ? (
+                    <p className="mb-1 text-[11px] text-slate-400">
+                      {t.alternativeRoute} {index}
+                    </p>
+                  ) : null}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-lg font-semibold text-slate-50">
+                      {formatRouteDuration(route.durationSeconds, locale)}
+                    </span>
+                    <span className="text-sm text-slate-300">
+                      {formatRouteDistance(route.distanceMeters, locale)}
+                    </span>
+                  </div>
+                  {route.trafficDelaySeconds != null &&
+                  route.trafficDelaySeconds >= 60 ? (
+                    <p className="mt-1 text-xs text-amber-200">
+                      {formatTrafficDelay(route.trafficDelaySeconds, locale)}{" "}
+                      {t.trafficDelayLabel}
+                    </p>
+                  ) : null}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {route.hasTolls ? (
+                      <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px]">
+                        {t.tollsPresent}
+                      </span>
+                    ) : null}
+                    {route.hasFerry ? (
+                      <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px]">
+                        {t.ferry}
+                      </span>
+                    ) : null}
+                    {route.hasTunnel ? (
+                      <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px]">
+                        {t.tunnel}
+                      </span>
+                    ) : null}
+                  </div>
                   {route.hasTolls ? (
-                    <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-200">
-                      {t.tollsPresent}
-                    </span>
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      {t.tollPriceUnavailable}
+                    </p>
                   ) : null}
-                  {route.hasFerry ? (
-                    <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-200">
-                      {t.ferry}
-                    </span>
-                  ) : null}
-                  {route.hasTunnel ? (
-                    <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-200">
-                      {t.tunnel}
-                    </span>
-                  ) : null}
-                  {route.hasLowEmissionZone ? (
-                    <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-200">
-                      {t.lowEmissionZone}
-                    </span>
-                  ) : null}
-                  {route.warnings.some((w) => w.code === "closure_on_route") ? (
-                    <span className="rounded-md bg-red-500/20 px-1.5 py-0.5 text-[10px] text-red-100">
-                      {t.closureOnRoute}
-                    </span>
-                  ) : null}
-                  {route.warnings.some((w) => w.code === "roadworks_on_route") ? (
-                    <span className="rounded-md bg-orange-500/20 px-1.5 py-0.5 text-[10px] text-orange-100">
-                      {t.roadworksOnRoute}
-                    </span>
-                  ) : null}
-                </div>
-                {route.hasTolls ? (
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    {t.tollPriceUnavailable}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    {t.noTollsDetected}
-                  </p>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
 
-        {selectedRoute && mode === "car" && incidents.length > 0 ? (
+        {incidents.length > 0 ? (
           <div className="mt-3 rounded-xl border border-white/10 p-3">
             <p className="text-sm font-medium text-slate-100">
               {incidents.length} {t.incidentsOnRoute}
@@ -975,53 +828,35 @@ export default function RoutePlannerPanel({
           </div>
         ) : null}
 
-        {selectedRoute?.estimatedCosts.fuelOrEnergy != null ? (
-          <div className="mt-3 rounded-xl border border-white/10 p-3 text-sm text-slate-200">
-            <p className="font-medium">
-              {selectedRoute.estimatedCosts.fuelOrEnergyUnit === "kWh"
-                ? t.energyEstimate
-                : t.fuelEstimate}
-            </p>
-            <p className="mt-1 text-slate-300">
-              {selectedRoute.estimatedCosts.fuelOrEnergyAmount}{" "}
-              {selectedRoute.estimatedCosts.fuelOrEnergyUnit} ≈{" "}
-              {selectedRoute.estimatedCosts.fuelOrEnergy.toFixed(2)} €
-            </p>
-          </div>
-        ) : null}
-
-        {selectedRoute?.instructions?.length ? (
+        {routes.find((r) => r.id === selectedRouteId)?.instructions?.length ? (
           <div className="mt-3">
             <h3 className="text-sm font-medium text-slate-100">
               {t.instructions}
             </h3>
             <ol className="mt-2 max-h-56 space-y-1 overflow-auto pr-1">
-              {selectedRoute.instructions.map((instruction) => (
-                <li key={instruction.index}>
-                  <button
-                    type="button"
-                    className="w-full rounded-lg px-2 py-2 text-left hover:bg-white/5"
-                    onClick={() => {
-                      if (instruction.point) {
-                        onFocusPoint(
-                          instruction.point.longitude,
-                          instruction.point.latitude,
-                          14,
-                        );
-                      }
-                    }}
-                  >
-                    <p className="text-sm text-slate-100">
-                      {instruction.index + 1}. {instruction.message}
-                    </p>
-                    {instruction.distanceMeters != null ? (
-                      <p className="text-[11px] text-slate-400">
-                        {formatRouteDistance(instruction.distanceMeters, locale)}
+              {routes
+                .find((r) => r.id === selectedRouteId)!
+                .instructions.map((instruction) => (
+                  <li key={instruction.index}>
+                    <button
+                      type="button"
+                      className="w-full rounded-lg px-2 py-2 text-left hover:bg-white/5"
+                      onClick={() => {
+                        if (instruction.point) {
+                          onFocusPoint(
+                            instruction.point.longitude,
+                            instruction.point.latitude,
+                            14,
+                          );
+                        }
+                      }}
+                    >
+                      <p className="text-sm text-slate-100">
+                        {instruction.index + 1}. {instruction.message}
                       </p>
-                    ) : null}
-                  </button>
-                </li>
-              ))}
+                    </button>
+                  </li>
+                ))}
             </ol>
           </div>
         ) : null}
@@ -1030,28 +865,16 @@ export default function RoutePlannerPanel({
   );
 
   return (
-    <>
-      <aside
-        className="pointer-events-auto absolute left-4 z-[40] hidden w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 shadow-2xl backdrop-blur-xl md:block"
-        style={{
-          top: "var(--map-panel-top-offset)",
-          maxHeight: "calc(100vh - var(--map-panel-top-offset) - 1.5rem)",
-        }}
-        aria-label={t.title}
-      >
-        <div className="max-h-[inherit] overflow-y-auto p-4">{content}</div>
-      </aside>
-
-      <div
-        className="pointer-events-auto absolute inset-x-0 bottom-0 z-[40] rounded-t-2xl border border-white/10 bg-slate-950/90 shadow-2xl backdrop-blur-xl md:hidden"
-        style={{
-          maxHeight: mobileExpanded ? "78vh" : "30vh",
-        }}
-        aria-label={t.title}
-      >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20" />
-        <div className="max-h-[inherit] overflow-y-auto p-4 pb-6">{content}</div>
+    <aside
+      className={`pointer-events-auto absolute inset-x-0 bottom-0 z-[40] overflow-hidden rounded-t-2xl border border-white/10 bg-slate-950/90 shadow-2xl backdrop-blur-xl md:inset-x-auto md:bottom-auto md:left-4 md:top-[var(--map-panel-top-offset)] md:w-[min(24rem,calc(100vw-2rem))] md:max-h-[calc(100vh-var(--map-panel-top-offset)-1.5rem)] md:rounded-2xl md:bg-slate-950/80 ${
+        mobileExpanded ? "max-h-[78vh]" : "max-h-[30vh]"
+      }`}
+      aria-label={t.title}
+    >
+      <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+      <div className="max-h-[inherit] overflow-y-auto p-4 pb-6 md:pb-4">
+        {content}
       </div>
-    </>
+    </aside>
   );
 }

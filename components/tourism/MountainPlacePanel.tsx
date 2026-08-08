@@ -18,6 +18,8 @@ import {
   type MountainPlaceCategory,
 } from "@/lib/tourism/europeanMountainDestinations";
 import type { EuropeanMountainPlaceDetails } from "@/lib/tourism/europeanMountainPlaceDetails";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -28,6 +30,7 @@ type Props = {
   onOpenTouristPlace?: (id: string) => void;
   onOpenUnescoSite?: (id: string) => void;
   onOpenCountry?: (code: string) => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function CategoryIcon({ category }: { category: MountainPlaceCategory }) {
@@ -51,6 +54,7 @@ export default function MountainPlacePanel({
   onOpenTouristPlace,
   onOpenUnescoSite,
   onOpenCountry,
+  onRouteToPlace,
 }: Props) {
   const place = getEuropeanMountainPlaceById(placeId);
   const t = getMessages(locale);
@@ -108,6 +112,8 @@ export default function MountainPlacePanel({
   const countryNames = place.countryCodes.map(
     (code) => regionNames?.of(code === "EL" ? "GR" : code) ?? code,
   );
+  const placeHasCoords =
+    Number.isFinite(place.latitude) && Number.isFinite(place.longitude);
 
   return (
     <aside
@@ -133,6 +139,18 @@ export default function MountainPlacePanel({
             <X size={22} />
           </button>
         </div>
+        {onRouteToPlace && placeHasCoords ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={place.canonicalName}
+              latitude={place.latitude}
+              longitude={place.longitude}
+              countryCode={place.countryCodes[0] ?? null}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-3">

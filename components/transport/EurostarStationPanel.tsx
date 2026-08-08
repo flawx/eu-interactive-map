@@ -12,6 +12,8 @@ import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { getEurostarStationById } from "@/lib/transport/eurostarNetwork";
 import type { EurostarStationDetails } from "@/lib/transport/transportDetails";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 const CLIENT_FETCH_TIMEOUT_MS = 12_000;
 
@@ -19,6 +21,7 @@ type EurostarStationPanelProps = {
   stationId: string;
   locale: Locale;
   onClose: () => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function flagCode(countryCode: string): string {
@@ -29,6 +32,7 @@ export default function EurostarStationPanel({
   stationId,
   locale,
   onClose,
+  onRouteToPlace,
 }: EurostarStationPanelProps) {
   const t = getMessages(locale);
   const tp = t.eurostarPanel;
@@ -104,6 +108,8 @@ export default function EurostarStationPanel({
     regionNames?.of(flagCode(station.countryCode)) ?? station.countryCode;
   const destinations = details?.directDestinations ?? [];
   const isSeasonal = station.serviceStatus === "seasonal";
+  const placeHasCoords =
+    Number.isFinite(station.latitude) && Number.isFinite(station.longitude);
 
   return (
     <aside
@@ -149,6 +155,18 @@ export default function EurostarStationPanel({
             {isSeasonal ? tp.seasonalService : tp.regularService}
           </span>
         </div>
+        {onRouteToPlace && placeHasCoords ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={station.name}
+              latitude={station.latitude}
+              longitude={station.longitude}
+              countryCode={station.countryCode}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">

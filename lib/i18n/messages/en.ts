@@ -975,5 +975,12 @@ export const en = {
     tunnelDetected: "Tunnel section detected",
     lezDetected: "Low-emission zone on route",
     tollDetected: "Toll road detected — exact price not available",
+    searchAddressOrPlace: "Search for an address or place",
+    calculateRoute: "Calculate route",
+    calculatingRoute: "Calculating…",
+    recommendedRoute: "Recommended route",
+    alternativeRoute: "Alternative",
+    noResults: "No results",
+    useMyLocationShort: "Use my location",
   },
 };

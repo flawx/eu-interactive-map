@@ -32,6 +32,7 @@ import {
   CloudLightning,
   Wind,
   Activity,
+  Route,
   X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
@@ -63,6 +64,8 @@ type MapSearchBoxProps = {
   autoFocus?: boolean;
   onSelectResult: (result: MapSearchResult) => void;
   onCloseCompact?: () => void;
+  onOpenRoutePlanner?: () => void;
+  onDirectionsToResult?: (result: MapSearchResult) => void;
 };
 
 function categoryLabel(category: MapSearchCategory, t: Messages): string {
@@ -397,6 +400,8 @@ export default function MapSearchBox({
   autoFocus = false,
   onSelectResult,
   onCloseCompact,
+  onOpenRoutePlanner,
+  onDirectionsToResult,
 }: MapSearchBoxProps) {
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -459,7 +464,7 @@ export default function MapSearchBox({
 
   const runExternalSearch = async () => {
     const q = query.trim();
-    if (q.length < 3) return;
+    if (q.length < 2) return;
 
     setExternalLoading(true);
     setExternalError(false);
@@ -467,10 +472,19 @@ export default function MapSearchBox({
 
     try {
       const response = await fetch(
-        `/api/search/geocode?q=${encodeURIComponent(q)}&lang=${encodeURIComponent(locale)}`,
+        `/api/search/locations?q=${encodeURIComponent(q)}&lang=${encodeURIComponent(locale)}&limit=8`,
       );
       const payload = (await response.json()) as {
-        results?: MapSearchResult[];
+        results?: Array<{
+          id: string;
+          source: "local" | "tomtom";
+          name: string;
+          subtitle: string;
+          latitude: number;
+          longitude: number;
+          countryCode: string | null;
+          localResultId?: string;
+        }>;
         error?: string;
       };
 
@@ -480,8 +494,25 @@ export default function MapSearchBox({
         return;
       }
 
-      setExternalResults(Array.isArray(payload.results) ? payload.results : []);
-      setHistory(pushSearchHistory({ query: q, title: q }));
+      const mapped: MapSearchResult[] = (payload.results ?? [])
+        .filter((item) => item.source !== "local")
+        .map((item) => ({
+          id: item.id,
+          type: "external_place",
+          category: "external",
+          title: item.name,
+          subtitle: item.subtitle,
+          longitude: item.longitude,
+          latitude: item.latitude,
+          icon: "external",
+          countryCode: item.countryCode ?? undefined,
+          source: "nominatim",
+          metadata: {
+            address: item.subtitle,
+            placeType: item.source,
+          },
+        }));
+      setExternalResults(mapped);
     } catch {
       setExternalResults([]);
       setExternalError(true);
@@ -489,6 +520,18 @@ export default function MapSearchBox({
       setExternalLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (debouncedQuery.length < 2) {
+      setExternalResults([]);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void runExternalSearch();
+    }, 280);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery, locale]);
 
   const selectResult = (result: MapSearchResult) => {
     setHistory(
@@ -584,19 +627,20 @@ export default function MapSearchBox({
       const selected = absoluteIndex === activeIndex;
       return (
         <li key={result.id} role="presentation">
-          <button
-            type="button"
-            id={`${listboxId}-option-${absoluteIndex}`}
-            role="option"
-            aria-selected={selected}
-            onMouseEnter={() => setActiveIndex(absoluteIndex)}
-            onClick={() => selectResult(result)}
-            className={`flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 ${
-              selected
-                ? "bg-[var(--map-ui-surface-hover)]"
-                : "hover:bg-[var(--map-ui-surface-hover)]"
+          <div
+            className={`flex w-full items-start gap-1 rounded-xl px-1 py-1 ${
+              selected ? "bg-[var(--map-ui-surface-hover)]" : ""
             }`}
           >
+            <button
+              type="button"
+              id={`${listboxId}-option-${absoluteIndex}`}
+              role="option"
+              aria-selected={selected}
+              onMouseEnter={() => setActiveIndex(absoluteIndex)}
+              onClick={() => selectResult(result)}
+              className="flex min-w-0 flex-1 items-start gap-3 rounded-xl px-2.5 py-2 text-left outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+            >
             <ResultIcon
               type={result.type}
               countryCode={result.countryCode}
@@ -617,7 +661,29 @@ export default function MapSearchBox({
                 {result.subtitle ? ` · ${result.subtitle}` : ""}
               </span>
             </span>
-          </button>
+            </button>
+            {onDirectionsToResult &&
+            Number.isFinite(result.latitude) &&
+            Number.isFinite(result.longitude) ? (
+              <button
+                type="button"
+                className="mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+                aria-label={t.routePlanner.routeToPlace}
+                title={t.routePlanner.openPlanner}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDirectionsToResult(result);
+                  setOpen(false);
+                }}
+              >
+                <Route
+                  className="h-4 w-4"
+                  style={{ color: "#1a73e8" }}
+                  aria-hidden
+                />
+              </button>
+            ) : null}
+          </div>
         </li>
       );
     });
@@ -863,6 +929,17 @@ export default function MapSearchBox({
             style={{ color: "var(--map-ui-muted)" }}
           >
             <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : null}
+        {onOpenRoutePlanner ? (
+          <button
+            type="button"
+            onClick={onOpenRoutePlanner}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+            aria-label={t.routePlanner.openPlanner}
+            title={t.routePlanner.openPlanner}
+          >
+            <Route className="h-4 w-4" style={{ color: "#1a73e8" }} aria-hidden />
           </button>
         ) : null}
       </div>

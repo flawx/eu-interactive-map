@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, Route, Search, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import EuLogo from "@/components/branding/EuLogo";
 import LanguageSelector from "@/components/i18n/LanguageSelector";
 import AppSideNav from "@/components/layout/AppSideNav";
@@ -24,6 +24,7 @@ type AppHeaderProps = {
   onGoEurope: () => void;
   onFocusLegend: () => void;
   onOpenRoutePlanner?: () => void;
+  onDirectionsToResult?: (result: MapSearchResult) => void;
 };
 
 export default function AppHeader({
@@ -37,6 +38,7 @@ export default function AppHeader({
   onGoEurope,
   onFocusLegend,
   onOpenRoutePlanner,
+  onDirectionsToResult,
 }: AppHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -71,20 +73,12 @@ export default function AppHeader({
               alerts={alerts}
               temporaryBorderControls={temporaryBorderControls}
               onSelectResult={onSelectSearchResult}
+              onOpenRoutePlanner={onOpenRoutePlanner}
+              onDirectionsToResult={onDirectionsToResult}
             />
           </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-2 overflow-visible">
-            {onOpenRoutePlanner ? (
-              <button
-                type="button"
-                className="map-ui-control inline-flex h-12 w-12 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
-                aria-label={t.routePlanner.openPlanner}
-                onClick={onOpenRoutePlanner}
-              >
-                <Route className="h-5 w-5" aria-hidden="true" />
-              </button>
-            ) : null}
             <button
               type="button"
               className="map-ui-control inline-flex h-12 w-12 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 md:hidden"
@@ -120,6 +114,8 @@ export default function AppHeader({
               compact
               autoFocus
               onSelectResult={onSelectSearchResult}
+              onOpenRoutePlanner={onOpenRoutePlanner}
+              onDirectionsToResult={onDirectionsToResult}
               onCloseCompact={() => setMobileSearchOpen(false)}
             />
           </div>

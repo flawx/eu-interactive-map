@@ -12,6 +12,8 @@ import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { getEuropeanAirportById } from "@/lib/transport/europeanAirports";
 import type { EuropeanAirportDetails } from "@/lib/transport/transportDetails";
+import type { RoutePoint } from "@/lib/routing/types";
+import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
 const CLIENT_FETCH_TIMEOUT_MS = 12_000;
 
@@ -19,6 +21,7 @@ type AirportPanelProps = {
   airportId: string;
   locale: Locale;
   onClose: () => void;
+  onRouteToPlace?: (point: RoutePoint) => void;
 };
 
 function flagCode(countryCode: string): string {
@@ -29,6 +32,7 @@ export default function AirportPanel({
   airportId,
   locale,
   onClose,
+  onRouteToPlace,
 }: AirportPanelProps) {
   const t = getMessages(locale);
   const tp = t.airportPanel;
@@ -102,6 +106,8 @@ export default function AirportPanel({
   const photo = images[photoIndex] ?? null;
   const countryName =
     regionNames?.of(flagCode(airport.countryCode)) ?? airport.countryCode;
+  const placeHasCoords =
+    Number.isFinite(airport.latitude) && Number.isFinite(airport.longitude);
 
   return (
     <aside
@@ -136,6 +142,18 @@ export default function AirportPanel({
         <p className="mt-2 inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2 py-0.5 text-[10px] font-medium text-cyan-200">
           {tp.badge}
         </p>
+        {onRouteToPlace && placeHasCoords ? (
+          <div className="mt-2">
+            <DirectionsToButton
+              locale={locale}
+              name={airport.name}
+              latitude={airport.latitude}
+              longitude={airport.longitude}
+              countryCode={airport.countryCode}
+              onDirectionsTo={onRouteToPlace}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
