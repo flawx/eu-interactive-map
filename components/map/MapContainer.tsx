@@ -44,6 +44,7 @@ import {
   ROUTE_PLANNER_LAYER_TRAFFIC,
 } from "@/lib/routing/routeMapLayers";
 import type { MultimodalJourney } from "@/lib/routing/flights/types";
+import { resolveBasemapTileConfig } from "@/lib/map/basemapRegistry";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
 import type {
@@ -1118,6 +1119,8 @@ export default function MapContainer({
   mapCommandsRef,
   baseMode = "map",
   dimensionMode = "2d",
+  basemapId = "standard",
+  resolvedTheme = "light",
   onCameraChange,
   onTerrainReadyChange,
   userLocation = null,
@@ -1251,6 +1254,8 @@ export default function MapContainer({
   mapCommandsRef?: MutableRefObject<MapCameraCommands | null>;
   baseMode?: MapBaseMode;
   dimensionMode?: MapDimensionMode;
+  basemapId?: string;
+  resolvedTheme?: "light" | "dark";
   onCameraChange?: (snapshot: CameraSnapshot) => void;
   onTerrainReadyChange?: (ready: boolean) => void;
   userLocation?: UserLocation | null;
@@ -1551,6 +1556,16 @@ export default function MapContainer({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
+    const tileConfig =
+      resolveBasemapTileConfig(basemapId, resolvedTheme) ?? {
+        tiles: [
+          "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+        ],
+        attribution: "© OpenStreetMap contributors © CARTO",
+        maxzoom: 19,
+        tileSize: 256,
+      };
+
     const map = new MapLibreMap({
       container: mapContainerRef.current,
       style: {
@@ -1558,12 +1573,10 @@ export default function MapContainer({
         sources: {
           "osm-tiles": {
             type: "raster",
-            tiles: [
-              "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-            ],
-            tileSize: 256,
-            maxzoom: 19,
-            attribution: "© OpenStreetMap contributors © CARTO",
+            tiles: [...tileConfig.tiles],
+            tileSize: tileConfig.tileSize ?? 256,
+            maxzoom: tileConfig.maxzoom ?? 19,
+            attribution: tileConfig.attribution,
           },
         },
         layers: [
@@ -4962,6 +4975,30 @@ export default function MapContainer({
       baseMode === "relief" ? "visible" : "none",
     );
   }, [baseMode, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
+    const tileConfig = resolveBasemapTileConfig(basemapId, resolvedTheme);
+    if (!tileConfig) return;
+    const source = map.getSource("osm-tiles") as
+      | { setTiles?: (tiles: string[]) => void; attribution?: string }
+      | undefined;
+    if (!source || typeof source.setTiles !== "function") return;
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    const bearing = map.getBearing();
+    const pitch = map.getPitch();
+    source.setTiles([...tileConfig.tiles]);
+    source.attribution = tileConfig.attribution;
+    // Keep camera stable across basemap swaps.
+    map.jumpTo({ center, zoom, bearing, pitch });
+    try {
+      ensureEUIMLayerOrder(map);
+    } catch {
+      // ignore during transitions
+    }
+  }, [basemapId, resolvedTheme, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -14,6 +14,8 @@ import EuInstitutionPanel from "@/components/europe/EuInstitutionPanel";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
+import { useThemePreferences } from "@/components/theme/ThemeProvider";
+import { getPreferencesStorage } from "@/lib/preferences/userPreferences";
 import MapLegend from "@/components/map/MapLegend";
 import UnescoSitePanel from "@/components/tourism/UnescoSitePanel";
 import EuropeanHeritageLabelPanel from "@/components/tourism/EuropeanHeritageLabelPanel";
@@ -628,7 +630,9 @@ export default function MapInterface() {
   const [legendCollapsed, setLegendCollapsed] = useState(true);
   const [layerPrefsHydrated, setLayerPrefsHydrated] = useState(false);
   const [legendCollapsedHydrated, setLegendCollapsedHydrated] = useState(false);
+  const { preferences, resolvedTheme } = useThemePreferences();
   const [baseMode, setBaseMode] = useState<MapBaseMode>("map");
+  const [basemapId, setBasemapId] = useState("standard");
   const [dimensionMode, setDimensionMode] = useState<MapDimensionMode>("2d");
   const [mapPitch, setMapPitch] = useState(0);
   const [mapBearing, setMapBearing] = useState(0);
@@ -797,7 +801,34 @@ export default function MapInterface() {
     const prefs = readMapViewPreferences();
     setBaseMode(prefs.baseMode);
     setDimensionMode(prefs.dimensionMode);
+    const userPrefs = getPreferencesStorage().load();
+    if (userPrefs.appearance.defaultBasemapId) {
+      setBasemapId(userPrefs.appearance.defaultBasemapId);
+    }
+    if (userPrefs.language.locale) {
+      setLocale(userPrefs.language.locale as Locale);
+    }
   }, []);
+
+  useEffect(() => {
+    if (preferences.appearance.defaultBasemapId) {
+      setBasemapId(preferences.appearance.defaultBasemapId);
+    }
+  }, [preferences.appearance.defaultBasemapId]);
+
+  useEffect(() => {
+    if (preferences.language.locale) {
+      setLocale(preferences.language.locale as Locale);
+    }
+  }, [preferences.language.locale]);
+
+  useEffect(() => {
+    if (preferences.map.preferRelief) setBaseMode("relief");
+  }, [preferences.map.preferRelief]);
+
+  useEffect(() => {
+    if (preferences.map.prefer3d) setDimensionMode("3d");
+  }, [preferences.map.prefer3d]);
 
   useEffect(() => {
     const prefs = loadMapLayerPreferences();
@@ -4155,6 +4186,8 @@ export default function MapInterface() {
           mapCommandsRef={mapCommandsRef}
           baseMode={baseMode}
           dimensionMode={dimensionMode}
+          basemapId={basemapId}
+          resolvedTheme={resolvedTheme}
           onCameraChange={handleCameraChange}
           onTerrainReadyChange={setTerrainReady}
           userLocation={userLocation}
@@ -4219,6 +4252,8 @@ export default function MapInterface() {
           commandsRef={mapCommandsRef}
           baseMode={baseMode}
           dimensionMode={dimensionMode}
+          basemapId={basemapId}
+          onBasemapIdChange={setBasemapId}
           pitch={mapPitch}
           bearing={mapBearing}
           terrainReady={terrainReady}

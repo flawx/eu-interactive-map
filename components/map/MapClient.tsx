@@ -162,6 +162,8 @@ type MapClientProps = {
   mapCommandsRef?: MutableRefObject<MapCameraCommands | null>;
   baseMode?: MapBaseMode;
   dimensionMode?: MapDimensionMode;
+  basemapId?: string;
+  resolvedTheme?: "light" | "dark";
   onCameraChange?: (snapshot: CameraSnapshot) => void;
   onTerrainReadyChange?: (ready: boolean) => void;
   userLocation?: UserLocation | null;
@@ -289,6 +291,8 @@ export default function MapClient({
   mapCommandsRef,
   baseMode = "map",
   dimensionMode = "2d",
+  basemapId = "standard",
+  resolvedTheme = "light",
   onCameraChange,
   onTerrainReadyChange,
   userLocation = null,
@@ -416,6 +420,8 @@ export default function MapClient({
       mapCommandsRef={mapCommandsRef}
       baseMode={baseMode}
       dimensionMode={dimensionMode}
+      basemapId={basemapId}
+      resolvedTheme={resolvedTheme}
       onCameraChange={onCameraChange}
       onTerrainReadyChange={onTerrainReadyChange}
       userLocation={userLocation}

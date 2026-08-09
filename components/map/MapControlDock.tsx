@@ -28,6 +28,7 @@ import type {
   MapBaseMode,
   MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
+import { getEnabledBasemaps } from "@/lib/map/basemapRegistry";
 import {
   formatAccuracyLabel,
   type UserLocationStatus,
@@ -44,6 +45,8 @@ type MapControlDockProps = {
   terrainReady: boolean;
   onBaseModeChange: (mode: MapBaseMode) => void;
   onDimensionModeChange: (mode: MapDimensionMode) => void;
+  basemapId?: string;
+  onBasemapIdChange?: (id: string) => void;
   locationStatus: UserLocationStatus;
   locationAccuracyMeters: number | null;
   consentOpen: boolean;
@@ -73,6 +76,8 @@ export default function MapControlDock({
   terrainReady,
   onBaseModeChange,
   onDimensionModeChange,
+  basemapId = "standard",
+  onBasemapIdChange,
   locationStatus,
   locationAccuracyMeters,
   consentOpen,
@@ -425,6 +430,23 @@ export default function MapControlDock({
                 previewClassName="bg-[linear-gradient(135deg,#1e293b_0%,#334155_50%,#0f172a_100%)]"
                 caption={t.mapControls.satellitePending}
               />
+            </div>
+            <p className="mt-3 text-xs font-semibold text-[var(--map-ui-muted)]">
+              Base map
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {getEnabledBasemaps().map((basemap) => (
+                <BaseModeCard
+                  key={basemap.id}
+                  title={basemap.id}
+                  active={basemapId === basemap.id}
+                  previewClassName={basemap.previewClassName}
+                  onClick={() => {
+                    onBasemapIdChange?.(basemap.id);
+                    setLayersOpen(false);
+                  }}
+                />
+              ))}
             </div>
           </div>,
           document.body,
