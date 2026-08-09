@@ -357,7 +357,7 @@ export function syncRoutePlannerLayers(
   },
 ) {
   if (!map) return;
-  if (!map.isStyleLoaded()) return;
+  if (!map.getStyle()?.layers) return;
 
   if (!options.active) {
     clearRoutePlannerLayers(map);

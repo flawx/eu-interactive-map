@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { encodeGooglePolyline } from "../lib/routing/transit/encodePolyline";
 import { decodeGooglePolyline } from "../lib/routing/transit/decodePolyline";
-import { normalizeGoogleTransitRoutes } from "../lib/routing/transit/normalizeGoogleTransit";
+import { normalizeGoogleTransitRoutes, mapGoogleVehicleType } from "../lib/routing/transit/normalizeGoogleTransit";
 import { parseTransitRequestBody } from "../lib/routing/transit/calculateTransit";
 import {
   TransitError,
@@ -477,6 +477,52 @@ async function main() {
     assert.ok(j.walkingDurationSeconds > 0);
     assert.ok(j.transitDurationSeconds > 0);
     assert.equal(j.durationSeconds, 20880);
+  }
+
+  // Detailed vehicle types + colors + stops
+  {
+    const journeys = normalizeGoogleTransitRoutes(fixtureBusTrainMetro());
+    const j = journeys[0]!;
+    const hs = j.legs.find((l) => l.mode === "high_speed_rail");
+    assert.ok(hs);
+    assert.equal(hs!.vehicleType, "HIGH_SPEED_TRAIN");
+    assert.ok((hs!.geometry?.coordinates.length ?? 0) >= 2);
+    assert.equal(hs!.from.name, "Bordeaux Saint-Jean");
+    assert.ok(hs!.headsign || hs!.line?.headsign);
+    const metro = j.legs.find((l) => l.mode === "subway");
+    assert.ok(metro);
+  }
+
+  {
+    assert.equal(mapGoogleVehicleType("HIGH_SPEED_TRAIN"), "high_speed_rail");
+    assert.equal(mapGoogleVehicleType("LONG_DISTANCE_TRAIN"), "long_distance_rail");
+    assert.equal(mapGoogleVehicleType("COMMUTER_TRAIN"), "commuter_rail");
+    assert.equal(mapGoogleVehicleType("INTERCITY_BUS"), "coach");
+    assert.equal(mapGoogleVehicleType("HEAVY_RAIL"), "rail");
+  }
+
+  {
+    const { sanitizeTransitColor, transitModeColor } = await import(
+      "../lib/routing/formatTransit"
+    );
+    assert.equal(sanitizeTransitColor("D35098"), "#D35098");
+    assert.equal(sanitizeTransitColor("#aabbcc"), "#AABBCC");
+    assert.equal(sanitizeTransitColor("zzz"), null);
+    assert.equal(sanitizeTransitColor("FFFFFF"), null);
+    assert.equal(transitModeColor("tram", "D35098"), "#D35098");
+    assert.ok(transitModeColor("tram", null).startsWith("#"));
+  }
+
+  {
+    const { transitModeFilterToAllowedModes } = await import(
+      "../lib/routing/transit/types"
+    );
+    assert.equal(transitModeFilterToAllowedModes("all"), null);
+    assert.deepEqual(transitModeFilterToAllowedModes("train"), ["TRAIN", "RAIL"]);
+    assert.deepEqual(transitModeFilterToAllowedModes("metro_tram"), [
+      "SUBWAY",
+      "LIGHT_RAIL",
+    ]);
   }
 
   // International + timezone + alternatives + fare absent/present

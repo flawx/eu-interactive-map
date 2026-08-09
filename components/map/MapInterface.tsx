@@ -86,6 +86,7 @@ import type { NormalizedRoute, RoutePoint } from "@/lib/routing/types";
 import type { TransitJourney } from "@/lib/routing/transit/types";
 import type { RoutePlannerMapPoint } from "@/lib/routing/routeMapLayers";
 import type { TransitMapPoint } from "@/lib/routing/transitMapLayers";
+import { buildTransitMapPointsFromJourney } from "@/lib/routing/formatTransit";
 import {
   areRoutePlannerPointsEqual,
   EMPTY_ROUTE_PLANNER_POINTS,
@@ -2910,51 +2911,11 @@ export default function MapInterface() {
     null;
 
   const transitMapPoints: TransitMapPoint[] = useMemo(() => {
-    const points: TransitMapPoint[] = [];
-    const { origin, destination } = routePlannerPointsState;
-    if (origin) {
-      points.push({
-        id: "transit-origin",
-        role: "origin",
-        longitude: origin.longitude,
-        latitude: origin.latitude,
-        label: "A",
-        color: "#16a34a",
-      });
-    }
-    if (selectedTransitJourney) {
-      selectedTransitJourney.legs.forEach((leg, index) => {
-        if (leg.mode === "walk") return;
-        if (
-          leg.from.longitude == null ||
-          leg.from.latitude == null ||
-          !Number.isFinite(leg.from.longitude) ||
-          !Number.isFinite(leg.from.latitude)
-        ) {
-          return;
-        }
-        if (index === 0) return;
-        points.push({
-          id: `transfer-${index}`,
-          role: "transfer",
-          longitude: leg.from.longitude,
-          latitude: leg.from.latitude,
-          label: String(points.filter((p) => p.role === "transfer").length + 1),
-          color: "#2563eb",
-        });
-      });
-    }
-    if (destination) {
-      points.push({
-        id: "transit-destination",
-        role: "destination",
-        longitude: destination.longitude,
-        latitude: destination.latitude,
-        label: "B",
-        color: "#dc2626",
-      });
-    }
-    return points;
+    return buildTransitMapPointsFromJourney(
+      selectedTransitJourney,
+      routePlannerPointsState.origin,
+      routePlannerPointsState.destination,
+    );
   }, [routePlannerPointsState, selectedTransitJourney]);
 
   const openRoutePlanner = (options?: {

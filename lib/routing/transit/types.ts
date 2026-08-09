@@ -3,15 +3,22 @@
 export type TransitMode =
   | "walk"
   | "bus"
+  | "trolleybus"
+  | "coach"
   | "tram"
   | "metro"
   | "subway"
   | "light_rail"
+  | "commuter_rail"
   | "regional_rail"
+  | "rail"
   | "train"
+  | "long_distance_rail"
   | "high_speed_rail"
-  | "coach"
   | "ferry"
+  | "funicular"
+  | "monorail"
+  | "cable_car"
   | "flight"
   | "other";
 
@@ -61,6 +68,14 @@ export type TransitLine = {
   textColor: string | null;
   vehicleType: string | null;
   headsign: string | null;
+  iconUri: string | null;
+};
+
+export type TransitVehicle = {
+  type: string | null;
+  name: string | null;
+  iconUri: string | null;
+  localIconUri: string | null;
 };
 
 export type TransitWarning = {
@@ -72,16 +87,22 @@ export type TransitWarning = {
 export type TransitLeg = {
   id: string;
   mode: TransitMode;
+  vehicleType: string | null;
   departureAt: string | null;
   arrivalAt: string | null;
   scheduledDepartureAt: string | null;
   scheduledArrivalAt: string | null;
+  localizedDepartureTime: string | null;
+  localizedArrivalTime: string | null;
+  timezone: string | null;
   delaySeconds: number | null;
   durationSeconds: number;
   from: TransitPlace;
   to: TransitPlace;
   line: TransitLine | null;
+  vehicle: TransitVehicle | null;
   agency: TransitAgency | null;
+  headsign: string | null;
   geometry: {
     type: "LineString";
     coordinates: [number, number][];
@@ -91,6 +112,7 @@ export type TransitLeg = {
   distanceMeters: number | null;
   realtime: boolean;
   instruction: string | null;
+  lineColorSource: "provider" | "fallback";
 };
 
 export type TransitJourney = {
@@ -120,6 +142,13 @@ export type TransitAllowedMode =
   | "TRAIN"
   | "LIGHT_RAIL"
   | "RAIL";
+
+/** UI preference — maps to Google allowedTravelModes (or null = all). */
+export type TransitModeFilter =
+  | "all"
+  | "bus"
+  | "metro_tram"
+  | "train";
 
 export type TransitRoutingPreference =
   | "fewer_transfers"
@@ -178,6 +207,22 @@ export class TransitError extends Error {
     this.name = "TransitError";
     this.code = code;
     this.status = status;
+  }
+}
+
+export function transitModeFilterToAllowedModes(
+  filter: TransitModeFilter,
+): TransitAllowedMode[] | null {
+  switch (filter) {
+    case "bus":
+      return ["BUS"];
+    case "metro_tram":
+      return ["SUBWAY", "LIGHT_RAIL"];
+    case "train":
+      return ["TRAIN", "RAIL"];
+    case "all":
+    default:
+      return null;
   }
 }
 

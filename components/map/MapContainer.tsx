@@ -19,6 +19,7 @@ import {
 import {
   ensureTransitRoutingLayers,
   syncTransitRouteLayers,
+  bringTransitLayersToFront,
 } from "@/components/routing/useTransitRouteLayers";
 import {
   ROUTE_PLANNER_LAYER_ALT,
@@ -29,7 +30,10 @@ import {
   ROUTE_PLANNER_LAYER_TRAFFIC,
 } from "@/lib/routing/routeMapLayers";
 import type { TransitJourney } from "@/lib/routing/transit/types";
-import type { TransitMapPoint } from "@/lib/routing/transitMapLayers";
+import {
+  TRANSIT_ROUTE_SOURCE_ID,
+  type TransitMapPoint,
+} from "@/lib/routing/transitMapLayers";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
 import type {
@@ -1262,6 +1266,8 @@ export default function MapContainer({
 }) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const transitJourneyRef = useRef(transitJourney);
+  transitJourneyRef.current = transitJourney;
   const showEurozoneRef = useRef(showEurozone);
   showEurozoneRef.current = showEurozone;
   const showNonEurozoneRef = useRef(showNonEurozone);
@@ -1576,6 +1582,9 @@ export default function MapContainer({
     });
 
     mapRef.current = map;
+    if (process.env.NODE_ENV !== "production") {
+      (window as unknown as { __euMap?: MapLibreMap }).__euMap = map;
+    }
     if (process.env.NODE_ENV !== "production") {
       (
         window as unknown as { __euMap?: MapLibreMap }
@@ -7308,11 +7317,43 @@ export default function MapContainer({
       TRAFFIC_FLOW_TILE_LAYER_ID,
       Boolean(showLiveTrafficFlow && providerAvailable),
     );
+    // Soften traffic flow while a transit journey is drawn so colored
+    // provider segments remain readable on Voyager + green flow tiles.
+    if (map.getLayer(TRAFFIC_FLOW_TILE_LAYER_ID) && transitJourneyRef.current) {
+      try {
+        map.setPaintProperty(TRAFFIC_FLOW_TILE_LAYER_ID, "line-opacity", 0.28);
+      } catch {
+        // ignore
+      }
+    } else if (map.getLayer(TRAFFIC_FLOW_TILE_LAYER_ID)) {
+      try {
+        map.setPaintProperty(TRAFFIC_FLOW_TILE_LAYER_ID, "line-opacity", [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          4,
+          0.55,
+          10,
+          0.8,
+        ]);
+      } catch {
+        // ignore
+      }
+    }
     applyLayerVisibility(
       map,
       TRAFFIC_INCIDENT_TILE_LINE_LAYER_ID,
       Boolean(anyDetailedLayer && vectorTilesAvailable),
     );
+
+    // Traffic flow is re-inserted often; keep transit geometry above it.
+    if (transitJourneyRef.current) {
+      try {
+        bringTransitLayersToFront(map);
+      } catch {
+        // ignore during style transitions
+      }
+    }
 
     const handleCluster = async (event: MapLayerMouseEvent) => {
       const feature = event.features?.[0];
@@ -8150,6 +8191,18 @@ export default function MapContainer({
     let idleQueued = false;
     const showTransit = Boolean(transitJourney);
 
+    if (process.env.NODE_ENV !== "production") {
+      (window as unknown as { __euTransitDebug?: unknown }).__euTransitDebug = {
+        routePlannerActive,
+        mapSourcesReadyVersion,
+        showTransit,
+        journeyId: transitJourney?.id ?? null,
+        legCount: transitJourney?.legs?.length ?? 0,
+        pointCount: transitPoints.length,
+        styleLoaded: map.isStyleLoaded(),
+      };
+    }
+
     const apply = () => {
       if (cancelled) return;
       syncRoutePlannerLayers(map, {
@@ -8163,13 +8216,25 @@ export default function MapContainer({
         journey: showTransit ? transitJourney : null,
         points: showTransit ? transitPoints : [],
       });
+      if (process.env.NODE_ENV !== "production") {
+        const src = map.getSource(TRANSIT_ROUTE_SOURCE_ID) as
+          | { _data?: GeoJSON.FeatureCollection }
+          | undefined;
+        console.info("[transit sync apply]", {
+          active: routePlannerActive && showTransit,
+          journeyId: transitJourney?.id ?? null,
+          features: src?._data?.features?.length ?? 0,
+        });
+      }
     };
 
     const scheduleWhenReady = () => {
       if (cancelled) return;
-      if (map.isStyleLoaded()) {
+      // Prefer applying whenever a style graph exists. Relying only on
+      // isStyleLoaded() + once('idle') races with traffic tiles and can miss
+      // idle if the map is already idle while styleLoaded stays false.
+      if (map.getStyle()?.layers) {
         apply();
-        return;
       }
       if (idleQueued) return;
       idleQueued = true;
@@ -8186,7 +8251,10 @@ export default function MapContainer({
       if (routePlannerActive) {
         try {
           if (!showTransit) ensureRoutingLayers(map);
-          if (showTransit) ensureTransitRoutingLayers(map);
+          if (showTransit) {
+            ensureTransitRoutingLayers(map);
+            bringTransitLayersToFront(map);
+          }
         } catch {
           // Style may still be transitioning.
         }

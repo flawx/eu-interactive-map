@@ -22,7 +22,11 @@ import {
   formatRouteDuration,
   formatTrafficDelay,
 } from "@/lib/routing/formatRoute";
-import { formatTransitClock, journeyCoordinates } from "@/lib/routing/formatTransit";
+import {
+  collapseTransitLegsForDisplay,
+  formatTransitClock,
+  journeyCoordinates,
+} from "@/lib/routing/formatTransit";
 import { isRoutingPointAllowed } from "@/lib/routing/routingGeofence";
 import {
   applyShareableRouteToUrl,
@@ -33,10 +37,12 @@ import {
   type RoutePlannerPointsState,
 } from "@/lib/routing/routePlannerPoints";
 import type {
-  TransitAllowedMode,
   TransitJourney,
+  TransitMode,
+  TransitModeFilter,
   TransitRoutingPreference,
 } from "@/lib/routing/transit/types";
+import { transitModeFilterToAllowedModes } from "@/lib/routing/transit/types";
 import {
   DEFAULT_ROUTE_AVOID,
   MAX_ROUTE_WAYPOINTS_UI,
@@ -54,13 +60,60 @@ import {
 } from "@/lib/routing/vehicleProfileStorage";
 import type { NormalizedAlert } from "@/lib/alerts/types";
 import UnifiedLocationField from "@/components/routing/UnifiedLocationField";
+import {
+  TransitModeChain,
+  TransitModeIcon,
+  TransitLineBadge,
+} from "@/components/routing/TransitIcons";
 
-const TRANSIT_MODE_CHIPS = [
-  ["BUS", "preferBus"],
-  ["SUBWAY", "preferMetro"],
-  ["LIGHT_RAIL", "preferTram"],
-  ["TRAIN", "preferTrain"],
-] as const satisfies readonly (readonly [TransitAllowedMode, string])[];
+const TRANSIT_FILTER_CHIPS: Array<{
+  value: TransitModeFilter;
+  labelKey:
+    | "allPublicTransport"
+    | "preferBus"
+    | "preferMetroTram"
+    | "preferTrain";
+}> = [
+  { value: "all", labelKey: "allPublicTransport" },
+  { value: "bus", labelKey: "preferBus" },
+  { value: "metro_tram", labelKey: "preferMetroTram" },
+  { value: "train", labelKey: "preferTrain" },
+];
+
+function modeLabel(
+  mode: TransitMode,
+  t: ReturnType<typeof getMessages>["routePlanner"],
+): string {
+  switch (mode) {
+    case "walk":
+      return t.walking;
+    case "bus":
+    case "trolleybus":
+      return t.preferBus;
+    case "coach":
+      return t.coach;
+    case "tram":
+    case "light_rail":
+      return t.tram;
+    case "metro":
+    case "subway":
+      return t.metro;
+    case "commuter_rail":
+    case "regional_rail":
+      return t.regionalTrain;
+    case "high_speed_rail":
+      return t.highSpeedTrain;
+    case "long_distance_rail":
+      return t.longDistanceTrain;
+    case "ferry":
+      return t.ferry;
+    case "rail":
+    case "train":
+      return t.train;
+    default:
+      return mode.replace(/_/g, " ");
+  }
+}
 
 function isAbortError(err: unknown): boolean {
   return (
@@ -171,9 +224,8 @@ export default function RoutePlannerPanel({
   const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
   const [transitRoutingPreference, setTransitRoutingPreference] =
     useState<TransitRoutingPreference>(null);
-  const [allowedTransitModes, setAllowedTransitModes] = useState<
-    TransitAllowedMode[] | null
-  >(null);
+  const [transitModeFilter, setTransitModeFilter] =
+    useState<TransitModeFilter>("all");
   const [incidents, setIncidents] = useState<NormalizedAlert[]>([]);
   const [loading, setLoading] = useState(false);
   const [roadError, setRoadError] = useState<string | null>(null);
@@ -307,6 +359,24 @@ export default function RoutePlannerPanel({
 
     if (mode === "transit") {
       try {
+        const allowedModes = transitModeFilterToAllowedModes(transitModeFilter);
+        if (process.env.NODE_ENV !== "production") {
+          console.info("[transit browser request]", {
+            originLabel: origin.name ?? null,
+            originLat: origin.latitude,
+            originLng: origin.longitude,
+            destinationLabel: destination.name ?? null,
+            destinationLat: destination.latitude,
+            destinationLng: destination.longitude,
+            departureTime:
+              timingPayload.kind === "depart_at" ? timingPayload.at : null,
+            arrivalTime:
+              timingPayload.kind === "arrive_at" ? timingPayload.at : null,
+            allowedTravelModes: allowedModes,
+            routingPreference: transitRoutingPreference,
+            modeFilter: transitModeFilter,
+          });
+        }
         const response = await fetch("/api/routing/transit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -315,7 +385,7 @@ export default function RoutePlannerPanel({
             origin,
             destination,
             timing: timingPayload,
-            allowedModes: allowedTransitModes,
+            allowedModes,
             routingPreference: transitRoutingPreference,
             alternatives: true,
             locale,
@@ -453,7 +523,7 @@ export default function RoutePlannerPanel({
     timing,
     departAtLocal,
     arriveAtLocal,
-    allowedTransitModes,
+    transitModeFilter,
     transitRoutingPreference,
     vehicle,
     locale,
@@ -491,7 +561,7 @@ export default function RoutePlannerPanel({
       JSON.stringify(avoid),
       timingKey,
       mode === "transit" ? (transitRoutingPreference ?? "none") : "",
-      mode === "transit" ? (allowedTransitModes ?? []).join(",") : "",
+      mode === "transit" ? transitModeFilter : "",
     ].join(";");
     if (autoCalcKeyRef.current === key) return;
     autoCalcKeyRef.current = key;
@@ -512,7 +582,7 @@ export default function RoutePlannerPanel({
     departAtLocal,
     arriveAtLocal,
     transitRoutingPreference,
-    allowedTransitModes,
+    transitModeFilter,
     calculate,
   ]);
 
@@ -935,38 +1005,19 @@ export default function RoutePlannerPanel({
             <div>
               <p className="mb-1.5 text-xs text-slate-400">{t.transitModes}</p>
               <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  className={`min-h-10 rounded-lg px-2.5 text-xs ${
-                    allowedTransitModes === null
-                      ? "bg-white/15 text-white"
-                      : "bg-white/5 text-slate-300"
-                  }`}
-                  onClick={() => setAllowedTransitModes(null)}
-                >
-                  {t.allPublicTransport}
-                </button>
-                {TRANSIT_MODE_CHIPS.map(([value, labelKey]) => {
-                  const active = allowedTransitModes?.includes(value) ?? false;
+                {TRANSIT_FILTER_CHIPS.map(({ value, labelKey }) => {
+                  const active = transitModeFilter === value;
                   return (
                     <button
                       key={value}
                       type="button"
+                      aria-pressed={active}
                       className={`min-h-10 rounded-lg px-2.5 text-xs ${
                         active
                           ? "bg-white/15 text-white"
                           : "bg-white/5 text-slate-300"
                       }`}
-                      onClick={() =>
-                        setAllowedTransitModes((prev) => {
-                          const current = prev ?? [];
-                          if (current.includes(value)) {
-                            const next = current.filter((m) => m !== value);
-                            return next.length > 0 ? next : null;
-                          }
-                          return [...current, value];
-                        })
-                      }
+                      onClick={() => setTransitModeFilter(value)}
                     >
                       {t[labelKey]}
                     </button>
@@ -1108,22 +1159,10 @@ export default function RoutePlannerPanel({
                         : t.fareUnavailable}
                     </span>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px] text-slate-300">
-                    {journey.modeSummary.map((legMode, legModeIndex) => (
-                      <span
-                        key={`${journey.id}-${legMode}-${legModeIndex}`}
-                        className="flex items-center gap-1"
-                      >
-                        {legModeIndex > 0 ? (
-                          <span aria-hidden className="text-slate-500">
-                            →
-                          </span>
-                        ) : null}
-                        <span className="rounded-md bg-white/10 px-1.5 py-0.5 capitalize">
-                          {legMode.replace(/_/g, " ")}
-                        </span>
-                      </span>
-                    ))}
+                  <div className="mt-2">
+                    <TransitModeChain
+                      legs={collapseTransitLegsForDisplay(journey.legs)}
+                    />
                   </div>
                 </button>
               );
@@ -1137,32 +1176,86 @@ export default function RoutePlannerPanel({
             <h3 className="text-sm font-medium text-slate-100">
               {t.instructions}
             </h3>
-            <ol className="mt-2 max-h-56 space-y-1.5 overflow-auto pr-1">
-              {journeys
-                .find((journey) => journey.id === selectedJourneyId)!
-                .legs.map((leg) => (
+            <ol className="mt-2 max-h-64 space-y-2 overflow-auto pr-1">
+              {collapseTransitLegsForDisplay(
+                journeys.find((journey) => journey.id === selectedJourneyId)!
+                  .legs,
+              ).map((leg) => {
+                const minutes = Math.max(
+                  1,
+                  Math.round(leg.durationSeconds / 60),
+                );
+                return (
                   <li
                     key={leg.id}
-                    className="rounded-lg bg-white/5 px-2 py-2"
+                    className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-slate-100">
-                        {leg.mode === "walk"
-                          ? t.walking
-                          : (leg.line?.nameShort ?? leg.line?.name ?? leg.mode)}
-                      </span>
-                      <span className="text-xs text-slate-400">
-                        {formatTransitClock(leg.departureAt)} →{" "}
-                        {formatTransitClock(leg.arrivalAt)}
-                      </span>
-                    </div>
-                    {leg.from.name || leg.to.name ? (
-                      <p className="mt-0.5 text-[11px] text-slate-400">
-                        {leg.from.name ?? ""} → {leg.to.name ?? ""}
-                      </p>
-                    ) : null}
+                    {leg.mode === "walk" ? (
+                      <div className="flex items-center gap-2 text-sm text-slate-200">
+                        <TransitModeIcon
+                          mode="walk"
+                          className="h-4 w-4 text-slate-400"
+                          title={t.walking}
+                        />
+                        <span>
+                          {t.walking} · {minutes} min
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <TransitLineBadge leg={leg} />
+                            <span className="truncate text-sm font-medium text-slate-100">
+                              {modeLabel(leg.mode, t)}
+                              {leg.line?.name && !leg.line.nameShort
+                                ? ` · ${leg.line.name}`
+                                : ""}
+                            </span>
+                          </div>
+                          <span className="shrink-0 text-xs tabular-nums text-slate-300">
+                            {formatTransitClock(
+                              leg.departureAt,
+                              leg.timezone ?? undefined,
+                            )}{" "}
+                            →{" "}
+                            {formatTransitClock(
+                              leg.arrivalAt,
+                              leg.timezone ?? undefined,
+                            )}
+                          </span>
+                        </div>
+                        {leg.headsign ? (
+                          <p className="mt-1 text-[11px] text-slate-400">
+                            {t.direction} {leg.headsign}
+                          </p>
+                        ) : null}
+                        <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-slate-400">
+                          {leg.from.name ? (
+                            <span>
+                              {t.board}: {leg.from.name}
+                            </span>
+                          ) : null}
+                          {leg.to.name ? (
+                            <span>
+                              {t.getOff}: {leg.to.name}
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          {minutes} min
+                          {leg.stopCount != null
+                            ? ` · ${leg.stopCount} ${
+                                leg.stopCount === 1 ? t.stopSingular : t.stops
+                              }`
+                            : null}
+                          {leg.agency?.name ? ` · ${leg.agency.name}` : null}
+                        </p>
+                      </>
+                    )}
                   </li>
-                ))}
+                );
+              })}
             </ol>
           </div>
         ) : null}

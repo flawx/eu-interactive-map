@@ -5,7 +5,10 @@ import type {
   GeoJSONSource,
   Map as MapLibreMap,
 } from "maplibre-gl";
-import { journeyCoordinates, transitModeColor } from "@/lib/routing/formatTransit";
+import {
+  journeyCoordinates,
+  transitModeColor,
+} from "@/lib/routing/formatTransit";
 import type { TransitJourney } from "@/lib/routing/transit/types";
 import {
   TRANSIT_LAYER_HALO,
@@ -13,6 +16,7 @@ import {
   TRANSIT_LAYER_POINT_LABELS,
   TRANSIT_LAYER_POINTS,
   TRANSIT_LAYER_WALK,
+  TRANSIT_LAYER_WALK_HALO,
   TRANSIT_POINTS_SOURCE_ID,
   TRANSIT_ROUTE_SOURCE_ID,
   TRANSIT_ROUTE_WALK_SOURCE_ID,
@@ -24,6 +28,7 @@ function emptyCollection(): GeoJSON.FeatureCollection {
 }
 
 const LAYER_ORDER = [
+  TRANSIT_LAYER_WALK_HALO,
   TRANSIT_LAYER_WALK,
   TRANSIT_LAYER_HALO,
   TRANSIT_LAYER_MAIN,
@@ -36,11 +41,27 @@ const WIDTH_MAIN: ExpressionSpecification = [
   ["linear"],
   ["zoom"],
   4,
-  3,
+  4.5,
+  8,
+  6.5,
+  12,
+  8,
+  15,
   10,
-  5,
-  14,
-  7,
+];
+
+const WIDTH_HALO: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  4,
+  8,
+  8,
+  11,
+  12,
+  13,
+  15,
+  16,
 ];
 
 const WIDTH_WALK: ExpressionSpecification = [
@@ -48,11 +69,11 @@ const WIDTH_WALK: ExpressionSpecification = [
   ["linear"],
   ["zoom"],
   4,
-  1.5,
+  2,
   10,
-  2.5,
-  14,
   3.5,
+  14,
+  5,
 ];
 
 export function buildTransitLegCollections(journey: TransitJourney | null): {
@@ -69,14 +90,20 @@ export function buildTransitLegCollections(journey: TransitJourney | null): {
   journey.legs.forEach((leg, legIndex) => {
     const coords = leg.geometry?.coordinates;
     if (!coords || coords.length < 2) return;
+    const color = transitModeColor(leg.mode, leg.line?.color);
     const feature: GeoJSON.Feature = {
       type: "Feature",
       properties: {
         journeyIndex: 0,
-        legIndex,
+        stepIndex: legIndex,
         mode: leg.mode,
+        vehicleType: leg.vehicleType,
+        lineName: leg.line?.name ?? null,
+        lineShortName: leg.line?.nameShort ?? null,
+        lineColor: color,
+        textColor: leg.line?.textColor ?? null,
         selected: true,
-        color: transitModeColor(leg.mode, leg.line?.color),
+        color,
       },
       geometry: {
         type: "LineString",
@@ -87,7 +114,6 @@ export function buildTransitLegCollections(journey: TransitJourney | null): {
     else transitFeatures.push(feature);
   });
 
-  // Fallback: if no leg geometries, draw journey geometry as one transit feature.
   if (transitFeatures.length === 0 && walkFeatures.length === 0) {
     const coords = journeyCoordinates(journey);
     if (coords.length >= 2) {
@@ -95,10 +121,10 @@ export function buildTransitLegCollections(journey: TransitJourney | null): {
         type: "Feature",
         properties: {
           journeyIndex: 0,
-          legIndex: 0,
-          mode: "train",
+          stepIndex: 0,
+          mode: "rail",
           selected: true,
-          color: transitModeColor("train"),
+          color: transitModeColor("rail"),
         },
         geometry: { type: "LineString", coordinates: coords },
       });
@@ -121,8 +147,11 @@ export function buildTransitPointsCollection(
       properties: {
         id: point.id,
         label: point.label,
+        subtitle: point.subtitle ?? "",
         color: point.color,
         role: point.role,
+        mode: point.mode ?? "",
+        lineShortName: point.lineShortName ?? "",
       },
       geometry: {
         type: "Point",
@@ -132,13 +161,14 @@ export function buildTransitPointsCollection(
   };
 }
 
-function bringToFront(map: MapLibreMap) {
+export function bringTransitLayersToFront(map: MapLibreMap) {
+  // Always lift transit above basemap + TomTom traffic flow overlays.
   for (const layerId of LAYER_ORDER) {
     if (map.getLayer(layerId)) {
       try {
         map.moveLayer(layerId);
       } catch {
-        // ignore during style transitions
+        // Layer may briefly be missing during style transitions.
       }
     }
   }
@@ -174,6 +204,34 @@ export function ensureTransitRoutingLayers(map: MapLibreMap) {
     });
   }
 
+  if (!map.getLayer(TRANSIT_LAYER_WALK_HALO)) {
+    map.addLayer({
+      id: TRANSIT_LAYER_WALK_HALO,
+      type: "line",
+      source: TRANSIT_ROUTE_WALK_SOURCE_ID,
+      layout: {
+        "line-cap": "round",
+        "line-join": "round",
+        visibility: "visible",
+      },
+      paint: {
+        "line-color": "#0f172a",
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          4,
+          4,
+          10,
+          6,
+          14,
+          8,
+        ],
+        "line-opacity": 0.55,
+        "line-dasharray": [1.2, 1.6],
+      },
+    });
+  }
   if (!map.getLayer(TRANSIT_LAYER_WALK)) {
     map.addLayer({
       id: TRANSIT_LAYER_WALK,
@@ -185,9 +243,9 @@ export function ensureTransitRoutingLayers(map: MapLibreMap) {
         visibility: "visible",
       },
       paint: {
-        "line-color": "#94a3b8",
+        "line-color": "#e2e8f0",
         "line-width": WIDTH_WALK,
-        "line-opacity": 0.9,
+        "line-opacity": 1,
         "line-dasharray": [1.2, 1.6],
       },
     });
@@ -203,19 +261,9 @@ export function ensureTransitRoutingLayers(map: MapLibreMap) {
         visibility: "visible",
       },
       paint: {
-        "line-color": "#ffffff",
-        "line-width": [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          4,
-          5,
-          10,
-          8,
-          14,
-          11,
-        ],
-        "line-opacity": 0.9,
+        "line-color": "#0f172a",
+        "line-width": WIDTH_HALO,
+        "line-opacity": 0.85,
       },
     });
   }
@@ -242,9 +290,21 @@ export function ensureTransitRoutingLayers(map: MapLibreMap) {
       type: "circle",
       source: TRANSIT_POINTS_SOURCE_ID,
       paint: {
-        "circle-radius": 7,
+        "circle-radius": [
+          "match",
+          ["get", "role"],
+          "origin",
+          8,
+          "destination",
+          8,
+          "boarding",
+          7,
+          "alighting",
+          7,
+          6,
+        ],
         "circle-color": ["get", "color"],
-        "circle-stroke-width": 2,
+        "circle-stroke-width": 2.5,
         "circle-stroke-color": "#ffffff",
       },
     });
@@ -254,22 +314,40 @@ export function ensureTransitRoutingLayers(map: MapLibreMap) {
       id: TRANSIT_LAYER_POINT_LABELS,
       type: "symbol",
       source: TRANSIT_POINTS_SOURCE_ID,
+      minzoom: 10,
       layout: {
-        "text-field": ["get", "label"],
+        "text-field": [
+          "case",
+          ["==", ["get", "role"], "origin"],
+          "A",
+          ["==", ["get", "role"], "destination"],
+          "B",
+          [
+            "concat",
+            ["get", "label"],
+            [
+              "case",
+              [">", ["length", ["get", "lineShortName"]], 0],
+              ["concat", " · ", ["get", "lineShortName"]],
+              "",
+            ],
+          ],
+        ],
         "text-size": 11,
-        "text-offset": [0, 1.15],
+        "text-offset": [0, 1.25],
         "text-anchor": "top",
-        "text-allow-overlap": true,
+        "text-optional": true,
+        "text-allow-overlap": false,
       },
       paint: {
         "text-color": "#0f172a",
         "text-halo-color": "#ffffff",
-        "text-halo-width": 1.5,
+        "text-halo-width": 1.75,
       },
     });
   }
 
-  bringToFront(map);
+  bringTransitLayersToFront(map);
 }
 
 export function clearTransitRouteLayers(map: MapLibreMap | null) {
@@ -294,21 +372,41 @@ export function syncTransitRouteLayers(
   },
 ) {
   if (!map) return;
-  if (!map.isStyleLoaded()) return;
+  // Do NOT gate on map.isStyleLoaded(): with live traffic/terrain tiles it can
+  // remain false for long stretches and would silently skip transit geometry.
+  // A present style graph is enough to add GeoJSON sources/layers.
+  if (!map.getStyle()?.layers) return;
 
   if (!options.active || !options.journey) {
     clearTransitRouteLayers(map);
     return;
   }
 
-  ensureTransitRoutingLayers(map);
-  const collections = buildTransitLegCollections(options.journey);
-  setData(map, TRANSIT_ROUTE_SOURCE_ID, collections.transit);
-  setData(map, TRANSIT_ROUTE_WALK_SOURCE_ID, collections.walk);
-  setData(
-    map,
-    TRANSIT_POINTS_SOURCE_ID,
-    buildTransitPointsCollection(options.points),
-  );
-  bringToFront(map);
+  try {
+    ensureTransitRoutingLayers(map);
+    const collections = buildTransitLegCollections(options.journey);
+    setData(map, TRANSIT_ROUTE_SOURCE_ID, collections.transit);
+    setData(map, TRANSIT_ROUTE_WALK_SOURCE_ID, collections.walk);
+    setData(
+      map,
+      TRANSIT_POINTS_SOURCE_ID,
+      buildTransitPointsCollection(options.points),
+    );
+    bringTransitLayersToFront(map);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[transit map]", {
+        features:
+          collections.transit.features.length + collections.walk.features.length,
+        walkFeatures: collections.walk.features.length,
+        transitFeatures: collections.transit.features.length,
+        pointFeatures: options.points.length,
+        layersPresent: LAYER_ORDER.filter((id) => Boolean(map.getLayer(id))),
+        styleLoaded: map.isStyleLoaded(),
+        selectedJourney: options.journey.id,
+      });
+    }
+  } catch {
+    // Style may be mid-swap (base/relief/3D); caller retries on idle/style.load.
+  }
 }

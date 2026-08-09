@@ -19,13 +19,16 @@ export const GOOGLE_TRANSIT_FIELD_MASK = [
   "routes.duration",
   "routes.distanceMeters",
   "routes.polyline.encodedPolyline",
+  "routes.polyline.geoJsonLinestring",
   "routes.legs.duration",
   "routes.legs.distanceMeters",
   "routes.legs.polyline.encodedPolyline",
+  "routes.legs.polyline.geoJsonLinestring",
   "routes.legs.steps.travelMode",
   "routes.legs.steps.staticDuration",
   "routes.legs.steps.distanceMeters",
   "routes.legs.steps.polyline.encodedPolyline",
+  "routes.legs.steps.polyline.geoJsonLinestring",
   "routes.legs.steps.startLocation",
   "routes.legs.steps.endLocation",
   "routes.legs.steps.navigationInstruction",
@@ -33,6 +36,7 @@ export const GOOGLE_TRANSIT_FIELD_MASK = [
   "routes.legs.steps.transitDetails.stopDetails.arrivalStop",
   "routes.legs.steps.transitDetails.stopDetails.departureTime",
   "routes.legs.steps.transitDetails.stopDetails.arrivalTime",
+  "routes.legs.steps.transitDetails.localizedValues",
   "routes.legs.steps.transitDetails.headsign",
   "routes.legs.steps.transitDetails.stopCount",
   "routes.legs.steps.transitDetails.transitLine",
@@ -107,6 +111,8 @@ function buildRequestBody(request: TransitRoutingRequest) {
     computeAlternativeRoutes: request.alternatives,
     languageCode: request.locale ?? "en",
     units: "METRIC",
+    polylineQuality: "HIGH_QUALITY",
+    polylineEncoding: "GEO_JSON_LINESTRING",
   };
 
   if (request.timing.kind === "depart_at") {

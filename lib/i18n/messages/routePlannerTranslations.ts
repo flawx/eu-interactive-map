@@ -111,11 +111,25 @@ export type RoutePlannerMessages = {
   preferMetro: string;
   preferTram: string;
   preferTrain: string;
+  preferMetroTram: string;
   fewerTransfers: string;
   lessWalking: string;
   transitDateOutOfRange: string;
   waiting: string;
   walking: string;
+  board: string;
+  getOff: string;
+  direction: string;
+  stops: string;
+  stopSingular: string;
+  coach: string;
+  tram: string;
+  metro: string;
+  regionalTrain: string;
+  train: string;
+  highSpeedTrain: string;
+  longDistanceTrain: string;
+  transferWalk: string;
 };
 
 const en: RoutePlannerMessages = {
@@ -231,11 +245,25 @@ const en: RoutePlannerMessages = {
   preferMetro: "Metro / Subway",
   preferTram: "Tram / Light rail",
   preferTrain: "Train / Rail",
+  preferMetroTram: "Metro / Tram",
   fewerTransfers: "Fewer transfers",
   lessWalking: "Less walking",
   transitDateOutOfRange: "Transit schedules are not available for this date.",
   waiting: "Waiting",
   walking: "Walking",
+  board: "Board",
+  getOff: "Get off",
+  direction: "Direction",
+  stops: "stops",
+  stopSingular: "stop",
+  coach: "Coach",
+  tram: "Tram",
+  metro: "Metro",
+  regionalTrain: "Regional train",
+  train: "Train",
+  highSpeedTrain: "High-speed train",
+  longDistanceTrain: "Long-distance train",
+  transferWalk: "Transfer",
 };
 
 const fr: RoutePlannerMessages = {
@@ -355,12 +383,26 @@ const fr: RoutePlannerMessages = {
   preferMetro: "Métro",
   preferTram: "Tram",
   preferTrain: "Train",
+  preferMetroTram: "Métro / Tram",
   fewerTransfers: "Moins de correspondances",
   lessWalking: "Moins de marche",
   transitDateOutOfRange:
     "Les horaires de transport ne sont pas disponibles pour cette date.",
   waiting: "Attente",
   walking: "Marche",
+  board: "Monter",
+  getOff: "Descendre",
+  direction: "Direction",
+  stops: "arrêts",
+  stopSingular: "arrêt",
+  coach: "Car",
+  tram: "Tram",
+  metro: "Métro",
+  regionalTrain: "Train régional",
+  train: "Train",
+  highSpeedTrain: "Train à grande vitesse",
+  longDistanceTrain: "Train longue distance",
+  transferWalk: "Correspondance",
 };
 
 const de: RoutePlannerMessages = {
@@ -405,12 +447,26 @@ const de: RoutePlannerMessages = {
   preferMetro: "U-Bahn / Metro",
   preferTram: "Tram / Stadtbahn",
   preferTrain: "Zug / Bahn",
+  preferMetroTram: "U-Bahn / Tram",
   fewerTransfers: "Weniger Umstiege",
   lessWalking: "Weniger zu Fuß",
   transitDateOutOfRange:
     "Fahrpläne sind für dieses Datum nicht verfügbar.",
   waiting: "Wartezeit",
   walking: "Zu Fuß",
+  board: "Einsteigen",
+  getOff: "Aussteigen",
+  direction: "Richtung",
+  stops: "Haltestellen",
+  stopSingular: "Haltestelle",
+  coach: "Fernbus",
+  tram: "Tram",
+  metro: "U-Bahn",
+  regionalTrain: "Regionalzug",
+  train: "Zug",
+  highSpeedTrain: "Hochgeschwindigkeitszug",
+  longDistanceTrain: "Fernzug",
+  transferWalk: "Umstieg",
 };
 
 const es: RoutePlannerMessages = {
