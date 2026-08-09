@@ -84,9 +84,11 @@ import type {
 } from "@/lib/map/focusRequest";
 import type { NormalizedRoute, RoutePoint } from "@/lib/routing/types";
 import type { TransitJourney } from "@/lib/routing/transit/types";
+import type { MultimodalJourney } from "@/lib/routing/flights/types";
 import type { RoutePlannerMapPoint } from "@/lib/routing/routeMapLayers";
 import type { TransitMapPoint } from "@/lib/routing/transitMapLayers";
 import { buildTransitMapPointsFromJourney } from "@/lib/routing/formatTransit";
+import { buildMapDataFromMultimodalJourney } from "@/components/routing/useFlightRouteLayers";
 import {
   areRoutePlannerPointsEqual,
   EMPTY_ROUTE_PLANNER_POINTS,
@@ -250,6 +252,12 @@ export default function MapInterface() {
   const [transitSelectedId, setTransitSelectedId] = useState<string | null>(
     null,
   );
+  const [multimodalJourneys, setMultimodalJourneys] = useState<
+    MultimodalJourney[]
+  >([]);
+  const [multimodalSelectedId, setMultimodalSelectedId] = useState<
+    string | null
+  >(null);
   const [routePlannerPointsState, setRoutePlannerPointsState] =
     useState<RoutePlannerPointsState>(EMPTY_ROUTE_PLANNER_POINTS);
   const [routePlannerPickTarget, setRoutePlannerPickTarget] =
@@ -2852,6 +2860,8 @@ export default function MapInterface() {
       if (routes.length > 0) {
         setTransitJourneys([]);
         setTransitSelectedId(null);
+        setMultimodalJourneys([]);
+        setMultimodalSelectedId(null);
       }
     },
     [],
@@ -2864,6 +2874,22 @@ export default function MapInterface() {
       if (journeys.length > 0) {
         setRoutePlannerRoutes([]);
         setRoutePlannerSelectedId(null);
+        setMultimodalJourneys([]);
+        setMultimodalSelectedId(null);
+      }
+    },
+    [],
+  );
+
+  const handleFlightChange = useCallback(
+    (journeys: MultimodalJourney[], selectedId: string | null) => {
+      setMultimodalJourneys(journeys);
+      setMultimodalSelectedId(selectedId);
+      if (journeys.length > 0) {
+        setRoutePlannerRoutes([]);
+        setRoutePlannerSelectedId(null);
+        setTransitJourneys([]);
+        setTransitSelectedId(null);
       }
     },
     [],
@@ -2910,13 +2936,43 @@ export default function MapInterface() {
     transitJourneys[0] ??
     null;
 
+  const selectedMultimodalJourney =
+    multimodalJourneys.find((journey) => journey.id === multimodalSelectedId) ??
+    multimodalJourneys[0] ??
+    null;
+
+  const flightMapData = useMemo(
+    () => buildMapDataFromMultimodalJourney(selectedMultimodalJourney),
+    [selectedMultimodalJourney],
+  );
+
+  // The ground portion of a flight journey (access/egress transit legs, if
+  // any) reuses the same transit map layers as "pure" transit journeys —
+  // only one of the two is ever populated at a time, which keeps road vs.
+  // transit-only vs. flight-multimodal mutually exclusive on the map.
+  const effectiveTransitJourney = selectedMultimodalJourney
+    ? flightMapData.transitJourneyForMap
+    : selectedTransitJourney;
+
   const transitMapPoints: TransitMapPoint[] = useMemo(() => {
+    if (selectedMultimodalJourney) {
+      return buildTransitMapPointsFromJourney(
+        flightMapData.transitJourneyForMap,
+        routePlannerPointsState.origin,
+        routePlannerPointsState.destination,
+      );
+    }
     return buildTransitMapPointsFromJourney(
       selectedTransitJourney,
       routePlannerPointsState.origin,
       routePlannerPointsState.destination,
     );
-  }, [routePlannerPointsState, selectedTransitJourney]);
+  }, [
+    routePlannerPointsState,
+    selectedTransitJourney,
+    selectedMultimodalJourney,
+    flightMapData,
+  ]);
 
   const openRoutePlanner = (options?: {
     origin?: RoutePoint | null;
@@ -4098,8 +4154,9 @@ export default function MapInterface() {
           routePlannerRoutes={routePlannerRoutes}
           routePlannerSelectedId={routePlannerSelectedId}
           routePlannerPoints={routePlannerMapPoints}
-          transitJourney={selectedTransitJourney}
+          transitJourney={effectiveTransitJourney}
           transitPoints={transitMapPoints}
+          multimodalJourney={selectedMultimodalJourney}
           routePlannerPickMode={routePlannerPickTarget != null}
           onRoutePlannerMapPick={async (longitude, latitude) => {
             let name: string | null = null;
@@ -4411,6 +4468,8 @@ export default function MapInterface() {
               setRoutePlannerSelectedId(null);
               setTransitJourneys([]);
               setTransitSelectedId(null);
+              setMultimodalJourneys([]);
+              setMultimodalSelectedId(null);
               setRoutePlannerPointsState(EMPTY_ROUTE_PLANNER_POINTS);
               setRoutePlannerPickTarget(null);
               setRoutePlannerMapPick(null);
@@ -4424,6 +4483,7 @@ export default function MapInterface() {
             onClearMapPick={() => setRoutePlannerMapPick(null)}
             onRoutesChange={handleRoutePlannerRoutesChange}
             onTransitChange={handleTransitChange}
+            onFlightChange={handleFlightChange}
             onSelectIncident={(alertId) => {
               handleAlertSelect(alertId);
             }}

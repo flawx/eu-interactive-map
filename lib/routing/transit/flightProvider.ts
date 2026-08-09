@@ -1,43 +1,25 @@
-import type {
-  FlightOffer,
-  FlightProvider,
-  TransitProviderStatus,
-} from "@/lib/routing/transit/types";
-
-/** Server-only flight stub — import from API routes, never from client components. */
-
 /**
- * Amadeus Flight Offers Search stub.
- * Full commercial integration is intentionally deferred.
+ * Backwards-compatible shim — the real Amadeus flight integration now lives
+ * in lib/routing/flights/ (see providers/amadeusFlightProvider.ts). This
+ * module only re-exports what /api/routing/transit/status still needs.
+ *
+ * Server-only — import from API routes / Node scripts, never from client
+ * components.
  */
-export class AmadeusFlightProvider implements FlightProvider {
-  readonly id = "amadeus" as const;
 
-  async getStatus(): Promise<TransitProviderStatus> {
-    const key = process.env.AMADEUS_API_KEY?.trim();
-    const secret = process.env.AMADEUS_API_SECRET?.trim();
-    if (!key || !secret) return "misconfigured";
-    return "operational";
-  }
+import { amadeusFlightProvider } from "@/lib/routing/flights/providers/amadeusFlightProvider";
+import type { TransitProviderStatus } from "@/lib/routing/transit/types";
 
-  async search(_input: {
-    origin: string;
-    destination: string;
-    departureDate: string;
-    adults?: number;
-    currency?: string;
-    signal?: AbortSignal;
-  }): Promise<FlightOffer[]> {
-    const status = await this.getStatus();
-    if (status === "misconfigured") {
-      return [];
-    }
-    // Intentionally not calling Amadeus until the dedicated flight commit.
-    return [];
-  }
+export { amadeusFlightProvider };
+
+function toTransitProviderStatus(
+  status: Awaited<ReturnType<typeof amadeusFlightProvider.getStatus>>,
+): TransitProviderStatus {
+  // TransitProviderStatus predates the flight-specific "authentication_error"
+  // state; fold it into "unavailable" for this legacy diagnostic shape.
+  if (status === "authentication_error") return "unavailable";
+  return status;
 }
-
-export const amadeusFlightProvider = new AmadeusFlightProvider();
 
 export async function diagnoseAmadeusFlightSearch(): Promise<{
   configured: boolean;
@@ -46,6 +28,6 @@ export async function diagnoseAmadeusFlightSearch(): Promise<{
   const status = await amadeusFlightProvider.getStatus();
   return {
     configured: status !== "misconfigured",
-    status,
+    status: toTransitProviderStatus(status),
   };
 }

@@ -36,7 +36,7 @@ const ALLOWED = new Set<string>(UNESCO_MAP_COUNTRY_CODES);
  * Curated from EUROCONTROL Snapshot #58 airport names + official / aeronautical
  * identifiers and coordinates. Overseas / non-perimeter sites excluded.
  */
-export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
+const EUROCONTROL_TOP40_AIRPORTS: readonly EuropeanAirport[] = [
   {
     id: "airport-cdg",
     name: "Paris Charles de Gaulle",
@@ -543,6 +543,38 @@ export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
   },
 ] as const;
 
+/**
+ * Airports outside the EUROCONTROL Snapshot #58 top-40 set, added for wider
+ * flight-routing airport-pair coverage (e.g. regional origins/destinations
+ * that still need a resolvable commercial airport). `rank2025` stays `null`
+ * — these are not claimed to be in the EUROCONTROL top-40 peak-day ranking.
+ */
+export const ADDITIONAL_EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
+  {
+    id: "airport-bod",
+    name: "Bordeaux–Mérignac Airport",
+    city: "Bordeaux",
+    countryCode: "FR",
+    latitude: 44.8283,
+    longitude: -0.7156,
+    iataCode: "BOD",
+    icaoCode: "LFBD",
+    rank2025: null,
+    officialWebsite: "https://www.bordeaux.aeroport.fr/en",
+    wikidataId: "Q612731",
+    airportType: "major-international",
+  },
+] as const;
+
+/**
+ * Public export consumed across the app: EUROCONTROL top-40 perimeter
+ * airports plus curated additions (see `ADDITIONAL_EUROPEAN_AIRPORTS`).
+ */
+export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
+  ...EUROCONTROL_TOP40_AIRPORTS,
+  ...ADDITIONAL_EUROPEAN_AIRPORTS,
+];
+
 /** Airports listed in Snapshot #58 but excluded from this map perimeter. */
 export const EUROCONTROL_TOP40_EXCLUDED = [
   { name: "Antalya", reason: "Asian Turkey / outside European map coverage" },
@@ -563,7 +595,7 @@ export const EUROCONTROL_SNAPSHOT_58 = {
   datasetUrl:
     "https://www.eurocontrol.int/sites/default/files/2026-03/eurocontrol-data-snapshot-58-dataset.xlsx",
   top40InSource: 40,
-  includedCount: EUROPEAN_AIRPORTS.length,
+  includedCount: EUROCONTROL_TOP40_AIRPORTS.length,
 } as const;
 
 export function getEuropeanAirportById(
@@ -598,9 +630,13 @@ export function validateEuropeanAirports(
   const expected =
     EUROCONTROL_SNAPSHOT_58.top40InSource -
     EUROCONTROL_TOP40_EXCLUDED.length;
-  if (airports.length !== expected) {
+  // Only airports carrying a rank2025 are claimed to be part of the
+  // EUROCONTROL top-40 perimeter set; curated additions (rank2025: null,
+  // e.g. Bordeaux) sit outside that count on purpose.
+  const rankedCount = airports.filter((a) => a.rank2025 != null).length;
+  if (rankedCount !== expected) {
     errors.push(
-      `Expected ${expected} perimeter airports from top-40 set, found ${airports.length}`,
+      `Expected ${expected} ranked EUROCONTROL top-40 perimeter airports, found ${rankedCount}`,
     );
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 import LanguageFlag from "@/components/i18n/LanguageFlag";
@@ -11,6 +11,9 @@ import {
 } from "@/lib/i18n/languageOptions";
 import type { Messages } from "@/lib/i18n/messages/types";
 import { useAnchoredPortalRect } from "@/lib/ui/useAnchoredPortalRect";
+
+/** Stable id — avoid useId SSR/client drift attributed to AppHeader. */
+const LANGUAGE_LISTBOX_ID = "app-language-listbox";
 
 type LanguageSelectorProps = {
   locale: Locale;
@@ -29,7 +32,6 @@ export default function LanguageSelector({
   const [mounted, setMounted] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLUListElement | null>(null);
-  const listId = useId();
   const active = getLanguageOption(locale);
   const anchor = useAnchoredPortalRect(buttonRef, open);
 
@@ -81,7 +83,7 @@ export default function LanguageSelector({
         aria-label={t.header.chooseLanguage}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={listId}
+        aria-controls={open ? LANGUAGE_LISTBOX_ID : undefined}
         onClick={() => setOpen((value) => !value)}
       >
         <LanguageFlag flagCode={active.flagCode} title={active.nativeName} />
@@ -103,7 +105,7 @@ export default function LanguageSelector({
       createPortal(
         <ul
           ref={menuRef}
-          id={listId}
+          id={LANGUAGE_LISTBOX_ID}
           role="listbox"
           aria-label={t.header.chooseLanguage}
           className="fixed w-[240px] overflow-x-hidden overflow-y-auto rounded-[16px] border p-1.5"

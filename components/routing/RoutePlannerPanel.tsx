@@ -10,6 +10,7 @@ import {
   Footprints,
   MapPin,
   Navigation,
+  Plane,
   Plus,
   Trash2,
   TrainFront,
@@ -27,6 +28,13 @@ import {
   formatTransitClock,
   journeyCoordinates,
 } from "@/lib/routing/formatTransit";
+import {
+  formatFlightClock,
+  formatFlightDuration,
+  multimodalCoordinates,
+  summarizeFlightJourney,
+  tomorrowDateInputValue,
+} from "@/lib/routing/formatFlight";
 import { isRoutingPointAllowed } from "@/lib/routing/routingGeofence";
 import {
   applyShareableRouteToUrl,
@@ -43,6 +51,12 @@ import type {
   TransitRoutingPreference,
 } from "@/lib/routing/transit/types";
 import { transitModeFilterToAllowedModes } from "@/lib/routing/transit/types";
+import type {
+  FlightJourney,
+  FlightLegSegment,
+  FlightSortOrder,
+  MultimodalJourney,
+} from "@/lib/routing/flights/types";
 import {
   DEFAULT_ROUTE_AVOID,
   MAX_ROUTE_WAYPOINTS_UI,
@@ -150,6 +164,10 @@ type RoutePlannerPanelProps = {
     journeys: TransitJourney[],
     selectedId: string | null,
   ) => void;
+  onFlightChange?: (
+    journeys: MultimodalJourney[],
+    selectedId: string | null,
+  ) => void;
   onSelectIncident: (alertId: string) => void;
   onFocusPoint: (longitude: number, latitude: number, zoom?: number) => void;
   onFocusRoute: (coordinates: [number, number][]) => void;
@@ -160,19 +178,28 @@ type RoutePlannerPanelProps = {
 function errorMessage(
   code: string | undefined,
   t: ReturnType<typeof getMessages>["routePlanner"],
-  scope: "road" | "transit",
+  scope: "road" | "transit" | "flight",
 ): string {
+  const unavailableMessage =
+    scope === "transit"
+      ? t.transitServiceUnavailable
+      : scope === "flight"
+        ? t.flightServiceUnavailable
+        : t.serviceUnavailable;
   switch (code) {
     case "origin_required":
       return t.originRequired;
     case "destination_required":
       return t.destinationRequired;
     case "point_outside_coverage":
+    case "airport_not_resolved":
       return t.outsideCoverage;
     case "route_outside_coverage":
       return t.routeLeavesCoverage;
     case "no_route_found":
       return t.noRouteFound;
+    case "no_offers_found":
+      return t.noFlightsFound;
     case "aborted":
       return t.calculationAborted;
     case "transit_date_out_of_range":
@@ -181,14 +208,15 @@ function errorMessage(
     case "provider_misconfigured":
     case "provider_rate_limited":
     case "provider_unavailable":
-      return scope === "transit"
-        ? t.transitServiceUnavailable
-        : t.serviceUnavailable;
+    case "authentication_error":
+      return unavailableMessage;
     default:
-      return scope === "transit"
-        ? t.transitServiceUnavailable
-        : t.serviceUnavailable;
+      return unavailableMessage;
   }
+}
+
+function formatNStops(template: string, count: number): string {
+  return template.replace("{count}", String(count));
 }
 
 export default function RoutePlannerPanel({
@@ -203,6 +231,7 @@ export default function RoutePlannerPanel({
   onClearMapPick,
   onRoutesChange,
   onTransitChange,
+  onFlightChange,
   onSelectIncident,
   onFocusPoint,
   onFocusRoute,
@@ -237,12 +266,43 @@ export default function RoutePlannerPanel({
   const [focusOrigin, setFocusOrigin] = useState(false);
   const [roadDevHint, setRoadDevHint] = useState<string | null>(null);
   const [transitDevHint, setTransitDevHint] = useState<string | null>(null);
+  const [flightError, setFlightError] = useState<string | null>(null);
+  const [flightDevHint, setFlightDevHint] = useState<string | null>(null);
+  const [flightEnvironment, setFlightEnvironment] = useState<
+    "test" | "production" | null
+  >(null);
+  const [multimodalJourneys, setMultimodalJourneys] = useState<
+    MultimodalJourney[]
+  >([]);
+  const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
+  const [flightSort, setFlightSort] = useState<FlightSortOrder>("recommended");
+  const [departureDate, setDepartureDate] = useState<string>(() =>
+    tomorrowDateInputValue(),
+  );
+  const [nonStop, setNonStop] = useState(false);
+  const [adults, setAdults] = useState(1);
+  const [confirmingFlightId, setConfirmingFlightId] = useState<string | null>(
+    null,
+  );
+  const [priceConfirmError, setPriceConfirmError] = useState<string | null>(
+    null,
+  );
   const abortRef = useRef<AbortController | null>(null);
   const autoCalcKeyRef = useRef<string | null>(null);
   const prevModeRef = useRef<PlannerTravelMode>(mode);
 
-  const activeError = mode === "transit" ? transitError : roadError;
-  const activeDevHint = mode === "transit" ? transitDevHint : roadDevHint;
+  const activeError =
+    mode === "transit"
+      ? transitError
+      : mode === "flight"
+        ? flightError
+        : roadError;
+  const activeDevHint =
+    mode === "transit"
+      ? transitDevHint
+      : mode === "flight"
+        ? flightDevHint
+        : roadDevHint;
 
   const bias = userLocation;
 
@@ -302,11 +362,18 @@ export default function RoutePlannerPanel({
     setFocusOrigin(focusOriginOnOpen);
   }, [focusOriginOnOpen, open]);
 
-  // Road (TomTom) and transit results/errors are mutually exclusive in the UI.
+  // Road (TomTom), transit and flight results/errors are mutually exclusive
+  // in the UI — switching mode clears whichever mode's results we're leaving.
   useEffect(() => {
     if (prevModeRef.current === mode) return;
-    const wasTransit = prevModeRef.current === "transit";
+    const previousMode = prevModeRef.current;
+    const wasTransit = previousMode === "transit";
+    const wasFlight = previousMode === "flight";
+    const wasRoad = !wasTransit && !wasFlight;
     const isTransit = mode === "transit";
+    const isFlight = mode === "flight";
+    const isRoad = !isTransit && !isFlight;
+
     if (wasTransit && !isTransit) {
       setJourneys([]);
       setSelectedJourneyId(null);
@@ -314,7 +381,15 @@ export default function RoutePlannerPanel({
       setTransitDevHint(null);
       onTransitChange?.([], null);
     }
-    if (!wasTransit && isTransit) {
+    if (wasFlight && !isFlight) {
+      setMultimodalJourneys([]);
+      setSelectedFlightId(null);
+      setFlightError(null);
+      setFlightDevHint(null);
+      setFlightEnvironment(null);
+      onFlightChange?.([], null);
+    }
+    if (wasRoad && !isRoad) {
       setRoutes([]);
       setSelectedRouteId(null);
       setIncidents([]);
@@ -323,18 +398,24 @@ export default function RoutePlannerPanel({
       onRoutesChange([], null);
     }
     prevModeRef.current = mode;
-  }, [mode, onRoutesChange, onTransitChange]);
+  }, [mode, onRoutesChange, onTransitChange, onFlightChange]);
 
   const calculate = useCallback(async () => {
     if (!origin || !destination) {
       const message = !origin ? t.originRequired : t.destinationRequired;
       if (mode === "transit") setTransitError(message);
+      else if (mode === "flight") setFlightError(message);
       else setRoadError(message);
       return;
     }
     if (!isRoutingPointAllowed(origin) || !isRoutingPointAllowed(destination)) {
       if (mode === "transit") setTransitError(t.outsideCoverage);
+      else if (mode === "flight") setFlightError(t.outsideCoverage);
       else setRoadError(t.outsideCoverage);
+      return;
+    }
+    if (mode === "flight" && !departureDate) {
+      setFlightError(t.flightDateRequired);
       return;
     }
 
@@ -345,9 +426,93 @@ export default function RoutePlannerPanel({
     if (mode === "transit") {
       setTransitError(null);
       setTransitDevHint(null);
+    } else if (mode === "flight") {
+      setFlightError(null);
+      setFlightDevHint(null);
+      setFlightEnvironment(null);
     } else {
       setRoadError(null);
       setRoadDevHint(null);
+    }
+
+    if (mode === "flight") {
+      try {
+        const response = await fetch("/api/routing/flights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            origin: {
+              latitude: origin.latitude,
+              longitude: origin.longitude,
+              name: origin.name,
+            },
+            destination: {
+              latitude: destination.latitude,
+              longitude: destination.longitude,
+              name: destination.name,
+            },
+            departureDate,
+            adults,
+            nonStop,
+            sort: flightSort,
+            includeGroundAccess: true,
+            currency: "EUR",
+            locale,
+          }),
+        });
+
+        const payload = (await response.json()) as {
+          journeys?: MultimodalJourney[];
+          environment?: "test" | "production";
+          error?: { code?: string };
+        };
+
+        if (!response.ok) {
+          setMultimodalJourneys([]);
+          setSelectedFlightId(null);
+          onFlightChange?.([], null);
+          setFlightError(errorMessage(payload.error?.code, t, "flight"));
+          setFlightDevHint(
+            process.env.NODE_ENV === "development" &&
+              (payload.error?.code === "provider_misconfigured" ||
+                payload.error?.code === "provider_not_entitled" ||
+                payload.error?.code === "authentication_error")
+              ? t.flightProviderNotConfiguredDev
+              : null,
+          );
+          return;
+        }
+
+        setFlightDevHint(null);
+        const nextJourneys = payload.journeys ?? [];
+        setFlightEnvironment(payload.environment ?? null);
+        setFlightError(nextJourneys.length === 0 ? t.noFlightsFound : null);
+        const selectedId = nextJourneys[0]?.id ?? null;
+        setMultimodalJourneys(nextJourneys);
+        setSelectedFlightId(selectedId);
+        setRoutes([]);
+        setSelectedRouteId(null);
+        setIncidents([]);
+        setRoadError(null);
+        setRoadDevHint(null);
+        onRoutesChange([], null);
+        setJourneys([]);
+        setSelectedJourneyId(null);
+        setTransitError(null);
+        setTransitDevHint(null);
+        onTransitChange?.([], null);
+        onFlightChange?.(nextJourneys, selectedId);
+        if (nextJourneys[0]) {
+          onFocusRoute(multimodalCoordinates(nextJourneys[0]));
+        }
+      } catch (err) {
+        if (isAbortError(err)) return;
+        setFlightError(t.flightServiceUnavailable);
+      } finally {
+        if (abortRef.current === controller) setLoading(false);
+      }
+      return;
     }
 
     const timingPayload: RoutingTiming =
@@ -424,6 +589,11 @@ export default function RoutePlannerPanel({
         setRoadError(null);
         setRoadDevHint(null);
         onRoutesChange([], null);
+        setMultimodalJourneys([]);
+        setSelectedFlightId(null);
+        setFlightError(null);
+        setFlightDevHint(null);
+        onFlightChange?.([], null);
         onTransitChange?.(nextJourneys, selectedId);
         if (nextJourneys[0]) {
           onFocusRoute(journeyCoordinates(nextJourneys[0]));
@@ -495,6 +665,11 @@ export default function RoutePlannerPanel({
       setTransitError(null);
       setTransitDevHint(null);
       onTransitChange?.([], null);
+      setMultimodalJourneys([]);
+      setSelectedFlightId(null);
+      setFlightError(null);
+      setFlightDevHint(null);
+      onFlightChange?.([], null);
       if (nextRoutes[0]) {
         onFocusRoute(nextRoutes[0].geometry.coordinates);
       }
@@ -526,11 +701,16 @@ export default function RoutePlannerPanel({
     transitModeFilter,
     transitRoutingPreference,
     vehicle,
+    departureDate,
+    adults,
+    nonStop,
+    flightSort,
     locale,
     t,
     onFocusRoute,
     onRoutesChange,
     onTransitChange,
+    onFlightChange,
   ]);
 
   // Auto-calc once per origin/destination/mode/options key when both points valid.
@@ -538,10 +718,12 @@ export default function RoutePlannerPanel({
     if (!open || !origin || !destination) return;
     if (
       mode !== "transit" &&
+      mode !== "flight" &&
       waypointDrafts.some((draft) => draft.point == null)
     ) {
       return;
     }
+    if (mode === "flight" && !departureDate) return;
     const timingKey =
       timing.kind === "depart_at"
         ? `dep:${departAtLocal}`
@@ -562,6 +744,10 @@ export default function RoutePlannerPanel({
       timingKey,
       mode === "transit" ? (transitRoutingPreference ?? "none") : "",
       mode === "transit" ? transitModeFilter : "",
+      mode === "flight" ? departureDate : "",
+      mode === "flight" ? String(nonStop) : "",
+      mode === "flight" ? flightSort : "",
+      mode === "flight" ? String(adults) : "",
     ].join(";");
     if (autoCalcKeyRef.current === key) return;
     autoCalcKeyRef.current = key;
@@ -583,6 +769,10 @@ export default function RoutePlannerPanel({
     arriveAtLocal,
     transitRoutingPreference,
     transitModeFilter,
+    departureDate,
+    nonStop,
+    flightSort,
+    adults,
     calculate,
   ]);
 
@@ -654,16 +844,76 @@ export default function RoutePlannerPanel({
     setWaypointDrafts([]);
     setJourneys([]);
     setSelectedJourneyId(null);
+    setMultimodalJourneys([]);
+    setSelectedFlightId(null);
     setRoadError(null);
     setTransitError(null);
+    setFlightError(null);
     setRoadDevHint(null);
     setTransitDevHint(null);
+    setFlightDevHint(null);
+    setFlightEnvironment(null);
     onRoutesChange([], null);
     onTransitChange?.([], null);
+    onFlightChange?.([], null);
     onPickTargetChange(null);
     clearShareableRouteFromUrl();
     onClose();
   };
+
+  const confirmFlightPrice = useCallback(
+    async (journeyId: string) => {
+      const journey = multimodalJourneys.find((j) => j.id === journeyId);
+      const flightSegment = journey?.segments.find(
+        (segment): segment is FlightLegSegment => segment.kind === "flight",
+      );
+      if (!journey || !flightSegment) return;
+
+      setConfirmingFlightId(journeyId);
+      setPriceConfirmError(null);
+      try {
+        const response = await fetch("/api/routing/flights/price", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rawOffer: flightSegment.journey.rawOffer }),
+        });
+        const payload = (await response.json()) as {
+          offer?: FlightJourney;
+          error?: { code?: string };
+        };
+        if (!response.ok || !payload.offer) {
+          setPriceConfirmError(t.flightServiceUnavailable);
+          return;
+        }
+        const confirmedOffer = payload.offer;
+        const nextJourneys = multimodalJourneys.map((current) => {
+          if (current.id !== journeyId) return current;
+          const hasGroundSegments = current.segments.some(
+            (segment) => segment.kind === "ground_transit",
+          );
+          return {
+            ...current,
+            segments: current.segments.map((segment) =>
+              segment.kind === "flight"
+                ? { ...segment, journey: confirmedOffer }
+                : segment,
+            ),
+            totalPrice:
+              !hasGroundSegments && confirmedOffer.price
+                ? confirmedOffer.price
+                : current.totalPrice,
+          };
+        });
+        setMultimodalJourneys(nextJourneys);
+        onFlightChange?.(nextJourneys, journeyId);
+      } catch {
+        setPriceConfirmError(t.flightServiceUnavailable);
+      } finally {
+        setConfirmingFlightId(null);
+      }
+    },
+    [multimodalJourneys, onFlightChange, t],
+  );
 
   if (!open) return null;
 
@@ -785,7 +1035,7 @@ export default function RoutePlannerPanel({
             </button>
           </div>
 
-          {mode !== "transit"
+          {mode !== "transit" && mode !== "flight"
             ? waypointDrafts.map((draft, index) => (
                 <div
                   key={draft.id}
@@ -835,7 +1085,9 @@ export default function RoutePlannerPanel({
               ))
             : null}
 
-          {mode !== "transit" && waypointDrafts.length < MAX_ROUTE_WAYPOINTS_UI ? (
+          {mode !== "transit" &&
+          mode !== "flight" &&
+          waypointDrafts.length < MAX_ROUTE_WAYPOINTS_UI ? (
             <button
               type="button"
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-sm text-slate-200 hover:bg-white/5"
@@ -852,11 +1104,12 @@ export default function RoutePlannerPanel({
           ) : null}
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-1.5" role="tablist">
+        <div className="mt-4 grid grid-cols-5 gap-1" role="tablist">
           {(
             [
               ["car", Car, t.car],
               ["transit", TrainFront, t.transit],
+              ["flight", Plane, t.flight],
               ["bicycle", Bike, t.bicycle],
               ["pedestrian", Footprints, t.pedestrian],
             ] as const
@@ -866,15 +1119,16 @@ export default function RoutePlannerPanel({
               type="button"
               role="tab"
               aria-selected={mode === value}
-              className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl text-xs font-medium ${
+              title={label}
+              className={`inline-flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-[10px] font-medium sm:flex-row sm:gap-1.5 sm:text-xs ${
                 mode === value
                   ? "bg-[#1a73e8] text-white"
                   : "bg-white/5 text-slate-200 hover:bg-white/10"
               }`}
               onClick={() => setMode(value)}
             >
-              <Icon className="h-4 w-4" aria-hidden />
-              {label}
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="truncate">{label}</span>
             </button>
           ))}
         </div>
@@ -926,6 +1180,48 @@ export default function RoutePlannerPanel({
                 onChange={(event) => setArriveAtLocal(event.target.value)}
               />
             ) : null}
+          </div>
+        ) : mode === "flight" ? (
+          <div className="mt-3 space-y-2">
+            <input
+              type="date"
+              min={tomorrowDateInputValue()}
+              className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+              value={departureDate}
+              aria-label={t.departureDate}
+              onChange={(event) => setDepartureDate(event.target.value)}
+            />
+            <label className="flex min-h-10 items-center gap-2 text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={nonStop}
+                onChange={(event) => setNonStop(event.target.checked)}
+              />
+              {t.directFlightsOnly}
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  ["recommended", t.recommended],
+                  ["cheapest", t.cheapest],
+                  ["fastest", t.fastest],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={flightSort === value}
+                  className={`min-h-10 rounded-lg px-2.5 text-xs ${
+                    flightSort === value
+                      ? "bg-white/15 text-white"
+                      : "bg-white/5 text-slate-300"
+                  }`}
+                  onClick={() => setFlightSort(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -1028,7 +1324,30 @@ export default function RoutePlannerPanel({
           </fieldset>
         ) : null}
 
-        {showOptions && mode !== "transit" ? (
+        {showOptions && mode === "flight" ? (
+          <fieldset className="mt-2 space-y-3 rounded-xl border border-white/10 p-3">
+            <legend className="px-1 text-xs text-slate-400">{t.options}</legend>
+            <div>
+              <label className="mb-1.5 block text-xs text-slate-400">
+                {t.passengers}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={9}
+                value={adults}
+                className="min-h-11 w-24 rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+                onChange={(event) =>
+                  setAdults(
+                    Math.min(9, Math.max(1, Number(event.target.value) || 1)),
+                  )
+                }
+              />
+            </div>
+          </fieldset>
+        ) : null}
+
+        {showOptions && mode !== "transit" && mode !== "flight" ? (
           <fieldset className="mt-2 space-y-1.5 rounded-xl border border-white/10 p-3">
             <legend className="px-1 text-xs text-slate-400">{t.options}</legend>
             {(
@@ -1260,7 +1579,247 @@ export default function RoutePlannerPanel({
           </div>
         ) : null}
 
-        {mode !== "transit" && routes.length > 0 ? (
+        {mode === "flight" && flightEnvironment === "test" ? (
+          <p className="mt-2 text-[11px] text-slate-500">
+            {process.env.NODE_ENV !== "production"
+              ? `Amadeus ${flightEnvironment} environment`
+              : null}
+          </p>
+        ) : null}
+
+        {mode === "flight" && multimodalJourneys.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              {t.recommendedRoute}
+            </h3>
+            {multimodalJourneys.map((journey, index) => {
+              const selected = journey.id === selectedFlightId;
+              const flightSegment = journey.segments.find(
+                (segment): segment is FlightLegSegment =>
+                  segment.kind === "flight",
+              );
+              const summary = flightSegment
+                ? summarizeFlightJourney(flightSegment.journey)
+                : null;
+              const hasAirportChange = journey.warnings.some(
+                (warning) => warning.code === "airport_change",
+              );
+              const hasTightConnection = journey.warnings.some(
+                (warning) =>
+                  warning.code === "connection_too_tight" ||
+                  warning.code === "egress_too_tight",
+              );
+              return (
+                <button
+                  key={journey.id}
+                  type="button"
+                  className={`w-full rounded-xl border p-3 text-left transition ${
+                    selected
+                      ? "border-[#1a73e8]/60 bg-[#1a73e8]/15"
+                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                  }`}
+                  onClick={() => {
+                    setSelectedFlightId(journey.id);
+                    onFlightChange?.(multimodalJourneys, journey.id);
+                    onFocusRoute(multimodalCoordinates(journey));
+                  }}
+                >
+                  {index > 0 ? (
+                    <p className="mb-1 text-[11px] text-slate-400">
+                      {t.alternativeRoute} {index}
+                    </p>
+                  ) : null}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-lg font-semibold text-slate-50">
+                      {formatFlightDuration(journey.totalDurationSeconds, locale)}
+                    </span>
+                    <span className="text-sm text-slate-300">
+                      {formatFlightClock(journey.departureAt)} →{" "}
+                      {formatFlightClock(journey.arrivalAt)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-300">
+                    <Plane className="h-3.5 w-3.5" aria-hidden />
+                    {summary?.firstFlightNumber ? (
+                      <span>{summary.firstFlightNumber}</span>
+                    ) : null}
+                    <span aria-hidden>·</span>
+                    <span>
+                      {summary
+                        ? summary.stops === 0
+                          ? t.direct
+                          : summary.stops === 1
+                            ? t.oneStop
+                            : formatNStops(t.nStops, summary.stops)
+                        : "—"}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {journey.totalPrice
+                        ? `${journey.totalPrice.status === "confirmed" ? `${t.priceConfirmed} ` : `${t.searchPrice} `}${journey.totalPrice.amount.toFixed(2)} ${journey.totalPrice.currency}`
+                        : t.fareUnavailable}
+                    </span>
+                  </div>
+                  {hasAirportChange ? (
+                    <p className="mt-1 text-[11px] text-amber-300">
+                      {t.airportChangeRequired}
+                    </p>
+                  ) : null}
+                  {hasTightConnection ? (
+                    <p className="mt-1 text-[11px] text-amber-300">
+                      {t.groundConnectionUnavailable}
+                    </p>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {mode === "flight" &&
+        multimodalJourneys.find((journey) => journey.id === selectedFlightId) ? (
+          <div className="mt-3 space-y-2">
+            <h3 className="text-sm font-medium text-slate-100">
+              {t.instructions}
+            </h3>
+            {multimodalJourneys
+              .find((journey) => journey.id === selectedFlightId)!
+              .segments.map((segment) => {
+                if (segment.kind === "ground_transit") {
+                  return (
+                    <div
+                      key={segment.id}
+                      className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
+                    >
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                        {t.airportTransfer}
+                      </p>
+                      {collapseTransitLegsForDisplay(segment.journey.legs).map(
+                        (leg) => (
+                          <div
+                            key={leg.id}
+                            className="mt-1 flex items-center justify-between gap-2 text-xs text-slate-300"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <TransitModeIcon
+                                mode={leg.mode}
+                                className="h-3.5 w-3.5 text-slate-400"
+                              />
+                              {leg.mode === "walk"
+                                ? t.walking
+                                : modeLabel(leg.mode, t)}
+                            </span>
+                            <span className="tabular-nums">
+                              {formatTransitClock(
+                                leg.departureAt,
+                                leg.timezone ?? undefined,
+                              )}{" "}
+                              →{" "}
+                              {formatTransitClock(
+                                leg.arrivalAt,
+                                leg.timezone ?? undefined,
+                              )}
+                            </span>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  );
+                }
+
+                const flight = segment.journey;
+                return (
+                  <div
+                    key={segment.id}
+                    className="space-y-2 rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
+                  >
+                    {flight.segments.map((flightSeg, segIndex) => (
+                      <div key={flightSeg.id}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Plane className="h-4 w-4 shrink-0 text-[#0ea5e9]" aria-hidden />
+                            <span className="truncate text-sm font-medium text-slate-100">
+                              {flightSeg.carrierCode}
+                              {flightSeg.flightNumber}
+                            </span>
+                          </div>
+                          <span className="shrink-0 text-xs tabular-nums text-slate-300">
+                            {formatFlightClock(flightSeg.departure.at)} →{" "}
+                            {formatFlightClock(flightSeg.arrival.at)}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-slate-400">
+                          <span>
+                            {t.departureAirport}: {flightSeg.departure.place.iataCode}
+                            {flightSeg.departure.terminal
+                              ? ` (${t.terminal} ${flightSeg.departure.terminal})`
+                              : ""}
+                          </span>
+                          <span>
+                            {t.arrivalAirport}: {flightSeg.arrival.place.iataCode}
+                            {flightSeg.arrival.terminal
+                              ? ` (${t.terminal} ${flightSeg.arrival.terminal})`
+                              : ""}
+                          </span>
+                        </div>
+                        {flightSeg.carrierName ? (
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            {t.operatedBy}: {flightSeg.carrierName}
+                          </p>
+                        ) : null}
+                        {segIndex < flight.segments.length - 1 &&
+                        flight.layovers[segIndex] ? (
+                          <p className="mt-1.5 text-[11px] text-amber-200">
+                            {t.layover}: {flight.layovers[segIndex]!.airport.iataCode}
+                            {" · "}
+                            {formatFlightDuration(
+                              flight.layovers[segIndex]!.durationSeconds,
+                              locale,
+                            )}
+                          </p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+
+            {(() => {
+              const selected = multimodalJourneys.find(
+                (journey) => journey.id === selectedFlightId,
+              );
+              const flightSegment = selected?.segments.find(
+                (segment): segment is FlightLegSegment =>
+                  segment.kind === "flight",
+              );
+              if (!selected || !flightSegment) return null;
+              const isConfirmed =
+                flightSegment.journey.price?.status === "confirmed";
+              const isConfirming = confirmingFlightId === selected.id;
+              return (
+                <div className="mt-2 space-y-1.5">
+                  <button
+                    type="button"
+                    disabled={isConfirmed || isConfirming}
+                    className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-white/10 text-xs font-medium text-slate-100 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => void confirmFlightPrice(selected.id)}
+                  >
+                    {isConfirming
+                      ? t.confirmingPrice
+                      : isConfirmed
+                        ? t.priceConfirmed
+                        : t.confirmPrice}
+                  </button>
+                  {priceConfirmError ? (
+                    <p className="text-[11px] text-amber-300">{priceConfirmError}</p>
+                  ) : null}
+                </div>
+              );
+            })()}
+          </div>
+        ) : null}
+
+        {mode !== "transit" && mode !== "flight" && routes.length > 0 ? (
           <div className="mt-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               {t.recommendedRoute}
@@ -1330,7 +1889,7 @@ export default function RoutePlannerPanel({
           </div>
         ) : null}
 
-        {mode !== "transit" && incidents.length > 0 ? (
+        {mode !== "transit" && mode !== "flight" && incidents.length > 0 ? (
           <div className="mt-3 rounded-xl border border-white/10 p-3">
             <p className="text-sm font-medium text-slate-100">
               {incidents.length} {t.incidentsOnRoute}
@@ -1352,6 +1911,7 @@ export default function RoutePlannerPanel({
         ) : null}
 
         {mode !== "transit" &&
+        mode !== "flight" &&
         routes.find((r) => r.id === selectedRouteId)?.instructions?.length ? (
           <div className="mt-3">
             <h3 className="text-sm font-medium text-slate-100">

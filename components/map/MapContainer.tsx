@@ -22,6 +22,11 @@ import {
   bringTransitLayersToFront,
 } from "@/components/routing/useTransitRouteLayers";
 import {
+  ensureFlightRoutingLayers,
+  syncFlightRouteLayers,
+  bringFlightLayersToFront,
+} from "@/components/routing/useFlightRouteLayers";
+import {
   ROUTE_PLANNER_LAYER_ALT,
   ROUTE_PLANNER_LAYER_HALO,
   ROUTE_PLANNER_LAYER_MAIN,
@@ -34,6 +39,7 @@ import {
   TRANSIT_ROUTE_SOURCE_ID,
   type TransitMapPoint,
 } from "@/lib/routing/transitMapLayers";
+import type { MultimodalJourney } from "@/lib/routing/flights/types";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
 import type {
@@ -1125,6 +1131,7 @@ export default function MapContainer({
   routePlannerPoints = [],
   transitJourney = null,
   transitPoints = [],
+  multimodalJourney = null,
   routePlannerPickMode = false,
   onRoutePlannerMapPick,
   onRoutePlannerContextMenu,
@@ -1259,6 +1266,7 @@ export default function MapContainer({
   routePlannerPoints?: import("@/lib/routing/routeMapLayers").RoutePlannerMapPoint[];
   transitJourney?: TransitJourney | null;
   transitPoints?: TransitMapPoint[];
+  multimodalJourney?: MultimodalJourney | null;
   routePlannerPickMode?: boolean;
   onRoutePlannerMapPick?: (longitude: number, latitude: number) => void;
   onRoutePlannerContextMenu?: (longitude: number, latitude: number) => void;
@@ -1268,6 +1276,8 @@ export default function MapContainer({
   const mapRef = useRef<MapLibreMap | null>(null);
   const transitJourneyRef = useRef(transitJourney);
   transitJourneyRef.current = transitJourney;
+  const multimodalJourneyRef = useRef(multimodalJourney);
+  multimodalJourneyRef.current = multimodalJourney;
   const showEurozoneRef = useRef(showEurozone);
   showEurozoneRef.current = showEurozone;
   const showNonEurozoneRef = useRef(showNonEurozone);
@@ -7317,9 +7327,12 @@ export default function MapContainer({
       TRAFFIC_FLOW_TILE_LAYER_ID,
       Boolean(showLiveTrafficFlow && providerAvailable),
     );
-    // Soften traffic flow while a transit journey is drawn so colored
-    // provider segments remain readable on Voyager + green flow tiles.
-    if (map.getLayer(TRAFFIC_FLOW_TILE_LAYER_ID) && transitJourneyRef.current) {
+    // Soften traffic flow while a transit or flight journey is drawn so
+    // colored provider segments remain readable on Voyager + green flow tiles.
+    if (
+      map.getLayer(TRAFFIC_FLOW_TILE_LAYER_ID) &&
+      (transitJourneyRef.current || multimodalJourneyRef.current)
+    ) {
       try {
         map.setPaintProperty(TRAFFIC_FLOW_TILE_LAYER_ID, "line-opacity", 0.28);
       } catch {
@@ -7346,10 +7359,17 @@ export default function MapContainer({
       Boolean(anyDetailedLayer && vectorTilesAvailable),
     );
 
-    // Traffic flow is re-inserted often; keep transit geometry above it.
+    // Traffic flow is re-inserted often; keep transit/flight geometry above it.
     if (transitJourneyRef.current) {
       try {
         bringTransitLayersToFront(map);
+      } catch {
+        // ignore during style transitions
+      }
+    }
+    if (multimodalJourneyRef.current) {
+      try {
+        bringFlightLayersToFront(map);
       } catch {
         // ignore during style transitions
       }
@@ -8189,6 +8209,7 @@ export default function MapContainer({
 
     let cancelled = false;
     let idleQueued = false;
+    const showFlight = Boolean(multimodalJourney);
     const showTransit = Boolean(transitJourney);
 
     if (process.env.NODE_ENV !== "production") {
@@ -8196,9 +8217,11 @@ export default function MapContainer({
         routePlannerActive,
         mapSourcesReadyVersion,
         showTransit,
+        showFlight,
         journeyId: transitJourney?.id ?? null,
         legCount: transitJourney?.legs?.length ?? 0,
         pointCount: transitPoints.length,
+        multimodalJourneyId: multimodalJourney?.id ?? null,
         styleLoaded: map.isStyleLoaded(),
       };
     }
@@ -8206,15 +8229,19 @@ export default function MapContainer({
     const apply = () => {
       if (cancelled) return;
       syncRoutePlannerLayers(map, {
-        active: routePlannerActive && !showTransit,
-        routes: showTransit ? [] : routePlannerRoutes,
-        selectedRouteId: showTransit ? null : routePlannerSelectedId,
-        points: showTransit ? [] : routePlannerPoints,
+        active: routePlannerActive && !showTransit && !showFlight,
+        routes: showTransit || showFlight ? [] : routePlannerRoutes,
+        selectedRouteId: showTransit || showFlight ? null : routePlannerSelectedId,
+        points: showTransit || showFlight ? [] : routePlannerPoints,
       });
       syncTransitRouteLayers(map, {
         active: routePlannerActive && showTransit,
         journey: showTransit ? transitJourney : null,
         points: showTransit ? transitPoints : [],
+      });
+      syncFlightRouteLayers(map, {
+        active: routePlannerActive && showFlight,
+        journey: showFlight ? multimodalJourney : null,
       });
       if (process.env.NODE_ENV !== "production") {
         const src = map.getSource(TRANSIT_ROUTE_SOURCE_ID) as
@@ -8250,10 +8277,14 @@ export default function MapContainer({
       // Runtime sources/layers are wiped on style reload — recreate + refill.
       if (routePlannerActive) {
         try {
-          if (!showTransit) ensureRoutingLayers(map);
+          if (!showTransit && !showFlight) ensureRoutingLayers(map);
           if (showTransit) {
             ensureTransitRoutingLayers(map);
             bringTransitLayersToFront(map);
+          }
+          if (showFlight) {
+            ensureFlightRoutingLayers(map);
+            bringFlightLayersToFront(map);
           }
         } catch {
           // Style may still be transitioning.
@@ -8275,6 +8306,7 @@ export default function MapContainer({
     routePlannerPoints,
     transitJourney,
     transitPoints,
+    multimodalJourney,
     mapSourcesReadyVersion,
   ]);
 

@@ -175,6 +175,7 @@ type MapClientProps = {
   routePlannerPoints?: import("@/lib/routing/routeMapLayers").RoutePlannerMapPoint[];
   transitJourney?: import("@/lib/routing/transit/types").TransitJourney | null;
   transitPoints?: import("@/lib/routing/transitMapLayers").TransitMapPoint[];
+  multimodalJourney?: import("@/lib/routing/flights/types").MultimodalJourney | null;
   routePlannerPickMode?: boolean;
   onRoutePlannerMapPick?: (longitude: number, latitude: number) => void;
   onRoutePlannerContextMenu?: (longitude: number, latitude: number) => void;
@@ -299,6 +300,7 @@ export default function MapClient({
   routePlannerPoints = [],
   transitJourney = null,
   transitPoints = [],
+  multimodalJourney = null,
   routePlannerPickMode = false,
   onRoutePlannerMapPick,
   onRoutePlannerContextMenu,
@@ -425,6 +427,7 @@ export default function MapClient({
       routePlannerPoints={routePlannerPoints}
       transitJourney={transitJourney}
       transitPoints={transitPoints}
+      multimodalJourney={multimodalJourney}
       routePlannerPickMode={routePlannerPickMode}
       onRoutePlannerMapPick={onRoutePlannerMapPick}
       onRoutePlannerContextMenu={onRoutePlannerContextMenu}
