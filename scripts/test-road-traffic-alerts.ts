@@ -145,23 +145,23 @@ async function main() {
   assert(demos.some((alert) => alert.status === "ended"));
 
   const migrated = migrateMapLayerPreferences({});
-  assert.equal(migrated.liveTrafficFlow, false);
-  assert.equal(migrated.roadTrafficIncidents, false);
+  assert.equal(migrated.liveTrafficFlow, true);
+  assert.equal(migrated.roadTrafficIncidents, true);
   assert.equal(migrated.trafficAccidents, true);
-  assert.equal(migrated.roadClosuresRestrictions, false);
-  assert.equal(migrated.roadworks, false);
+  assert.equal(migrated.roadClosuresRestrictions, true);
+  assert.equal(migrated.roadworks, true);
   const baseCount = countActiveMapLayers(DEFAULT_MAP_LAYER_PREFERENCES);
-  const enabledParents = {
+  const disabledParents = {
     ...DEFAULT_MAP_LAYER_PREFERENCES,
-    roadTrafficIncidents: true,
-    roadClosuresRestrictions: true,
-    roadworks: true,
+    roadTrafficIncidents: false,
+    roadClosuresRestrictions: false,
+    roadworks: false,
   };
-  assert.equal(countActiveMapLayers(enabledParents), baseCount + 3);
+  assert.equal(countActiveMapLayers(disabledParents), baseCount - 3);
   assert.equal(
-    countActiveMapLayers({ ...enabledParents, trafficAccidents: false }),
-    baseCount + 3,
-    "traffic subfilters must not increase the main-layer counter",
+    countActiveMapLayers({ ...disabledParents, trafficAccidents: false }),
+    baseCount - 3,
+    "traffic subfilters must not decrease the main-layer counter",
   );
 
   const search = buildLocalSearchIndex("en", [], [], demos);

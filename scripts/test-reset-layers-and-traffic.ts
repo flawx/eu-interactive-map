@@ -56,11 +56,11 @@ function main() {
   assert.equal(defaults.touristLandmark, true);
   assert.equal(defaults.majorEuropeanAirports, true);
   assert.equal(defaults.liveTrafficFlow, true);
+  assert.equal(defaults.roadTrafficIncidents, true);
+  assert.equal(defaults.roadClosuresRestrictions, true);
+  assert.equal(defaults.roadworks, true);
   assert.equal(defaults.schengenOutsideEu, false);
   assert.equal(defaults.euCandidates, false);
-  assert.equal(defaults.roadTrafficIncidents, false);
-  assert.equal(defaults.roadClosuresRestrictions, false);
-  assert.equal(defaults.roadworks, false);
   assert.equal(defaults.unescoWorldHeritage, false);
   assert.equal(defaults.majorWildfires, false);
   assert.equal(MAP_LAYER_PREFERENCES_SCHEMA_VERSION, 3);
@@ -107,27 +107,33 @@ function main() {
     false,
   );
 
-  // Simulate: Road incidents ON → Reset → OFF; Live traffic stays ON; Heritage ON.
+  // Simulate: all Road Traffic OFF → Reset → 4/4 ON; Heritage restored ON.
   const dirty = migrateMapLayerPreferences({
     ...DEFAULT_MAP_LAYER_PREFERENCES,
-    roadTrafficIncidents: true,
+    liveTrafficFlow: false,
+    roadTrafficIncidents: false,
+    roadClosuresRestrictions: false,
+    roadworks: false,
     schengenOutsideEu: true,
     euCandidates: true,
     europeanHeritageLabel: false,
     majorEuropeanAirports: false,
-    liveTrafficFlow: false,
   });
-  assert.equal(dirty.roadTrafficIncidents, true);
   assert.equal(dirty.liveTrafficFlow, false);
+  assert.equal(dirty.roadTrafficIncidents, false);
+  assert.equal(dirty.roadClosuresRestrictions, false);
+  assert.equal(dirty.roadworks, false);
   assert.equal(dirty.europeanHeritageLabel, false);
 
   const afterReset = applyResetLayersAction(dirty);
-  assert.equal(afterReset.roadTrafficIncidents, false);
+  assert.equal(afterReset.liveTrafficFlow, true);
+  assert.equal(afterReset.roadTrafficIncidents, true);
+  assert.equal(afterReset.roadClosuresRestrictions, true);
+  assert.equal(afterReset.roadworks, true);
   assert.equal(afterReset.schengenOutsideEu, false);
   assert.equal(afterReset.euCandidates, false);
   assert.equal(afterReset.europeanHeritageLabel, true);
   assert.equal(afterReset.majorEuropeanAirports, true);
-  assert.equal(afterReset.liveTrafficFlow, true);
   assert.notEqual(afterReset, dirty);
   assert.notEqual(afterReset, DEFAULT_MAP_LAYER_PREFERENCES);
   assert.deepEqual(afterReset, createDefaultLayerState());

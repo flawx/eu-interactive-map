@@ -17,10 +17,13 @@ function main() {
   assert.equal(prefs.touristLandmark, true);
   assert.equal(prefs.majorEuropeanAirports, true);
   assert.equal(prefs.liveTrafficFlow, true);
+  assert.equal(prefs.roadTrafficIncidents, true);
+  assert.equal(prefs.roadClosuresRestrictions, true);
+  assert.equal(prefs.roadworks, true);
   assert.equal(prefs.euCandidates, false);
   assert.equal(prefs.unescoWorldHeritage, false);
   assert.equal(prefs.majorWildfires, false);
-  assert.equal(prefs.roadTrafficIncidents, false);
+  assert.equal(prefs.schengenOutsideEu, false);
 
   assert.equal(DEFAULT_EXPANDED_CATEGORIES.alerts, false);
   assert.equal(DEFAULT_EXPANDED_CATEGORIES.roadTraffic, false);
