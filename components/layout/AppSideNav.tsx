@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BookOpen, Info, Map as MapIcon, Settings2, X } from "lucide-react";
+import { EUStarLoader } from "@/components/ui/EUStarLoader";
 import type { Messages } from "@/lib/i18n/messages/types";
 
 type AppSideNavProps = {
@@ -20,9 +22,15 @@ export default function AppSideNav({
 }: AppSideNavProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setPendingHref(null);
+      return;
+    }
 
     const previous = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
@@ -41,7 +49,21 @@ export default function AppSideNav({
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    router.prefetch("/about");
+    router.prefetch("/sources");
+    router.prefetch("/settings");
+  }, [router]);
+
   if (!open) return null;
+
+  const navigate = (href: string) => {
+    setPendingHref(href);
+    startTransition(() => {
+      router.push(href);
+      onClose();
+    });
+  };
 
   return (
     <div className="fixed inset-0" style={{ zIndex: 1300 }} role="presentation">
@@ -94,7 +116,8 @@ export default function AppSideNav({
             href="/about"
             icon={<Info className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />}
             label={t.nav.aboutProject}
-            onNavigate={onClose}
+            pending={isPending && pendingHref === "/about"}
+            onNavigate={() => navigate("/about")}
           />
           <NavLinkItem
             href="/sources"
@@ -102,7 +125,8 @@ export default function AppSideNav({
               <BookOpen className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />
             }
             label={t.nav.sourcesCredits}
-            onNavigate={onClose}
+            pending={isPending && pendingHref === "/sources"}
+            onNavigate={() => navigate("/sources")}
           />
           <NavLinkItem
             href="/settings"
@@ -110,7 +134,8 @@ export default function AppSideNav({
               <Settings2 className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />
             }
             label={t.nav.displaySettings}
-            onNavigate={onClose}
+            pending={isPending && pendingHref === "/settings"}
+            onNavigate={() => navigate("/settings")}
           />
         </ul>
       </nav>
@@ -157,24 +182,34 @@ function NavLinkItem({
   href,
   icon,
   label,
+  pending,
   onNavigate,
 }: {
   href: string;
   icon: ReactNode;
   label: string;
+  pending?: boolean;
   onNavigate: () => void;
 }) {
   return (
     <li>
       <Link
         href={href}
-        onClick={onNavigate}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+        prefetch
+        onClick={(event) => {
+          event.preventDefault();
+          onNavigate();
+        }}
+        aria-busy={pending || undefined}
+        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 ${
+          pending ? "opacity-80" : ""
+        }`}
       >
         <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-muted)]">
           {icon}
         </span>
         <span className="flex-1 font-medium">{label}</span>
+        {pending ? <EUStarLoader size="sm" label="Loading" /> : null}
       </Link>
     </li>
   );

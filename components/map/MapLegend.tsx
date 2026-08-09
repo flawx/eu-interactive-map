@@ -49,6 +49,8 @@ type MapLegendProps = {
     value: boolean,
   ) => void;
   onResetLayers: () => void;
+  /** Increment to force category collapse to defaults (Reset Layers). */
+  resetToken?: number;
   highlight?: boolean;
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
@@ -73,6 +75,7 @@ export default function MapLegend({
   preferences,
   onTogglePreference,
   onResetLayers,
+  resetToken = 0,
   highlight,
   collapsed,
   onCollapsedChange,
@@ -100,6 +103,15 @@ export default function MapLegend({
       alerts: majorActiveAlertCount > 0,
     }));
   }, [majorActiveAlertCount]);
+
+  useEffect(() => {
+    if (resetToken <= 0) return;
+    setExpandedCategories({
+      ...DEFAULT_EXPANDED_CATEGORIES,
+      alerts: majorActiveAlertCount > 0,
+    });
+    setExpandedFilters({});
+  }, [resetToken, majorActiveAlertCount]);
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     () => getDefaultGroupsForHydration(),

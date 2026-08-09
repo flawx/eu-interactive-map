@@ -47,7 +47,11 @@ type Props = {
     jams: number;
     closures: number;
     roadworks: number;
+    other?: number;
   };
+  trafficFlowEnabled?: boolean;
+  trafficIncidentsEnabled?: boolean;
+  trafficDetailsZoomOk?: boolean;
   forceCollapsedToken?: number;
 };
 
@@ -55,12 +59,13 @@ function statusLabel(
   status: AlertConnectorStatus | undefined,
   activeCount: number,
   t: ReturnType<typeof getMessages>["alertPanel"],
+  emptyLabel?: string,
 ): string {
   if (status === "misconfigured") return t.configurationRequired;
   if (status === "unavailable") return t.connectorUnavailable;
   if (status === "delayed") return t.connectorDelayed;
   if (status === "operational" && activeCount === 0) {
-    return t.noActiveEventsEurope;
+    return emptyLabel ?? t.noActiveEventsInView;
   }
   return status === "operational"
     ? t.connectorOperational
@@ -98,7 +103,11 @@ export default function AlertStatusPanel({
     jams: 0,
     closures: 0,
     roadworks: 0,
+    other: 0,
   },
+  trafficFlowEnabled = false,
+  trafficIncidentsEnabled = false,
+  trafficDetailsZoomOk = true,
   forceCollapsedToken = 0,
 }: Props) {
   const t = getMessages(locale).alertPanel;
@@ -348,21 +357,41 @@ export default function AlertStatusPanel({
         )}
         {trafficEnabled && (
           <>
-            <dt className="font-medium text-slate-200">TomTom Traffic</dt>
+            <dt className="font-medium text-slate-200">Traffic flow</dt>
             <dd className="text-right text-slate-400">
-              {statusLabel(
-                statuses["tomtom-traffic"],
-                trafficCounts.visible,
-                t,
-              )}
+              {trafficFlowEnabled
+                ? statusLabel(statuses["tomtom-traffic"], 1, t)
+                : t.layerDisabled}
             </dd>
-            <dt className="font-medium text-slate-200">Visible incidents</dt>
+            <dt className="font-medium text-slate-200">Traffic incidents</dt>
             <dd className="text-right text-slate-400">
-              {trafficCounts.active} active / {trafficCounts.visible} visible ·{" "}
-              {trafficCounts.accidents} accidents ·{" "}
-              {trafficCounts.jams} jams · {trafficCounts.closures} closures ·{" "}
-              {trafficCounts.roadworks} roadworks
+              {!trafficIncidentsEnabled
+                ? t.layerDisabled
+                : !trafficDetailsZoomOk
+                  ? t.zoomInForIncidents
+                  : statusLabel(
+                      statuses["tomtom-traffic"],
+                      trafficCounts.visible,
+                      t,
+                      t.noActiveEventsInView,
+                    )}
             </dd>
+            {trafficIncidentsEnabled ? (
+              <>
+                <dt className="font-medium text-slate-200">
+                  {t.visibleIncidentsInView}
+                </dt>
+                <dd className="text-right text-slate-400">
+                  {trafficCounts.active} active / {trafficCounts.visible}{" "}
+                  visible · {trafficCounts.accidents} accidents ·{" "}
+                  {trafficCounts.jams} jams · {trafficCounts.closures} closures
+                  · {trafficCounts.roadworks} roadworks
+                  {typeof trafficCounts.other === "number"
+                    ? ` · ${trafficCounts.other} other`
+                    : ""}
+                </dd>
+              </>
+            ) : null}
           </>
         )}
         {demoMode && (

@@ -595,6 +595,23 @@ async function main() {
     assert.equal(req.destination.longitude, 4.3517);
   }
 
+  // Paris → Zurich (Schengen non-EU) is in scope
+  {
+    const req = parseTransitRequestBody({
+      origin: { latitude: 48.8566, longitude: 2.3522, name: "Paris" },
+      destination: {
+        latitude: 47.3769,
+        longitude: 8.5417,
+        name: "Zurich",
+        countryCode: "CH",
+      },
+      timing: { kind: "depart_at", at: "2026-08-10T08:00:00Z" },
+      allowedModes: ["TRAIN", "RAIL"],
+      locale: "fr",
+    });
+    assert.equal(req.destination.latitude, 47.3769);
+  }
+
   assert.throws(
     () =>
       parseTransitRequestBody({

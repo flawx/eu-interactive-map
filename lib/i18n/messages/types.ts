@@ -678,6 +678,10 @@ export type Messages = {
     gdacsIndicative: string;
     configurationRequired: string;
     noActiveEventsEurope: string;
+    noActiveEventsInView: string;
+    visibleIncidentsInView: string;
+    layerDisabled: string;
+    zoomInForIncidents: string;
     noRecentData: string;
     activeMode: string;
     last24Hours: string;

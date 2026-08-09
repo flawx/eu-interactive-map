@@ -2924,13 +2924,21 @@ export default function MapContainer({
         },
       });
 
-      // Schengen non-EU (CH/NO/IS/LI) is outside EUIM operational scope.
+      // Schengen non-EU (CH/NO/IS/LI): in EUIM scope, OFF by default in legend.
       map.addLayer({
         id: "schengen-non-eu-fill",
         type: "fill",
         source: "europe-countries",
-        filter: ["==", ["get", "CNTR_ID"], ""],
-        layout: { visibility: "none" },
+        filter: [
+          "match",
+          ["get", "CNTR_ID"],
+          ["CH", "NO", "IS", "LI"],
+          true,
+          false,
+        ],
+        layout: {
+          visibility: showSchengenNonEURef.current ? "visible" : "none",
+        },
         paint: {
           "fill-color": "#14b8a6",
           "fill-opacity": 0.12,
@@ -2941,8 +2949,16 @@ export default function MapContainer({
         id: "schengen-non-eu-border",
         type: "line",
         source: "europe-countries",
-        filter: ["==", ["get", "CNTR_ID"], ""],
-        layout: { visibility: "none" },
+        filter: [
+          "match",
+          ["get", "CNTR_ID"],
+          ["CH", "NO", "IS", "LI"],
+          true,
+          false,
+        ],
+        layout: {
+          visibility: showSchengenNonEURef.current ? "visible" : "none",
+        },
         paint: {
           "line-color": "#5eead4",
           "line-width": 0.7,
@@ -2950,7 +2966,7 @@ export default function MapContainer({
         },
       });
 
-      applySchengenNonEUVisibility(map, false);
+      applySchengenNonEUVisibility(map, showSchengenNonEURef.current);
 
       map.addLayer({
         id: "eu-candidates-fill",

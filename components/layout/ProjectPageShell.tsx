@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+/** Scrollable shell for documentary pages (About / Sources / Settings). */
 export default function ProjectPageShell({
   title,
   children,
@@ -9,7 +10,7 @@ export default function ProjectPageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-full overflow-y-auto bg-[var(--background)] text-[var(--foreground)]">
+    <div className="min-h-[100dvh] bg-[var(--background)] text-[var(--foreground)]">
       <header
         className="sticky top-0 z-10 flex h-14 items-center justify-between border-b px-4"
         style={{
@@ -24,9 +25,9 @@ export default function ProjectPageShell({
           ← EU Interactive Map
         </Link>
         <h1 className="text-sm font-semibold">{title}</h1>
-        <span className="w-28" />
+        <span className="w-28" aria-hidden="true" />
       </header>
-      <main className="mx-auto w-full max-w-3xl px-4 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-16">{children}</main>
     </div>
   );
 }

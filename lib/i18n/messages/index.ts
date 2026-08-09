@@ -188,6 +188,12 @@ export function getMessages(locale: Locale): Messages {
               "Les informations GDACS sont indicatives et ne remplacent pas les consignes des autorités locales.",
             configurationRequired: "Configuration requise",
             noActiveEventsEurope: "Aucun événement actif en Europe",
+            noActiveEventsInView:
+              "Aucun événement actif dans la vue carte actuelle",
+            visibleIncidentsInView: "Incidents dans la vue actuelle",
+            layerDisabled: "Calque désactivé",
+            zoomInForIncidents:
+              "Zoomez (z≥7) pour charger le détail des incidents",
             noRecentData: "Aucune donnée récente",
             activeMode: "Actifs",
             last24Hours: "Dernières 24 heures",

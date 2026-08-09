@@ -120,7 +120,7 @@ async function main() {
       longitude: 7.45,
       countryCode: "CH",
     }),
-    false,
+    true,
   );
 
   // Fuel cost: 500 km * 6.5 / 100 * 1.82

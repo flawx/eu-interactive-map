@@ -23,9 +23,17 @@ function main() {
   assert.ok(EUIM_EU_CANDIDATE_CODES.includes("AL"));
   assert.ok(EUIM_COUNTRY_CODES.includes("FR"));
   assert.ok(EUIM_COUNTRY_CODES.includes("UA"));
-  for (const code of ["UK", "CH", "NO", "IS", "LI", "XK", "GB"] as const) {
+  assert.ok(EUIM_COUNTRY_CODES.includes("CH"));
+  assert.ok(EUIM_COUNTRY_CODES.includes("NO"));
+  assert.ok(EUIM_COUNTRY_CODES.includes("IS"));
+  assert.ok(EUIM_COUNTRY_CODES.includes("LI"));
+  for (const code of ["UK", "XK", "GB"] as const) {
     assert.equal(isCountryInEUIMScope(code), false);
     assert.equal(getEUIMCountryStatus(code), "outside_scope");
+  }
+  for (const code of ["CH", "NO", "IS", "LI"] as const) {
+    assert.equal(isCountryInEUIMScope(code), true);
+    assert.equal(getEUIMCountryStatus(code), "schengen_non_eu");
   }
 
   assert.equal(normalizeEUIMCountryCode("GB"), "UK");
@@ -45,12 +53,11 @@ function main() {
   assert.equal(isCoordinateInEUIMScope(-6.2603, 53.3498), true); // Dublin
   assert.equal(isCoordinateInEUIMScope(33.3823, 35.1856), true); // Nicosia
   assert.equal(isCoordinateInEUIMScope(19.8187, 41.3275), true); // Tirana
+  assert.equal(isCoordinateInEUIMScope(8.5417, 47.3769), true); // Zurich (Schengen)
+  assert.equal(isCoordinateInEUIMScope(10.7522, 59.9139), true); // Oslo
+  assert.equal(isCoordinateInEUIMScope(-21.8174, 64.1265), true); // Reykjavik
 
   assert.equal(isCoordinateInEUIMScope(-0.1276, 51.5074), false); // London
-  assert.equal(isCoordinateInEUIMScope(8.5417, 47.3769), false); // Zurich
-  assert.equal(isCoordinateInEUIMScope(10.7522, 59.9139), false); // Oslo
-  assert.equal(isCoordinateInEUIMScope(-21.8174, 64.1466), false); // Reykjavik
-  assert.equal(isCoordinateInEUIMScope(9.5209, 47.141), false); // Vaduz
   assert.equal(isCoordinateInEUIMScope(37.6173, 55.7558), false); // Moscow (outside bbox)
   assert.equal(isCountryInEUIMScope("BY"), false);
   assert.equal(isCountryInEUIMScope("RU"), false);
@@ -77,7 +84,15 @@ function main() {
       longitude: 7.4474,
       countryCode: "CH",
     }),
-    false,
+    true,
+  );
+  assert.equal(
+    isRoutingEndpointInEUIMScope({
+      latitude: 47.141,
+      longitude: 9.5209,
+      countryCode: "LI",
+    }),
+    true,
   );
 
   // UE→UE geometry may cross Switzerland
@@ -127,7 +142,7 @@ function main() {
   const capitalIdx = EUIM_LAYER_STACK_BOTTOM_TO_TOP.indexOf("eu-capitals-symbol");
   assert.ok(trafficIdx < capitalIdx, "traffic must stack below capital POIs");
 
-  // London / Zurich / Oslo tiles must not intersect EUIM operational coverage
+  // London tile must not intersect EUIM operational coverage
   assert.equal(
     tileMayIntersectEuimCoverage({
       west: -0.2,
@@ -145,7 +160,7 @@ function main() {
       south: 47.35,
       north: 47.45,
     }),
-    false,
+    true,
     "Zurich tile",
   );
   assert.equal(
@@ -155,7 +170,7 @@ function main() {
       south: 59.85,
       north: 59.98,
     }),
-    false,
+    true,
     "Oslo tile",
   );
   assert.equal(

@@ -89,6 +89,11 @@ export type MapLayerPreferences = {
   borderCrossingSea: boolean;
 };
 
+/** Shared default layer state — first visit and Reset Layers must match. */
+export function createDefaultLayerState(): MapLayerPreferences {
+  return { ...DEFAULT_MAP_LAYER_PREFERENCES };
+}
+
 export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   euroArea: true,
   euOutsideEuroArea: true,

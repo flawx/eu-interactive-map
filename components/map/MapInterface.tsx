@@ -101,6 +101,8 @@ import {
 } from "@/lib/routing/shareableRoute";
 import {
   DEFAULT_MAP_LAYER_PREFERENCES,
+  MAP_LAYER_PREFERENCES_SCHEMA_VERSION,
+  createDefaultLayerState,
   defaultLegendCollapsedForViewport,
   loadLegendCollapsed,
   loadMapLayerPreferences,
@@ -636,6 +638,7 @@ export default function MapInterface() {
   const [dimensionMode, setDimensionMode] = useState<MapDimensionMode>("2d");
   const [mapPitch, setMapPitch] = useState(0);
   const [mapBearing, setMapBearing] = useState(0);
+  const [mapZoom, setMapZoom] = useState(4);
   const [terrainReady, setTerrainReady] = useState(false);
   const [locationStatus, setLocationStatus] =
     useState<UserLocationStatus>("idle");
@@ -767,6 +770,13 @@ export default function MapInterface() {
           alert.hazard === "traffic_restriction",
       ).length,
       roadworks: traffic.filter((alert) => alert.hazard === "roadworks").length,
+      other: traffic.filter(
+        (alert) =>
+          alert.hazard === "other_traffic_incident" ||
+          alert.hazard === "broken_down_vehicle" ||
+          alert.hazard === "road_weather" ||
+          alert.hazard === "road_hazard",
+      ).length,
     };
   }, [
     activityFilteredAlerts,
@@ -1451,8 +1461,20 @@ export default function MapInterface() {
     setters[key](value);
   };
 
+  const [legendResetToken, setLegendResetToken] = useState(0);
+
   const handleLegendLayersReset = () => {
-    const defaults = DEFAULT_MAP_LAYER_PREFERENCES;
+    const defaults = createDefaultLayerState();
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[reset layers]", {
+        clicked: true,
+        storageVersion: MAP_LAYER_PREFERENCES_SCHEMA_VERSION,
+        nextActive: Object.entries(defaults)
+          .filter(([, value]) => value === true)
+          .map(([key]) => key),
+      });
+    }
+    saveMapLayerPreferences(defaults);
     setShowEurozone(defaults.euroArea);
     setShowNonEurozone(defaults.euOutsideEuroArea);
     setShowSchengenNonEU(defaults.schengenOutsideEu);
@@ -1546,6 +1568,7 @@ export default function MapInterface() {
     setShowBorderCrossingAir(defaults.borderCrossingAir);
     setShowBorderCrossingSea(defaults.borderCrossingSea);
     setTrafficPanelCollapseToken((token) => token + 1);
+    setLegendResetToken((token) => token + 1);
   };
 
   useEffect(() => {
@@ -1835,6 +1858,11 @@ export default function MapInterface() {
         ? current
         : normalized;
     });
+    if (typeof snapshot.zoom === "number") {
+      setMapZoom((current) =>
+        Math.abs(current - snapshot.zoom) < 0.01 ? current : snapshot.zoom,
+      );
+    }
   }, []);
 
   const trafficParentLayers = useMemo(
@@ -4290,6 +4318,7 @@ export default function MapInterface() {
           preferences={legendPreferences}
           onTogglePreference={handleLegendPreferenceToggle}
           onResetLayers={handleLegendLayersReset}
+          resetToken={legendResetToken}
           majorActiveAlertCount={
             activeGdacsFloodCount + activeMeteoalarmCount
           }
@@ -4451,6 +4480,13 @@ export default function MapInterface() {
               showRoadClosuresRestrictions ||
               showRoadworks
             }
+            trafficFlowEnabled={showLiveTrafficFlow}
+            trafficIncidentsEnabled={
+              showRoadTrafficIncidents ||
+              showRoadClosuresRestrictions ||
+              showRoadworks
+            }
+            trafficDetailsZoomOk={mapZoom >= 7}
             trafficMode={trafficTimeMode}
             onTrafficModeChange={setTrafficTimeMode}
             trafficCounts={trafficCounts}

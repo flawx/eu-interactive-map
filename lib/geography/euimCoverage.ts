@@ -1,12 +1,19 @@
 /**
  * Single source of truth for EU Interactive Map operational coverage.
- * Operational data = EU member states + official EU candidate countries.
+ *
+ * EUIM DATA COVERAGE =
+ *   EU member states
+ *   ∪ official EU candidate countries
+ *   ∪ Schengen countries (incl. non-EU Schengen: CH, NO, IS, LI)
+ *
+ * United Kingdom remains outside operational scope.
  * Basemap world context may still render outside this scope.
  */
 
 export type EUIMCountryStatus =
   | "eu_member"
   | "eu_candidate"
+  | "schengen_non_eu"
   | "outside_scope";
 
 /** Greece = EL (GISCO / Eurostat). United Kingdom canonical = UK (not GB). */
@@ -21,16 +28,32 @@ export const EUIM_EU_CANDIDATE_CODES = [
   "AL", "BA", "GE", "MD", "ME", "MK", "RS", "TR", "UA",
 ] as const;
 
+/**
+ * Schengen non-EU states — in Schengen, outside the EU.
+ * These are in EUIM operational coverage but their fill layer stays OFF by default.
+ */
+export const EUIM_SCHENGEN_NON_EU_COUNTRY_CODES = [
+  "CH", "NO", "IS", "LI",
+] as const;
+
+/** All Schengen country codes relevant to EUIM (EU Schengen members + non-EU). */
+export const EUIM_SCHENGEN_COUNTRY_CODES = [
+  "AT", "BE", "HR", "CZ", "DK", "EE", "FI", "FR", "DE", "EL", "HU", "IS",
+  "IT", "LV", "LI", "LT", "LU", "MT", "NL", "NO", "PL", "PT", "SK", "SI",
+  "ES", "SE", "CH",
+] as const;
+
 export const EUIM_COUNTRY_CODES = [
   ...EUIM_EU_MEMBER_CODES,
   ...EUIM_EU_CANDIDATE_CODES,
+  ...EUIM_SCHENGEN_NON_EU_COUNTRY_CODES,
 ] as const;
 
 export type EUIMCountryCode = (typeof EUIM_COUNTRY_CODES)[number];
 
-/** Explicitly excluded from operational EUIM data (former broader Europe set). */
+/** Explicitly excluded from operational EUIM data. */
 export const EUIM_EXCLUDED_COUNTRY_CODES = [
-  "UK", "GB", "CH", "NO", "IS", "LI", "XK",
+  "UK", "GB", "XK",
 ] as const;
 
 export const EUIM_MAP_BOUNDS = {
@@ -42,24 +65,25 @@ export const EUIM_MAP_BOUNDS = {
 
 const EU_MEMBER_SET = new Set<string>(EUIM_EU_MEMBER_CODES);
 const CANDIDATE_SET = new Set<string>(EUIM_EU_CANDIDATE_CODES);
+const SCHENGEN_NON_EU_SET = new Set<string>(EUIM_SCHENGEN_NON_EU_COUNTRY_CODES);
+const SCHENGEN_SET = new Set<string>(EUIM_SCHENGEN_COUNTRY_CODES);
 const IN_SCOPE_SET = new Set<string>(EUIM_COUNTRY_CODES);
 
 const ISO3_TO_EUIM: Record<string, string> = {
   ALB: "AL", AUT: "AT", BEL: "BE", BGR: "BG", BIH: "BA",
-  CYP: "CY", CZE: "CZ", DEU: "DE", DNK: "DK", ESP: "ES", EST: "EE",
+  CHE: "CH", CYP: "CY", CZE: "CZ", DEU: "DE", DNK: "DK", ESP: "ES", EST: "EE",
   FIN: "FI", FRA: "FR", GEO: "GE", GRC: "EL", HRV: "HR",
-  HUN: "HU", IRL: "IE", ITA: "IT", LTU: "LT",
+  HUN: "HU", IRL: "IE", ISL: "IS", ITA: "IT", LIE: "LI", LTU: "LT",
   LUX: "LU", LVA: "LV", MDA: "MD", MKD: "MK", MLT: "MT", MNE: "ME",
-  NLD: "NL", POL: "PL", PRT: "PT", ROU: "RO", SRB: "RS",
+  NLD: "NL", NOR: "NO", POL: "PL", PRT: "PT", ROU: "RO", SRB: "RS",
   SVK: "SK", SVN: "SI", SWE: "SE", TUR: "TR", UKR: "UA",
   // Out-of-scope (normalized then rejected by IN_SCOPE_SET)
-  GBR: "UK", CHE: "CH", ISL: "IS", LIE: "LI", NOR: "NO", XKX: "XK",
+  GBR: "UK", XKX: "XK",
 };
 
 /**
  * Approximate rectangles for out-of-scope states that sit inside the Europe
  * basemap bbox. Used when a feature has coordinates but no country code.
- * Tuned to avoid swallowing nearby in-scope border towns (e.g. Calais).
  */
 const EXCLUDED_APPROX_BOXES: ReadonlyArray<{
   minLon: number;
@@ -71,14 +95,6 @@ const EXCLUDED_APPROX_BOXES: ReadonlyArray<{
   { minLon: -5.8, maxLon: 1.65, minLat: 49.9, maxLat: 58.7 },
   // Northern Ireland (approx; may clip a little of Donegal)
   { minLon: -8.2, maxLon: -5.4, minLat: 54.05, maxLat: 55.25 },
-  // Switzerland + Liechtenstein
-  { minLon: 5.9, maxLon: 10.55, minLat: 45.78, maxLat: 47.82 },
-  // Iceland
-  { minLon: -25, maxLon: -13.2, minLat: 63.2, maxLat: 66.7 },
-  // Southern Norway (Oslo / south) — avoid most of Sweden
-  { minLon: 4.5, maxLon: 12.6, minLat: 57.9, maxLat: 64.0 },
-  // Northern Norway
-  { minLon: 12.0, maxLon: 31.5, minLat: 64.0, maxLat: 71.3 },
   // Kosovo
   { minLon: 20.0, maxLon: 21.8, minLat: 41.8, maxLat: 43.3 },
   // Western Russia (keeps Ukraine / Baltics south of ~54°N)
@@ -94,11 +110,32 @@ export function normalizeEUIMCountryCode(value: unknown): string | null {
   return mapped || null;
 }
 
+export function isEuMemberCountry(value: unknown): boolean {
+  const code = normalizeEUIMCountryCode(value);
+  return code !== null && EU_MEMBER_SET.has(code);
+}
+
+export function isEuCandidateCountry(value: unknown): boolean {
+  const code = normalizeEUIMCountryCode(value);
+  return code !== null && CANDIDATE_SET.has(code);
+}
+
+export function isSchengenCountry(value: unknown): boolean {
+  const code = normalizeEUIMCountryCode(value);
+  return code !== null && SCHENGEN_SET.has(code);
+}
+
+export function isSchengenNonEuCountry(value: unknown): boolean {
+  const code = normalizeEUIMCountryCode(value);
+  return code !== null && SCHENGEN_NON_EU_SET.has(code);
+}
+
 export function getEUIMCountryStatus(value: unknown): EUIMCountryStatus {
   const code = normalizeEUIMCountryCode(value);
   if (!code) return "outside_scope";
   if (EU_MEMBER_SET.has(code)) return "eu_member";
   if (CANDIDATE_SET.has(code)) return "eu_candidate";
+  if (SCHENGEN_NON_EU_SET.has(code)) return "schengen_non_eu";
   return "outside_scope";
 }
 
@@ -135,7 +172,7 @@ function inExcludedApprox(longitude: number, latitude: number): boolean {
 
 /**
  * Spatial scope check when no reliable ISO code is available.
- * Rejects basemap-context countries (UK/CH/NO/IS/LI/XK) via approx boxes.
+ * Rejects UK / XK / Russia via approx boxes. CH/NO/IS/LI are in scope.
  */
 export function isCoordinateInEUIMScope(
   longitude: number,

@@ -26,6 +26,7 @@
     "test:euim-coverage": "tsx scripts/test-euim-coverage.ts",
     "test:default-layers": "tsx scripts/test-default-layers.ts",
     "test:settings-basemap": "tsx scripts/test-settings-basemap.ts",
+    "test:reset-layers": "tsx scripts/test-reset-layers-and-traffic.ts",
     "test:tomtom-products": "tsx scripts/test-tomtom-products.ts",
     "test:media-routing-stability": "tsx scripts/test-media-routing-stability.ts",
     "test:transit": "tsx scripts/test-transit.ts",

@@ -140,6 +140,43 @@ async function fetchDeduped(url: string, init: RequestInit): Promise<Response> {
   return (await request).clone();
 }
 
+function tomTomAcceptLanguage(locale?: string): string | null {
+  if (!locale) return null;
+  const normalized = locale.trim().toLowerCase();
+  if (!normalized) return null;
+  const map: Record<string, string> = {
+    en: "en-GB",
+    fr: "fr-FR",
+    de: "de-DE",
+    es: "es-ES",
+    it: "it-IT",
+    nl: "nl-NL",
+    pl: "pl-PL",
+    pt: "pt-PT",
+    sv: "sv-SE",
+    da: "da-DK",
+    fi: "fi-FI",
+    el: "el-GR",
+    cs: "cs-CZ",
+    hu: "hu-HU",
+    ro: "ro-RO",
+    sk: "sk-SK",
+    sl: "sl-SI",
+    bg: "bg-BG",
+    hr: "hr-HR",
+    lt: "lt-LT",
+    lv: "lv-LV",
+    et: "et-EE",
+    mt: "mt-MT",
+    ga: "en-GB",
+  };
+  if (normalized.includes("-")) {
+    const [lang, region] = normalized.split("-");
+    return `${lang}-${(region || "").toUpperCase()}`;
+  }
+  return map[normalized] ?? null;
+}
+
 function headers(accept: string, locale?: string): HeadersInit {
   const key = apiKey();
   if (!key) return {};
@@ -148,7 +185,8 @@ function headers(accept: string, locale?: string): HeadersInit {
     "TomTom-Api-Version": API_VERSION,
     Accept: accept,
   };
-  if (locale) result["Accept-Language"] = locale;
+  const acceptLanguage = tomTomAcceptLanguage(locale);
+  if (acceptLanguage) result["Accept-Language"] = acceptLanguage;
   if (trafficModel && trafficModel.expiresAt > Date.now()) {
     result.TrafficModelID = trafficModel.id;
   }
