@@ -25,6 +25,7 @@
     "test:routing": "tsx scripts/test-routing.ts",
     "test:euim-coverage": "tsx scripts/test-euim-coverage.ts",
     "test:default-layers": "tsx scripts/test-default-layers.ts",
+    "test:data-layers": "tsx scripts/test-data-layers.ts",
     "test:settings-basemap": "tsx scripts/test-settings-basemap.ts",
     "test:theme-toggle": "tsx scripts/test-theme-toggle.ts",
     "test:reset-layers": "tsx scripts/test-reset-layers-and-traffic.ts",
