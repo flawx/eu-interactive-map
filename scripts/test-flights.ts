@@ -204,6 +204,57 @@ async function testNormalizeFixtures() {
   console.log("  normalize fixtures: OK");
 }
 
+async function testBookingOptionsSession() {
+  const {
+    shouldFetchBookingOptions,
+    bookingOptionsLoadingEntry,
+    bookingOptionsSuccessEntry,
+    bookingOptionsEmptyEntry,
+    bookingOptionsErrorEntry,
+    isBookingResultCurrent,
+    formatBookWithSeller,
+    compactSellerLabel,
+  } = await import("../lib/routing/flights/bookingOptionsSession");
+
+  assert.equal(shouldFetchBookingOptions({}, "a"), true);
+  assert.equal(
+    shouldFetchBookingOptions({ a: bookingOptionsLoadingEntry() }, "a"),
+    false,
+  );
+  assert.equal(
+    shouldFetchBookingOptions(
+      { a: bookingOptionsSuccessEntry([{ id: "1" } as never]) },
+      "a",
+    ),
+    false,
+  );
+  assert.equal(
+    shouldFetchBookingOptions({ a: bookingOptionsEmptyEntry("empty") }, "a"),
+    false,
+  );
+  assert.equal(
+    shouldFetchBookingOptions({ a: bookingOptionsErrorEntry("err") }, "a"),
+    false,
+  );
+  assert.equal(
+    shouldFetchBookingOptions(
+      { a: bookingOptionsErrorEntry("err") },
+      "a",
+      { retry: true },
+    ),
+    true,
+  );
+  assert.equal(isBookingResultCurrent("a", "a"), true);
+  assert.equal(isBookingResultCurrent("a", "b"), false);
+  assert.equal(isBookingResultCurrent("a", null), false);
+  assert.equal(formatBookWithSeller("Book with {seller}", "KLM"), "Book with KLM");
+  assert.equal(formatBookWithSeller("Réserver avec {seller}", "Expedia"), "Réserver avec Expedia");
+  assert.equal(compactSellerLabel("Short"), "Short");
+  assert.ok(compactSellerLabel("A".repeat(40), 28).endsWith("…"));
+
+  console.log("  booking options session: OK");
+}
+
 async function testBookingOptionsNormalizer() {
   const { normalizeSerpApiBookingOptions } = await import(
     "../lib/routing/flights/providers/serpapiFlightProvider"
@@ -578,6 +629,7 @@ async function testAirportResolver() {
 async function main() {
   console.log("test:flights");
   await testNormalizeFixtures();
+  await testBookingOptionsSession();
   await testBookingOptionsNormalizer();
   await testGreatCircleAndAntimeridian();
   await testAirportBuffers();

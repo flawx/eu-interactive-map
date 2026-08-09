@@ -7,7 +7,9 @@ import {
   Car,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   Footprints,
+  Loader2,
   MapPin,
   Navigation,
   Plane,
@@ -58,6 +60,16 @@ import type {
   MultimodalJourney,
 } from "@/lib/routing/flights/types";
 import { executeFlightBookingAction } from "@/lib/routing/flights/bookingAction";
+import {
+  bookingOptionsEmptyEntry,
+  bookingOptionsErrorEntry,
+  bookingOptionsLoadingEntry,
+  bookingOptionsSuccessEntry,
+  compactSellerLabel,
+  formatBookWithSeller,
+  shouldFetchBookingOptions,
+  type BookingOptionsCache,
+} from "@/lib/routing/flights/bookingOptionsSession";
 import {
   DEFAULT_ROUTE_AVOID,
   MAX_ROUTE_WAYPOINTS_UI,
@@ -279,22 +291,18 @@ export default function RoutePlannerPanel({
   );
   const [nonStop, setNonStop] = useState(false);
   const [adults, setAdults] = useState(1);
-  const [bookingOptionsByJourney, setBookingOptionsByJourney] = useState<
-    Record<string, FlightBookingOption[]>
-  >({});
-  const [bookingOptionsLoadingId, setBookingOptionsLoadingId] = useState<
-    string | null
-  >(null);
-  const [bookingOptionsError, setBookingOptionsError] = useState<
-    string | null
-  >(null);
-
-  useEffect(() => {
-    setBookingOptionsError(null);
-  }, [selectedFlightId]);
+  const [bookingOptionsCache, setBookingOptionsCache] =
+    useState<BookingOptionsCache>({});
+  const bookingOptionsCacheRef = useRef<BookingOptionsCache>({});
+  const bookingInflightRef = useRef<Map<string, Promise<void>>>(new Map());
+  const selectedFlightIdRef = useRef<string | null>(null);
+  const bookingOptionsSectionRef = useRef<HTMLDivElement | null>(null);
+  const panelScrollRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const autoCalcKeyRef = useRef<string | null>(null);
   const prevModeRef = useRef<PlannerTravelMode>(mode);
+
+  bookingOptionsCacheRef.current = bookingOptionsCache;
 
   const activeError =
     mode === "transit"
@@ -391,8 +399,9 @@ export default function RoutePlannerPanel({
       setSelectedFlightId(null);
       setFlightError(null);
       setFlightDevHint(null);
-      setBookingOptionsByJourney({});
-      setBookingOptionsError(null);
+      setBookingOptionsCache({});
+      bookingOptionsCacheRef.current = {};
+      bookingInflightRef.current.clear();
       onFlightChange?.([], null);
     }
     if (wasRoad && !isRoad) {
@@ -435,8 +444,9 @@ export default function RoutePlannerPanel({
     } else if (mode === "flight") {
       setFlightError(null);
       setFlightDevHint(null);
-      setBookingOptionsByJourney({});
-      setBookingOptionsError(null);
+      setBookingOptionsCache({});
+      bookingOptionsCacheRef.current = {};
+      bookingInflightRef.current.clear();
     } else {
       setRoadError(null);
       setRoadDevHint(null);
@@ -496,6 +506,10 @@ export default function RoutePlannerPanel({
         const selectedId = nextJourneys[0]?.id ?? null;
         setMultimodalJourneys(nextJourneys);
         setSelectedFlightId(selectedId);
+        selectedFlightIdRef.current = selectedId;
+        setBookingOptionsCache({});
+        bookingOptionsCacheRef.current = {};
+        bookingInflightRef.current.clear();
         setRoutes([]);
         setSelectedRouteId(null);
         setIncidents([]);
@@ -508,8 +522,12 @@ export default function RoutePlannerPanel({
         setTransitDevHint(null);
         onTransitChange?.([], null);
         onFlightChange?.(nextJourneys, selectedId);
-        if (nextJourneys[0]) {
+        if (nextJourneys[0] && selectedId) {
           onFocusRoute(multimodalCoordinates(nextJourneys[0]));
+          void ensureBookingOptions(selectedId, { journey: nextJourneys[0] });
+          requestAnimationFrame(() => {
+            scrollBookingOptionsIntoView();
+          });
         }
       } catch (err) {
         if (isAbortError(err)) return;
@@ -857,8 +875,9 @@ export default function RoutePlannerPanel({
     setRoadDevHint(null);
     setTransitDevHint(null);
     setFlightDevHint(null);
-    setBookingOptionsByJourney({});
-    setBookingOptionsError(null);
+    setBookingOptionsCache({});
+    bookingOptionsCacheRef.current = {};
+    bookingInflightRef.current.clear();
     onRoutesChange([], null);
     onTransitChange?.([], null);
     onFlightChange?.([], null);
@@ -867,9 +886,32 @@ export default function RoutePlannerPanel({
     onClose();
   };
 
-  const viewBookingOptions = useCallback(
-    async (journeyId: string) => {
-      const journey = multimodalJourneys.find((j) => j.id === journeyId);
+  const scrollBookingOptionsIntoView = useCallback(() => {
+    const section = bookingOptionsSectionRef.current;
+    if (!section) return;
+    // Prefer scrolling within the Directions panel container (not the map/page).
+    section.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+  }, []);
+
+  const ensureBookingOptions = useCallback(
+    async (
+      journeyId: string,
+      options: { retry?: boolean; journey?: MultimodalJourney } = {},
+    ) => {
+      if (bookingInflightRef.current.has(journeyId)) return;
+      if (
+        !shouldFetchBookingOptions(
+          bookingOptionsCacheRef.current,
+          journeyId,
+          options,
+        )
+      ) {
+        return;
+      }
+
+      const journey =
+        options.journey ??
+        multimodalJourneys.find((j) => j.id === journeyId);
       const flightSegment = journey?.segments.find(
         (segment): segment is FlightLegSegment => segment.kind === "flight",
       );
@@ -880,22 +922,6 @@ export default function RoutePlannerPanel({
       const departureId = firstSeg?.departure.place.iataCode;
       const arrivalId = lastSeg?.arrival.place.iataCode;
       const outboundDate = firstSeg?.departure.at?.slice(0, 10);
-      const flightNumber = firstSeg
-        ? `${firstSeg.carrierCode}${firstSeg.flightNumber}`
-        : null;
-
-      if (process.env.NODE_ENV === "development") {
-        console.info("[booking client]", {
-          offerId: journeyId,
-          flightNumber,
-          bookingTokenPresent: Boolean(bookingToken),
-          bookingTokenLength: bookingToken?.length ?? 0,
-          segments: flightJourney?.segments.length ?? 0,
-          requestStarted: Boolean(
-            journey && flightSegment && bookingToken && departureId && arrivalId && outboundDate,
-          ),
-        });
-      }
 
       if (
         !journey ||
@@ -905,59 +931,96 @@ export default function RoutePlannerPanel({
         !arrivalId ||
         !outboundDate
       ) {
-        setBookingOptionsError(t.bookingOptionsError);
+        const entry = bookingOptionsErrorEntry(t.bookingOptionsError);
+        bookingOptionsCacheRef.current = {
+          ...bookingOptionsCacheRef.current,
+          [journeyId]: entry,
+        };
+        setBookingOptionsCache(bookingOptionsCacheRef.current);
         return;
       }
 
-      setBookingOptionsLoadingId(journeyId);
-      setBookingOptionsError(null);
-      try {
-        const response = await fetch("/api/routing/flights/booking-options", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            bookingToken,
-            departureId,
-            arrivalId,
-            outboundDate,
-            currency: flightJourney.price?.currency ?? "EUR",
-          }),
-        });
-        const payload = (await response.json()) as {
-          options?: FlightBookingOption[];
-          error?: { code?: string };
-        };
+      const loadingEntry = bookingOptionsLoadingEntry();
+      bookingOptionsCacheRef.current = {
+        ...bookingOptionsCacheRef.current,
+        [journeyId]: loadingEntry,
+      };
+      setBookingOptionsCache(bookingOptionsCacheRef.current);
 
-        if (process.env.NODE_ENV === "development") {
-          console.info("[booking response]", {
-            status: response.status,
-            optionsCount: payload.options?.length ?? 0,
-            normalizedOptionsCount: payload.options?.length ?? 0,
-            errorCode: payload.error?.code ?? null,
+      const request = (async () => {
+        try {
+          const response = await fetch("/api/routing/flights/booking-options", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              bookingToken,
+              departureId,
+              arrivalId,
+              outboundDate,
+              currency: flightJourney.price?.currency ?? "EUR",
+            }),
           });
-        }
+          const payload = (await response.json()) as {
+            options?: FlightBookingOption[];
+            error?: { code?: string };
+          };
 
-        if (response.status === 404 || (response.ok && payload.options?.length === 0)) {
-          setBookingOptionsByJourney((prev) => ({ ...prev, [journeyId]: [] }));
-          setBookingOptionsError(t.bookingOptionsEmpty);
-          return;
+          // Always key by offerId so a late response never contaminates another selection.
+          let entry;
+          if (
+            response.status === 404 ||
+            (response.ok && payload.options?.length === 0)
+          ) {
+            entry = bookingOptionsEmptyEntry(t.bookingOptionsEmpty);
+          } else if (!response.ok || !payload.options) {
+            entry = bookingOptionsErrorEntry(t.bookingOptionsError);
+          } else {
+            entry = bookingOptionsSuccessEntry(payload.options);
+          }
+          bookingOptionsCacheRef.current = {
+            ...bookingOptionsCacheRef.current,
+            [journeyId]: entry,
+          };
+          setBookingOptionsCache(bookingOptionsCacheRef.current);
+        } catch {
+          const entry = bookingOptionsErrorEntry(t.bookingOptionsError);
+          bookingOptionsCacheRef.current = {
+            ...bookingOptionsCacheRef.current,
+            [journeyId]: entry,
+          };
+          setBookingOptionsCache(bookingOptionsCacheRef.current);
+        } finally {
+          bookingInflightRef.current.delete(journeyId);
         }
-        if (!response.ok || !payload.options) {
-          setBookingOptionsError(t.bookingOptionsError);
-          return;
-        }
-        setBookingOptionsByJourney((prev) => ({
-          ...prev,
-          [journeyId]: payload.options!,
-        }));
-        setBookingOptionsError(null);
-      } catch {
-        setBookingOptionsError(t.bookingOptionsError);
-      } finally {
-        setBookingOptionsLoadingId(null);
-      }
+      })();
+
+      bookingInflightRef.current.set(journeyId, request);
+      await request;
     },
     [multimodalJourneys, t],
+  );
+
+  const selectFlightOffer = useCallback(
+    (journeyId: string) => {
+      const journey = multimodalJourneys.find((item) => item.id === journeyId);
+      if (!journey) return;
+      setMobileExpanded(true);
+      setSelectedFlightId(journeyId);
+      selectedFlightIdRef.current = journeyId;
+      onFlightChange?.(multimodalJourneys, journeyId);
+      onFocusRoute(multimodalCoordinates(journey));
+      void ensureBookingOptions(journeyId, { journey });
+      requestAnimationFrame(() => {
+        scrollBookingOptionsIntoView();
+      });
+    },
+    [
+      ensureBookingOptions,
+      multimodalJourneys,
+      onFlightChange,
+      onFocusRoute,
+      scrollBookingOptionsIntoView,
+    ],
   );
 
   if (!open) return null;
@@ -1656,10 +1719,9 @@ export default function RoutePlannerPanel({
                       : "border-white/10 bg-white/5 hover:bg-white/10"
                   }`}
                   onClick={() => {
-                    setSelectedFlightId(journey.id);
-                    onFlightChange?.(multimodalJourneys, journey.id);
-                    onFocusRoute(multimodalCoordinates(journey));
+                    selectFlightOffer(journey.id);
                   }}
+                  aria-pressed={selected}
                 >
                   {index > 0 ? (
                     <p className="mb-1 text-[11px] text-slate-400">
@@ -1715,219 +1777,280 @@ export default function RoutePlannerPanel({
 
         {mode === "flight" &&
         multimodalJourneys.find((journey) => journey.id === selectedFlightId) ? (
-          <div className="mt-3 space-y-2">
-            <h3 className="text-sm font-medium text-slate-100">
-              {t.instructions}
-            </h3>
-            {multimodalJourneys
-              .find((journey) => journey.id === selectedFlightId)!
-              .segments.map((segment) => {
-                if (segment.kind === "ground_transit") {
-                  return (
-                    <div
-                      key={segment.id}
-                      className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
-                    >
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                        {t.airportTransfer}
-                      </p>
-                      {collapseTransitLegsForDisplay(segment.journey.legs).map(
-                        (leg) => (
-                          <div
-                            key={leg.id}
-                            className="mt-1 flex items-center justify-between gap-2 text-xs text-slate-300"
-                          >
-                            <span className="flex items-center gap-1.5">
-                              <TransitModeIcon
-                                mode={leg.mode}
-                                className="h-3.5 w-3.5 text-slate-400"
-                              />
-                              {leg.mode === "walk"
-                                ? t.walking
-                                : modeLabel(leg.mode, t)}
-                            </span>
-                            <span className="tabular-nums">
-                              {formatTransitClock(
-                                leg.departureAt,
-                                leg.timezone ?? undefined,
-                              )}{" "}
-                              →{" "}
-                              {formatTransitClock(
-                                leg.arrivalAt,
-                                leg.timezone ?? undefined,
-                              )}
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  );
-                }
-
-                const flight = segment.journey;
-                return (
-                  <div
-                    key={segment.id}
-                    className="space-y-2 rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
-                  >
-                    {flight.segments.map((flightSeg, segIndex) => (
-                      <div key={flightSeg.id}>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <Plane className="h-4 w-4 shrink-0 text-[#0ea5e9]" aria-hidden />
-                            <span className="truncate text-sm font-medium text-slate-100">
-                              {flightSeg.carrierCode}
-                              {flightSeg.flightNumber}
-                            </span>
-                          </div>
-                          <span className="shrink-0 text-xs tabular-nums text-slate-300">
-                            {formatFlightClock(flightSeg.departure.at)} →{" "}
-                            {formatFlightClock(flightSeg.arrival.at)}
-                          </span>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-slate-400">
-                          <span>
-                            {t.departureAirport}: {flightSeg.departure.place.iataCode}
-                            {flightSeg.departure.terminal
-                              ? ` (${t.terminal} ${flightSeg.departure.terminal})`
-                              : ""}
-                          </span>
-                          <span>
-                            {t.arrivalAirport}: {flightSeg.arrival.place.iataCode}
-                            {flightSeg.arrival.terminal
-                              ? ` (${t.terminal} ${flightSeg.arrival.terminal})`
-                              : ""}
-                          </span>
-                        </div>
-                        {flightSeg.carrierName ? (
-                          <p className="mt-0.5 text-[11px] text-slate-500">
-                            {t.operatedBy}: {flightSeg.carrierName}
-                          </p>
-                        ) : null}
-                        {segIndex < flight.segments.length - 1 &&
-                        flight.layovers[segIndex] ? (
-                          <p className="mt-1.5 text-[11px] text-amber-200">
-                            {t.layover}: {flight.layovers[segIndex]!.airport.iataCode}
-                            {" · "}
-                            {formatFlightDuration(
-                              flight.layovers[segIndex]!.durationSeconds,
-                              locale,
-                            )}
-                          </p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-
+          <div className="mt-3 space-y-3">
             {(() => {
               const selected = multimodalJourneys.find(
                 (journey) => journey.id === selectedFlightId,
-              );
-              const flightSegment = selected?.segments.find(
+              )!;
+              const flightSegment = selected.segments.find(
                 (segment): segment is FlightLegSegment =>
                   segment.kind === "flight",
               );
-              const bookingToken = flightSegment?.journey.bookingToken;
-              if (!selected || !flightSegment || !bookingToken) return null;
-              const isLoading = bookingOptionsLoadingId === selected.id;
-              const options = bookingOptionsByJourney[selected.id];
-              const searchPrice = flightSegment.journey.price;
+              const groundSegments = selected.segments.filter(
+                (segment) => segment.kind === "ground_transit",
+              );
+              const bookingEntry = bookingOptionsCache[selected.id];
+              const searchPrice =
+                flightSegment?.journey.price ?? selected.totalPrice;
+              const showBookingLoading =
+                Boolean(flightSegment?.journey.bookingToken) &&
+                (bookingEntry?.status === "loading" || !bookingEntry);
+              const sellerName = (option: FlightBookingOption) =>
+                option.seller ?? option.bookWith ?? t.bookingOptionsTitle;
+
               return (
-                <div className="mt-2 space-y-1.5">
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-white/10 text-xs font-medium text-slate-100 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={() => void viewBookingOptions(selected.id)}
-                  >
-                    {isLoading ? t.loadingBookingOptions : t.viewBookingOptions}
-                  </button>
-                  {searchPrice ? (
-                    <p className="text-[11px] text-slate-400">
-                      {t.searchPrice}: {searchPrice.amount.toFixed(2)}{" "}
-                      {searchPrice.currency}
-                    </p>
-                  ) : null}
-                  {bookingOptionsError ? (
-                    <p className="text-[11px] text-amber-300">{bookingOptionsError}</p>
-                  ) : null}
-                  {options && options.length > 0 ? (
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                        {t.bookingOptionsTitle}
-                      </p>
-                      <ul className="space-y-1">
-                        {options.map((option) => {
-                          const priceLabel =
-                            option.price != null
-                              ? `${option.price.toFixed(2)} ${option.currency ?? ""}`.trim()
-                              : null;
-                          const badge =
-                            option.sellerType === "airline"
-                              ? t.bookingSellerAirline
-                              : option.sellerType === "agency"
-                                ? t.bookingSellerAgency
-                                : null;
-                          const canContinue = Boolean(option.bookingAction);
-                          return (
-                            <li
-                              key={option.id}
-                              className="rounded-lg bg-white/5 px-2.5 py-2 text-xs"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0 space-y-0.5">
-                                  <p className="truncate font-medium text-slate-100">
-                                    {option.seller ?? option.bookWith ?? t.viewBookingOptions}
-                                  </p>
-                                  {badge ? (
-                                    <span className="inline-flex rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-300">
-                                      {badge}
-                                    </span>
-                                  ) : null}
-                                  {option.optionTitle ? (
-                                    <p className="text-[11px] text-slate-400">
-                                      {option.optionTitle}
-                                    </p>
-                                  ) : null}
-                                  {option.baggagePrices.length > 0 ? (
-                                    <p className="text-[11px] text-slate-400">
-                                      {option.baggagePrices.slice(0, 2).join(" · ")}
-                                    </p>
-                                  ) : null}
-                                  {option.extensions.length > 0 ? (
-                                    <p className="text-[11px] text-slate-500">
-                                      {option.extensions.slice(0, 2).join(" · ")}
-                                    </p>
-                                  ) : null}
+                <>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-slate-100">
+                      {t.selectedFlightDetails}
+                    </h3>
+                    {flightSegment ? (
+                      <div className="space-y-2 rounded-lg border border-white/5 bg-white/5 px-2.5 py-2">
+                        {flightSegment.journey.segments.map(
+                          (flightSeg, segIndex) => (
+                            <div key={flightSeg.id}>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <Plane
+                                    className="h-4 w-4 shrink-0 text-[#0ea5e9]"
+                                    aria-hidden
+                                  />
+                                  <span className="truncate text-sm font-medium text-slate-100">
+                                    {flightSeg.carrierCode}
+                                    {flightSeg.flightNumber}
+                                  </span>
                                 </div>
-                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                <span className="shrink-0 text-xs tabular-nums text-slate-300">
+                                  {formatFlightClock(flightSeg.departure.at)} →{" "}
+                                  {formatFlightClock(flightSeg.arrival.at)}
+                                </span>
+                              </div>
+                              <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-slate-400">
+                                <span>
+                                  {t.departureAirport}:{" "}
+                                  {flightSeg.departure.place.iataCode}
+                                  {flightSeg.departure.terminal
+                                    ? ` (${t.terminal} ${flightSeg.departure.terminal})`
+                                    : ""}
+                                </span>
+                                <span>
+                                  {t.arrivalAirport}:{" "}
+                                  {flightSeg.arrival.place.iataCode}
+                                  {flightSeg.arrival.terminal
+                                    ? ` (${t.terminal} ${flightSeg.arrival.terminal})`
+                                    : ""}
+                                </span>
+                              </div>
+                              {flightSeg.carrierName ? (
+                                <p className="mt-0.5 text-[11px] text-slate-500">
+                                  {t.operatedBy}: {flightSeg.carrierName}
+                                </p>
+                              ) : null}
+                              {segIndex <
+                                flightSegment.journey.segments.length - 1 &&
+                              flightSegment.journey.layovers[segIndex] ? (
+                                <p className="mt-1.5 text-[11px] text-amber-200">
+                                  {t.layover}:{" "}
+                                  {
+                                    flightSegment.journey.layovers[segIndex]!
+                                      .airport.iataCode
+                                  }
+                                  {" · "}
+                                  {formatFlightDuration(
+                                    flightSegment.journey.layovers[segIndex]!
+                                      .durationSeconds,
+                                    locale,
+                                  )}
+                                </p>
+                              ) : null}
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    ) : null}
+                    {searchPrice ? (
+                      <p className="text-[11px] text-slate-400">
+                        {t.searchPrice}: {searchPrice.amount.toFixed(2)}{" "}
+                        {searchPrice.currency}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {flightSegment?.journey.bookingToken ? (
+                    <div
+                      ref={bookingOptionsSectionRef}
+                      className="space-y-1.5"
+                    >
+                      <h3 className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        {t.bookingOptionsTitle}
+                      </h3>
+                      {showBookingLoading ? (
+                        <div className="flex items-center gap-2 rounded-lg bg-white/5 px-2.5 py-3 text-xs text-slate-300">
+                          <Loader2
+                            className="h-3.5 w-3.5 animate-spin text-sky-400"
+                            aria-hidden
+                          />
+                          <span>{t.loadingBookingOptions}</span>
+                        </div>
+                      ) : null}
+                      {bookingEntry?.status === "error" ? (
+                        <div className="space-y-2">
+                          <p className="text-[11px] text-amber-300">
+                            {bookingEntry.error ?? t.bookingOptionsError}
+                          </p>
+                          <button
+                            type="button"
+                            className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-white/10 text-xs font-medium text-slate-100 hover:bg-white/15"
+                            onClick={() =>
+                              void ensureBookingOptions(selected.id, {
+                                retry: true,
+                                journey: selected,
+                              })
+                            }
+                          >
+                            {t.bookingRetry}
+                          </button>
+                        </div>
+                      ) : null}
+                      {bookingEntry?.status === "empty" ? (
+                        <p className="text-[11px] text-amber-300">
+                          {bookingEntry.error ?? t.bookingOptionsEmpty}
+                        </p>
+                      ) : null}
+                      {bookingEntry?.status === "success" &&
+                      bookingEntry.options.length > 0 ? (
+                        <ul className="space-y-1.5">
+                          {bookingEntry.options.map((option) => {
+                            const seller = sellerName(option);
+                            const compact = compactSellerLabel(seller);
+                            const cta = formatBookWithSeller(
+                              t.bookingBookWith,
+                              compact,
+                            );
+                            const aria = formatBookWithSeller(
+                              t.bookingBookWithAria,
+                              seller,
+                            );
+                            const priceLabel =
+                              option.price != null
+                                ? `${option.price.toFixed(2)} ${option.currency ?? ""}`.trim()
+                                : null;
+                            const badge =
+                              option.sellerType === "airline"
+                                ? t.bookingSellerAirline
+                                : option.sellerType === "agency"
+                                  ? t.bookingSellerAgency
+                                  : null;
+                            return (
+                              <li
+                                key={option.id}
+                                className="rounded-lg bg-white/5 px-2.5 py-2 text-xs"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 space-y-0.5">
+                                    <p className="truncate font-medium text-slate-100">
+                                      {seller}
+                                    </p>
+                                    {badge ? (
+                                      <span className="inline-flex rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-300">
+                                        {badge}
+                                      </span>
+                                    ) : null}
+                                    {option.optionTitle ? (
+                                      <p className="text-[11px] text-slate-400">
+                                        {option.optionTitle}
+                                      </p>
+                                    ) : null}
+                                    {option.baggagePrices.length > 0 ? (
+                                      <p className="text-[11px] text-slate-400">
+                                        {option.baggagePrices
+                                          .slice(0, 2)
+                                          .join(" · ")}
+                                      </p>
+                                    ) : null}
+                                  </div>
                                   {priceLabel ? (
-                                    <span className="tabular-nums text-slate-200">
+                                    <span className="shrink-0 tabular-nums text-slate-200">
                                       {priceLabel}
                                     </span>
                                   ) : null}
-                                  {canContinue && option.bookingAction ? (
-                                    <button
-                                      type="button"
-                                      className="rounded-md bg-sky-500/90 px-2 py-1 text-[11px] font-medium text-white hover:bg-sky-400"
-                                      onClick={() =>
-                                        executeFlightBookingAction(option.bookingAction!)
-                                      }
-                                    >
-                                      {t.bookingContinue}
-                                    </button>
-                                  ) : null}
                                 </div>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                                {option.bookingAction ? (
+                                  <button
+                                    type="button"
+                                    className="mt-2 inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-md bg-sky-500/90 px-2.5 py-1.5 text-[11px] font-medium text-white hover:bg-sky-400"
+                                    aria-label={aria}
+                                    title={aria}
+                                    onClick={() =>
+                                      executeFlightBookingAction(
+                                        option.bookingAction!,
+                                      )
+                                    }
+                                  >
+                                    <ExternalLink
+                                      className="h-3.5 w-3.5 shrink-0"
+                                      aria-hidden
+                                    />
+                                    <span className="truncate">{cta}</span>
+                                  </button>
+                                ) : null}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
                     </div>
                   ) : null}
-                </div>
+
+                  {groundSegments.length > 0 ? (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium text-slate-100">
+                        {t.instructions}
+                      </h3>
+                      {groundSegments.map((segment) =>
+                        segment.kind === "ground_transit" ? (
+                          <div
+                            key={segment.id}
+                            className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
+                          >
+                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                              {t.airportTransfer}
+                            </p>
+                            {collapseTransitLegsForDisplay(
+                              segment.journey.legs,
+                            ).map((leg) => (
+                              <div
+                                key={leg.id}
+                                className="mt-1 flex items-center justify-between gap-2 text-xs text-slate-300"
+                              >
+                                <span className="flex items-center gap-1.5">
+                                  <TransitModeIcon
+                                    mode={leg.mode}
+                                    className="h-3.5 w-3.5 text-slate-400"
+                                  />
+                                  {leg.mode === "walk"
+                                    ? t.walking
+                                    : modeLabel(leg.mode, t)}
+                                </span>
+                                <span className="tabular-nums">
+                                  {formatTransitClock(
+                                    leg.departureAt,
+                                    leg.timezone ?? undefined,
+                                  )}{" "}
+                                  →{" "}
+                                  {formatTransitClock(
+                                    leg.arrivalAt,
+                                    leg.timezone ?? undefined,
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null,
+                      )}
+                    </div>
+                  ) : null}
+                </>
               );
             })()}
           </div>
@@ -2070,7 +2193,10 @@ export default function RoutePlannerPanel({
       aria-label={t.title}
     >
       <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20 md:hidden" />
-      <div className="max-h-[inherit] overflow-y-auto p-4 pb-6 md:pb-4">
+      <div
+        ref={panelScrollRef}
+        className="max-h-[inherit] overflow-y-auto p-4 pb-6 md:pb-4"
+      >
         {content}
       </div>
     </aside>

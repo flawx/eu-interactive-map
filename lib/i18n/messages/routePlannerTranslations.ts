@@ -158,8 +158,12 @@ export type RoutePlannerMessages = {
   bookingOptionsEmpty: string;
   bookingOptionsError: string;
   bookingContinue: string;
+  bookingBookWith: string;
+  bookingBookWithAria: string;
+  bookingRetry: string;
   bookingSellerAirline: string;
   bookingSellerAgency: string;
+  selectedFlightDetails: string;
   airportTime: string;
   noFlightsFound: string;
   flightDateRequired: string;
@@ -325,8 +329,12 @@ const en: RoutePlannerMessages = {
   bookingOptionsEmpty: "No booking options are currently available for this flight.",
   bookingOptionsError: "Unable to load booking options.",
   bookingContinue: "Continue",
+  bookingBookWith: "Book with {seller}",
+  bookingBookWithAria: "Book with {seller} — opens external website",
+  bookingRetry: "Retry booking options",
   bookingSellerAirline: "Airline",
   bookingSellerAgency: "Travel agency",
+  selectedFlightDetails: "Selected flight",
   airportTime: "Airport time",
   noFlightsFound: "No flights found",
   flightDateRequired: "Departure date required",
@@ -497,8 +505,12 @@ const fr: RoutePlannerMessages = {
   bookingOptionsEmpty: "Aucune option de réservation n’est disponible pour ce vol pour le moment.",
   bookingOptionsError: "Impossible de charger les options de réservation.",
   bookingContinue: "Continuer",
+  bookingBookWith: "Réserver avec {seller}",
+  bookingBookWithAria: "Réserver avec {seller} — ouvre un site externe",
+  bookingRetry: "Réessayer les options de réservation",
   bookingSellerAirline: "Compagnie",
   bookingSellerAgency: "Agence de voyage",
+  selectedFlightDetails: "Vol sélectionné",
   airportTime: "Heure aéroport",
   noFlightsFound: "Aucun vol trouvé",
   flightDateRequired: "Date de départ requise",
@@ -594,8 +606,12 @@ const de: RoutePlannerMessages = {
   bookingOptionsEmpty: "Für diesen Flug sind derzeit keine Buchungsoptionen verfügbar.",
   bookingOptionsError: "Buchungsoptionen konnten nicht geladen werden.",
   bookingContinue: "Weiter",
+  bookingBookWith: "Bei {seller} buchen",
+  bookingBookWithAria: "Bei {seller} buchen — öffnet externe Website",
+  bookingRetry: "Buchungsoptionen erneut laden",
   bookingSellerAirline: "Airline",
   bookingSellerAgency: "Reisebüro",
+  selectedFlightDetails: "Ausgewählter Flug",
   airportTime: "Flughafenzeit",
   noFlightsFound: "Keine Flüge gefunden",
   flightDateRequired: "Abflugdatum erforderlich",
