@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import type {
@@ -11,6 +13,8 @@ import type {
   TrafficIncidentTimeMode,
 } from "@/lib/alerts/types";
 import type { CopernicusFloodLayerStatus } from "@/lib/alerts/copernicusFlood";
+
+const TRAFFIC_PANEL_COLLAPSED_KEY = "eu-map-traffic-panel-collapsed-v1";
 
 type Props = {
   locale: Locale;
@@ -44,6 +48,7 @@ type Props = {
     closures: number;
     roadworks: number;
   };
+  forceCollapsedToken?: number;
 };
 
 function statusLabel(
@@ -94,8 +99,46 @@ export default function AlertStatusPanel({
     closures: 0,
     roadworks: 0,
   },
+  forceCollapsedToken = 0,
 }: Props) {
   const t = getMessages(locale).alertPanel;
+  const [collapsed, setCollapsed] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(TRAFFIC_PANEL_COLLAPSED_KEY);
+      if (raw === "false") setCollapsed(false);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (forceCollapsedToken <= 0) return;
+    setCollapsed(true);
+    try {
+      window.localStorage.setItem(TRAFFIC_PANEL_COLLAPSED_KEY, "true");
+    } catch {
+      // ignore
+    }
+  }, [forceCollapsedToken]);
+
+  const toggleCollapsed = () => {
+    setCollapsed((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem(
+          TRAFFIC_PANEL_COLLAPSED_KEY,
+          next ? "true" : "false",
+        );
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
   const acquisition = copernicus?.acquisitionTime
     ? new Intl.DateTimeFormat(locale, {
         dateStyle: "medium",
@@ -105,6 +148,23 @@ export default function AlertStatusPanel({
     : null;
   return (
     <section className="absolute bottom-4 left-1/2 z-20 w-[min(34rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-slate-950/92 p-3 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
+      <button
+        type="button"
+        className="mb-2 flex w-full items-center justify-between gap-2 rounded-md px-1 py-1 text-left hover:bg-white/5"
+        aria-expanded={!collapsed}
+        onClick={toggleCollapsed}
+      >
+        <span className="font-semibold text-slate-100">
+          {trafficEnabled ? "Road traffic" : "Alerts"}
+        </span>
+        {collapsed ? (
+          <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        ) : (
+          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        )}
+      </button>
+      {collapsed ? null : (
+      <>
       {showGeneralModes && (
       <div className="flex gap-1 rounded-lg bg-white/5 p-1">
         {([
@@ -325,6 +385,8 @@ export default function AlertStatusPanel({
         <p className="mt-2 border-t border-white/10 pt-2 text-[10px] text-orange-100">
           Modelled landslide likelihood. It does not confirm that a landslide occurred.
         </p>
+      )}
+      </>
       )}
     </section>
   );

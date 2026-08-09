@@ -126,6 +126,7 @@ export const en = {
     trafficActiveRoadworks: "Current roadworks",
     trafficPlannedRoadworks: "Planned roadworks",
     categoryWeather: "Weather",
+    categoryRoadTraffic: "Road traffic",
     categorySportCulture: "Sport and culture",
     categoryEconomy: "Economy",
     filters: "Filters",

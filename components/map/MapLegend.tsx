@@ -12,6 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import {
   AlertTriangle,
+  Car,
   ChevronDown,
   ChevronUp,
   Info,
@@ -55,6 +56,8 @@ type MapLegendProps = {
   preferenceStatusLabels?: Partial<
     Record<keyof MapLayerPreferences, string>
   >;
+  /** When > 0, Alerts category expands automatically. */
+  majorActiveAlertCount?: number;
 };
 
 function resolveLegendText(
@@ -75,6 +78,7 @@ export default function MapLegend({
   onCollapsedChange,
   disabledPreferences = {},
   preferenceStatusLabels = {},
+  majorActiveAlertCount = 0,
 }: MapLegendProps) {
   const t = getMessages(locale);
   const isHighlighted = Boolean(highlight);
@@ -89,6 +93,14 @@ export default function MapLegend({
   const [expandedCategories, setExpandedCategories] = useState<
     Record<LegendCategoryId, boolean>
   >(DEFAULT_EXPANDED_CATEGORIES);
+
+  useEffect(() => {
+    setExpandedCategories((current) => ({
+      ...current,
+      alerts: majorActiveAlertCount > 0,
+    }));
+  }, [majorActiveAlertCount]);
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     () => getDefaultGroupsForHydration(),
   );
@@ -521,6 +533,9 @@ function CategoryIcon({ id }: { id: string }) {
     return (
       <AlertTriangle className="h-4 w-4 text-[#d93025]" aria-hidden="true" />
     );
+  }
+  if (id === "transport") {
+    return <Car className="h-4 w-4 text-[#ea580c]" aria-hidden="true" />;
   }
   if (id === "energy") {
     return <Zap className="h-4 w-4 text-[#f9ab00]" aria-hidden="true" />;

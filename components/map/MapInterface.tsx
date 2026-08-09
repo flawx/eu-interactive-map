@@ -557,6 +557,7 @@ export default function MapInterface() {
   const [showTrafficPlannedRoadworks, setShowTrafficPlannedRoadworks] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.trafficPlannedRoadworks,
   );
+  const [trafficPanelCollapseToken, setTrafficPanelCollapseToken] = useState(0);
   const [normalizedAlerts, setNormalizedAlerts] = useState<NormalizedAlert[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [alertActivityMode, setAlertActivityMode] =
@@ -1488,6 +1489,21 @@ export default function MapInterface() {
     setShowChemicalAccidents(defaults.chemicalAccidents);
     setShowIndustrialExplosions(defaults.industrialExplosions);
     setShowOtherTechnicalAccidents(defaults.otherTechnicalAccidents);
+    setShowLiveTrafficFlow(defaults.liveTrafficFlow);
+    setShowRoadTrafficIncidents(defaults.roadTrafficIncidents);
+    setShowTrafficAccidents(defaults.trafficAccidents);
+    setShowTrafficMajorJams(defaults.trafficMajorJams);
+    setShowTrafficBrokenVehicles(defaults.trafficBrokenVehicles);
+    setShowTrafficHazards(defaults.trafficHazards);
+    setShowTrafficRoadWeather(defaults.trafficRoadWeather);
+    setShowTrafficOtherIncidents(defaults.trafficOtherIncidents);
+    setShowRoadClosuresRestrictions(defaults.roadClosuresRestrictions);
+    setShowTrafficRoadClosures(defaults.trafficRoadClosures);
+    setShowTrafficLaneClosures(defaults.trafficLaneClosures);
+    setShowTrafficRestrictions(defaults.trafficRestrictions);
+    setShowRoadworks(defaults.roadworks);
+    setShowTrafficActiveRoadworks(defaults.trafficActiveRoadworks);
+    setShowTrafficPlannedRoadworks(defaults.trafficPlannedRoadworks);
     setShowSchengenExternalBorderCrossings(
       defaults.schengenExternalBorderCrossings,
     );
@@ -1498,6 +1514,7 @@ export default function MapInterface() {
     setShowBorderCrossingRail(defaults.borderCrossingRail);
     setShowBorderCrossingAir(defaults.borderCrossingAir);
     setShowBorderCrossingSea(defaults.borderCrossingSea);
+    setTrafficPanelCollapseToken((token) => token + 1);
   };
 
   useEffect(() => {
@@ -4238,6 +4255,9 @@ export default function MapInterface() {
           preferences={legendPreferences}
           onTogglePreference={handleLegendPreferenceToggle}
           onResetLayers={handleLegendLayersReset}
+          majorActiveAlertCount={
+            activeGdacsFloodCount + activeMeteoalarmCount
+          }
           disabledPreferences={{
             officialWeatherWarnings:
               alertConnectorStatus.meteoalarm === "misconfigured",
@@ -4361,6 +4381,7 @@ export default function MapInterface() {
             statuses={alertConnectorStatus}
             gdacsActiveCount={activeGdacsFloodCount}
             meteoalarmActiveCount={activeMeteoalarmCount}
+            forceCollapsedToken={trafficPanelCollapseToken}
             copernicus={
               showOfficialWeatherWarnings ||
               showMajorFloodAlerts ||

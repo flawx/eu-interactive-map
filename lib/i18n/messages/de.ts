@@ -58,6 +58,7 @@ export const de = {
     groupBordersAndControls: "Grenzen und Kontrollen",
     groupWildfires: "Waldbrände",
     categoryWeather: "Wetter",
+    categoryRoadTraffic: "Straßenverkehr",
     categorySportCulture: "Sport und Kultur",
     categoryEconomy: "Wirtschaft",
     filters: "Filter",

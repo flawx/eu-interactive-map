@@ -64,6 +64,7 @@ export const fr = {
     groupBordersAndControls: "Frontières et contrôles",
     groupWildfires: "Incendies",
     categoryWeather: "Météo",
+    categoryRoadTraffic: "Trafic routier",
     categorySportCulture: "Sport et culture",
     categoryEconomy: "Économie",
     filters: "Filtres",

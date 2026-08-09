@@ -94,14 +94,14 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   euOutsideEuroArea: true,
   schengenOutsideEu: false,
   euCandidates: false,
-  euCapitals: false,
-  euMainInstitutions: false,
+  euCapitals: true,
+  euMainInstitutions: true,
   unescoWorldHeritage: false,
   unescoCultural: true,
   unescoNatural: true,
   unescoMixed: true,
-  europeanHeritageLabel: false,
-  majorTouristPlaces: false,
+  europeanHeritageLabel: true,
+  majorTouristPlaces: true,
   touristLandmark: true,
   touristHistoricArea: true,
   touristMuseum: true,
@@ -120,7 +120,7 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   civilEngineeringTunnel: true,
   civilEngineeringDam: true,
   civilEngineeringCanalLock: true,
-  majorEuropeanAirports: false,
+  majorEuropeanAirports: true,
   eurostarStations: false,
   eurostarRoutes: false,
   majorWildfires: false,
@@ -157,7 +157,7 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   chemicalAccidents: true,
   industrialExplosions: true,
   otherTechnicalAccidents: true,
-  liveTrafficFlow: false,
+  liveTrafficFlow: true,
   roadTrafficIncidents: false,
   trafficAccidents: true,
   trafficMajorJams: true,
@@ -180,9 +180,10 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   borderCrossingSea: true,
 };
 
-const LAYER_PREFS_KEY = "eu-map-layer-preferences-v2";
+const LAYER_PREFS_KEY = "eu-map-layer-preferences-v3";
+const LEGACY_LAYER_PREFS_KEY_V2 = "eu-map-layer-preferences-v2";
 const LEGACY_LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
-export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 2;
+export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 3;
 const LEGEND_COLLAPSED_KEY = "eu-map-legend-collapsed-v1";
 
 const LAYER_KEYS = [
@@ -306,6 +307,7 @@ export function loadMapLayerPreferences(): MapLayerPreferences {
   try {
     const raw =
       window.localStorage.getItem(LAYER_PREFS_KEY) ??
+      window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V2) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY);
     if (!raw) {
       return { ...DEFAULT_MAP_LAYER_PREFERENCES };

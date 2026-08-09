@@ -138,6 +138,7 @@ export type Messages = {
     trafficActiveRoadworks: string;
     trafficPlannedRoadworks: string;
     categoryWeather: string;
+    categoryRoadTraffic: string;
     categorySportCulture: string;
     categoryEconomy: string;
     filters: string;

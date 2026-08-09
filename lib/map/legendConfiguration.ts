@@ -6,6 +6,7 @@ export type LegendCategoryId =
   | "tourism"
   | "security"
   | "alerts"
+  | "roadTraffic"
   | "weather"
   | "sportCulture"
   | "economy"
@@ -65,7 +66,8 @@ export const DEFAULT_EXPANDED_CATEGORIES: Record<
   europe: false,
   tourism: false,
   security: false,
-  alerts: true,
+  alerts: false,
+  roadTraffic: false,
   weather: false,
   sportCulture: false,
   economy: false,
@@ -748,8 +750,15 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
           },
         ],
       },
+    ],
+  },
+  {
+    id: "roadTraffic",
+    titleKey: { ns: "legend", key: "categoryRoadTraffic" },
+    icon: "transport",
+    groups: [
       {
-        id: "alerts-road-traffic",
+        id: "road-traffic-layers",
         titleKey: { ns: "legend", key: "groupRoadTraffic" },
         defaultExpanded: true,
         layers: [
