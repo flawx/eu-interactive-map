@@ -62,9 +62,16 @@ function compareFastest(a: FlightJourney, b: FlightJourney): number {
   return a.stops - b.stops;
 }
 
+/** "best_flights" ranks before "other_flights" on an otherwise-tied score. */
+function sourceRankWeight(journey: FlightJourney): number {
+  return journey.sourceRank === "best" ? 0 : 1;
+}
+
 function compareRecommended(a: FlightJourney, b: FlightJourney): number {
   const diff = recommendedScore(a) - recommendedScore(b);
   if (diff !== 0) return diff;
+  const rankDiff = sourceRankWeight(a) - sourceRankWeight(b);
+  if (rankDiff !== 0) return rankDiff;
   return a.id.localeCompare(b.id);
 }
 

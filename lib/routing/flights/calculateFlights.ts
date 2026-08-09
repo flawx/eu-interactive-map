@@ -2,25 +2,26 @@ import "server-only";
 
 /**
  * Top-level flight search orchestrator: resolves airports for the requested
- * places, searches Amadeus for a bounded set of airport-pair combinations,
- * optionally attaches ground access/egress via the Google Transit provider,
- * and returns both the raw flight offers and door-to-door multimodal
- * journeys. This is the only module in this tree marked server-only — it is
- * the sole entry point used by the flight API routes.
+ * places, searches SerpApi Google Flights with a single request per side
+ * (candidate airports joined into comma-separated departure_id/arrival_id
+ * lists), optionally attaches ground access/egress via the Google Transit
+ * provider, and returns both the raw flight offers and door-to-door
+ * multimodal journeys. This is the only module in this tree marked
+ * server-only — it is the sole entry point used by the flight API routes.
  */
 
 import { calculateTransitJourneys } from "@/lib/routing/transit/calculateTransit";
 import type { TransitJourney } from "@/lib/routing/transit/types";
 import { resolveAirportsForPlace } from "@/lib/routing/flights/airportResolver";
-import { RECOMMENDED_FLIGHT_BUFFERS, connectionMarginMinutes } from "@/lib/routing/flights/airportBuffers";
+import { RECOMMENDED_FLIGHT_BUFFERS, connectionMarginMinutes, shareCalendarDate } from "@/lib/routing/flights/airportBuffers";
 import {
   flightSearchCacheKey,
   withFlightSearchDedup,
 } from "@/lib/routing/flights/flightCache";
 import { sortOffers } from "@/lib/routing/flights/flightScore";
 import { assembleMultimodalJourney } from "@/lib/routing/flights/multimodalJourney";
-import { bareFlightPlace } from "@/lib/routing/flights/normalizeAmadeusOffers";
-import { amadeusFlightProvider } from "@/lib/routing/flights/providers/amadeusFlightProvider";
+import { bareFlightPlace } from "@/lib/routing/flights/normalizeSerpApiFlights";
+import { serpapiFlightProvider } from "@/lib/routing/flights/providers/serpapiFlightProvider";
 import {
   FlightError,
   type FlightCabin,
@@ -36,12 +37,11 @@ import {
 import { isRoutingPointAllowed } from "@/lib/routing/routingGeofence";
 import { getEuropeanAirportByIata } from "@/lib/transport/europeanAirports";
 
-/** Cap the number of Amadeus searches per request (origin candidates × destination candidates). */
-const MAX_AIRPORT_PAIRS = 4;
-const MAX_ORIGIN_CANDIDATES = 2;
-const MAX_DESTINATION_CANDIDATES = 2;
 /** Only the top offers get ground access/egress attached (each costs a Google Transit call). */
 const MAX_MULTIMODAL_JOURNEYS = 5;
+/** Cap how many candidate airports on each side get folded into a single SerpApi request. */
+const MAX_ORIGIN_CANDIDATES = 3;
+const MAX_DESTINATION_CANDIDATES = 3;
 
 const VALID_CABINS: FlightCabin[] = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -162,47 +162,50 @@ function resolvePlace(iataCode: string): FlightPlace {
 function mapProviderStatusToError(status: string): FlightError {
   switch (status) {
     case "misconfigured":
-      return new FlightError("provider_misconfigured", "AMADEUS_API_KEY / AMADEUS_API_SECRET are not configured", 503);
+      return new FlightError("provider_misconfigured", "SERPAPI_API_KEY is not configured", 503);
     case "not_entitled":
-      return new FlightError("provider_not_entitled", "Amadeus flight search not entitled for this account", 403);
+      return new FlightError("provider_not_entitled", "SerpApi account not entitled for Google Flights", 403);
     case "rate_limited":
-      return new FlightError("provider_rate_limited", "Amadeus rate limit reached", 429);
+      return new FlightError("provider_rate_limited", "SerpApi rate limit reached", 429);
     case "authentication_error":
-      return new FlightError("authentication_error", "Amadeus rejected the API key/secret", 401);
+      return new FlightError("authentication_error", "SerpApi rejected the API key", 401);
     default:
-      return new FlightError("provider_unavailable", "Amadeus temporarily unavailable", 503);
+      return new FlightError("provider_unavailable", "SerpApi temporarily unavailable", 503);
   }
 }
 
-type AirportPair = { origin: ResolvedAirport; destination: ResolvedAirport };
-
-function buildAirportPairs(
+/**
+ * Searches SerpApi Google Flights once for the whole origin/destination
+ * place pair: every resolved candidate airport on each side is folded into
+ * a single comma-separated departure_id/arrival_id request, rather than
+ * searching every airport-pair combination individually.
+ */
+async function searchAllAirports(
   origins: ResolvedAirport[],
   destinations: ResolvedAirport[],
-): AirportPair[] {
-  const pairs: AirportPair[] = [];
-  const seen = new Set<string>();
-  for (const origin of origins.slice(0, MAX_ORIGIN_CANDIDATES)) {
-    for (const destination of destinations.slice(0, MAX_DESTINATION_CANDIDATES)) {
-      if (origin.iataCode === destination.iataCode) continue;
-      const key = `${origin.iataCode}-${destination.iataCode}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      pairs.push({ origin, destination });
-      if (pairs.length >= MAX_AIRPORT_PAIRS) return pairs;
-    }
-  }
-  return pairs;
-}
-
-async function searchOneAirportPair(
-  pair: AirportPair,
   request: FlightSearchRequest,
   signal?: AbortSignal,
 ): Promise<FlightJourney[]> {
+  const originIatas = origins.slice(0, MAX_ORIGIN_CANDIDATES).map((a) => a.iataCode);
+  const destinationIatas = destinations
+    .slice(0, MAX_DESTINATION_CANDIDATES)
+    .map((a) => a.iataCode)
+    .filter((iata) => !originIatas.includes(iata));
+
+  if (destinationIatas.length === 0) {
+    throw new FlightError(
+      "airport_not_resolved",
+      "Origin and destination resolve to the same airport(s)",
+      404,
+    );
+  }
+
+  const departureIds = originIatas.join(",");
+  const arrivalIds = destinationIatas.join(",");
+
   const key = flightSearchCacheKey({
-    originIata: pair.origin.iataCode,
-    destinationIata: pair.destination.iataCode,
+    originIata: departureIds,
+    destinationIata: arrivalIds,
     departureDate: request.departureDate,
     returnDate: request.returnDate,
     adults: request.adults,
@@ -212,11 +215,12 @@ async function searchOneAirportPair(
     nonStop: request.nonStop,
     currency: request.currency,
   });
-  return withFlightSearchDedup(key, () =>
-    amadeusFlightProvider.searchFlights({
-      originIata: pair.origin.iataCode,
-      destinationIata: pair.destination.iataCode,
-      departureDate: request.departureDate,
+
+  return withFlightSearchDedup(key, async () => {
+    const journeys = await serpapiFlightProvider.searchFlights({
+      departureIds,
+      arrivalIds,
+      outboundDate: request.departureDate,
       returnDate: request.returnDate,
       adults: request.adults,
       children: request.children,
@@ -224,10 +228,32 @@ async function searchOneAirportPair(
       cabin: request.cabin,
       nonStop: request.nonStop,
       currency: request.currency,
+      hl: request.locale,
+      gl: originCountryHint(origins),
       signal,
       resolvePlace,
-    }),
-  );
+    });
+
+    // Defense in depth: SerpApi multi-airport queries can occasionally
+    // surface itineraries that leave/enter outside the requested set.
+    const originSet = new Set(originIatas.map((c) => c.toUpperCase()));
+    const destinationSet = new Set(destinationIatas.map((c) => c.toUpperCase()));
+    return journeys.filter((journey) => {
+      const first = journey.segments[0];
+      const last = journey.segments[journey.segments.length - 1];
+      if (!first || !last) return false;
+      return (
+        originSet.has(first.departure.place.iataCode.toUpperCase()) &&
+        destinationSet.has(last.arrival.place.iataCode.toUpperCase())
+      );
+    });
+  });
+}
+
+/** Best-effort `gl` (Google country) hint from the top resolved origin airport. */
+function originCountryHint(origins: ResolvedAirport[]): string | undefined {
+  const code = origins[0]?.countryCode;
+  return code ? code.toLowerCase() : undefined;
 }
 
 async function computeGroundLeg(
@@ -264,7 +290,7 @@ export async function calculateFlightJourneys(
     throw new FlightError("aborted", "Flight search aborted", 499);
   }
 
-  const status = await amadeusFlightProvider.getStatus();
+  const status = await serpapiFlightProvider.getStatus();
   if (status !== "operational") {
     throw mapProviderStatusToError(status);
   }
@@ -294,7 +320,6 @@ export async function calculateFlightJourneys(
     );
   }
 
-  const pairs = buildAirportPairs(originCandidates, destinationCandidates);
   const warnings: FlightWarning[] = [];
   if (
     originCandidates.length > MAX_ORIGIN_CANDIDATES ||
@@ -307,22 +332,9 @@ export async function calculateFlightJourneys(
     });
   }
 
-  const pairResults = await Promise.allSettled(
-    pairs.map((pair) => searchOneAirportPair(pair, request, signal)),
-  );
-
-  const offers: FlightJourney[] = [];
-  let firstError: FlightError | null = null;
-  for (const result of pairResults) {
-    if (result.status === "fulfilled") {
-      offers.push(...result.value);
-    } else if (result.reason instanceof FlightError && !firstError) {
-      firstError = result.reason;
-    }
-  }
+  const offers = await searchAllAirports(originCandidates, destinationCandidates, request, signal);
 
   if (offers.length === 0) {
-    if (firstError) throw firstError;
     throw new FlightError("no_offers_found", "No flight offers found", 404);
   }
 
@@ -378,16 +390,20 @@ export async function calculateFlightJourneys(
 
     // Drop physically impossible connections (ground arrives after the flight departs, or
     // the egress leg would need to depart before the flight lands) rather than just warning.
+    // Also drop legs timed on a different calendar day than the flight (Google Routes defaults
+    // to "now", which invents multi-day door-to-door durations against future SerpApi flights).
     if (accessJourney) {
       const margin = connectionMarginMinutes(accessJourney.arrivalAt, firstSegment.departure.at);
-      if (margin != null && margin < 0) {
+      const sameDay = shareCalendarDate(accessJourney.arrivalAt, firstSegment.departure.at);
+      if (!sameDay || (margin != null && margin < 0)) {
         accessJourney = null;
         accessUnavailable = true;
       }
     }
     if (egressJourney) {
       const margin = connectionMarginMinutes(lastSegment.arrival.at, egressJourney.departureAt);
-      if (margin != null && margin < 0) {
+      const sameDay = shareCalendarDate(lastSegment.arrival.at, egressJourney.departureAt);
+      if (!sameDay || (margin != null && margin < 0)) {
         egressJourney = null;
         egressUnavailable = true;
       }
@@ -408,8 +424,7 @@ export async function calculateFlightJourneys(
   }
 
   return {
-    provider: "amadeus",
-    environment: amadeusFlightProvider.getEnvironment(),
+    provider: "serpapi_google_flights",
     status: "operational",
     offers: sortedOffers,
     journeys,

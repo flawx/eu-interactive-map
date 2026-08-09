@@ -26,8 +26,8 @@
     "test:tomtom-products": "tsx scripts/test-tomtom-products.ts",
     "test:media-routing-stability": "tsx scripts/test-media-routing-stability.ts",
     "test:transit": "tsx scripts/test-transit.ts",
-    "test:amadeus-products": "tsx scripts/test-amadeus-products.ts",
     "test:flights": "tsx scripts/test-flights.ts",
+    "test:flight-provider": "tsx scripts/test-flight-provider.ts",
     "thumbnails:audit": "tsx scripts/audit-map-marker-thumbnails.ts",
     "test:photo-markers-wildfire-labels": "tsx scripts/test-photo-markers-wildfire-labels.ts"
   },

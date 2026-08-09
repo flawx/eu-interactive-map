@@ -1,126 +1,53 @@
+/**
+ * Offline unit tests for the SerpApi Google Flights integration: normalizer
+ * fixtures (direct / 1-stop / multi-stop / layovers / price / no-price /
+ * airline / flight number), geodesic + antimeridian geometry, connection
+ * buffers, deterministic scoring (recommended sort preserves best_flights
+ * ranking), provider misconfiguration, cache dedup, and abort handling.
+ *
+ * No live network calls, no Amadeus references — SerpApi Google Flights is
+ * the only flight provider in this tree.
+ */
 import assert from "node:assert/strict";
 
 const ORIGINAL_FETCH = globalThis.fetch;
 
-function clearAmadeusCredentials() {
-  delete process.env.AMADEUS_API_KEY;
-  delete process.env.AMADEUS_API_SECRET;
-  delete process.env.AMADEUS_ENV;
+function clearSerpApiCredentials() {
+  delete process.env.SERPAPI_API_KEY;
 }
 
-function setAmadeusCredentials(key = "test-key", secret = "test-secret") {
-  process.env.AMADEUS_API_KEY = key;
-  process.env.AMADEUS_API_SECRET = secret;
-}
-
-function mockTokenResponse(accessToken: string, expiresIn = 1800, status = 200) {
-  return (async () =>
-    new Response(
-      status === 200
-        ? JSON.stringify({ access_token: accessToken, expires_in: expiresIn })
-        : JSON.stringify({ error_description: "invalid_client" }),
-      { status, headers: { "content-type": "application/json" } },
-    )) as typeof fetch;
-}
-
-async function testTokenCache() {
-  const {
-    getAmadeusAccessToken,
-    hasAmadeusCredentials,
-    resetAmadeusAuthForTests,
-    getAmadeusEnvironment,
-    getAmadeusBaseUrl,
-    AmadeusAuthError,
-  } = await import("../lib/routing/flights/amadeusAuth");
-
-  // Environment resolution
-  clearAmadeusCredentials();
-  assert.equal(getAmadeusEnvironment(), "test");
-  assert.equal(getAmadeusBaseUrl(), "https://test.api.amadeus.com");
-  process.env.AMADEUS_ENV = "production";
-  assert.equal(getAmadeusEnvironment(), "production");
-  assert.equal(getAmadeusBaseUrl(), "https://api.amadeus.com");
-  delete process.env.AMADEUS_ENV;
-
-  // Misconfigured — no credentials at all
-  resetAmadeusAuthForTests();
-  assert.equal(hasAmadeusCredentials(), false);
-  await assert.rejects(
-    () => getAmadeusAccessToken(),
-    (err: unknown) => err instanceof AmadeusAuthError && err.kind === "misconfigured",
-  );
-
-  // Successful fetch + in-memory cache (second call must not hit fetch again)
-  setAmadeusCredentials();
-  resetAmadeusAuthForTests();
-  let fetchCalls = 0;
-  globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
-    fetchCalls += 1;
-    return mockTokenResponse("tok-cache")(...args);
-  }) as typeof fetch;
-  try {
-    const token1 = await getAmadeusAccessToken();
-    assert.equal(token1, "tok-cache");
-    assert.equal(fetchCalls, 1);
-    const token2 = await getAmadeusAccessToken();
-    assert.equal(token2, "tok-cache");
-    assert.equal(fetchCalls, 1, "second call should reuse the cached token");
-  } finally {
-    globalThis.fetch = ORIGINAL_FETCH;
-  }
-
-  // Concurrent requests dedup into a single in-flight fetch
-  resetAmadeusAuthForTests();
-  let concurrentFetchCalls = 0;
-  globalThis.fetch = (async () => {
-    concurrentFetchCalls += 1;
-    await new Promise((r) => setTimeout(r, 15));
-    return new Response(
-      JSON.stringify({ access_token: "tok-concurrent", expires_in: 1800 }),
-      { status: 200, headers: { "content-type": "application/json" } },
-    );
-  }) as typeof fetch;
-  try {
-    const [a, b] = await Promise.all([getAmadeusAccessToken(), getAmadeusAccessToken()]);
-    assert.equal(a, "tok-concurrent");
-    assert.equal(b, "tok-concurrent");
-    assert.equal(concurrentFetchCalls, 1, "concurrent calls must dedup into one request");
-  } finally {
-    globalThis.fetch = ORIGINAL_FETCH;
-  }
-
-  // Authentication error (bad key/secret) is classified, not swallowed
-  resetAmadeusAuthForTests();
-  globalThis.fetch = mockTokenResponse("", 0, 401);
-  try {
-    await assert.rejects(
-      () => getAmadeusAccessToken(),
-      (err: unknown) => err instanceof AmadeusAuthError && err.kind === "authentication_error",
-    );
-  } finally {
-    globalThis.fetch = ORIGINAL_FETCH;
-  }
-
-  resetAmadeusAuthForTests();
-  clearAmadeusCredentials();
-  console.log("  token cache: OK");
+function setSerpApiCredentials(key = "test-key") {
+  process.env.SERPAPI_API_KEY = key;
 }
 
 async function testNormalizeFixtures() {
-  const { normalizeAmadeusOffers, parseIso8601Duration, bareFlightPlace } = await import(
-    "../lib/routing/flights/normalizeAmadeusOffers"
-  );
+  const {
+    normalizeSerpApiFlights,
+    bareFlightPlace,
+    toLocalIsoLikeString,
+    parseFlightNumber,
+  } = await import("../lib/routing/flights/normalizeSerpApiFlights");
+  type SerpApiGoogleFlightsSearchResult =
+    import("../lib/routing/flights/normalizeSerpApiFlights").SerpApiGoogleFlightsSearchResult;
 
-  assert.equal(parseIso8601Duration("PT2H5M"), 7500);
-  assert.equal(parseIso8601Duration("P1DT3H"), 97200);
-  assert.equal(parseIso8601Duration("PT45M"), 2700);
-  assert.equal(parseIso8601Duration(null), 0);
-  assert.equal(parseIso8601Duration("not-a-duration"), 0);
+  // Local-time string handling: never invent a "Z"/UTC offset.
+  assert.equal(toLocalIsoLikeString("2026-09-01 09:00"), "2026-09-01T09:00:00");
+  assert.equal(toLocalIsoLikeString("2026-09-01T09:00:00"), "2026-09-01T09:00:00");
+  assert.ok(!toLocalIsoLikeString("2026-09-01 09:00").includes("Z"));
+  assert.equal(toLocalIsoLikeString(null), "");
+
+  assert.deepEqual(parseFlightNumber("AF 1404"), { carrierCode: "AF", flightNumber: "1404" });
+  assert.deepEqual(parseFlightNumber("TO 3950"), { carrierCode: "TO", flightNumber: "3950" });
+  assert.deepEqual(parseFlightNumber(null), { carrierCode: "", flightNumber: "" });
+
+  assert.equal(bareFlightPlace("cdg").iataCode, "CDG");
+  assert.equal(bareFlightPlace("cdg").name, null);
 
   const placesByIata: Record<string, { name: string; lat: number; lon: number; country: string }> = {
     CDG: { name: "Paris Charles de Gaulle", lat: 49.0097, lon: 2.5479, country: "FR" },
-    FRA: { name: "Frankfurt Airport", lat: 50.0379, lon: 8.5622, country: "DE" },
-    MAD: { name: "Madrid-Barajas", lat: 40.4983, lon: -3.5676, country: "ES" },
+    FCO: { name: "Rome Fiumicino", lat: 41.8003, lon: 12.2389, country: "IT" },
+    ORY: { name: "Paris Orly", lat: 48.7233, lon: 2.3794, country: "FR" },
+    MXP: { name: "Milan Malpensa", lat: 45.63, lon: 8.7231, country: "IT" },
   };
   const resolvePlace = (iataCode: string) => {
     const entry = placesByIata[iataCode];
@@ -135,139 +62,144 @@ async function testNormalizeFixtures() {
     };
   };
 
-  const fixture = {
-    data: [
+  const fixture: SerpApiGoogleFlightsSearchResult = {
+    best_flights: [
       {
-        id: "1",
-        numberOfBookableSeats: 4,
-        lastTicketingDate: "2026-08-20",
-        itineraries: [
+        // Direct flight, with price + booking token + carbon emissions.
+        flights: [
           {
-            duration: "PT7H30M",
-            segments: [
-              {
-                id: "1",
-                departure: { iataCode: "CDG", terminal: "2E", at: "2026-09-01T09:00:00" },
-                arrival: { iataCode: "FRA", terminal: "1", at: "2026-09-01T10:30:00" },
-                carrierCode: "AF",
-                number: "1234",
-                aircraft: { code: "320" },
-                operating: { carrierCode: "AF" },
-                duration: "PT1H30M",
-                numberOfStops: 0,
-              },
-              {
-                id: "2",
-                departure: { iataCode: "FRA", terminal: "1", at: "2026-09-01T12:00:00" },
-                arrival: { iataCode: "MAD", terminal: "4", at: "2026-09-01T14:30:00" },
-                carrierCode: "LH",
-                number: "5678",
-                aircraft: { code: "321" },
-                operating: { carrierCode: "LH" },
-                duration: "PT2H30M",
-                numberOfStops: 0,
-              },
-            ],
+            departure_airport: { name: "Paris Charles de Gaulle", id: "CDG", time: "2026-09-01 09:00" },
+            arrival_airport: { name: "Rome Fiumicino", id: "FCO", time: "2026-09-01 11:05" },
+            duration: 125,
+            airplane: "Airbus A320neo",
+            airline: "Air France",
+            airline_logo: "https://www.gstatic.com/flights/airline_logos/70px/AF.png",
+            travel_class: "Economy",
+            flight_number: "AF 1404",
           },
         ],
-        price: { currency: "EUR", total: "245.50", grandTotal: "245.50" },
-        validatingAirlineCodes: ["AF"],
-        travelerPricings: [{ fareDetailsBySegment: [{ cabin: "ECONOMY" }] }],
+        total_duration: 125,
+        carbon_emissions: { this_flight: 89000, typical_for_this_route: 146000, difference_percent: -39 },
+        price: 109,
+        type: "One way",
+        airline_logo: "https://www.gstatic.com/flights/airline_logos/70px/AF.png",
+        booking_token: "TOKEN123",
       },
     ],
-    dictionaries: { carriers: { AF: "AIR FRANCE" } },
-  };
-
-  const journeys = normalizeAmadeusOffers(fixture, { environment: "test", resolvePlace });
-  assert.equal(journeys.length, 1);
-  const journey = journeys[0]!;
-  assert.equal(journey.segments.length, 2);
-  assert.equal(journey.stops, 1);
-  assert.equal(journey.durationSeconds, 27000);
-  assert.equal(journey.layovers.length, 1);
-  assert.equal(journey.layovers[0]!.durationSeconds, 5400);
-  assert.equal(journey.layovers[0]!.airport.iataCode, "FRA");
-  assert.equal(journey.price?.amount, 245.5);
-  assert.equal(journey.price?.currency, "EUR");
-  assert.equal(journey.price?.status, "search");
-  assert.equal(journey.cabin, "ECONOMY");
-  assert.equal(journey.rawOfferId, "1");
-  assert.equal(journey.sourceEnvironment, "test");
-  // Dictionary entry wins when present.
-  assert.equal(journey.segments[0]!.carrierName, "AIR FRANCE");
-  // Curated EU_AIRLINE_NAMES fallback when the Amadeus dictionary omits the carrier.
-  assert.equal(journey.segments[1]!.carrierName, "Lufthansa");
-  assert.equal(journey.segments[0]!.departure.place.name, "Paris Charles de Gaulle");
-  assert.equal(journey.segments[0]!.departure.place.latitude, 49.0097);
-
-  // Unknown carrier code must never be invented.
-  const unknownCarrierFixture = {
-    data: [
+    other_flights: [
       {
-        id: "2",
-        itineraries: [
+        // 1-stop with a layover, no price (must not be invented).
+        flights: [
           {
-            duration: "PT1H0M",
-            segments: [
-              {
-                id: "1",
-                departure: { iataCode: "CDG", at: "2026-09-01T09:00:00" },
-                arrival: { iataCode: "ORY", at: "2026-09-01T10:00:00" },
-                carrierCode: "ZZ",
-                number: "1",
-              },
-            ],
+            departure_airport: { name: "Paris Orly", id: "ORY", time: "2026-09-01 07:00" },
+            arrival_airport: { name: "Milan Malpensa", id: "MXP", time: "2026-09-01 08:40" },
+            duration: 100,
+            airline: "ITA Airways",
+            travel_class: "Economy",
+            flight_number: "AZ 312",
+          },
+          {
+            departure_airport: { name: "Milan Malpensa", id: "MXP", time: "2026-09-01 10:10" },
+            arrival_airport: { name: "Rome Fiumicino", id: "FCO", time: "2026-09-01 11:15" },
+            duration: 65,
+            airline: "ITA Airways",
+            travel_class: "Economy",
+            flight_number: "AZ 1478",
           },
         ],
+        layovers: [{ duration: 90, name: "Milan Malpensa", id: "MXP" }],
+        total_duration: 255,
+        type: "One way",
+      },
+      {
+        // 2-stop itinerary, overnight layover, unknown carrier code.
+        flights: [
+          {
+            departure_airport: { id: "CDG", time: "2026-09-01 22:00" },
+            arrival_airport: { id: "ATH", time: "2026-09-02 02:10" },
+            duration: 190,
+            flight_number: "ZZ 100",
+            overnight: true,
+          },
+          {
+            departure_airport: { id: "ATH", time: "2026-09-02 10:00" },
+            arrival_airport: { id: "IST", time: "2026-09-02 11:20" },
+            duration: 80,
+            flight_number: "ZZ 200",
+          },
+          {
+            departure_airport: { id: "IST", time: "2026-09-02 13:00" },
+            arrival_airport: { id: "FCO", time: "2026-09-02 15:30" },
+            duration: 150,
+            flight_number: "ZZ 300",
+          },
+        ],
+        layovers: [
+          { duration: 470, name: "Athens", id: "ATH", overnight: true },
+          { duration: 100, name: "Istanbul", id: "IST" },
+        ],
+        total_duration: 990,
+        price: 340,
       },
     ],
   };
-  const unknownJourneys = normalizeAmadeusOffers(unknownCarrierFixture, { environment: "test" });
-  assert.equal(unknownJourneys[0]!.segments[0]!.carrierName, null);
-  assert.equal(unknownJourneys[0]!.price, null);
-  assert.equal(unknownJourneys[0]!.segments[0]!.departure.place.name, null);
 
-  // Round trip: two itineraries on the same offer share the offer id + price.
-  const roundTripFixture = {
-    data: [
-      {
-        id: "rt-1",
-        itineraries: [
-          {
-            duration: "PT2H0M",
-            segments: [
-              {
-                id: "1",
-                departure: { iataCode: "CDG", at: "2026-09-01T09:00:00" },
-                arrival: { iataCode: "MAD", at: "2026-09-01T11:00:00" },
-                carrierCode: "AF",
-                number: "100",
-              },
-            ],
-          },
-          {
-            duration: "PT2H0M",
-            segments: [
-              {
-                id: "2",
-                departure: { iataCode: "MAD", at: "2026-09-08T09:00:00" },
-                arrival: { iataCode: "CDG", at: "2026-09-08T11:00:00" },
-                carrierCode: "AF",
-                number: "101",
-              },
-            ],
-          },
-        ],
-        price: { currency: "EUR", total: "300.00" },
-      },
-    ],
-  };
-  const roundTripJourneys = normalizeAmadeusOffers(roundTripFixture, { environment: "test" });
-  assert.equal(roundTripJourneys.length, 2);
-  assert.equal(roundTripJourneys[0]!.rawOfferId, "rt-1");
-  assert.equal(roundTripJourneys[1]!.rawOfferId, "rt-1");
-  assert.equal(roundTripJourneys[0]!.price?.amount, 300);
-  assert.equal(roundTripJourneys[1]!.price?.amount, 300);
+  const journeys = normalizeSerpApiFlights(fixture, { currency: "EUR", resolvePlace });
+  assert.equal(journeys.length, 3);
+
+  // --- Direct flight (best_flights[0]) ---
+  const direct = journeys[0]!;
+  assert.equal(direct.sourceRank, "best");
+  assert.equal(direct.segments.length, 1);
+  assert.equal(direct.stops, 0);
+  assert.equal(direct.durationSeconds, 125 * 60);
+  assert.equal(direct.price?.amount, 109);
+  assert.equal(direct.price?.currency, "EUR");
+  assert.equal(direct.price?.status, "search");
+  assert.equal(direct.price?.source, "serpapi");
+  assert.equal(direct.cabin, "ECONOMY");
+  assert.equal(direct.bookingToken, "TOKEN123");
+  assert.equal(direct.overnight, false);
+  assert.equal(direct.carbonEmissions?.thisFlightGrams, 89000);
+  assert.equal(direct.carbonEmissions?.differencePercent, -39);
+  const directSeg = direct.segments[0]!;
+  assert.equal(directSeg.carrierCode, "AF");
+  assert.equal(directSeg.flightNumber, "1404");
+  assert.equal(directSeg.carrierName, "Air France");
+  assert.equal(directSeg.airplane, "Airbus A320neo");
+  assert.equal(directSeg.departure.place.name, "Paris Charles de Gaulle");
+  assert.equal(directSeg.departure.at, "2026-09-01T09:00:00");
+  assert.equal(directSeg.arrival.terminal, null);
+
+  // --- 1-stop, no price ---
+  const oneStop = journeys[1]!;
+  assert.equal(oneStop.sourceRank, "other");
+  assert.equal(oneStop.segments.length, 2);
+  assert.equal(oneStop.stops, 1);
+  assert.equal(oneStop.layovers.length, 1);
+  assert.equal(oneStop.layovers[0]!.durationSeconds, 90 * 60);
+  assert.equal(oneStop.layovers[0]!.airport.iataCode, "MXP");
+  assert.equal(oneStop.durationSeconds, 255 * 60);
+  assert.equal(oneStop.price, null, "missing price must never be invented");
+  assert.equal(oneStop.segments[0]!.carrierCode, "AZ");
+  assert.equal(oneStop.segments[0]!.carrierName, "ITA Airways");
+
+  // --- 2-stop, unknown carrier, overnight ---
+  const multiStop = journeys[2]!;
+  assert.equal(multiStop.segments.length, 3);
+  assert.equal(multiStop.stops, 2);
+  assert.equal(multiStop.layovers.length, 2);
+  assert.equal(multiStop.layovers[0]!.overnight, true);
+  assert.equal(multiStop.overnight, true, "overnight must propagate from segments/layovers");
+  assert.equal(multiStop.durationSeconds, 990 * 60);
+  assert.equal(multiStop.price?.amount, 340);
+  // Unknown carrier code must never invent a name.
+  assert.equal(multiStop.segments[0]!.carrierName, null);
+  assert.equal(multiStop.segments[1]!.flightNumber, "200");
+  assert.equal(multiStop.segments[2]!.departure.place.name, null);
+
+  // Empty payload normalizes to an empty array, not an error.
+  assert.deepEqual(normalizeSerpApiFlights({}, { currency: "EUR" }), []);
 
   console.log("  normalize fixtures: OK");
 }
@@ -277,19 +209,16 @@ async function testGreatCircleAndAntimeridian() {
     "../lib/routing/flights/greatCircle"
   );
 
-  // Basic arc: endpoints preserved, correct point count.
-  const line = greatCircleLine(2.5479, 49.0097, -3.5676, 40.4983, 32);
+  const line = greatCircleLine(2.5479, 49.0097, 12.2389, 41.8003, 32);
   assert.equal(line.length, 33);
   assert.ok(Math.abs(line[0]![0] - 2.5479) < 1e-6);
   assert.ok(Math.abs(line[0]![1] - 49.0097) < 1e-6);
-  assert.ok(Math.abs(line[line.length - 1]![0] - -3.5676) < 1e-6);
-  assert.ok(Math.abs(line[line.length - 1]![1] - 40.4983) < 1e-6);
+  assert.ok(Math.abs(line[line.length - 1]![0] - 12.2389) < 1e-6);
+  assert.ok(Math.abs(line[line.length - 1]![1] - 41.8003) < 1e-6);
 
-  // Identical points shouldn't blow up (degenerate great circle).
   const degenerate = greatCircleLine(10, 45, 10, 45, 10);
   assert.equal(degenerate.length, 2);
 
-  // Antimeridian crossing: consecutive points must stay continuous (no ±360 jump).
   const crossing = greatCircleLine(170, 40, -170, 45, 32);
   for (let i = 1; i < crossing.length; i += 1) {
     const delta = Math.abs(crossing[i]![0] - crossing[i - 1]![0]);
@@ -304,11 +233,9 @@ async function testGreatCircleAndAntimeridian() {
       }
     }
   } else {
-    // Continuous LineString is also an acceptable, MapLibre-renderable result.
     assert.ok(geometry.coordinates.length >= 2);
   }
 
-  // Direct split test with a crafted continuous crossing.
   const parts = splitAtAntimeridian([
     [170, 40],
     [175, 41],
@@ -323,7 +250,6 @@ async function testGreatCircleAndAntimeridian() {
   }
   assert.ok(parts[0]!.at(-1)![0] === 180 || parts[0]!.at(-1)![0] === -180);
 
-  // Non-crossing input must stay a single part.
   const noCrossing = splitAtAntimeridian([
     [2, 48],
     [3, 48.5],
@@ -339,6 +265,8 @@ async function testAirportBuffers() {
     isConnectionViable,
     isEgressViable,
     connectionMarginMinutes,
+    shareCalendarDate,
+    calendarDatePrefix,
     RECOMMENDED_FLIGHT_BUFFERS,
   } = await import("../lib/routing/flights/airportBuffers");
 
@@ -346,39 +274,28 @@ async function testAirportBuffers() {
   assert.equal(RECOMMENDED_FLIGHT_BUFFERS.internationalMinutes, 120);
   assert.equal(RECOMMENDED_FLIGHT_BUFFERS.egressMinutes, 45);
 
-  assert.equal(
-    isConnectionViable("2026-09-01T08:00:00Z", "2026-09-01T10:00:00Z", 90),
-    true,
-  );
-  assert.equal(
-    isConnectionViable("2026-09-01T09:30:00Z", "2026-09-01T10:00:00Z", 90),
-    false,
-  );
-  assert.equal(isConnectionViable(null, "2026-09-01T10:00:00Z", 90), false);
-  assert.equal(isConnectionViable("2026-09-01T08:00:00Z", null, 90), false);
+  assert.equal(isConnectionViable("2026-09-01T08:00:00", "2026-09-01T10:00:00", 90), true);
+  assert.equal(isConnectionViable("2026-09-01T09:30:00", "2026-09-01T10:00:00", 90), false);
+  assert.equal(isConnectionViable(null, "2026-09-01T10:00:00", 90), false);
+  assert.equal(isConnectionViable("2026-09-01T08:00:00", null, 90), false);
 
-  assert.equal(
-    isEgressViable("2026-09-01T10:00:00Z", "2026-09-01T10:50:00Z", 45),
-    true,
-  );
-  assert.equal(
-    isEgressViable("2026-09-01T10:00:00Z", "2026-09-01T10:20:00Z", 45),
-    false,
-  );
+  assert.equal(calendarDatePrefix("2026-08-23 21:10"), "2026-08-23");
+  assert.equal(calendarDatePrefix("2026-08-09T14:21:00Z"), "2026-08-09");
+  assert.equal(shareCalendarDate("2026-08-23T10:00:00Z", "2026-08-23 21:10"), true);
+  assert.equal(shareCalendarDate("2026-08-09T14:21:00Z", "2026-08-23 21:10"), false);
 
-  assert.equal(
-    connectionMarginMinutes("2026-09-01T08:00:00Z", "2026-09-01T09:30:00Z"),
-    90,
-  );
-  assert.equal(connectionMarginMinutes(null, "2026-09-01T09:30:00Z"), null);
-  assert.equal(connectionMarginMinutes("not-a-date", "2026-09-01T09:30:00Z"), null);
+  assert.equal(isEgressViable("2026-09-01T10:00:00", "2026-09-01T10:50:00", 45), true);
+  assert.equal(isEgressViable("2026-09-01T10:00:00", "2026-09-01T10:20:00", 45), false);
+
+  assert.equal(connectionMarginMinutes("2026-09-01T08:00:00", "2026-09-01T09:30:00"), 90);
+  assert.equal(connectionMarginMinutes(null, "2026-09-01T09:30:00"), null);
+  assert.equal(connectionMarginMinutes("not-a-date", "2026-09-01T09:30:00"), null);
 
   console.log("  airport buffers: OK");
 }
 
 async function testFlightScore() {
   const { sortOffers, recommendedScore } = await import("../lib/routing/flights/flightScore");
-
   type FlightJourney = import("../lib/routing/flights/types").FlightJourney;
 
   function journey(overrides: Partial<FlightJourney> & { id: string }): FlightJourney {
@@ -392,9 +309,11 @@ async function testFlightScore() {
       validatingAirlineCodes: [],
       bookableSeats: null,
       lastTicketingDate: null,
-      sourceEnvironment: "test",
-      rawOfferId: overrides.id,
-      rawOffer: null,
+      bookingToken: null,
+      airlineLogo: null,
+      carbonEmissions: null,
+      sourceRank: "other",
+      overnight: false,
       ...overrides,
     };
   }
@@ -403,20 +322,15 @@ async function testFlightScore() {
     id: "cheap-slow",
     durationSeconds: 5 * 3600,
     stops: 1,
-    price: { amount: 80, currency: "EUR", status: "search", source: "amadeus" },
+    price: { amount: 80, currency: "EUR", status: "search", source: "serpapi" },
   });
   const pricyFast = journey({
     id: "pricy-fast",
     durationSeconds: 2 * 3600,
     stops: 0,
-    price: { amount: 400, currency: "EUR", status: "search", source: "amadeus" },
+    price: { amount: 400, currency: "EUR", status: "search", source: "serpapi" },
   });
-  const noPrice = journey({
-    id: "no-price",
-    durationSeconds: 3 * 3600,
-    stops: 0,
-    price: null,
-  });
+  const noPrice = journey({ id: "no-price", durationSeconds: 3 * 3600, stops: 0, price: null });
 
   const byCheapest = sortOffers([pricyFast, cheapSlow, noPrice], "cheapest");
   assert.deepEqual(byCheapest.map((j) => j.id), ["cheap-slow", "pricy-fast", "no-price"]);
@@ -424,62 +338,125 @@ async function testFlightScore() {
   const byFastest = sortOffers([cheapSlow, pricyFast, noPrice], "fastest");
   assert.deepEqual(byFastest.map((j) => j.id), ["pricy-fast", "no-price", "cheap-slow"]);
 
-  // sortOffers never mutates its input.
   const input = [cheapSlow, pricyFast, noPrice];
   const inputCopy = input.slice();
   sortOffers(input, "recommended");
-  assert.deepEqual(input, inputCopy);
+  assert.deepEqual(input, inputCopy, "sortOffers must never mutate its input");
 
-  // Determinism: same input, same output, every time.
   const runA = sortOffers(input, "recommended").map((j) => j.id);
   const runB = sortOffers(input, "recommended").map((j) => j.id);
-  assert.deepEqual(runA, runB);
+  assert.deepEqual(runA, runB, "recommended sort must be deterministic");
 
-  // More stops must never score better than an otherwise-identical nonstop.
   const nonstop = journey({ id: "nonstop", durationSeconds: 3600, stops: 0 });
   const oneStop = journey({ id: "onestop", durationSeconds: 3600, stops: 1 });
   assert.ok(recommendedScore(oneStop) > recommendedScore(nonstop));
 
+  // On an otherwise-tied score, "recommended" must keep Google's own
+  // best_flights ranking ahead of other_flights.
+  const bestTie = journey({ id: "best-tie", durationSeconds: 3600, stops: 0, sourceRank: "best" });
+  const otherTie = journey({ id: "other-tie", durationSeconds: 3600, stops: 0, sourceRank: "other" });
+  const tieBroken = sortOffers([otherTie, bestTie], "recommended");
+  assert.deepEqual(tieBroken.map((j) => j.id), ["best-tie", "other-tie"]);
+
   console.log("  flight score: OK");
 }
 
-async function testProviderMisconfigured() {
-  const { amadeusFlightProvider } = await import(
-    "../lib/routing/flights/providers/amadeusFlightProvider"
+async function testProviderStatus() {
+  const { serpapiFlightProvider } = await import(
+    "../lib/routing/flights/providers/serpapiFlightProvider"
   );
-  const { resetAmadeusAuthForTests } = await import("../lib/routing/flights/amadeusAuth");
 
-  clearAmadeusCredentials();
-  resetAmadeusAuthForTests();
-  assert.equal(await amadeusFlightProvider.getStatus(), "misconfigured");
+  clearSerpApiCredentials();
+  assert.equal(await serpapiFlightProvider.getStatus(), "misconfigured");
 
-  setAmadeusCredentials();
-  resetAmadeusAuthForTests();
-  globalThis.fetch = mockTokenResponse("tok-status");
+  setSerpApiCredentials();
+  assert.equal(await serpapiFlightProvider.getStatus(), "operational");
+
+  clearSerpApiCredentials();
+  console.log("  provider misconfigured/operational: OK");
+}
+
+async function testFlightCacheDedup() {
+  const {
+    flightSearchCacheKey,
+    withFlightSearchDedup,
+    clearFlightCacheForTests,
+  } = await import("../lib/routing/flights/flightCache");
+  type FlightJourney = import("../lib/routing/flights/types").FlightJourney;
+
+  clearFlightCacheForTests();
+  const key = flightSearchCacheKey({
+    originIata: "CDG,ORY",
+    destinationIata: "FCO,CIA",
+    departureDate: "2026-09-01",
+    adults: 1,
+    nonStop: false,
+    currency: "EUR",
+  });
+
+  let fetchCalls = 0;
+  const fetcher = () =>
+    new Promise<FlightJourney[]>((resolve) => {
+      fetchCalls += 1;
+      setTimeout(() => resolve([]), 15);
+    });
+
+  const [a, b] = await Promise.all([
+    withFlightSearchDedup(key, fetcher),
+    withFlightSearchDedup(key, fetcher),
+  ]);
+  assert.deepEqual(a, []);
+  assert.deepEqual(b, []);
+  assert.equal(fetchCalls, 1, "concurrent identical searches must dedup into a single call");
+
+  await withFlightSearchDedup(key, fetcher);
+  assert.equal(fetchCalls, 1, "a cached result must be reused without another fetch");
+
+  clearFlightCacheForTests();
+  console.log("  flight cache dedup: OK");
+}
+
+async function testAbortHandling() {
+  const { fetchSerpApiGoogleFlights } = await import("../lib/routing/flights/serpapiClient");
+  const { FlightError } = await import("../lib/routing/flights/types");
+
+  // Misconfigured: no network call should even be attempted.
+  clearSerpApiCredentials();
+  await assert.rejects(
+    () => fetchSerpApiGoogleFlights({ departure_id: "CDG" }),
+    (err: unknown) => err instanceof FlightError && err.code === "provider_misconfigured",
+  );
+
+  setSerpApiCredentials();
+  const controller = new AbortController();
+  globalThis.fetch = ((_url: unknown, init?: { signal?: AbortSignal }) =>
+    new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => {
+        const abortError = new Error("This operation was aborted");
+        abortError.name = "AbortError";
+        reject(abortError);
+      });
+    })) as typeof fetch;
+
   try {
-    assert.equal(await amadeusFlightProvider.getStatus(), "operational");
+    const pending = fetchSerpApiGoogleFlights(
+      { departure_id: "CDG", arrival_id: "FCO" },
+      { signal: controller.signal },
+    );
+    controller.abort();
+    await assert.rejects(
+      () => pending,
+      (err: unknown) => err instanceof FlightError && err.code === "aborted",
+    );
   } finally {
     globalThis.fetch = ORIGINAL_FETCH;
   }
 
-  resetAmadeusAuthForTests();
-  globalThis.fetch = mockTokenResponse("", 0, 401);
-  try {
-    assert.equal(await amadeusFlightProvider.getStatus(), "authentication_error");
-  } finally {
-    globalThis.fetch = ORIGINAL_FETCH;
-  }
-
-  resetAmadeusAuthForTests();
-  clearAmadeusCredentials();
-  console.log("  provider misconfigured/operational/authentication_error: OK");
+  clearSerpApiCredentials();
+  console.log("  abort / misconfigured handling: OK");
 }
 
 async function testAirportResolver() {
-  clearAmadeusCredentials();
-  const { resetAmadeusAuthForTests } = await import("../lib/routing/flights/amadeusAuth");
-  resetAmadeusAuthForTests();
-
   const { resolveByIata, airportsForCity, resolveAirportsForPlace, haversineDistanceKm } =
     await import("../lib/routing/flights/airportResolver");
 
@@ -507,7 +484,23 @@ async function testAirportResolver() {
     name: "Paris",
   });
   assert.ok(resolved.length >= 1 && resolved.length <= 3);
+  assert.ok(resolved.every((a) => a.source === "curated"));
   assert.ok(resolved.some((a) => a.iataCode === "CDG" || a.iataCode === "ORY"));
+  assert.ok(
+    resolved.every((a) => a.iataCode === "CDG" || a.iataCode === "ORY"),
+    "Paris must not pad with distant airports like BRU",
+  );
+
+  const rome = await resolveAirportsForPlace({
+    latitude: 41.9028,
+    longitude: 12.4964,
+    name: "Rome",
+  });
+  assert.ok(rome.some((a) => a.iataCode === "FCO" || a.iataCode === "CIA"));
+  assert.ok(
+    rome.every((a) => a.iataCode === "FCO" || a.iataCode === "CIA"),
+    "Rome must not pad with distant airports like NCE",
+  );
 
   const byIataHint = await resolveAirportsForPlace({
     latitude: 44.8283,
@@ -521,12 +514,13 @@ async function testAirportResolver() {
 
 async function main() {
   console.log("test:flights");
-  await testTokenCache();
   await testNormalizeFixtures();
   await testGreatCircleAndAntimeridian();
   await testAirportBuffers();
   await testFlightScore();
-  await testProviderMisconfigured();
+  await testProviderStatus();
+  await testFlightCacheDedup();
+  await testAbortHandling();
   await testAirportResolver();
   globalThis.fetch = ORIGINAL_FETCH;
   console.log("test:flights OK");

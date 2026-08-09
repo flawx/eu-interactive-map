@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         mapGeometryPipeline: "syncTransitRouteLayers",
         envGoogleRoutes: process.env.GOOGLE_ROUTES_API_KEY ? "present" : "missing",
         envNavitia: process.env.NAVITIA_API_KEY ? "present" : "missing",
-        envAmadeus: process.env.AMADEUS_API_KEY ? "present" : "missing",
+        envSerpApi: process.env.SERPAPI_API_KEY ? "present" : "missing",
       });
     }
 

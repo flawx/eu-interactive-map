@@ -52,7 +52,7 @@ import type {
 } from "@/lib/routing/transit/types";
 import { transitModeFilterToAllowedModes } from "@/lib/routing/transit/types";
 import type {
-  FlightJourney,
+  FlightBookingOption,
   FlightLegSegment,
   FlightSortOrder,
   MultimodalJourney,
@@ -268,9 +268,6 @@ export default function RoutePlannerPanel({
   const [transitDevHint, setTransitDevHint] = useState<string | null>(null);
   const [flightError, setFlightError] = useState<string | null>(null);
   const [flightDevHint, setFlightDevHint] = useState<string | null>(null);
-  const [flightEnvironment, setFlightEnvironment] = useState<
-    "test" | "production" | null
-  >(null);
   const [multimodalJourneys, setMultimodalJourneys] = useState<
     MultimodalJourney[]
   >([]);
@@ -281,12 +278,15 @@ export default function RoutePlannerPanel({
   );
   const [nonStop, setNonStop] = useState(false);
   const [adults, setAdults] = useState(1);
-  const [confirmingFlightId, setConfirmingFlightId] = useState<string | null>(
-    null,
-  );
-  const [priceConfirmError, setPriceConfirmError] = useState<string | null>(
-    null,
-  );
+  const [bookingOptionsByJourney, setBookingOptionsByJourney] = useState<
+    Record<string, FlightBookingOption[]>
+  >({});
+  const [bookingOptionsLoadingId, setBookingOptionsLoadingId] = useState<
+    string | null
+  >(null);
+  const [bookingOptionsError, setBookingOptionsError] = useState<
+    string | null
+  >(null);
   const abortRef = useRef<AbortController | null>(null);
   const autoCalcKeyRef = useRef<string | null>(null);
   const prevModeRef = useRef<PlannerTravelMode>(mode);
@@ -386,7 +386,8 @@ export default function RoutePlannerPanel({
       setSelectedFlightId(null);
       setFlightError(null);
       setFlightDevHint(null);
-      setFlightEnvironment(null);
+      setBookingOptionsByJourney({});
+      setBookingOptionsError(null);
       onFlightChange?.([], null);
     }
     if (wasRoad && !isRoad) {
@@ -429,7 +430,8 @@ export default function RoutePlannerPanel({
     } else if (mode === "flight") {
       setFlightError(null);
       setFlightDevHint(null);
-      setFlightEnvironment(null);
+      setBookingOptionsByJourney({});
+      setBookingOptionsError(null);
     } else {
       setRoadError(null);
       setRoadDevHint(null);
@@ -464,7 +466,6 @@ export default function RoutePlannerPanel({
 
         const payload = (await response.json()) as {
           journeys?: MultimodalJourney[];
-          environment?: "test" | "production";
           error?: { code?: string };
         };
 
@@ -486,7 +487,6 @@ export default function RoutePlannerPanel({
 
         setFlightDevHint(null);
         const nextJourneys = payload.journeys ?? [];
-        setFlightEnvironment(payload.environment ?? null);
         setFlightError(nextJourneys.length === 0 ? t.noFlightsFound : null);
         const selectedId = nextJourneys[0]?.id ?? null;
         setMultimodalJourneys(nextJourneys);
@@ -852,7 +852,8 @@ export default function RoutePlannerPanel({
     setRoadDevHint(null);
     setTransitDevHint(null);
     setFlightDevHint(null);
-    setFlightEnvironment(null);
+    setBookingOptionsByJourney({});
+    setBookingOptionsError(null);
     onRoutesChange([], null);
     onTransitChange?.([], null);
     onFlightChange?.([], null);
@@ -861,58 +862,63 @@ export default function RoutePlannerPanel({
     onClose();
   };
 
-  const confirmFlightPrice = useCallback(
+  const viewBookingOptions = useCallback(
     async (journeyId: string) => {
       const journey = multimodalJourneys.find((j) => j.id === journeyId);
       const flightSegment = journey?.segments.find(
         (segment): segment is FlightLegSegment => segment.kind === "flight",
       );
-      if (!journey || !flightSegment) return;
+      const flightJourney = flightSegment?.journey;
+      const bookingToken = flightJourney?.bookingToken;
+      const firstSeg = flightJourney?.segments[0];
+      const lastSeg = flightJourney?.segments[flightJourney.segments.length - 1];
+      const departureId = firstSeg?.departure.place.iataCode;
+      const arrivalId = lastSeg?.arrival.place.iataCode;
+      const outboundDate = firstSeg?.departure.at?.slice(0, 10);
+      if (
+        !journey ||
+        !flightSegment ||
+        !bookingToken ||
+        !departureId ||
+        !arrivalId ||
+        !outboundDate
+      ) {
+        return;
+      }
 
-      setConfirmingFlightId(journeyId);
-      setPriceConfirmError(null);
+      setBookingOptionsLoadingId(journeyId);
+      setBookingOptionsError(null);
       try {
-        const response = await fetch("/api/routing/flights/price", {
+        const response = await fetch("/api/routing/flights/booking-options", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rawOffer: flightSegment.journey.rawOffer }),
+          body: JSON.stringify({
+            bookingToken,
+            departureId,
+            arrivalId,
+            outboundDate,
+            currency: flightJourney.price?.currency ?? "EUR",
+          }),
         });
         const payload = (await response.json()) as {
-          offer?: FlightJourney;
+          options?: FlightBookingOption[];
           error?: { code?: string };
         };
-        if (!response.ok || !payload.offer) {
-          setPriceConfirmError(t.flightServiceUnavailable);
+        if (!response.ok || !payload.options) {
+          setBookingOptionsError(t.bookingOptionsUnavailable);
           return;
         }
-        const confirmedOffer = payload.offer;
-        const nextJourneys = multimodalJourneys.map((current) => {
-          if (current.id !== journeyId) return current;
-          const hasGroundSegments = current.segments.some(
-            (segment) => segment.kind === "ground_transit",
-          );
-          return {
-            ...current,
-            segments: current.segments.map((segment) =>
-              segment.kind === "flight"
-                ? { ...segment, journey: confirmedOffer }
-                : segment,
-            ),
-            totalPrice:
-              !hasGroundSegments && confirmedOffer.price
-                ? confirmedOffer.price
-                : current.totalPrice,
-          };
-        });
-        setMultimodalJourneys(nextJourneys);
-        onFlightChange?.(nextJourneys, journeyId);
+        setBookingOptionsByJourney((prev) => ({
+          ...prev,
+          [journeyId]: payload.options!,
+        }));
       } catch {
-        setPriceConfirmError(t.flightServiceUnavailable);
+        setBookingOptionsError(t.bookingOptionsUnavailable);
       } finally {
-        setConfirmingFlightId(null);
+        setBookingOptionsLoadingId(null);
       }
     },
-    [multimodalJourneys, onFlightChange, t],
+    [multimodalJourneys, t],
   );
 
   if (!open) return null;
@@ -1579,14 +1585,6 @@ export default function RoutePlannerPanel({
           </div>
         ) : null}
 
-        {mode === "flight" && flightEnvironment === "test" ? (
-          <p className="mt-2 text-[11px] text-slate-500">
-            {process.env.NODE_ENV !== "production"
-              ? `Amadeus ${flightEnvironment} environment`
-              : null}
-          </p>
-        ) : null}
-
         {mode === "flight" && multimodalJourneys.length > 0 ? (
           <div className="mt-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -1656,7 +1654,7 @@ export default function RoutePlannerPanel({
                     <span aria-hidden>·</span>
                     <span>
                       {journey.totalPrice
-                        ? `${journey.totalPrice.status === "confirmed" ? `${t.priceConfirmed} ` : `${t.searchPrice} `}${journey.totalPrice.amount.toFixed(2)} ${journey.totalPrice.currency}`
+                        ? `${t.searchPrice} ${journey.totalPrice.amount.toFixed(2)} ${journey.totalPrice.currency}`
                         : t.fareUnavailable}
                     </span>
                   </div>
@@ -1792,26 +1790,62 @@ export default function RoutePlannerPanel({
                 (segment): segment is FlightLegSegment =>
                   segment.kind === "flight",
               );
-              if (!selected || !flightSegment) return null;
-              const isConfirmed =
-                flightSegment.journey.price?.status === "confirmed";
-              const isConfirming = confirmingFlightId === selected.id;
+              const bookingToken = flightSegment?.journey.bookingToken;
+              if (!selected || !flightSegment || !bookingToken) return null;
+              const isLoading = bookingOptionsLoadingId === selected.id;
+              const options = bookingOptionsByJourney[selected.id];
               return (
                 <div className="mt-2 space-y-1.5">
                   <button
                     type="button"
-                    disabled={isConfirmed || isConfirming}
+                    disabled={isLoading}
                     className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-white/10 text-xs font-medium text-slate-100 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={() => void confirmFlightPrice(selected.id)}
+                    onClick={() => void viewBookingOptions(selected.id)}
                   >
-                    {isConfirming
-                      ? t.confirmingPrice
-                      : isConfirmed
-                        ? t.priceConfirmed
-                        : t.confirmPrice}
+                    {isLoading ? t.loadingBookingOptions : t.viewBookingOptions}
                   </button>
-                  {priceConfirmError ? (
-                    <p className="text-[11px] text-amber-300">{priceConfirmError}</p>
+                  {bookingOptionsError ? (
+                    <p className="text-[11px] text-amber-300">{bookingOptionsError}</p>
+                  ) : null}
+                  {options && options.length > 0 ? (
+                    <ul className="space-y-1">
+                      {options.slice(0, 5).map((option, index) => {
+                        const priceLabel =
+                          option.price != null
+                            ? `${option.price.toFixed(2)} ${option.currency ?? ""}`.trim()
+                            : null;
+                        const content = (
+                          <>
+                            <span className="truncate text-slate-100">
+                              {option.bookWith ?? t.viewBookingOptions}
+                            </span>
+                            {priceLabel ? (
+                              <span className="shrink-0 tabular-nums text-slate-300">
+                                {priceLabel}
+                              </span>
+                            ) : null}
+                          </>
+                        );
+                        return (
+                          <li key={`${option.bookWith ?? "option"}-${index}`}>
+                            {option.url ? (
+                              <a
+                                href={option.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-2.5 py-2 text-xs hover:bg-white/10"
+                              >
+                                {content}
+                              </a>
+                            ) : (
+                              <div className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-2.5 py-2 text-xs">
+                                {content}
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
                   ) : null}
                 </div>
               );

@@ -109,7 +109,7 @@ function aggregatePrice(
 
   const amount = knownFares.reduce((sum, fare) => sum + fare.amount, 0);
   return {
-    price: { amount, currency, status: flightPrice.status, source: "amadeus" },
+    price: { amount, currency, status: flightPrice.status, source: "serpapi" },
     partial: false,
   };
 }
@@ -237,17 +237,13 @@ export function assembleMultimodalJourney(
   const departureAt = accessJourney?.departureAt ?? firstSegment?.departure.at ?? null;
   const arrivalAt = egressJourney?.arrivalAt ?? lastSegment?.arrival.at ?? null;
 
-  let totalDurationSeconds: number;
-  const departureMs = departureAt ? new Date(departureAt).getTime() : NaN;
-  const arrivalMs = arrivalAt ? new Date(arrivalAt).getTime() : NaN;
-  if (Number.isFinite(departureMs) && Number.isFinite(arrivalMs)) {
-    totalDurationSeconds = Math.max(0, Math.round((arrivalMs - departureMs) / 1000));
-  } else {
-    totalDurationSeconds =
-      flight.durationSeconds +
-      (accessJourney?.durationSeconds ?? 0) +
-      (egressJourney?.durationSeconds ?? 0);
-  }
+  // SerpApi flight times are airport-local wall clocks without a timezone, while
+  // Google Transit legs use ISO instants. Never subtract those clocks — a
+  // "now"-timed access leg against a future flight date invents multi-day spans.
+  const totalDurationSeconds =
+    flight.durationSeconds +
+    (accessJourney?.durationSeconds ?? 0) +
+    (egressJourney?.durationSeconds ?? 0);
 
   const { price: totalPrice, partial } = aggregatePrice(
     flight.price,
@@ -265,14 +261,13 @@ export function assembleMultimodalJourney(
   }
 
   return {
-    id: `multimodal-${flight.rawOfferId}`,
+    id: `multimodal-${flight.id}`,
     segments,
     totalDurationSeconds,
     departureAt,
     arrivalAt,
     totalPrice,
     warnings,
-    provider: "amadeus",
-    environment: flight.sourceEnvironment,
+    provider: "serpapi_google_flights",
   };
 }

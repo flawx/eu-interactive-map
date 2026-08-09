@@ -1,10 +1,9 @@
 /**
- * Flight routing domain model — Amadeus Self-Service Flight Offers Search /
- * Flight Offers Price integration.
+ * Flight routing domain model — SerpApi Google Flights integration.
  *
  * Server-only — import from API routes / Node scripts, never from client
- * components. Never persist or log AMADEUS_API_KEY / AMADEUS_API_SECRET /
- * bearer tokens anywhere in this module tree.
+ * components. Never persist or log SERPAPI_API_KEY or any URL containing
+ * an `api_key` query parameter anywhere in this module tree.
  */
 
 import type { TransitJourney } from "@/lib/routing/transit/types";
@@ -16,8 +15,6 @@ export type FlightProviderStatus =
   | "rate_limited"
   | "unavailable"
   | "authentication_error";
-
-export type FlightEnvironment = "test" | "production";
 
 export type FlightPlace = {
   iataCode: string;
@@ -31,7 +28,13 @@ export type FlightPlace = {
 export type FlightSegmentEndpoint = {
   place: FlightPlace;
   terminal: string | null;
-  /** ISO 8601, local to the airport as returned by Amadeus. */
+  /**
+   * Local time string as returned by SerpApi/Google Flights (e.g.
+   * "2026-08-23 21:10"), local to the departure/arrival airport. Never
+   * converted to an invented UTC/"Z" timestamp — SerpApi does not provide
+   * a timezone offset, so callers must treat this as airport-local wall
+   * clock time only.
+   */
   at: string;
 };
 
@@ -43,33 +46,48 @@ export type FlightSegment = {
   operatingCarrierName: string | null;
   flightNumber: string;
   aircraftCode: string | null;
+  /** Free-text airplane model as returned by SerpApi (e.g. "Airbus A320neo"). */
+  airplane: string | null;
+  /** Free-text travel class as returned by SerpApi (e.g. "Economy"). */
+  travelClassLabel: string | null;
+  /** Airline logo URL for this specific segment, when available. */
+  airlineLogo: string | null;
   departure: FlightSegmentEndpoint;
   arrival: FlightSegmentEndpoint;
   durationSeconds: number;
   /** Technical stops within this segment (rare; distinct from `stops` at journey level). */
   numberOfStopsEnRoute: number;
+  /** True when this segment lands the day after it departs (SerpApi `overnight`). */
+  overnight: boolean;
+  /** True when SerpApi flags this flight as often delayed by 30+ minutes. */
+  oftenDelayed: boolean;
 };
 
 export type FlightLayover = {
   airport: FlightPlace;
   durationSeconds: number;
+  /** True when the layover spans overnight (SerpApi `overnight` on the layover). */
+  overnight: boolean;
 };
 
-export type FlightPriceStatus = "search" | "confirmed" | "unavailable";
+export type FlightPriceStatus = "search" | "unavailable";
 
 export type FlightPrice = {
   amount: number;
   currency: string;
   status: FlightPriceStatus;
-  source: "amadeus";
+  source: "serpapi";
 };
 
 export type FlightCabin = "ECONOMY" | "PREMIUM_ECONOMY" | "BUSINESS" | "FIRST";
 
+/** Ranking bucket assigned by Google Flights/SerpApi — best_flights vs other_flights. */
+export type FlightSourceRank = "best" | "other";
+
 /**
  * A single priced itinerary composed of one or more segments (technical
- * stops/connections on the same ticket). Kept close to the Amadeus Flight
- * Offer shape while normalizing units to seconds / ISO strings.
+ * stops/connections on the same ticket), normalized from a SerpApi Google
+ * Flights result.
  */
 export type FlightJourney = {
   id: string;
@@ -82,11 +100,19 @@ export type FlightJourney = {
   validatingAirlineCodes: string[];
   bookableSeats: number | null;
   lastTicketingDate: string | null;
-  sourceEnvironment: FlightEnvironment;
-  /** Amadeus offer id — required to call Flight Offers Price for the same offer. */
-  rawOfferId: string;
-  /** Amadeus raw offer, secrets stripped, kept for price confirmation replay. */
-  rawOffer: unknown;
+  /** Opaque SerpApi token used to fetch booking options for this itinerary, when available. */
+  bookingToken?: string | null;
+  /** Representative airline logo URL for this itinerary, when available. */
+  airlineLogo?: string | null;
+  carbonEmissions?: {
+    thisFlightGrams: number;
+    typicalForRouteGrams: number;
+    differencePercent: number;
+  } | null;
+  /** Whether this itinerary came from SerpApi's best_flights (recommended) or other_flights bucket. */
+  sourceRank?: FlightSourceRank;
+  /** True when any segment/layover in this itinerary spans overnight. */
+  overnight?: boolean;
 };
 
 export type FlightSearchRequest = {
@@ -134,8 +160,7 @@ export type FlightWarning = {
 };
 
 export type FlightSearchResponse = {
-  provider: "amadeus";
-  environment: FlightEnvironment;
+  provider: "serpapi_google_flights";
   status: FlightProviderStatus;
   offers: FlightJourney[];
   journeys: MultimodalJourney[];
@@ -168,7 +193,7 @@ export type MultimodalSegment = GroundTransitSegment | FlightLegSegment;
 /**
  * A full door-to-door journey: optional ground access, one flight offer,
  * optional ground egress. Total price is only aggregated when every known
- * segment has a confirmed/estimated fare — never invented.
+ * segment has a known fare — never invented.
  */
 export type MultimodalJourney = {
   id: string;
@@ -178,8 +203,7 @@ export type MultimodalJourney = {
   arrivalAt: string | null;
   totalPrice: FlightPrice | null;
   warnings: FlightWarning[];
-  provider: "amadeus";
-  environment: FlightEnvironment;
+  provider: "serpapi_google_flights";
 };
 
 export type FlightErrorCode =
@@ -209,6 +233,16 @@ export class FlightError extends Error {
   }
 }
 
+/** A single fare/booking link returned by SerpApi's Google Flights Booking Options engine. */
+export type FlightBookingOption = {
+  bookWith: string | null;
+  price: number | null;
+  currency: string | null;
+  optionTitle: string | null;
+  url: string | null;
+  extensions: string[];
+};
+
 /** Resolved candidate airport for a free-text/coordinate place in a flight search. */
 export type ResolvedAirport = {
   iataCode: string;
@@ -219,5 +253,5 @@ export type ResolvedAirport = {
   latitude: number;
   longitude: number;
   distanceKm: number | null;
-  source: "curated" | "amadeus";
+  source: "curated";
 };

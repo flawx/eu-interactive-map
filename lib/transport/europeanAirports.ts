@@ -564,6 +564,20 @@ export const ADDITIONAL_EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
     wikidataId: "Q612731",
     airportType: "major-international",
   },
+  {
+    id: "airport-cia",
+    name: "Rome Ciampino Airport",
+    city: "Rome",
+    countryCode: "IT",
+    latitude: 41.7994,
+    longitude: 12.5949,
+    iataCode: "CIA",
+    icaoCode: "LIRA",
+    rank2025: null,
+    officialWebsite: "https://www.adr.it/ciampino",
+    wikidataId: "Q852320",
+    airportType: "major-international",
+  },
 ] as const;
 
 /**

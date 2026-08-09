@@ -240,7 +240,7 @@ export type FlightOffer = {
 };
 
 export interface FlightProvider {
-  id: "amadeus";
+  id: "serpapi_google_flights";
   getStatus(): Promise<TransitProviderStatus>;
   search(input: {
     origin: string;

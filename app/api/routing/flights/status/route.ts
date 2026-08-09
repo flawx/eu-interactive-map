@@ -1,16 +1,15 @@
 import "server-only";
 
-import { amadeusFlightProvider } from "@/lib/routing/flights/providers/amadeusFlightProvider";
+import { serpapiFlightProvider } from "@/lib/routing/flights/providers/serpapiFlightProvider";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const status = await amadeusFlightProvider.getStatus();
+  const status = await serpapiFlightProvider.getStatus();
   return Response.json(
     {
-      provider: "amadeus",
-      environment: amadeusFlightProvider.getEnvironment(),
+      provider: "serpapi_google_flights",
       status,
       configured: status !== "misconfigured",
     },

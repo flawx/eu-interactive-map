@@ -1,8 +1,9 @@
 /**
  * Optional display helper: IATA airline code → common name, for a handful
- * of carriers frequently seen on European routes. Purely cosmetic — when a
- * code is not in this map (or in the Amadeus response's own `carriers`
- * dictionary), callers must fall back to showing the raw code. Never invent
+ * of carriers frequently seen on European routes. Purely cosmetic — SerpApi
+ * already returns a free-text `airline` name per segment, so this map is
+ * only consulted as a fallback when that field is missing. Callers must
+ * fall back to showing the raw code when neither is available. Never invent
  * a name for an unknown code.
  */
 export const EU_AIRLINE_NAMES: Readonly<Record<string, string>> = {

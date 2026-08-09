@@ -1,8 +1,8 @@
 /**
- * Short-lived in-memory cache + in-flight request dedup for Amadeus flight
- * offer searches. Amadeus test-environment inventory changes rarely enough
- * that a short TTL meaningfully reduces duplicate calls during a single
- * planning session without risking stale prices.
+ * Short-lived in-memory cache + in-flight request dedup for SerpApi Google
+ * Flights searches. A short TTL meaningfully reduces duplicate (and billed)
+ * SerpApi calls during a single planning session without risking stale
+ * prices for long.
  */
 
 import type { FlightCabin, FlightJourney } from "@/lib/routing/flights/types";

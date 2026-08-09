@@ -21,6 +21,27 @@ function parseIsoToMs(iso: string): number | null {
   return Number.isFinite(ms) ? ms : null;
 }
 
+/** YYYY-MM-DD prefix from an ISO instant or SerpApi local wall clock. */
+export function calendarDatePrefix(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const match = value.trim().match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? null;
+}
+
+/**
+ * True when both timestamps share the same calendar date prefix. Used to
+ * discard ground legs that Google Routes timed for "today" against a flight
+ * on a different departure date (SerpApi wall clocks have no timezone).
+ */
+export function shareCalendarDate(
+  left: string | null | undefined,
+  right: string | null | undefined,
+): boolean {
+  const a = calendarDatePrefix(left);
+  const b = calendarDatePrefix(right);
+  return Boolean(a && b && a === b);
+}
+
 /**
  * True when a ground-transit arrival leaves at least `bufferMinutes` before
  * the flight's scheduled departure. Returns false (not viable) when either

@@ -140,7 +140,6 @@ export type RoutePlannerMessages = {
   terminal: string;
   operatedBy: string;
   searchPrice: string;
-  priceConfirmed: string;
   airportTransfer: string;
   airportChangeRequired: string;
   groundConnectionUnavailable: string;
@@ -152,8 +151,9 @@ export type RoutePlannerMessages = {
   cabin: string;
   flightServiceUnavailable: string;
   flightProviderNotConfiguredDev: string;
-  confirmPrice: string;
-  confirmingPrice: string;
+  viewBookingOptions: string;
+  loadingBookingOptions: string;
+  bookingOptionsUnavailable: string;
   airportTime: string;
   noFlightsFound: string;
   flightDateRequired: string;
@@ -301,7 +301,6 @@ const en: RoutePlannerMessages = {
   terminal: "Terminal",
   operatedBy: "Operated by",
   searchPrice: "Search price",
-  priceConfirmed: "Price confirmed",
   airportTransfer: "Airport transfer",
   airportChangeRequired: "Requires an airport change",
   groundConnectionUnavailable: "Ground connection could not be calculated",
@@ -312,9 +311,10 @@ const en: RoutePlannerMessages = {
   departureDate: "Departure date",
   cabin: "Cabin",
   flightServiceUnavailable: "Flight search is temporarily unavailable",
-  flightProviderNotConfiguredDev: "Amadeus Flight Offers API is not configured",
-  confirmPrice: "Confirm price",
-  confirmingPrice: "Confirming price…",
+  flightProviderNotConfiguredDev: "SerpApi Google Flights is not configured (SERPAPI_API_KEY)",
+  viewBookingOptions: "View booking options",
+  loadingBookingOptions: "Loading booking options…",
+  bookingOptionsUnavailable: "Booking options are not available for this flight",
   airportTime: "Airport time",
   noFlightsFound: "No flights found",
   flightDateRequired: "Departure date required",
@@ -467,7 +467,6 @@ const fr: RoutePlannerMessages = {
   terminal: "Terminal",
   operatedBy: "Exploité par",
   searchPrice: "Prix indicatif",
-  priceConfirmed: "Prix confirmé",
   airportTransfer: "Transfert aéroport",
   airportChangeRequired: "Changement d'aéroport nécessaire",
   groundConnectionUnavailable: "La correspondance terrestre n'a pas pu être calculée",
@@ -478,9 +477,10 @@ const fr: RoutePlannerMessages = {
   departureDate: "Date de départ",
   cabin: "Cabine",
   flightServiceUnavailable: "La recherche de vols est temporairement indisponible",
-  flightProviderNotConfiguredDev: "L'API Amadeus Flight Offers n'est pas configurée",
-  confirmPrice: "Confirmer le prix",
-  confirmingPrice: "Confirmation du prix…",
+  flightProviderNotConfiguredDev: "SerpApi Google Flights n'est pas configuré (SERPAPI_API_KEY)",
+  viewBookingOptions: "Voir les options de réservation",
+  loadingBookingOptions: "Chargement des options de réservation…",
+  bookingOptionsUnavailable: "Aucune option de réservation disponible pour ce vol",
   airportTime: "Heure aéroport",
   noFlightsFound: "Aucun vol trouvé",
   flightDateRequired: "Date de départ requise",
@@ -558,7 +558,6 @@ const de: RoutePlannerMessages = {
   terminal: "Terminal",
   operatedBy: "Durchgeführt von",
   searchPrice: "Richtpreis",
-  priceConfirmed: "Preis bestätigt",
   airportTransfer: "Flughafentransfer",
   airportChangeRequired: "Flughafenwechsel erforderlich",
   groundConnectionUnavailable: "Die Bodenverbindung konnte nicht berechnet werden",
@@ -569,9 +568,10 @@ const de: RoutePlannerMessages = {
   departureDate: "Abflugdatum",
   cabin: "Kabine",
   flightServiceUnavailable: "Die Flugsuche ist vorübergehend nicht verfügbar",
-  flightProviderNotConfiguredDev: "Die Amadeus Flight Offers API ist nicht konfiguriert",
-  confirmPrice: "Preis bestätigen",
-  confirmingPrice: "Preis wird bestätigt…",
+  flightProviderNotConfiguredDev: "SerpApi Google Flights ist nicht konfiguriert (SERPAPI_API_KEY)",
+  viewBookingOptions: "Buchungsoptionen anzeigen",
+  loadingBookingOptions: "Buchungsoptionen werden geladen…",
+  bookingOptionsUnavailable: "Für diesen Flug sind keine Buchungsoptionen verfügbar",
   airportTime: "Flughafenzeit",
   noFlightsFound: "Keine Flüge gefunden",
   flightDateRequired: "Abflugdatum erforderlich",

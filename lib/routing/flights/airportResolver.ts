@@ -1,12 +1,10 @@
 /**
  * Resolves a free-form place (coordinates + optional name/IATA hint) to one
- * or more candidate commercial airports for flight search. Primary source
- * is the curated EUROPEAN_AIRPORTS list; Amadeus Airport & City Search is
- * only used as an optional fallback when credentials are configured and the
- * curated list has no close-enough match.
+ * or more candidate commercial airports for flight search. The sole source
+ * is the curated EUROPEAN_AIRPORTS list — SerpApi Google Flights has no
+ * airport/location search endpoint, so there is no live fallback.
  */
 
-import { amadeusFlightProvider } from "@/lib/routing/flights/providers/amadeusFlightProvider";
 import type { ResolvedAirport } from "@/lib/routing/flights/types";
 import {
   EUROPEAN_AIRPORTS,
@@ -15,9 +13,9 @@ import {
 } from "@/lib/transport/europeanAirports";
 
 const EARTH_RADIUS_KM = 6371;
-/** Beyond this, a curated top-40 match is too far to be a sensible default. */
-const CURATED_FALLBACK_TRIGGER_KM = 250;
 const MAX_RESULTS = 3;
+/** Reject haversine padding beyond this radius — avoids NCE for Rome, BRU for Paris. */
+const MAX_HAVERSINE_PADDING_KM = 120;
 
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
@@ -89,8 +87,7 @@ export type ResolveAirportsInput = {
 /**
  * Returns up to MAX_RESULTS ranked candidate airports for a place: an exact
  * IATA hint always wins; otherwise city-name grouping is preferred over pure
- * distance, then curated airports are ranked by haversine distance; the
- * Amadeus location search is only consulted when nothing curated is close.
+ * distance, then curated airports are ranked by haversine distance.
  */
 export async function resolveAirportsForPlace(
   input: ResolveAirportsInput,
@@ -109,7 +106,11 @@ export async function resolveAirportsForPlace(
   }
 
   if (input.name && results.length < MAX_RESULTS) {
-    for (const airport of airportsForCity(input.name)) {
+    // Prefer exact city-name grouping (e.g. "Paris" → CDG, ORY) when the
+    // free-text label is a city. Match on the first token so "Paris France"
+    // still groups correctly.
+    const cityToken = input.name.split(/[|,]/)[0]?.trim() ?? input.name;
+    for (const airport of airportsForCity(cityToken)) {
       const distanceKm =
         Number.isFinite(input.latitude) && Number.isFinite(input.longitude)
           ? haversineDistanceKm(
@@ -123,6 +124,8 @@ export async function resolveAirportsForPlace(
     }
   }
 
+  // Only pad with nearby airports when city grouping left empty (or short).
+  // Never pull in distant cities (Nice for Rome, Brussels for Paris).
   if (
     results.length < MAX_RESULTS &&
     Number.isFinite(input.latitude) &&
@@ -138,32 +141,12 @@ export async function resolveAirportsForPlace(
           airport.longitude,
         ),
       }))
+      .filter(({ distanceKm }) => distanceKm <= MAX_HAVERSINE_PADDING_KM)
       .sort((a, b) => a.distanceKm - b.distanceKm);
 
     for (const { airport, distanceKm } of ranked) {
       if (results.length >= MAX_RESULTS) break;
       push(toResolvedAirport(airport, distanceKm));
-    }
-  }
-
-  const nearestCuratedDistance = results
-    .map((r) => r.distanceKm)
-    .filter((d): d is number => d != null)
-    .sort((a, b) => a - b)[0];
-
-  const shouldTryAmadeusFallback =
-    results.length === 0 ||
-    (nearestCuratedDistance != null &&
-      nearestCuratedDistance > CURATED_FALLBACK_TRIGGER_KM);
-
-  if (shouldTryAmadeusFallback && input.name) {
-    const fallback = await amadeusFlightProvider.searchAirportLocations(
-      input.name,
-      input.signal,
-    );
-    for (const candidate of fallback) {
-      if (results.length >= MAX_RESULTS) break;
-      push(candidate);
     }
   }
 
