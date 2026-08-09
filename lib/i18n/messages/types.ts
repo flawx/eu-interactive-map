@@ -5,6 +5,8 @@ export type Messages = {
     openSearch: string;
     language: string;
     chooseLanguage: string;
+    switchToDarkMode: string;
+    switchToLightMode: string;
   };
   nav: {
     menuTitle: string;
@@ -20,6 +22,9 @@ export type Messages = {
     displaySettings: string;
     aboutProject: string;
     sourcesCredits: string;
+    appearance: string;
+    lightMode: string;
+    darkMode: string;
   };
   legend: {
     title: string;

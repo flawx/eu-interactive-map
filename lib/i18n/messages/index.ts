@@ -40,6 +40,14 @@ export function getMessages(locale: Locale): Messages {
   return {
     ...en,
     ...localized,
+    header: {
+      ...en.header,
+      ...localized.header,
+    },
+    nav: {
+      ...en.nav,
+      ...localized.nav,
+    },
     routePlanner: {
       ...en.routePlanner,
       ...routePlanner,

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpen, Info, Map as MapIcon, Settings2, X } from "lucide-react";
 import { EUStarLoader } from "@/components/ui/EUStarLoader";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Messages } from "@/lib/i18n/messages/types";
 
 type AppSideNavProps = {
@@ -128,6 +129,23 @@ export default function AppSideNav({
             pending={isPending && pendingHref === "/sources"}
             onNavigate={() => navigate("/sources")}
           />
+          <li className="px-1 pt-2">
+            <p
+              className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--map-ui-muted)" }}
+            >
+              {t.nav.appearance}
+            </p>
+            <ThemeToggle
+              variant="menu"
+              labels={{
+                switchToDark: t.header.switchToDarkMode,
+                switchToLight: t.header.switchToLightMode,
+                lightMode: t.nav.lightMode,
+                darkMode: t.nav.darkMode,
+              }}
+            />
+          </li>
           <NavLinkItem
             href="/settings"
             icon={

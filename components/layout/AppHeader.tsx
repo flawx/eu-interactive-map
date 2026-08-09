@@ -6,6 +6,7 @@ import EuLogo from "@/components/branding/EuLogo";
 import LanguageSelector from "@/components/i18n/LanguageSelector";
 import AppSideNav from "@/components/layout/AppSideNav";
 import MapSearchBox from "@/components/layout/MapSearchBox";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages/types";
 import type { WildfireIncident } from "@/lib/incidents/types";
@@ -94,6 +95,16 @@ export default function AppHeader({
                 <Search className="h-5 w-5" aria-hidden="true" />
               )}
             </button>
+
+            <ThemeToggle
+              variant="icon"
+              labels={{
+                switchToDark: t.header.switchToDarkMode,
+                switchToLight: t.header.switchToLightMode,
+                lightMode: t.nav.lightMode,
+                darkMode: t.nav.darkMode,
+              }}
+            />
 
             <LanguageSelector
               locale={locale}

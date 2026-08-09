@@ -245,6 +245,8 @@ export const fr = {
     openSearch: "Ouvrir la recherche",
     language: "Langue",
     chooseLanguage: "Choisir une langue",
+    switchToDarkMode: "Passer en mode sombre",
+    switchToLightMode: "Passer en mode clair",
   },
   nav: {
     menuTitle: "Explorer",
@@ -260,6 +262,9 @@ export const fr = {
     displaySettings: "Paramètres",
     aboutProject: "À propos du projet",
     sourcesCredits: "Sources / crédits",
+    appearance: "Apparence",
+    lightMode: "Mode clair",
+    darkMode: "Mode sombre",
   },
   search: {
     placeholder: "Rechercher un lieu, un pays ou une alerte",

@@ -313,6 +313,8 @@ export const en = {
     openSearch: "Open search",
     language: "Language",
     chooseLanguage: "Choose a language",
+    switchToDarkMode: "Switch to dark mode",
+    switchToLightMode: "Switch to light mode",
   },
   nav: {
     menuTitle: "Explore",
@@ -328,6 +330,9 @@ export const en = {
     displaySettings: "Settings",
     aboutProject: "About the project",
     sourcesCredits: "Sources / credits",
+    appearance: "Appearance",
+    lightMode: "Light mode",
+    darkMode: "Dark mode",
   },
   search: {
     placeholder: "Search for a place, country or alert",

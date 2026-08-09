@@ -239,6 +239,8 @@ export const de = {
     openSearch: "Suche öffnen",
     language: "Sprache",
     chooseLanguage: "Sprache wählen",
+    switchToDarkMode: "Zum Dunkelmodus wechseln",
+    switchToLightMode: "Zum Hellmodus wechseln",
   },
   nav: {
     menuTitle: "Entdecken",
@@ -254,6 +256,9 @@ export const de = {
     displaySettings: "Einstellungen",
     aboutProject: "Über das Projekt",
     sourcesCredits: "Quellen / Credits",
+    appearance: "Darstellung",
+    lightMode: "Hellmodus",
+    darkMode: "Dunkelmodus",
   },
   search: {
     placeholder: "Ort, Land oder Warnung suchen",
