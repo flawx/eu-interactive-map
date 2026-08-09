@@ -22,7 +22,7 @@ type AppHeaderProps = {
   temporaryBorderControls?: readonly TemporaryInternalBorderControl[];
   onSelectSearchResult: (result: MapSearchResult) => void;
   onGoEurope: () => void;
-  onFocusLegend: () => void;
+  onFocusLegend?: () => void;
   onOpenRoutePlanner?: () => void;
   onDirectionsToResult?: (result: MapSearchResult) => void;
 };
@@ -36,7 +36,7 @@ export default function AppHeader({
   temporaryBorderControls,
   onSelectSearchResult,
   onGoEurope,
-  onFocusLegend,
+  onFocusLegend: _onFocusLegend,
   onOpenRoutePlanner,
   onDirectionsToResult,
 }: AppHeaderProps) {
@@ -128,7 +128,6 @@ export default function AppHeader({
           onClose={() => setMenuOpen(false)}
           t={t}
           onGoEurope={onGoEurope}
-          onFocusLegend={onFocusLegend}
         />
       </div>
     </>

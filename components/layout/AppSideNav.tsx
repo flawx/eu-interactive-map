@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import { Info, Layers, Map as MapIcon, Settings2, X } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Info, Map as MapIcon, Settings2, X } from "lucide-react";
 import type { Messages } from "@/lib/i18n/messages/types";
 
 type AppSideNavProps = {
@@ -9,7 +10,6 @@ type AppSideNavProps = {
   onClose: () => void;
   t: Messages;
   onGoEurope: () => void;
-  onFocusLegend: () => void;
 };
 
 export default function AppSideNav({
@@ -17,7 +17,6 @@ export default function AppSideNav({
   onClose,
   t,
   onGoEurope,
-  onFocusLegend,
 }: AppSideNavProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -91,27 +90,27 @@ export default function AppSideNav({
               onClose();
             }}
           />
-          <NavItem
-            icon={<Layers className="h-4 w-4 text-[#188038]" aria-hidden="true" />}
-            label={t.nav.mapLegend}
-            onClick={() => {
-              onFocusLegend();
-              onClose();
-            }}
+          <NavLinkItem
+            href="/about"
+            icon={<Info className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />}
+            label={t.nav.aboutProject}
+            onNavigate={onClose}
           />
-          <NavItem
+          <NavLinkItem
+            href="/sources"
+            icon={
+              <BookOpen className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />
+            }
+            label={t.nav.sourcesCredits}
+            onNavigate={onClose}
+          />
+          <NavLinkItem
+            href="/settings"
             icon={
               <Settings2 className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />
             }
             label={t.nav.displaySettings}
-            badge={t.nav.comingSoon}
-            disabled
-          />
-          <NavItem
-            icon={<Info className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />}
-            label={t.nav.aboutProject}
-            badge={t.nav.comingSoon}
-            disabled
+            onNavigate={onClose}
           />
         </ul>
       </nav>
@@ -122,15 +121,15 @@ export default function AppSideNav({
 function NavItem({
   icon,
   label,
+  onClick,
   badge,
   disabled,
-  onClick,
 }: {
   icon: ReactNode;
   label: string;
+  onClick?: () => void;
   badge?: string;
   disabled?: boolean;
-  onClick?: () => void;
 }) {
   return (
     <li>
@@ -138,22 +137,45 @@ function NavItem({
         type="button"
         disabled={disabled}
         onClick={onClick}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 disabled:cursor-not-allowed disabled:opacity-65"
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {icon}
-        <span className="flex-1">{label}</span>
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-muted)]">
+          {icon}
+        </span>
+        <span className="flex-1 font-medium">{label}</span>
         {badge ? (
-          <span
-            className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide"
-            style={{
-              borderColor: "var(--map-ui-border)",
-              color: "var(--map-ui-muted)",
-            }}
-          >
+          <span className="text-[10px] uppercase tracking-wide text-[var(--map-ui-muted)]">
             {badge}
           </span>
         ) : null}
       </button>
+    </li>
+  );
+}
+
+function NavLinkItem({
+  href,
+  icon,
+  label,
+  onNavigate,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        onClick={onNavigate}
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
+      >
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-muted)]">
+          {icon}
+        </span>
+        <span className="flex-1 font-medium">{label}</span>
+      </Link>
     </li>
   );
 }

@@ -1,3 +1,5 @@
+import { getPreferencesStorage } from "@/lib/preferences/userPreferences";
+
 const HISTORY_KEY = "eu-map-search-history-v1";
 const MAX_HISTORY = 5;
 
@@ -32,6 +34,13 @@ export function pushSearchHistory(entry: {
   query: string;
   title: string;
 }): SearchHistoryEntry[] {
+  try {
+    const prefs = getPreferencesStorage().load();
+    if (!prefs.privacy.saveSearchHistory) return readSearchHistory();
+  } catch {
+    // continue with save if prefs unavailable
+  }
+
   const next: SearchHistoryEntry = {
     query: entry.query.trim(),
     title: entry.title.trim(),
@@ -49,4 +58,13 @@ export function pushSearchHistory(entry: {
     // ignore quota / private mode
   }
   return updated;
+}
+
+export function clearSearchHistory(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(HISTORY_KEY);
+  } catch {
+    // ignore
+  }
 }

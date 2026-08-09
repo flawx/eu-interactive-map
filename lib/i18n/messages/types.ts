@@ -19,6 +19,7 @@ export type Messages = {
     europeOverview: string;
     displaySettings: string;
     aboutProject: string;
+    sourcesCredits: string;
   };
   legend: {
     title: string;

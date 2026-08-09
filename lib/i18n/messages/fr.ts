@@ -257,8 +257,9 @@ export const fr = {
     mapLegend: "Légende de la carte",
     currentWildfires: "Incendies actuels",
     europeOverview: "Vue générale de l’Europe",
-    displaySettings: "Paramètres d’affichage",
+    displaySettings: "Paramètres",
     aboutProject: "À propos du projet",
+    sourcesCredits: "Sources / crédits",
   },
   search: {
     placeholder: "Rechercher un lieu, un pays ou une alerte",

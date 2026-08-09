@@ -325,8 +325,9 @@ export const en = {
     mapLegend: "Map legend",
     currentWildfires: "Current wildfires",
     europeOverview: "Europe overview",
-    displaySettings: "Display settings",
+    displaySettings: "Settings",
     aboutProject: "About the project",
+    sourcesCredits: "Sources / credits",
   },
   search: {
     placeholder: "Search for a place, country or alert",

@@ -251,8 +251,9 @@ export const de = {
     mapLegend: "Kartenlegende",
     currentWildfires: "Aktuelle Waldbrände",
     europeOverview: "Gesamtansicht Europas",
-    displaySettings: "Anzeigeeinstellungen",
+    displaySettings: "Einstellungen",
     aboutProject: "Über das Projekt",
+    sourcesCredits: "Quellen / Credits",
   },
   search: {
     placeholder: "Ort, Land oder Warnung suchen",
