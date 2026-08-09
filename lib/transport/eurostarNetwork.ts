@@ -1,3 +1,5 @@
+import { isCountryInEUIMScope } from "@/lib/geography/euimCoverage";
+
 /**
  * Eurostar stations and direct (through-service) links.
  *
@@ -40,7 +42,7 @@ const EUROSTAR_ROUTEMAP_URL =
 const EUROSTAR_STATIONS_URL =
   "https://www.eurostar.com/uk-en/travel-info/your-trip/stations";
 
-export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
+export const ALL_EUROSTAR_STATIONS: readonly EurostarStation[] = [
   {
     id: "eurostar-london-st-pancras",
     name: "London St Pancras International",
@@ -308,6 +310,16 @@ export const EUROSTAR_STATIONS: readonly EurostarStation[] = [
   },
 ] as const;
 
+/** Stations limited to EUIM operational scope (excludes UK termini). */
+export const EUROSTAR_STATIONS: readonly EurostarStation[] =
+  ALL_EUROSTAR_STATIONS.filter((station) =>
+    isCountryInEUIMScope(station.countryCode),
+  );
+
+const EUIM_EUROSTAR_STATION_IDS = new Set(
+  EUROSTAR_STATIONS.map((station) => station.id),
+);
+
 function route(
   fromStationId: string,
   toStationId: string,
@@ -327,7 +339,7 @@ function route(
  * Schematic through-service segments (not interchange-only connections).
  * London–Continent, Paris–Benelux–Netherlands, Brussels–Germany, Snow branch.
  */
-export const EUROSTAR_ROUTES: readonly EurostarRoute[] = [
+export const ALL_EUROSTAR_ROUTES: readonly EurostarRoute[] = [
   route("eurostar-london-st-pancras", "eurostar-paris-nord"),
   route("eurostar-london-st-pancras", "eurostar-lille-europe"),
   route("eurostar-london-st-pancras", "eurostar-brussels-midi"),
@@ -356,6 +368,13 @@ export const EUROSTAR_ROUTES: readonly EurostarRoute[] = [
   route("eurostar-albertville", "eurostar-moutiers", "seasonal"),
   route("eurostar-moutiers", "eurostar-bourg-saint-maurice", "seasonal"),
 ];
+
+export const EUROSTAR_ROUTES: readonly EurostarRoute[] =
+  ALL_EUROSTAR_ROUTES.filter(
+    (edge) =>
+      EUIM_EUROSTAR_STATION_IDS.has(edge.fromStationId) &&
+      EUIM_EUROSTAR_STATION_IDS.has(edge.toStationId),
+  );
 
 export const EUROSTAR_NETWORK_META = {
   stationsUrl: EUROSTAR_STATIONS_URL,

@@ -26,6 +26,15 @@ import {
   syncFlightRouteLayers,
   bringFlightLayersToFront,
 } from "@/components/routing/useFlightRouteLayers";
+import { ensureEUIMLayerOrder } from "@/lib/map/ensureEUIMLayerOrder";
+import {
+  EUIM_EU_MEMBER_CODES,
+} from "@/lib/geography/euimCoverage";
+import type { TransitJourney } from "@/lib/routing/transit/types";
+import {
+  TRANSIT_ROUTE_SOURCE_ID,
+  type TransitMapPoint,
+} from "@/lib/routing/transitMapLayers";
 import {
   ROUTE_PLANNER_LAYER_ALT,
   ROUTE_PLANNER_LAYER_HALO,
@@ -34,11 +43,6 @@ import {
   ROUTE_PLANNER_LAYER_POINTS,
   ROUTE_PLANNER_LAYER_TRAFFIC,
 } from "@/lib/routing/routeMapLayers";
-import type { TransitJourney } from "@/lib/routing/transit/types";
-import {
-  TRANSIT_ROUTE_SOURCE_ID,
-  type TransitMapPoint,
-} from "@/lib/routing/transitMapLayers";
 import type { MultimodalJourney } from "@/lib/routing/flights/types";
 import { formatRelativeUpdateTime } from "@/lib/map/formatRelativeUpdateTime";
 import { safeQueryRenderedFeatures } from "@/lib/map/safeQueryRenderedFeatures";
@@ -242,12 +246,7 @@ setWorkerUrl(
   "https://cdn.jsdelivr.net/npm/maplibre-gl@6.0.0/dist/maplibre-gl-worker.mjs",
 );
 
-const EU_MEMBER_IDS = [
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK",
-  "EE", "FI", "FR", "DE", "EL", "HU", "IE",
-  "IT", "LV", "LT", "LU", "MT", "NL", "PL",
-  "PT", "RO", "SK", "SI", "ES", "SE",
-] as const;
+const EU_MEMBER_IDS = EUIM_EU_MEMBER_CODES;
 
 const NON_EUROZONE_IDS = ["CZ", "DK", "HU", "PL", "RO", "SE"] as const;
 
@@ -259,7 +258,6 @@ const SELECTABLE_FILL_LAYERS = [
   "eurozone-fill",
   "non-eurozone-fill",
   "eu-candidates-fill",
-  "schengen-non-eu-fill",
 ] as const;
 
 const EFFIS_WMS_BASE =
@@ -2895,17 +2893,13 @@ export default function MapContainer({
         },
       });
 
+      // Schengen non-EU (CH/NO/IS/LI) is outside EUIM operational scope.
       map.addLayer({
         id: "schengen-non-eu-fill",
         type: "fill",
         source: "europe-countries",
-        filter: [
-          "match",
-          ["get", "CNTR_ID"],
-          ["IS", "LI", "NO", "CH"],
-          true,
-          false,
-        ],
+        filter: ["==", ["get", "CNTR_ID"], ""],
+        layout: { visibility: "none" },
         paint: {
           "fill-color": "#14b8a6",
           "fill-opacity": 0.12,
@@ -2916,13 +2910,8 @@ export default function MapContainer({
         id: "schengen-non-eu-border",
         type: "line",
         source: "europe-countries",
-        filter: [
-          "match",
-          ["get", "CNTR_ID"],
-          ["IS", "LI", "NO", "CH"],
-          true,
-          false,
-        ],
+        filter: ["==", ["get", "CNTR_ID"], ""],
+        layout: { visibility: "none" },
         paint: {
           "line-color": "#5eead4",
           "line-width": 0.7,
@@ -2930,7 +2919,7 @@ export default function MapContainer({
         },
       });
 
-      applySchengenNonEUVisibility(map, showSchengenNonEURef.current);
+      applySchengenNonEUVisibility(map, false);
 
       map.addLayer({
         id: "eu-candidates-fill",
@@ -2979,7 +2968,8 @@ export default function MapContainer({
         id: "eu-potential-candidate-fill",
         type: "fill",
         source: "europe-countries",
-        filter: ["==", ["get", "CNTR_ID"], "XK"],
+        filter: ["==", ["get", "CNTR_ID"], ""],
+        layout: { visibility: "none" },
         paint: {
           "fill-color": "#fb923c",
           "fill-opacity": 0.03,
@@ -2990,7 +2980,8 @@ export default function MapContainer({
         id: "eu-potential-candidate-border",
         type: "line",
         source: "europe-countries",
-        filter: ["==", ["get", "CNTR_ID"], "XK"],
+        filter: ["==", ["get", "CNTR_ID"], ""],
+        layout: { visibility: "none" },
         paint: {
           "line-color": "#fdba74",
           "line-width": 1,
@@ -4691,88 +4682,8 @@ export default function MapContainer({
         });
       }
 
-      // Reorder so brown (7d history) sits below red (24h active) which sits
-      // below the EFFIS layers, all stacked above the base country layers.
-      const layerStackOrder = [
-        "firms-recent-history-fill",
-        "firms-recent-history-border",
-        "firms-recent-history-selected-fill",
-        "firms-recent-history-selected",
-        "firms-incident-footprints-fill",
-        "firms-incident-footprints-border",
-        "firms-incident-footprints-selected-fill",
-        "firms-incident-footprints-selected",
-        "effis-burned-areas-layer",
-        "effis-burned-area-snapshots-fill",
-        "effis-burned-area-snapshots-border",
-        "effis-burned-area-snapshots-selected",
-        "eurostar-routes-line",
-        "schengen-temporary-control-fill",
-        "schengen-temporary-control-line",
-        "schengen-temporary-control-symbol",
-        "schengen-temporary-control-selected",
-        "eu-capitals-halo",
-        "eu-capitals-symbol",
-        "eu-capitals-label",
-        "eu-main-institutions-halo",
-        "eu-main-institutions-symbol",
-        "eu-main-institutions-label",
-        "unesco-world-heritage-halo",
-        "unesco-world-heritage-symbol",
-        "unesco-world-heritage-labels",
-        "unesco-clusters",
-        "unesco-cluster-count",
-        EHL_SELECTED_LAYER_ID,
-        EHL_SYMBOL_LAYER_ID,
-        EHL_LABEL_LAYER_ID,
-        EHL_CLUSTER_LAYER_ID,
-        EHL_CLUSTER_COUNT_LAYER_ID,
-        "tourist-places-halo",
-        "tourist-places-symbol",
-        "tourist-places-labels",
-        "tourist-clusters",
-        "tourist-cluster-count",
-        MOUNTAIN_SELECTED_LAYER_ID,
-        MOUNTAIN_SYMBOL_LAYER_ID,
-        MOUNTAIN_LABEL_LAYER_ID,
-        MOUNTAIN_CLUSTER_LAYER_ID,
-        MOUNTAIN_CLUSTER_COUNT_LAYER_ID,
-        CIVIL_ENGINEERING_SELECTED_LAYER_ID,
-        CIVIL_ENGINEERING_SYMBOL_LAYER_ID,
-        CIVIL_ENGINEERING_LABEL_LAYER_ID,
-        CIVIL_ENGINEERING_CLUSTER_LAYER_ID,
-        CIVIL_ENGINEERING_CLUSTER_COUNT_LAYER_ID,
-        "airport-clusters",
-        "airport-cluster-count",
-        "major-airport-selected",
-        "major-airports-symbol",
-        "major-airports-label",
-        "eurostar-selected-station",
-        "eurostar-stations-symbol",
-        "eurostar-stations-label",
-        "schengen-border-clusters",
-        "schengen-border-cluster-count",
-        "schengen-border-crossing-selected",
-        "schengen-border-crossing-symbol",
-        "schengen-border-crossing-label",
-        "user-location-accuracy",
-        "user-location-halo",
-        "user-location-pulse",
-        "user-location-dot",
-        // Route planner lines must stay above basemap / admin / POI fills.
-        ROUTE_PLANNER_LAYER_ALT,
-        ROUTE_PLANNER_LAYER_HALO,
-        ROUTE_PLANNER_LAYER_MAIN,
-        ROUTE_PLANNER_LAYER_TRAFFIC,
-        ROUTE_PLANNER_LAYER_POINTS,
-        ROUTE_PLANNER_LAYER_POINT_LABELS,
-      ];
-
-      for (const layerId of layerStackOrder) {
-        if (map.getLayer(layerId)) {
-          map.moveLayer(layerId);
-        }
-      }
+      // Canonical EUIM stack: traffic under POI/photos; routes mid; user on top.
+      ensureEUIMLayerOrder(map);
 
       keepBasemapLabelsUpright(map);
 
@@ -7359,20 +7270,11 @@ export default function MapContainer({
       Boolean(anyDetailedLayer && vectorTilesAvailable),
     );
 
-    // Traffic flow is re-inserted often; keep transit/flight geometry above it.
-    if (transitJourneyRef.current) {
-      try {
-        bringTransitLayersToFront(map);
-      } catch {
-        // ignore during style transitions
-      }
-    }
-    if (multimodalJourneyRef.current) {
-      try {
-        bringFlightLayersToFront(map);
-      } catch {
-        // ignore during style transitions
-      }
+    // Traffic flow is re-inserted often; restore canonical stack (traffic under POI).
+    try {
+      ensureEUIMLayerOrder(map);
+    } catch {
+      // ignore during style transitions
     }
 
     const handleCluster = async (event: MapLayerMouseEvent) => {

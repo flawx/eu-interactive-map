@@ -5,6 +5,7 @@ import type {
   GeoJSONSource,
   Map as MapLibreMap,
 } from "maplibre-gl";
+import { ensureEUIMLayerOrder } from "@/lib/map/ensureEUIMLayerOrder";
 import {
   journeyCoordinates,
   transitModeColor,
@@ -162,15 +163,10 @@ export function buildTransitPointsCollection(
 }
 
 export function bringTransitLayersToFront(map: MapLibreMap) {
-  // Always lift transit above basemap + TomTom traffic flow overlays.
-  for (const layerId of LAYER_ORDER) {
-    if (map.getLayer(layerId)) {
-      try {
-        map.moveLayer(layerId);
-      } catch {
-        // Layer may briefly be missing during style transitions.
-      }
-    }
+  try {
+    ensureEUIMLayerOrder(map);
+  } catch {
+    // Layer may briefly be missing during style transitions.
   }
 }
 

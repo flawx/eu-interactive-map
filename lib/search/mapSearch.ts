@@ -118,10 +118,6 @@ const NON_EU_CAPITALS_BY_COUNTRY: ReadonlyArray<{
   longitude: number;
   latitude: number;
 }> = [
-  { countryCode: "IS", name: "Reykjavík", aliases: ["Reykjavik"], longitude: -21.8174, latitude: 64.1466 },
-  { countryCode: "LI", name: "Vaduz", aliases: [], longitude: 9.5209, latitude: 47.141 },
-  { countryCode: "NO", name: "Oslo", aliases: [], longitude: 10.7522, latitude: 59.9139 },
-  { countryCode: "CH", name: "Bern", aliases: ["Berne"], longitude: 7.4474, latitude: 46.948 },
   { countryCode: "AL", name: "Tirana", aliases: ["Tiranë"], longitude: 19.8187, latitude: 41.3275 },
   { countryCode: "BA", name: "Sarajevo", aliases: [], longitude: 18.4131, latitude: 43.8563 },
   { countryCode: "GE", name: "Tbilisi", aliases: [], longitude: 44.8271, latitude: 41.7151 },

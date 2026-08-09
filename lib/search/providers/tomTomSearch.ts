@@ -44,7 +44,6 @@ function apiKey(): string | null {
 function tomTomCountrySet(): string {
   return UNESCO_MAP_COUNTRY_CODES.map((code) => {
     if (code === "EL") return "GR";
-    if (code === "UK") return "GB";
     return code;
   }).join(",");
 }

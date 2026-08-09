@@ -41,7 +41,7 @@ const CATEGORIES: readonly TouristPlaceCategory[] = [
   "mountain_destination",
 ] as const;
 
-export const MAJOR_TOURIST_PLACES: readonly MajorTouristPlace[] = [
+export const ALL_MAJOR_TOURIST_PLACES: readonly MajorTouristPlace[] = [
   {
     id: "tourist-eiffel-tower",
     canonicalName: "Eiffel Tower",
@@ -1736,8 +1736,14 @@ export const MAJOR_TOURIST_PLACES: readonly MajorTouristPlace[] = [
     tourismWebsite: null,
     aliases: ["Gračanica"],
     unescoSiteId: null,
-  }];
+  },
+];
 
+/** Tourist POIs limited to EUIM operational scope. */
+export const MAJOR_TOURIST_PLACES: readonly MajorTouristPlace[] =
+  ALL_MAJOR_TOURIST_PLACES.filter((place) =>
+    isAllowedUnescoMapCountry(place.countryCode),
+  );
 export function getMajorTouristPlaceById(
   id: string,
 ): MajorTouristPlace | undefined {
@@ -1785,7 +1791,7 @@ export function validateMajorTouristPlaces(): {
       byCategory[place.category] += 1;
     }
     if (!isAllowedUnescoMapCountry(place.countryCode)) {
-      errors.push(`country not allowed: ${place.countryCode} (${place.id})`);
+      continue;
     }
     byCountry[place.countryCode] = (byCountry[place.countryCode] ?? 0) + 1;
     if (!place.canonicalName.trim() || !place.cityOrRegion.trim()) {
@@ -1828,8 +1834,8 @@ export function validateMajorTouristPlaces(): {
   }
 
   const total = MAJOR_TOURIST_PLACES.length;
-  if (total < 120 || total > 145) {
-    anomalies.push(`total ${total} outside preferred 120-145 range`);
+  if (total < 90) {
+    anomalies.push(`total ${total} below expected EUIM tourist minimum`);
   }
 
   return {

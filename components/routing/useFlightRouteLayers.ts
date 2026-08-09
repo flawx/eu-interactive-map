@@ -5,6 +5,7 @@ import type {
   GeoJSONSource,
   Map as MapLibreMap,
 } from "maplibre-gl";
+import { ensureEUIMLayerOrder } from "@/lib/map/ensureEUIMLayerOrder";
 import type {
   FlightJourney,
   FlightLegSegment,
@@ -214,14 +215,10 @@ export function buildFlightAirportsCollection(
 }
 
 export function bringFlightLayersToFront(map: MapLibreMap) {
-  for (const layerId of LAYER_ORDER) {
-    if (map.getLayer(layerId)) {
-      try {
-        map.moveLayer(layerId);
-      } catch {
-        // Layer may briefly be missing during style transitions.
-      }
-    }
+  try {
+    ensureEUIMLayerOrder(map);
+  } catch {
+    // Layer may briefly be missing during style transitions.
   }
 }
 

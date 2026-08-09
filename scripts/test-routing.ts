@@ -81,17 +81,47 @@ async function main() {
     }),
     true,
   );
-  assert.ok(
+  // Geometry may leave the EUIM country set (e.g. FR→IT via CH) — still allowed.
+  assert.equal(
+    isRouteGeometryAllowed({
+      type: "LineString",
+      coordinates: [
+        [2.35, 48.85],
+        [-74.0, 40.7],
+      ],
+    }),
+    true,
+  );
+  assert.equal(
     getDisallowedRouteSegments({
       type: "LineString",
       coordinates: [
         [2.35, 48.85],
         [-74.0, 40.7],
       ],
-    }).length > 0,
+    }).length,
+    0,
   );
   assert.equal(areCountriesAllowed(["FR", "DE"]), true);
-  assert.equal(areCountriesAllowed(["FR", "US"]), false);
+  // Traversed third countries on a calculated path are tolerated.
+  assert.equal(areCountriesAllowed(["FR", "CH", "IT"]), true);
+  assert.equal(areCountriesAllowed(["FR", "US"]), true);
+  assert.equal(
+    isRoutingPointAllowed({
+      latitude: 51.5,
+      longitude: -0.12,
+      countryCode: "UK",
+    }),
+    false,
+  );
+  assert.equal(
+    isRoutingPointAllowed({
+      latitude: 46.95,
+      longitude: 7.45,
+      countryCode: "CH",
+    }),
+    false,
+  );
 
   // Fuel cost: 500 km * 6.5 / 100 * 1.82
   const fuel = estimateFuelOrEnergyCost(500_000, {

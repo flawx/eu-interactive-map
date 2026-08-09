@@ -1,33 +1,23 @@
 import {
+  EUIM_COUNTRY_CODES,
+  EUIM_MAP_BOUNDS,
+  isCountryInEUIMScope,
+} from "@/lib/geography/euimCoverage";
+import {
   pointInPolygon,
   type LngLat,
 } from "@/lib/geo/pointInPolygon";
 
 /** Align with MapContainer country source bounds. */
-export const UNESCO_EUROPE_MAP_BOUNDS = {
-  minLongitude: -25,
-  maxLongitude: 45,
-  minLatitude: 34,
-  maxLatitude: 72,
-} as const;
+export const UNESCO_EUROPE_MAP_BOUNDS = EUIM_MAP_BOUNDS;
 
 /**
- * States / territories already used by the interactive map
- * (EU members + Schengen non-EU + official candidates + UK / XK).
- * Greece = EL (GISCO / Eurostat). United Kingdom = UK.
+ * Operational UNESCO / tourism map countries = EUIM scope
+ * (EU members + official candidates only).
+ * Greece = EL (GISCO / Eurostat).
+ * @deprecated Prefer EUIM_COUNTRY_CODES from euimCoverage.
  */
-export const UNESCO_MAP_COUNTRY_CODES = [
-  // EU members
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "EL",
-  "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK",
-  "SI", "ES", "SE",
-  // Schengen non-EU
-  "IS", "LI", "NO", "CH",
-  // Official candidates / Eastern partners already on the map
-  "AL", "BA", "GE", "MD", "ME", "MK", "RS", "TR", "UA",
-  // Other European states present in the country dataset / search index
-  "UK", "XK",
-] as const;
+export const UNESCO_MAP_COUNTRY_CODES = EUIM_COUNTRY_CODES;
 
 /**
  * GISCO country geometries at 10M — same family as the map's CNTR_RG source,
@@ -292,7 +282,7 @@ export function resolveEuropeanTerritory(
 }
 
 export function isAllowedUnescoMapCountry(code: string): boolean {
-  return ALLOWED.has(code.toUpperCase());
+  return isCountryInEUIMScope(code);
 }
 
 export function isForbiddenUnescoCountry(code: string): boolean {

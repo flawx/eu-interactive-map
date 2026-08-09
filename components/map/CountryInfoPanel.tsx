@@ -237,8 +237,6 @@ const euCountrySlugByCode: Record<string, string> = {
 
 const nonEurozoneCountries = ["CZ", "DK", "HU", "PL", "RO", "SE"];
 
-const schengenNonEUCountries = ["IS", "LI", "NO", "CH"];
-
 const candidateCountries = [
   "AL",
   "BA",
@@ -258,13 +256,6 @@ function getCountryStatus(countryCode: string, locale: Locale) {
     return {
       label: t.legend.officialCandidate,
       color: "#f59e0b",
-    };
-  }
-
-  if (schengenNonEUCountries.includes(countryCode)) {
-    return {
-      label: t.legend.schengenNonEU,
-      color: "#14b8a6",
     };
   }
 

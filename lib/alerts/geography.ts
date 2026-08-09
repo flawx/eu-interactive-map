@@ -1,12 +1,13 @@
 import {
-  UNESCO_EUROPE_MAP_BOUNDS,
-  UNESCO_MAP_COUNTRY_CODES,
+  EUIM_COUNTRY_CODES,
+  EUIM_MAP_BOUNDS,
+  isCoordinateInEUIMScope,
+  isCountryInEUIMScope,
   isEuropeanTurkeyPoint,
-} from "@/lib/tourism/unescoEuropeCoverage";
+  normalizeEUIMCountryCode,
+} from "@/lib/geography/euimCoverage";
 
-export const ALERT_EUROPE_COUNTRY_CODES = new Set<string>(
-  UNESCO_MAP_COUNTRY_CODES,
-);
+export const ALERT_EUROPE_COUNTRY_CODES = new Set<string>(EUIM_COUNTRY_CODES);
 
 export const ISO3_TO_ALERT_COUNTRY: Record<string, string> = {
   ALB: "AL", AUT: "AT", BEL: "BE", BGR: "BG", BIH: "BA", CHE: "CH",
@@ -26,42 +27,27 @@ export type GeographicBounds = {
 };
 
 export const PROJECT_EUROPE_ALERT_BOUNDS: GeographicBounds = {
-  west: UNESCO_EUROPE_MAP_BOUNDS.minLongitude,
-  south: UNESCO_EUROPE_MAP_BOUNDS.minLatitude,
-  east: UNESCO_EUROPE_MAP_BOUNDS.maxLongitude,
-  north: UNESCO_EUROPE_MAP_BOUNDS.maxLatitude,
+  west: EUIM_MAP_BOUNDS.minLongitude,
+  south: EUIM_MAP_BOUNDS.minLatitude,
+  east: EUIM_MAP_BOUNDS.maxLongitude,
+  north: EUIM_MAP_BOUNDS.maxLatitude,
 };
 
 export function normalizeAlertCountryCode(value: unknown): string | null {
-  const code = String(value ?? "").trim().toUpperCase();
-  const normalized =
-    ISO3_TO_ALERT_COUNTRY[code] ??
-    (code === "GB" ? "UK" : code === "GR" ? "EL" : code);
+  const normalized = normalizeEUIMCountryCode(value);
+  if (!normalized) return null;
   return ALERT_EUROPE_COUNTRY_CODES.has(normalized) ? normalized : null;
 }
 
 export function isCountryAllowedInProject(value: unknown): boolean {
-  return normalizeAlertCountryCode(value) !== null;
+  return isCountryInEUIMScope(value);
 }
 
 export function isPointInsideProjectEurope(
   longitude: number,
   latitude: number,
 ): boolean {
-  if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return false;
-  const bounds = PROJECT_EUROPE_ALERT_BOUNDS;
-  if (
-    longitude < bounds.west ||
-    longitude > bounds.east ||
-    latitude < bounds.south ||
-    latitude > bounds.north
-  ) {
-    return false;
-  }
-  return !(
-    longitude > 29.2 &&
-    latitude < 42.5
-  );
+  return isCoordinateInEUIMScope(longitude, latitude);
 }
 
 export function isEuropeanAlertCentroid(
@@ -147,7 +133,6 @@ export function geometryIntersectsProjectEurope(
     });
   }
   if (intersects) return true;
-  // A segment/polygon may cross the boundary without a vertex inside.
   return bounds.west <= PROJECT_EUROPE_ALERT_BOUNDS.east &&
     bounds.east >= PROJECT_EUROPE_ALERT_BOUNDS.west &&
     bounds.south <= PROJECT_EUROPE_ALERT_BOUNDS.north &&

@@ -1,3 +1,9 @@
+import {
+  EUIM_COUNTRY_CODES,
+  isCoordinateInEUIMScope,
+  isCountryInEUIMScope,
+} from "@/lib/geography/euimCoverage";
+
 export type CivilEngineeringWorkCategory =
   | "bridge"
   | "viaduct"
@@ -44,7 +50,7 @@ const work = (
   value: MajorCivilEngineeringWork,
 ): MajorCivilEngineeringWork => value;
 
-export const MAJOR_CIVIL_ENGINEERING_WORKS: readonly MajorCivilEngineeringWork[] = [
+const ALL_MAJOR_CIVIL_ENGINEERING_WORKS: readonly MajorCivilEngineeringWork[] = [
   work({ id: "oresund-bridge", name: "Øresund Bridge", aliases: ["Öresund Bridge", "Oresundsbron"], countryCodes: ["DK", "SE"], regionOrCity: "Copenhagen–Malmö", latitude: 55.5753, longitude: 12.8302, category: "bridge", status: "open", openingYear: 2000, summary: "A combined road and railway crossing linking Denmark and Sweden across the Øresund strait.", officialUrl: "https://www.oresundsbron.com/", wikipediaUrl: "https://en.wikipedia.org/wiki/%C3%98resund_Bridge", wikidataId: null, lengthMeters: 7845, heightMeters: 204, mainSpanMeters: 490, depthMeters: null, carries: "road_rail" }),
   work({ id: "great-belt-east-bridge", name: "Great Belt East Bridge", aliases: ["Storebælt Bridge", "Great Belt Fixed Link"], countryCodes: ["DK"], regionOrCity: "Zealand–Funen", latitude: 55.3419, longitude: 11.0362, category: "bridge", status: "open", openingYear: 1998, summary: "The suspension bridge carrying the road section of Denmark’s Great Belt Fixed Link.", officialUrl: "https://storebaelt.dk/en/", wikipediaUrl: "https://en.wikipedia.org/wiki/Great_Belt_Bridge", wikidataId: null, lengthMeters: 6790, heightMeters: 254, mainSpanMeters: 1624, depthMeters: null, carries: "road" }),
   work({ id: "vasco-da-gama-bridge", name: "Vasco da Gama Bridge", aliases: ["Ponte Vasco da Gama"], countryCodes: ["PT"], regionOrCity: "Lisbon", latitude: 38.7571, longitude: -9.0384, category: "bridge", status: "open", openingYear: 1998, summary: "A long road crossing of the Tagus estuary that relieves traffic pressure on central Lisbon.", officialUrl: "https://www.lusoponte.pt/", wikipediaUrl: "https://en.wikipedia.org/wiki/Vasco_da_Gama_Bridge", wikidataId: null, lengthMeters: 12345, heightMeters: 155, mainSpanMeters: 420, depthMeters: null, carries: "road" }),
@@ -95,10 +101,15 @@ export const MAJOR_CIVIL_ENGINEERING_WORKS: readonly MajorCivilEngineeringWork[]
   work({ id: "caen-hill-locks", name: "Caen Hill Locks", aliases: [], countryCodes: ["UK"], regionOrCity: "Devizes, Wiltshire", latitude: 51.3508, longitude: -2.0198, category: "canal_lock", status: "open", openingYear: 1810, summary: "A landmark flight of 29 locks lifting the Kennet and Avon Canal over Caen Hill.", officialUrl: "https://canalrivertrust.org.uk/things-to-do/places-to-visit/caen-hill-locks", wikipediaUrl: "https://en.wikipedia.org/wiki/Caen_Hill_Locks", wikidataId: null, lengthMeters: 3200, heightMeters: 72, mainSpanMeters: null, depthMeters: null, carries: "water" }),
 ] as const;
 
-const ALLOWED_COUNTRY_CODES = new Set([
-  "AT", "BE", "CH", "DE", "DK", "EL", "ES", "FR", "HU", "IS", "IT",
-  "ME", "NL", "NO", "PT", "RO", "RS", "SE", "UK",
-]);
+/** Operational civil-engineering POIs limited to EUIM scope. */
+export const MAJOR_CIVIL_ENGINEERING_WORKS: readonly MajorCivilEngineeringWork[] =
+  ALL_MAJOR_CIVIL_ENGINEERING_WORKS.filter(
+    (item) =>
+      item.countryCodes.some((code) => isCountryInEUIMScope(code)) &&
+      isCoordinateInEUIMScope(item.longitude, item.latitude),
+  );
+
+const ALLOWED_COUNTRY_CODES = new Set<string>([...EUIM_COUNTRY_CODES]);
 
 export type CivilEngineeringWorksValidationReport = {
   total: number;
@@ -130,7 +141,12 @@ export function validateMajorCivilEngineeringWorks(
     if (!item.countryCodes.length) errors.push(`missing_country:${item.id}`);
     for (const code of item.countryCodes) {
       countries.add(code);
-      if (!ALLOWED_COUNTRY_CODES.has(code)) errors.push(`country_out_of_scope:${item.id}:${code}`);
+      if (
+        !ALLOWED_COUNTRY_CODES.has(code) &&
+        !item.countryCodes.some((c) => ALLOWED_COUNTRY_CODES.has(c))
+      ) {
+        errors.push(`country_out_of_scope:${item.id}:${code}`);
+      }
     }
     for (const url of [item.officialUrl, item.wikipediaUrl]) {
       if (url && !url.startsWith("https://")) errors.push(`non_https_url:${item.id}`);

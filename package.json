@@ -23,6 +23,7 @@
     "test:alerts-landslide-industrial": "tsx scripts/test-landslide-industrial-alerts.ts",
     "test:alerts-traffic": "tsx scripts/test-road-traffic-alerts.ts",
     "test:routing": "tsx scripts/test-routing.ts",
+    "test:euim-coverage": "tsx scripts/test-euim-coverage.ts",
     "test:tomtom-products": "tsx scripts/test-tomtom-products.ts",
     "test:media-routing-stability": "tsx scripts/test-media-routing-stability.ts",
     "test:transit": "tsx scripts/test-transit.ts",

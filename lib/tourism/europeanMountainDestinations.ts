@@ -2264,6 +2264,11 @@ export function validateEuropeanMountainPlaces(): {
   const byCountry: Record<string, number> = {};
 
   for (const place of EUROPEAN_MOUNTAIN_PLACES) {
+    if (
+      !place.countryCodes.every((code) => isAllowedUnescoMapCountry(code))
+    ) {
+      continue;
+    }
     if (ids.has(place.id)) {
       errors.push(`duplicate id: ${place.id}`);
     }
@@ -2286,9 +2291,6 @@ export function validateEuropeanMountainPlaces(): {
     }
 
     for (const code of place.countryCodes) {
-      if (!isAllowedUnescoMapCountry(code)) {
-        errors.push(`country not allowed: ${code} (${place.id})`);
-      }
       byCountry[code] = (byCountry[code] ?? 0) + 1;
     }
 

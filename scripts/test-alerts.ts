@@ -203,10 +203,10 @@ assert.equal(
   ),
   null,
 );
-for (const country of ["FR", "ESP", "ISL"]) {
+for (const country of ["FR", "ESP", "DEU"]) {
   assert.equal(isCountryAllowedInProject(country), true);
 }
-for (const country of ["CHN", "USA", "PHL", "AUS"]) {
+for (const country of ["CHN", "USA", "PHL", "AUS", "ISL", "CHE", "GBR"]) {
   assert.equal(isCountryAllowedInProject(country), false);
 }
 assert.equal(

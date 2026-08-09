@@ -1,8 +1,4 @@
-import {
-  areCountriesAllowed,
-  isRouteGeometryAllowed,
-  isRoutingPointAllowed,
-} from "@/lib/routing/routingGeofence";
+import { isRoutingPointAllowed } from "@/lib/routing/routingGeofence";
 import { getRoutingProvider } from "@/lib/routing/providers/providerRegistry";
 import {
   DEFAULT_ROUTE_AVOID,
@@ -201,22 +197,7 @@ export async function calculateNormalizedRoutes(
   const provider = getRoutingProvider();
   const result = await provider.calculateRoute(request, signal);
 
-  const allowedRoutes = result.routes.filter((route) => {
-    if (!isRouteGeometryAllowed(route.geometry)) return false;
-    if (!areCountriesAllowed(route.countriesTraversed)) return false;
-    return true;
-  });
-
-  if (!allowedRoutes.length) {
-    throw new RoutingError(
-      "route_outside_coverage",
-      "Calculated route leaves the supported European coverage",
-      422,
-    );
-  }
-
-  return {
-    ...result,
-    routes: allowedRoutes,
-  };
+  // Endpoints are validated before the provider call. Geometry may cross
+  // third countries (e.g. FR→IT via CH) — keep provider routes intact.
+  return result;
 }

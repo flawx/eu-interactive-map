@@ -1,90 +1,49 @@
 import {
-  isCountryAllowedInProject,
-  isPointInsideProjectEurope,
-  normalizeAlertCountryCode,
-} from "@/lib/alerts/geography";
+  assertRouteEndpointsInEUIMScope,
+  isRoutingEndpointInEUIMScope,
+} from "@/lib/geography/euimCoverage";
 import type { RoutePoint } from "@/lib/routing/types";
-
-const SAMPLE_STEP = 8;
 
 export function isRoutingPointAllowed(point: {
   latitude: number;
   longitude: number;
   countryCode?: string | null;
 }): boolean {
-  if (
-    !Number.isFinite(point.latitude) ||
-    !Number.isFinite(point.longitude)
-  ) {
-    return false;
-  }
-  if (
-    point.countryCode &&
-    !isCountryAllowedInProject(point.countryCode)
-  ) {
-    return false;
-  }
-  return isPointInsideProjectEurope(point.longitude, point.latitude);
+  return isRoutingEndpointInEUIMScope(point);
 }
 
 export function assertRoutingPointsAllowed(
   points: Array<RoutePoint | null | undefined>,
 ): void {
-  for (const point of points) {
-    if (!point) continue;
-    if (!isRoutingPointAllowed(point)) {
-      throw new Error("point_outside_coverage");
-    }
-  }
+  assertRouteEndpointsInEUIMScope(points);
 }
 
-export function getDisallowedRouteSegments(geometry: {
+/**
+ * Route geometries may briefly cross out-of-scope third countries
+ * (e.g. FR→IT via CH). Do not reject continuous EU→EU paths.
+ * @deprecated Always returns [] — endpoints are the coverage gate.
+ */
+export function getDisallowedRouteSegments(_geometry: {
   type: "LineString";
   coordinates: [number, number][];
 }): Array<{ index: number; longitude: number; latitude: number }> {
-  const out: Array<{ index: number; longitude: number; latitude: number }> =
-    [];
-  const coords = geometry.coordinates;
-  if (!coords.length) return out;
-
-  for (let i = 0; i < coords.length; i += SAMPLE_STEP) {
-    const pair = coords[i];
-    if (!pair) continue;
-    const [longitude, latitude] = pair;
-    if (!isPointInsideProjectEurope(longitude, latitude)) {
-      out.push({ index: i, longitude, latitude });
-    }
-  }
-
-  const last = coords[coords.length - 1];
-  if (last) {
-    const [longitude, latitude] = last;
-    if (!isPointInsideProjectEurope(longitude, latitude)) {
-      out.push({
-        index: coords.length - 1,
-        longitude,
-        latitude,
-      });
-    }
-  }
-
-  return out;
+  return [];
 }
 
-export function isRouteGeometryAllowed(geometry: {
+/** Endpoints are validated separately; geometry through third countries is OK. */
+export function isRouteGeometryAllowed(_geometry: {
   type: "LineString";
   coordinates: [number, number][];
 }): boolean {
-  return getDisallowedRouteSegments(geometry).length === 0;
+  return true;
 }
 
+/**
+ * Traversed countries on a calculated route may include third states (CH, …).
+ * Coverage is enforced on route endpoints only — always allow provider paths.
+ */
 export function areCountriesAllowed(
-  countryCodes: Array<string | null | undefined>,
+  _countryCodes: Array<string | null | undefined>,
 ): boolean {
-  for (const code of countryCodes) {
-    if (!code) continue;
-    const normalized = normalizeAlertCountryCode(code);
-    if (!normalized) return false;
-  }
   return true;
 }

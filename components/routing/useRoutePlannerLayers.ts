@@ -8,6 +8,7 @@ import type {
 } from "maplibre-gl";
 import type { NormalizedRoute } from "@/lib/routing/types";
 import { trafficSectionColor } from "@/lib/routing/formatRoute";
+import { ensureEUIMLayerOrder } from "@/lib/map/ensureEUIMLayerOrder";
 import {
   ROUTE_PLANNER_ALT_SOURCE_ID,
   ROUTE_PLANNER_LAYER_ALT,
@@ -164,14 +165,10 @@ export function logRoutingGeometryDev(routes: NormalizedRoute[]) {
 }
 
 function bringRouteLayersToFront(map: MapLibreMap) {
-  for (const layerId of ROUTE_LAYER_ORDER) {
-    if (map.getLayer(layerId)) {
-      try {
-        map.moveLayer(layerId);
-      } catch {
-        // Layer may briefly be missing during style transitions.
-      }
-    }
+  try {
+    ensureEUIMLayerOrder(map);
+  } catch {
+    // Layer may briefly be missing during style transitions.
   }
 }
 

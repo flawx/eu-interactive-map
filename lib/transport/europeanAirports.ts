@@ -13,6 +13,7 @@
  * Gran Canaria).
  */
 
+import { isCountryInEUIMScope } from "@/lib/geography/euimCoverage";
 import { UNESCO_MAP_COUNTRY_CODES } from "@/lib/tourism/unescoEuropeCoverage";
 
 export type EuropeanAirport = {
@@ -582,12 +583,12 @@ export const ADDITIONAL_EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
 
 /**
  * Public export consumed across the app: EUROCONTROL top-40 perimeter
- * airports plus curated additions (see `ADDITIONAL_EUROPEAN_AIRPORTS`).
+ * airports plus curated additions, filtered to EUIM operational scope.
  */
 export const EUROPEAN_AIRPORTS: readonly EuropeanAirport[] = [
   ...EUROCONTROL_TOP40_AIRPORTS,
   ...ADDITIONAL_EUROPEAN_AIRPORTS,
-];
+].filter((airport) => isCountryInEUIMScope(airport.countryCode));
 
 /** Airports listed in Snapshot #58 but excluded from this map perimeter. */
 export const EUROCONTROL_TOP40_EXCLUDED = [
@@ -641,16 +642,13 @@ export function validateEuropeanAirports(
   const icaos = new Set<string>();
   const ranks = new Set<number>();
 
-  const expected =
-    EUROCONTROL_SNAPSHOT_58.top40InSource -
-    EUROCONTROL_TOP40_EXCLUDED.length;
-  // Only airports carrying a rank2025 are claimed to be part of the
-  // EUROCONTROL top-40 perimeter set; curated additions (rank2025: null,
-  // e.g. Bordeaux) sit outside that count on purpose.
+  const rankedInScope = EUROCONTROL_TOP40_AIRPORTS.filter(
+    (a) => a.rank2025 != null && ALLOWED.has(a.countryCode),
+  ).length;
   const rankedCount = airports.filter((a) => a.rank2025 != null).length;
-  if (rankedCount !== expected) {
+  if (rankedCount !== rankedInScope) {
     errors.push(
-      `Expected ${expected} ranked EUROCONTROL top-40 perimeter airports, found ${rankedCount}`,
+      `Expected ${rankedInScope} ranked EUROCONTROL airports in EUIM scope, found ${rankedCount}`,
     );
   }
 

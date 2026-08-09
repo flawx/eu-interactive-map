@@ -58,7 +58,11 @@ export { UNESCO_MAP_COUNTRY_CODES };
 const dataset = rawSites as UnescoWorldHeritageDataset;
 
 export const UNESCO_WORLD_HERITAGE_SITES: readonly UnescoWorldHeritageSite[] =
-  dataset.sites;
+  dataset.sites.filter(
+    (site) =>
+      site.resolvedCountryCode &&
+      isAllowedUnescoMapCountry(site.resolvedCountryCode),
+  );
 
 export const UNESCO_DATASET_META = dataset.source;
 
