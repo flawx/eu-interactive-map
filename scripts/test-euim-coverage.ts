@@ -16,6 +16,7 @@ import { isRouteGeometryAllowed, isRoutingPointAllowed } from "../lib/routing/ro
 import { EUROPEAN_AIRPORTS } from "../lib/transport/europeanAirports";
 import { EUROSTAR_STATIONS } from "../lib/transport/eurostarNetwork";
 import { MAJOR_CIVIL_ENGINEERING_WORKS } from "../lib/tourism/majorCivilEngineeringWorks";
+import { tileMayIntersectEuimCoverage } from "../lib/geography/euimCoverageMask";
 
 function main() {
   assert.equal(EUIM_EU_MEMBER_CODES.length, 27);
@@ -125,6 +126,48 @@ function main() {
   );
   const capitalIdx = EUIM_LAYER_STACK_BOTTOM_TO_TOP.indexOf("eu-capitals-symbol");
   assert.ok(trafficIdx < capitalIdx, "traffic must stack below capital POIs");
+
+  // London / Zurich / Oslo tiles must not intersect EUIM operational coverage
+  assert.equal(
+    tileMayIntersectEuimCoverage({
+      west: -0.2,
+      east: -0.05,
+      south: 51.45,
+      north: 51.55,
+    }),
+    false,
+    "London tile",
+  );
+  assert.equal(
+    tileMayIntersectEuimCoverage({
+      west: 8.45,
+      east: 8.6,
+      south: 47.35,
+      north: 47.45,
+    }),
+    false,
+    "Zurich tile",
+  );
+  assert.equal(
+    tileMayIntersectEuimCoverage({
+      west: 10.65,
+      east: 10.85,
+      south: 59.85,
+      north: 59.98,
+    }),
+    false,
+    "Oslo tile",
+  );
+  assert.equal(
+    tileMayIntersectEuimCoverage({
+      west: 2.25,
+      east: 2.45,
+      south: 48.8,
+      north: 48.9,
+    }),
+    true,
+    "Paris tile",
+  );
 
   // ensureEUIMLayerOrder is a no-op-safe helper (map mock)
   const layers = new Set<string>();

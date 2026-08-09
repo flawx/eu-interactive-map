@@ -30,6 +30,11 @@ import { ensureEUIMLayerOrder } from "@/lib/map/ensureEUIMLayerOrder";
 import {
   EUIM_EU_MEMBER_CODES,
 } from "@/lib/geography/euimCoverage";
+import {
+  euimWithinFilter,
+  loadEuimCoverageMaskGeometry,
+  type EuimMaskGeometry,
+} from "@/lib/geography/euimCoverageMask";
 import type { TransitJourney } from "@/lib/routing/transit/types";
 import {
   TRANSIT_ROUTE_SOURCE_ID,
@@ -1475,6 +1480,19 @@ export default function MapContainer({
   const majorWildfireLabelMarkersRef = useRef<Marker[]>([]);
   const trafficFlowTilesRef = useRef<string | null>(null);
   const trafficIncidentTilesRef = useRef<string | null>(null);
+  const euimTrafficMaskRef = useRef<EuimMaskGeometry | null>(null);
+
+  const applyEuimTrafficWithinFilter = (map: MapLibreMap) => {
+    const geometry = euimTrafficMaskRef.current;
+    if (!geometry) return;
+    const filter = euimWithinFilter(geometry);
+    if (map.getLayer(TRAFFIC_FLOW_TILE_LAYER_ID)) {
+      map.setFilter(TRAFFIC_FLOW_TILE_LAYER_ID, filter);
+    }
+    if (map.getLayer(TRAFFIC_INCIDENT_TILE_LINE_LAYER_ID)) {
+      map.setFilter(TRAFFIC_INCIDENT_TILE_LINE_LAYER_ID, filter);
+    }
+  };
 
   usePhotoMapMarkers({
     mapRef,
@@ -6952,6 +6970,21 @@ export default function MapContainer({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || mapSourcesReadyVersion === 0) return;
+    let cancelled = false;
+    void loadEuimCoverageMaskGeometry().then((geometry) => {
+      if (cancelled || !geometry) return;
+      euimTrafficMaskRef.current = geometry;
+      applyEuimTrafficWithinFilter(map);
+      ensureEUIMLayerOrder(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || mapSourcesReadyVersion === 0) return;
     const anyDetailedLayer =
       trafficParentLayers.incidents ||
       trafficParentLayers.closures ||
@@ -7070,6 +7103,7 @@ export default function MapContainer({
         },
         beforeLayer,
       );
+      applyEuimTrafficWithinFilter(map);
     }
     if (
       map.getSource(TRAFFIC_INCIDENT_TILE_SOURCE_ID) &&
@@ -7103,6 +7137,7 @@ export default function MapContainer({
         },
         beforeLayer,
       );
+      applyEuimTrafficWithinFilter(map);
     }
 
     if (!map.getSource(TRAFFIC_DETAILS_SOURCE_ID)) {

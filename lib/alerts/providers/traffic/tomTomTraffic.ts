@@ -3,9 +3,11 @@ import {
   type GeographicBounds,
 } from "@/lib/alerts/geography";
 import {
+  tileBounds4326,
   tileIntersectsProjectEurope,
   validateTileCoordinates,
 } from "@/lib/alerts/providers/copernicusFloodTiles";
+import { tileMayIntersectEuimCoverage } from "@/lib/geography/euimCoverageMask";
 import { normalizeTomTomResponse } from "./normalization";
 import type {
   TrafficProvider,
@@ -389,6 +391,9 @@ export class TomTomTrafficProvider implements TrafficProvider {
     }
     if (!tileIntersectsProjectEurope(z, x, y)) {
       return emptyTile("operational", "outside-project-europe");
+    }
+    if (!tileMayIntersectEuimCoverage(tileBounds4326(z, x, y))) {
+      return emptyTile("operational", "outside-euim-coverage");
     }
     if (!apiKey()) return emptyTile("misconfigured", "configuration-required");
     const cacheKey = `${kind}/${z}/${x}/${y}/${trafficModel?.id ?? "current"}`;

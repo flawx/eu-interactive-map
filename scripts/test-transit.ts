@@ -558,11 +558,31 @@ async function main() {
     assert.equal(flightMode, "flight");
   }
 
-  // Parse request + geofence
+  // Parse request + geofence — UK is outside EUIM operational coverage
+  assert.throws(
+    () =>
+      parseTransitRequestBody({
+        origin: { latitude: 48.8566, longitude: 2.3522, name: "Paris" },
+        destination: { latitude: 51.5074, longitude: -0.1278, name: "London" },
+        timing: { kind: "depart_at", at: "2026-08-10T08:00:00Z" },
+        allowedModes: ["TRAIN", "RAIL"],
+        routingPreference: "fewer_transfers",
+        locale: "fr",
+      }),
+    (err: unknown) =>
+      err instanceof TransitError && err.code === "point_outside_coverage",
+  );
+
+  // International train within scope (Paris → Brussels)
   {
     const req = parseTransitRequestBody({
       origin: { latitude: 48.8566, longitude: 2.3522, name: "Paris" },
-      destination: { latitude: 51.5074, longitude: -0.1278, name: "London" },
+      destination: {
+        latitude: 50.8503,
+        longitude: 4.3517,
+        name: "Brussels",
+        countryCode: "BE",
+      },
       timing: { kind: "depart_at", at: "2026-08-10T08:00:00Z" },
       allowedModes: ["TRAIN", "RAIL"],
       routingPreference: "fewer_transfers",
@@ -571,6 +591,8 @@ async function main() {
     assert.equal(req.timing.kind, "depart_at");
     assert.deepEqual(req.allowedModes, ["TRAIN", "RAIL"]);
     assert.equal(req.routingPreference, "fewer_transfers");
+    assert.equal(req.destination.latitude, 50.8503);
+    assert.equal(req.destination.longitude, 4.3517);
   }
 
   assert.throws(
