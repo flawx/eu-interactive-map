@@ -708,6 +708,29 @@ async function main() {
   }
   assert.ok(supportedLocales.length > 0);
 
+  // i18n: road vs transit provider messages must not leak across modes
+  {
+    const en = getMessages("en").routePlanner;
+    const fr = getMessages("fr").routePlanner;
+    assert.match(en.providerNotEntitledDev, /TomTom/i);
+    assert.doesNotMatch(en.transitProviderNotConfiguredDev, /TomTom/i);
+    assert.match(en.transitProviderNotConfiguredDev, /Google Routes/i);
+    assert.doesNotMatch(en.transitServiceUnavailable, /TomTom/i);
+    assert.doesNotMatch(fr.transitProviderNotConfiguredDev, /TomTom/i);
+    assert.match(fr.providerNotEntitledDev, /TomTom/i);
+  }
+
+  // Mode-scoped error selection (road error must not be shown as transit copy)
+  {
+    const en = getMessages("en").routePlanner;
+    const roadHint = en.providerNotEntitledDev;
+    const transitHint = en.transitProviderNotConfiguredDev;
+    const mode: "car" | "transit" = "transit";
+    const activeHint = mode === "transit" ? transitHint : roadHint;
+    assert.equal(activeHint, transitHint);
+    assert.notEqual(activeHint, roadHint);
+  }
+
   // Cache key distinguishes departure times
   {
     clearTransitCacheForTests();

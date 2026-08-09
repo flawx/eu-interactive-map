@@ -98,6 +98,8 @@ export type RoutePlannerMessages = {
   resultTypePoi: string;
   resultTypeCity: string;
   providerNotEntitledDev: string;
+  transitServiceUnavailable: string;
+  transitProviderNotConfiguredDev: string;
   transit: string;
   transfers: string;
   transfer: string;
@@ -215,6 +217,9 @@ const en: RoutePlannerMessages = {
   resultTypeCity: "City",
   providerNotEntitledDev:
     "TomTom Routing API is not enabled for this API key",
+  transitServiceUnavailable:
+    "Public transport directions are temporarily unavailable",
+  transitProviderNotConfiguredDev: "Google Routes API is not configured",
   transit: "Transit",
   transfers: "transfers",
   transfer: "transfer",
@@ -335,6 +340,10 @@ const fr: RoutePlannerMessages = {
   resultTypeCity: "Ville",
   providerNotEntitledDev:
     "L'API TomTom Routing n'est pas activée pour cette clé API",
+  transitServiceUnavailable:
+    "Les transports publics sont temporairement indisponibles",
+  transitProviderNotConfiguredDev:
+    "L'API Google Routes n'est pas configurée",
   transit: "Transports",
   transfers: "correspondances",
   transfer: "correspondance",
@@ -383,6 +392,9 @@ const de: RoutePlannerMessages = {
   fuelEstimate: "Kraftstoffschätzung",
   energyEstimate: "Energieschätzung",
   transit: "ÖPNV",
+  transitServiceUnavailable:
+    "Öffentliche Verkehrsmittel sind vorübergehend nicht verfügbar",
+  transitProviderNotConfiguredDev: "Google Routes API ist nicht konfiguriert",
   transfers: "Umstiege",
   transfer: "Umstieg",
   fareUnavailable: "Tarif nicht verfügbar",

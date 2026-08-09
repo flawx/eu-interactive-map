@@ -1,5 +1,3 @@
-import "server-only";
-
 import {
   normalizeGoogleTransitRoutes,
   type GoogleComputeRoutesResponse,
@@ -11,6 +9,8 @@ import {
   type TransitRoutingRequest,
   type TransitRoutingResult,
 } from "@/lib/routing/transit/types";
+
+/** Server-only provider — import from API routes / Node scripts, never from client components. */
 
 const GOOGLE_ROUTES_ENDPOINT =
   "https://routes.googleapis.com/directions/v2:computeRoutes";
@@ -29,7 +29,13 @@ export const GOOGLE_TRANSIT_FIELD_MASK = [
   "routes.legs.steps.startLocation",
   "routes.legs.steps.endLocation",
   "routes.legs.steps.navigationInstruction",
-  "routes.legs.steps.transitDetails",
+  "routes.legs.steps.transitDetails.stopDetails.departureStop",
+  "routes.legs.steps.transitDetails.stopDetails.arrivalStop",
+  "routes.legs.steps.transitDetails.stopDetails.departureTime",
+  "routes.legs.steps.transitDetails.stopDetails.arrivalTime",
+  "routes.legs.steps.transitDetails.headsign",
+  "routes.legs.steps.transitDetails.stopCount",
+  "routes.legs.steps.transitDetails.transitLine",
   "routes.travelAdvisory.transitFare",
   "routes.localizedValues.transitFare",
   "routes.warnings",

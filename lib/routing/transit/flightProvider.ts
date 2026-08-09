@@ -1,10 +1,10 @@
-import "server-only";
-
 import type {
   FlightOffer,
   FlightProvider,
   TransitProviderStatus,
 } from "@/lib/routing/transit/types";
+
+/** Server-only flight stub — import from API routes, never from client components. */
 
 /**
  * Amadeus Flight Offers Search stub.

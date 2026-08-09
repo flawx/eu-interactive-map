@@ -107,6 +107,7 @@ type RoutePlannerPanelProps = {
 function errorMessage(
   code: string | undefined,
   t: ReturnType<typeof getMessages>["routePlanner"],
+  scope: "road" | "transit",
 ): string {
   switch (code) {
     case "origin_required":
@@ -126,9 +127,14 @@ function errorMessage(
     case "provider_not_entitled":
     case "provider_misconfigured":
     case "provider_rate_limited":
-      return t.serviceUnavailable;
+    case "provider_unavailable":
+      return scope === "transit"
+        ? t.transitServiceUnavailable
+        : t.serviceUnavailable;
     default:
-      return t.serviceUnavailable;
+      return scope === "transit"
+        ? t.transitServiceUnavailable
+        : t.serviceUnavailable;
   }
 }
 
@@ -170,16 +176,21 @@ export default function RoutePlannerPanel({
   >(null);
   const [incidents, setIncidents] = useState<NormalizedAlert[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [roadError, setRoadError] = useState<string | null>(null);
+  const [transitError, setTransitError] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState(true);
   const [showOptions, setShowOptions] = useState(false);
   const [showVehicle, setShowVehicle] = useState(false);
   const [vehicle, setVehicle] = useState<VehicleProfile>(() => loadVehicleProfile());
   const [focusOrigin, setFocusOrigin] = useState(false);
-  const [devProviderHint, setDevProviderHint] = useState<string | null>(null);
+  const [roadDevHint, setRoadDevHint] = useState<string | null>(null);
+  const [transitDevHint, setTransitDevHint] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const autoCalcKeyRef = useRef<string | null>(null);
   const prevModeRef = useRef<PlannerTravelMode>(mode);
+
+  const activeError = mode === "transit" ? transitError : roadError;
+  const activeDevHint = mode === "transit" ? transitDevHint : roadDevHint;
 
   const bias = userLocation;
 
@@ -239,7 +250,7 @@ export default function RoutePlannerPanel({
     setFocusOrigin(focusOriginOnOpen);
   }, [focusOriginOnOpen, open]);
 
-  // Road (TomTom) and transit results are mutually exclusive on the map.
+  // Road (TomTom) and transit results/errors are mutually exclusive in the UI.
   useEffect(() => {
     if (prevModeRef.current === mode) return;
     const wasTransit = prevModeRef.current === "transit";
@@ -247,12 +258,16 @@ export default function RoutePlannerPanel({
     if (wasTransit && !isTransit) {
       setJourneys([]);
       setSelectedJourneyId(null);
+      setTransitError(null);
+      setTransitDevHint(null);
       onTransitChange?.([], null);
     }
     if (!wasTransit && isTransit) {
       setRoutes([]);
       setSelectedRouteId(null);
       setIncidents([]);
+      setRoadError(null);
+      setRoadDevHint(null);
       onRoutesChange([], null);
     }
     prevModeRef.current = mode;
@@ -260,11 +275,14 @@ export default function RoutePlannerPanel({
 
   const calculate = useCallback(async () => {
     if (!origin || !destination) {
-      setError(!origin ? t.originRequired : t.destinationRequired);
+      const message = !origin ? t.originRequired : t.destinationRequired;
+      if (mode === "transit") setTransitError(message);
+      else setRoadError(message);
       return;
     }
     if (!isRoutingPointAllowed(origin) || !isRoutingPointAllowed(destination)) {
-      setError(t.outsideCoverage);
+      if (mode === "transit") setTransitError(t.outsideCoverage);
+      else setRoadError(t.outsideCoverage);
       return;
     }
 
@@ -272,7 +290,13 @@ export default function RoutePlannerPanel({
     const controller = new AbortController();
     abortRef.current = controller;
     setLoading(true);
-    setError(null);
+    if (mode === "transit") {
+      setTransitError(null);
+      setTransitDevHint(null);
+    } else {
+      setRoadError(null);
+      setRoadDevHint(null);
+    }
 
     const timingPayload: RoutingTiming =
       timing.kind === "depart_at" && departAtLocal
@@ -307,17 +331,19 @@ export default function RoutePlannerPanel({
           setJourneys([]);
           setSelectedJourneyId(null);
           onTransitChange?.([], null);
-          setError(errorMessage(payload.error?.code, t));
-          setDevProviderHint(
+          setTransitError(errorMessage(payload.error?.code, t, "transit"));
+          setTransitDevHint(
             process.env.NODE_ENV === "development" &&
-              payload.error?.code === "provider_misconfigured"
-              ? t.providerNotEntitledDev
+              (payload.error?.code === "provider_misconfigured" ||
+                payload.error?.code === "provider_not_entitled")
+              ? t.transitProviderNotConfiguredDev
               : null,
           );
           return;
         }
 
-        setDevProviderHint(null);
+        setTransitDevHint(null);
+        setTransitError(null);
         const nextJourneys = payload.journeys ?? [];
         const selectedId = nextJourneys[0]?.id ?? null;
         setJourneys(nextJourneys);
@@ -325,6 +351,8 @@ export default function RoutePlannerPanel({
         setRoutes([]);
         setSelectedRouteId(null);
         setIncidents([]);
+        setRoadError(null);
+        setRoadDevHint(null);
         onRoutesChange([], null);
         onTransitChange?.(nextJourneys, selectedId);
         if (nextJourneys[0]) {
@@ -332,7 +360,7 @@ export default function RoutePlannerPanel({
         }
       } catch (err) {
         if (isAbortError(err)) return;
-        setError(t.serviceUnavailable);
+        setTransitError(t.transitServiceUnavailable);
       } finally {
         if (abortRef.current === controller) setLoading(false);
       }
@@ -373,8 +401,8 @@ export default function RoutePlannerPanel({
         setSelectedRouteId(null);
         setIncidents([]);
         onRoutesChange([], null);
-        setError(errorMessage(payload.error?.code, t));
-        setDevProviderHint(
+        setRoadError(errorMessage(payload.error?.code, t, "road"));
+        setRoadDevHint(
           process.env.NODE_ENV === "development" &&
             (payload.error?.code === "provider_not_entitled" ||
               payload.error?.code === "provider_misconfigured")
@@ -384,7 +412,8 @@ export default function RoutePlannerPanel({
         return;
       }
 
-      setDevProviderHint(null);
+      setRoadDevHint(null);
+      setRoadError(null);
       const nextRoutes = payload.routes ?? [];
       const selectedId = nextRoutes[0]?.id ?? null;
       setRoutes(nextRoutes);
@@ -393,6 +422,8 @@ export default function RoutePlannerPanel({
       onRoutesChange(nextRoutes, selectedId);
       setJourneys([]);
       setSelectedJourneyId(null);
+      setTransitError(null);
+      setTransitDevHint(null);
       onTransitChange?.([], null);
       if (nextRoutes[0]) {
         onFocusRoute(nextRoutes[0].geometry.coordinates);
@@ -408,7 +439,7 @@ export default function RoutePlannerPanel({
       });
     } catch (err) {
       if (isAbortError(err)) return;
-      setError(t.serviceUnavailable);
+      setRoadError(t.serviceUnavailable);
     } finally {
       if (abortRef.current === controller) setLoading(false);
     }
@@ -490,8 +521,12 @@ export default function RoutePlannerPanel({
   }, []);
 
   const useMyLocation = async (target: "origin" | "destination") => {
+    const setActiveError = (message: string) => {
+      if (mode === "transit") setTransitError(message);
+      else setRoadError(message);
+    };
     if (!navigator.geolocation) {
-      setError(t.geolocationDenied);
+      setActiveError(t.geolocationDenied);
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -499,7 +534,7 @@ export default function RoutePlannerPanel({
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         if (!isRoutingPointAllowed({ latitude, longitude })) {
-          setError(t.outsideCoverage);
+          setActiveError(t.outsideCoverage);
           return;
         }
         let name = t.useMyLocation;
@@ -536,7 +571,7 @@ export default function RoutePlannerPanel({
           });
         }
       },
-      () => setError(t.geolocationDenied),
+      () => setActiveError(t.geolocationDenied),
       { enableHighAccuracy: true, timeout: 10_000 },
     );
   };
@@ -549,6 +584,10 @@ export default function RoutePlannerPanel({
     setWaypointDrafts([]);
     setJourneys([]);
     setSelectedJourneyId(null);
+    setRoadError(null);
+    setTransitError(null);
+    setRoadDevHint(null);
+    setTransitDevHint(null);
     onRoutesChange([], null);
     onTransitChange?.([], null);
     onPickTargetChange(null);
@@ -1007,15 +1046,15 @@ export default function RoutePlannerPanel({
           {loading ? t.calculatingRoute : t.calculateRoute}
         </button>
 
-        {error ? (
+        {activeError ? (
           <div
             className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100"
             role="alert"
           >
-            <p>{error}</p>
-            {devProviderHint ? (
+            <p>{activeError}</p>
+            {activeDevHint ? (
               <p className="mt-1 text-[11px] text-amber-200/80">
-                {devProviderHint}
+                {activeDevHint}
               </p>
             ) : null}
           </div>
@@ -1198,7 +1237,7 @@ export default function RoutePlannerPanel({
           </div>
         ) : null}
 
-        {incidents.length > 0 ? (
+        {mode !== "transit" && incidents.length > 0 ? (
           <div className="mt-3 rounded-xl border border-white/10 p-3">
             <p className="text-sm font-medium text-slate-100">
               {incidents.length} {t.incidentsOnRoute}
@@ -1219,7 +1258,8 @@ export default function RoutePlannerPanel({
           </div>
         ) : null}
 
-        {routes.find((r) => r.id === selectedRouteId)?.instructions?.length ? (
+        {mode !== "transit" &&
+        routes.find((r) => r.id === selectedRouteId)?.instructions?.length ? (
           <div className="mt-3">
             <h3 className="text-sm font-medium text-slate-100">
               {t.instructions}
