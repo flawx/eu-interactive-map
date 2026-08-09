@@ -233,14 +233,42 @@ export class FlightError extends Error {
   }
 }
 
-/** A single fare/booking link returned by SerpApi's Google Flights Booking Options engine. */
+/** A single fare/booking action returned by SerpApi Google Flights Booking Options. */
+export type FlightBookingSellerType = "airline" | "agency" | "other";
+
+export type FlightBookingAction =
+  | {
+      type: "post";
+      url: string;
+      /** Ephemeral form-urlencoded body — never log, never persist. */
+      postData: string;
+    }
+  | {
+      type: "get";
+      url: string;
+    }
+  | {
+      type: "phone";
+      phone: string;
+    };
+
 export type FlightBookingOption = {
+  id: string;
+  seller: string | null;
+  /** @deprecated Prefer `seller` — kept for older UI call sites during migration. */
   bookWith: string | null;
+  sellerType: FlightBookingSellerType;
+  airline: boolean;
+  airlineLogos: string[];
+  marketedAs: string[];
   price: number | null;
   currency: string | null;
   optionTitle: string | null;
-  url: string | null;
   extensions: string[];
+  baggagePrices: string[];
+  bookingAction: FlightBookingAction | null;
+  /** @deprecated Prefer `bookingAction` — GET url only when available. */
+  url: string | null;
 };
 
 /** Resolved candidate airport for a free-text/coordinate place in a flight search. */

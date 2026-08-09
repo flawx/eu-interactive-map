@@ -153,7 +153,13 @@ export type RoutePlannerMessages = {
   flightProviderNotConfiguredDev: string;
   viewBookingOptions: string;
   loadingBookingOptions: string;
+  bookingOptionsTitle: string;
   bookingOptionsUnavailable: string;
+  bookingOptionsEmpty: string;
+  bookingOptionsError: string;
+  bookingContinue: string;
+  bookingSellerAirline: string;
+  bookingSellerAgency: string;
   airportTime: string;
   noFlightsFound: string;
   flightDateRequired: string;
@@ -314,7 +320,13 @@ const en: RoutePlannerMessages = {
   flightProviderNotConfiguredDev: "SerpApi Google Flights is not configured (SERPAPI_API_KEY)",
   viewBookingOptions: "View booking options",
   loadingBookingOptions: "Loading booking options…",
+  bookingOptionsTitle: "Booking options",
   bookingOptionsUnavailable: "Booking options are not available for this flight",
+  bookingOptionsEmpty: "No booking options are currently available for this flight.",
+  bookingOptionsError: "Unable to load booking options.",
+  bookingContinue: "Continue",
+  bookingSellerAirline: "Airline",
+  bookingSellerAgency: "Travel agency",
   airportTime: "Airport time",
   noFlightsFound: "No flights found",
   flightDateRequired: "Departure date required",
@@ -480,7 +492,13 @@ const fr: RoutePlannerMessages = {
   flightProviderNotConfiguredDev: "SerpApi Google Flights n'est pas configuré (SERPAPI_API_KEY)",
   viewBookingOptions: "Voir les options de réservation",
   loadingBookingOptions: "Chargement des options de réservation…",
+  bookingOptionsTitle: "Options de réservation",
   bookingOptionsUnavailable: "Aucune option de réservation disponible pour ce vol",
+  bookingOptionsEmpty: "Aucune option de réservation n’est disponible pour ce vol pour le moment.",
+  bookingOptionsError: "Impossible de charger les options de réservation.",
+  bookingContinue: "Continuer",
+  bookingSellerAirline: "Compagnie",
+  bookingSellerAgency: "Agence de voyage",
   airportTime: "Heure aéroport",
   noFlightsFound: "Aucun vol trouvé",
   flightDateRequired: "Date de départ requise",
@@ -571,7 +589,13 @@ const de: RoutePlannerMessages = {
   flightProviderNotConfiguredDev: "SerpApi Google Flights ist nicht konfiguriert (SERPAPI_API_KEY)",
   viewBookingOptions: "Buchungsoptionen anzeigen",
   loadingBookingOptions: "Buchungsoptionen werden geladen…",
+  bookingOptionsTitle: "Buchungsoptionen",
   bookingOptionsUnavailable: "Für diesen Flug sind keine Buchungsoptionen verfügbar",
+  bookingOptionsEmpty: "Für diesen Flug sind derzeit keine Buchungsoptionen verfügbar.",
+  bookingOptionsError: "Buchungsoptionen konnten nicht geladen werden.",
+  bookingContinue: "Weiter",
+  bookingSellerAirline: "Airline",
+  bookingSellerAgency: "Reisebüro",
   airportTime: "Flughafenzeit",
   noFlightsFound: "Keine Flüge gefunden",
   flightDateRequired: "Abflugdatum erforderlich",

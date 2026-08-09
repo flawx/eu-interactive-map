@@ -19,7 +19,7 @@ function isAbortError(error: unknown): boolean {
 /**
  * Looks up booking options (airline-direct / OTA fare links) for a
  * previously returned itinerary via its SerpApi `booking_token`. Never
- * accepts or forwards the raw offer — only the opaque token.
+ * logs the token, post_data, or API key.
  */
 export async function POST(request: Request) {
   const controller = new AbortController();
@@ -63,6 +63,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (process.env.NODE_ENV === "development") {
+      console.info("[booking api]", {
+        provider: "serpapi_google_flights",
+        bookingTokenPresent: true,
+        bookingTokenLength: bookingToken.trim().length,
+        departureId: departureId.trim().toUpperCase(),
+        arrivalId: arrivalId.trim().toUpperCase(),
+        outboundDate: outboundDate.trim(),
+      });
+    }
+
     const options = await serpapiFlightProvider.getBookingOptions(bookingToken, {
       departureId,
       arrivalId,
@@ -71,15 +82,27 @@ export async function POST(request: Request) {
       signal: controller.signal,
     });
 
+    if (process.env.NODE_ENV === "development") {
+      console.info("[booking response]", {
+        status: 200,
+        optionsCount: options.length,
+        normalizedOptionsCount: options.length,
+        postActions: options.filter((o) => o.bookingAction?.type === "post").length,
+        getActions: options.filter((o) => o.bookingAction?.type === "get").length,
+      });
+    }
+
     if (options.length === 0) {
       return Response.json(
         {
+          provider: "serpapi_google_flights",
+          options: [],
           error: {
             code: "no_offers_found",
             message: "No booking options are available for this itinerary",
           },
         },
-        { status: 404 },
+        { status: 404, headers: { "Cache-Control": "no-store" } },
       );
     }
 
@@ -98,6 +121,9 @@ export async function POST(request: Request) {
       );
     }
     if (error instanceof FlightError) {
+      if (process.env.NODE_ENV === "development") {
+        console.info("[booking api error]", { code: error.code, status: error.status });
+      }
       return Response.json(
         { error: { code: error.code, message: error.message } },
         { status: error.status },

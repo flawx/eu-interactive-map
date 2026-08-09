@@ -57,6 +57,7 @@ import type {
   FlightSortOrder,
   MultimodalJourney,
 } from "@/lib/routing/flights/types";
+import { executeFlightBookingAction } from "@/lib/routing/flights/bookingAction";
 import {
   DEFAULT_ROUTE_AVOID,
   MAX_ROUTE_WAYPOINTS_UI,
@@ -287,6 +288,10 @@ export default function RoutePlannerPanel({
   const [bookingOptionsError, setBookingOptionsError] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    setBookingOptionsError(null);
+  }, [selectedFlightId]);
   const abortRef = useRef<AbortController | null>(null);
   const autoCalcKeyRef = useRef<string | null>(null);
   const prevModeRef = useRef<PlannerTravelMode>(mode);
@@ -875,6 +880,23 @@ export default function RoutePlannerPanel({
       const departureId = firstSeg?.departure.place.iataCode;
       const arrivalId = lastSeg?.arrival.place.iataCode;
       const outboundDate = firstSeg?.departure.at?.slice(0, 10);
+      const flightNumber = firstSeg
+        ? `${firstSeg.carrierCode}${firstSeg.flightNumber}`
+        : null;
+
+      if (process.env.NODE_ENV === "development") {
+        console.info("[booking client]", {
+          offerId: journeyId,
+          flightNumber,
+          bookingTokenPresent: Boolean(bookingToken),
+          bookingTokenLength: bookingToken?.length ?? 0,
+          segments: flightJourney?.segments.length ?? 0,
+          requestStarted: Boolean(
+            journey && flightSegment && bookingToken && departureId && arrivalId && outboundDate,
+          ),
+        });
+      }
+
       if (
         !journey ||
         !flightSegment ||
@@ -883,6 +905,7 @@ export default function RoutePlannerPanel({
         !arrivalId ||
         !outboundDate
       ) {
+        setBookingOptionsError(t.bookingOptionsError);
         return;
       }
 
@@ -904,16 +927,32 @@ export default function RoutePlannerPanel({
           options?: FlightBookingOption[];
           error?: { code?: string };
         };
+
+        if (process.env.NODE_ENV === "development") {
+          console.info("[booking response]", {
+            status: response.status,
+            optionsCount: payload.options?.length ?? 0,
+            normalizedOptionsCount: payload.options?.length ?? 0,
+            errorCode: payload.error?.code ?? null,
+          });
+        }
+
+        if (response.status === 404 || (response.ok && payload.options?.length === 0)) {
+          setBookingOptionsByJourney((prev) => ({ ...prev, [journeyId]: [] }));
+          setBookingOptionsError(t.bookingOptionsEmpty);
+          return;
+        }
         if (!response.ok || !payload.options) {
-          setBookingOptionsError(t.bookingOptionsUnavailable);
+          setBookingOptionsError(t.bookingOptionsError);
           return;
         }
         setBookingOptionsByJourney((prev) => ({
           ...prev,
           [journeyId]: payload.options!,
         }));
+        setBookingOptionsError(null);
       } catch {
-        setBookingOptionsError(t.bookingOptionsUnavailable);
+        setBookingOptionsError(t.bookingOptionsError);
       } finally {
         setBookingOptionsLoadingId(null);
       }
@@ -1794,6 +1833,7 @@ export default function RoutePlannerPanel({
               if (!selected || !flightSegment || !bookingToken) return null;
               const isLoading = bookingOptionsLoadingId === selected.id;
               const options = bookingOptionsByJourney[selected.id];
+              const searchPrice = flightSegment.journey.price;
               return (
                 <div className="mt-2 space-y-1.5">
                   <button
@@ -1804,48 +1844,88 @@ export default function RoutePlannerPanel({
                   >
                     {isLoading ? t.loadingBookingOptions : t.viewBookingOptions}
                   </button>
+                  {searchPrice ? (
+                    <p className="text-[11px] text-slate-400">
+                      {t.searchPrice}: {searchPrice.amount.toFixed(2)}{" "}
+                      {searchPrice.currency}
+                    </p>
+                  ) : null}
                   {bookingOptionsError ? (
                     <p className="text-[11px] text-amber-300">{bookingOptionsError}</p>
                   ) : null}
                   {options && options.length > 0 ? (
-                    <ul className="space-y-1">
-                      {options.slice(0, 5).map((option, index) => {
-                        const priceLabel =
-                          option.price != null
-                            ? `${option.price.toFixed(2)} ${option.currency ?? ""}`.trim()
-                            : null;
-                        const content = (
-                          <>
-                            <span className="truncate text-slate-100">
-                              {option.bookWith ?? t.viewBookingOptions}
-                            </span>
-                            {priceLabel ? (
-                              <span className="shrink-0 tabular-nums text-slate-300">
-                                {priceLabel}
-                              </span>
-                            ) : null}
-                          </>
-                        );
-                        return (
-                          <li key={`${option.bookWith ?? "option"}-${index}`}>
-                            {option.url ? (
-                              <a
-                                href={option.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-2.5 py-2 text-xs hover:bg-white/10"
-                              >
-                                {content}
-                              </a>
-                            ) : (
-                              <div className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-2.5 py-2 text-xs">
-                                {content}
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        {t.bookingOptionsTitle}
+                      </p>
+                      <ul className="space-y-1">
+                        {options.map((option) => {
+                          const priceLabel =
+                            option.price != null
+                              ? `${option.price.toFixed(2)} ${option.currency ?? ""}`.trim()
+                              : null;
+                          const badge =
+                            option.sellerType === "airline"
+                              ? t.bookingSellerAirline
+                              : option.sellerType === "agency"
+                                ? t.bookingSellerAgency
+                                : null;
+                          const canContinue = Boolean(option.bookingAction);
+                          return (
+                            <li
+                              key={option.id}
+                              className="rounded-lg bg-white/5 px-2.5 py-2 text-xs"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0 space-y-0.5">
+                                  <p className="truncate font-medium text-slate-100">
+                                    {option.seller ?? option.bookWith ?? t.viewBookingOptions}
+                                  </p>
+                                  {badge ? (
+                                    <span className="inline-flex rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-300">
+                                      {badge}
+                                    </span>
+                                  ) : null}
+                                  {option.optionTitle ? (
+                                    <p className="text-[11px] text-slate-400">
+                                      {option.optionTitle}
+                                    </p>
+                                  ) : null}
+                                  {option.baggagePrices.length > 0 ? (
+                                    <p className="text-[11px] text-slate-400">
+                                      {option.baggagePrices.slice(0, 2).join(" · ")}
+                                    </p>
+                                  ) : null}
+                                  {option.extensions.length > 0 ? (
+                                    <p className="text-[11px] text-slate-500">
+                                      {option.extensions.slice(0, 2).join(" · ")}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                  {priceLabel ? (
+                                    <span className="tabular-nums text-slate-200">
+                                      {priceLabel}
+                                    </span>
+                                  ) : null}
+                                  {canContinue && option.bookingAction ? (
+                                    <button
+                                      type="button"
+                                      className="rounded-md bg-sky-500/90 px-2 py-1 text-[11px] font-medium text-white hover:bg-sky-400"
+                                      onClick={() =>
+                                        executeFlightBookingAction(option.bookingAction!)
+                                      }
+                                    >
+                                      {t.bookingContinue}
+                                    </button>
+                                  ) : null}
+                                </div>
                               </div>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   ) : null}
                 </div>
               );

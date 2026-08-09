@@ -18,7 +18,9 @@ import {
   type SerpApiGoogleFlightsSearchResult,
 } from "@/lib/routing/flights/normalizeSerpApiFlights";
 import type {
+  FlightBookingAction,
   FlightBookingOption,
+  FlightBookingSellerType,
   FlightCabin,
   FlightJourney,
   FlightProviderStatus,
@@ -31,6 +33,9 @@ const CABIN_TO_TRAVEL_CLASS: Record<FlightCabin, 1 | 2 | 3 | 4> = {
   BUSINESS: 3,
   FIRST: 4,
 };
+
+/** Booking-options lookups are slower than search; SerpApi often exceeds 15s. */
+const BOOKING_OPTIONS_TIMEOUT_MS = 45_000;
 
 export type SerpApiFlightSearchInput = {
   /** Comma-joined IATA codes, e.g. "CDG,ORY" — a single request covers every candidate airport. */
@@ -50,6 +55,12 @@ export type SerpApiFlightSearchInput = {
   resolvePlace?: ResolvePlace;
 };
 
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+}
+
 function extractLocalPrice(
   option: Record<string, unknown>,
   currency: string | undefined,
@@ -64,20 +75,71 @@ function extractLocalPrice(
         entry.currency.toUpperCase() === currency.toUpperCase(),
     );
     if (match && typeof match.price === "number") {
-      return { amount: match.price, currency: match.currency as string };
+      return { amount: match.price, currency: (match.currency as string).toUpperCase() };
     }
   }
   if (typeof option.price === "number") {
-    return { amount: option.price, currency: currency ?? null };
+    return { amount: option.price, currency: currency?.toUpperCase() ?? null };
   }
   return { amount: null, currency: null };
 }
 
+function resolveSellerType(option: Record<string, unknown>): FlightBookingSellerType {
+  if (option.airline === true) return "airline";
+  if (typeof option.book_with === "string" && option.book_with.trim()) return "agency";
+  return "other";
+}
+
+function resolveBookingAction(option: Record<string, unknown>): FlightBookingAction | null {
+  const bookingRequest = option.booking_request as Record<string, unknown> | undefined;
+  const url = typeof bookingRequest?.url === "string" ? bookingRequest.url.trim() : "";
+  const postData =
+    typeof bookingRequest?.post_data === "string" ? bookingRequest.post_data : "";
+  if (url && postData) {
+    return { type: "post", url, postData };
+  }
+  if (url) {
+    return { type: "get", url };
+  }
+  const phone = typeof option.booking_phone === "string" ? option.booking_phone.trim() : "";
+  if (phone) {
+    return { type: "phone", phone };
+  }
+  return null;
+}
+
+function normalizeOneBookingSlice(
+  option: Record<string, unknown>,
+  currency: string | undefined,
+  id: string,
+): FlightBookingOption | null {
+  const seller = typeof option.book_with === "string" ? option.book_with.trim() : "";
+  const action = resolveBookingAction(option);
+  const { amount, currency: priceCurrency } = extractLocalPrice(option, currency);
+  if (!seller && !action && amount == null) return null;
+
+  return {
+    id,
+    seller: seller || null,
+    bookWith: seller || null,
+    sellerType: resolveSellerType(option),
+    airline: option.airline === true,
+    airlineLogos: asStringArray(option.airline_logos),
+    marketedAs: asStringArray(option.marketed_as),
+    price: amount,
+    currency: priceCurrency,
+    optionTitle: typeof option.option_title === "string" ? option.option_title : null,
+    extensions: asStringArray(option.extensions),
+    baggagePrices: asStringArray(option.baggage_prices),
+    bookingAction: action,
+    url: action?.type === "get" || action?.type === "post" ? action.url : null,
+  };
+}
+
 /**
  * Normalizes the `booking_options[]` array from a SerpApi booking-token
- * lookup into flat, display-ready options. Each raw entry nests the actual
- * fare under `together` (single booking) or `departing`/`returning`
- * (booked separately) — we surface whichever is present.
+ * lookup. Each raw entry nests the fare under `together` (single ticket)
+ * and/or `departing`/`returning` (separate tickets).
  */
 export function normalizeSerpApiBookingOptions(
   payload: SerpApiRawResponse,
@@ -88,27 +150,26 @@ export function normalizeSerpApiBookingOptions(
     : [];
 
   const options: FlightBookingOption[] = [];
-  for (const entry of rawOptions) {
-    const option =
-      (entry.together as Record<string, unknown> | undefined) ??
-      (entry.departing as Record<string, unknown> | undefined) ??
-      (entry.returning as Record<string, unknown> | undefined);
-    if (!option) continue;
+  rawOptions.forEach((entry, index) => {
+    const together = entry.together as Record<string, unknown> | undefined;
+    const departing = entry.departing as Record<string, unknown> | undefined;
+    const returning = entry.returning as Record<string, unknown> | undefined;
 
-    const { amount, currency: priceCurrency } = extractLocalPrice(option, currency);
-    const bookingRequest = option.booking_request as Record<string, unknown> | undefined;
+    if (together) {
+      const normalized = normalizeOneBookingSlice(together, currency, `bo-${index}-together`);
+      if (normalized) options.push(normalized);
+      return;
+    }
 
-    options.push({
-      bookWith: typeof option.book_with === "string" ? option.book_with : null,
-      price: amount,
-      currency: priceCurrency,
-      optionTitle: typeof option.option_title === "string" ? option.option_title : null,
-      url: typeof bookingRequest?.url === "string" ? bookingRequest.url : null,
-      extensions: Array.isArray(option.extensions)
-        ? (option.extensions as unknown[]).filter((item): item is string => typeof item === "string")
-        : [],
-    });
-  }
+    if (departing) {
+      const normalized = normalizeOneBookingSlice(departing, currency, `bo-${index}-departing`);
+      if (normalized) options.push(normalized);
+    }
+    if (returning) {
+      const normalized = normalizeOneBookingSlice(returning, currency, `bo-${index}-returning`);
+      if (normalized) options.push(normalized);
+    }
+  });
   return options;
 }
 
@@ -145,8 +206,8 @@ export class SerpApiFlightProvider {
 
   /**
    * Fetches booking options for a previously returned itinerary.
-   * SerpApi still requires the original search context (`departure_id`,
-   * `arrival_id`, `outbound_date`) alongside `booking_token`.
+   * SerpApi's google_flights engine still requires `departure_id` (validated
+   * live) alongside `booking_token`; arrival/date are sent for context.
    */
   async getBookingOptions(
     bookingToken: string,
@@ -180,7 +241,25 @@ export class SerpApiFlightProvider {
       hl: options.hl,
       gl: options.gl,
       signal: options.signal,
+      timeoutMs: BOOKING_OPTIONS_TIMEOUT_MS,
     });
+
+    if (process.env.NODE_ENV === "development") {
+      const rawCount = Array.isArray(payload.booking_options)
+        ? payload.booking_options.length
+        : 0;
+      const selectedCount = Array.isArray(payload.selected_flights)
+        ? payload.selected_flights.length
+        : 0;
+      console.info("[booking provider]", {
+        provider: "serpapi_google_flights",
+        searchStatus: payload.search_metadata?.status ?? null,
+        bookingOptionsCount: rawCount,
+        selectedFlightsCount: selectedCount,
+        providerError: typeof payload.error === "string" ? payload.error : null,
+      });
+    }
+
     return normalizeSerpApiBookingOptions(payload, options.currency);
   }
 }

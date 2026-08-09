@@ -204,6 +204,69 @@ async function testNormalizeFixtures() {
   console.log("  normalize fixtures: OK");
 }
 
+async function testBookingOptionsNormalizer() {
+  const { normalizeSerpApiBookingOptions } = await import(
+    "../lib/routing/flights/providers/serpapiFlightProvider"
+  );
+
+  const options = normalizeSerpApiBookingOptions(
+    {
+      booking_options: [
+        {
+          together: {
+            book_with: "KLM",
+            airline: true,
+            airline_logos: ["https://example.com/kl.png"],
+            marketed_as: ["KL 1406"],
+            price: 242,
+            local_prices: [{ currency: "EUR", price: 242 }],
+            option_title: "Economy",
+            extensions: ["Cabin bag included"],
+            baggage_prices: ["1 free carry-on"],
+            booking_request: {
+              url: "https://www.google.com/travel/clk/f",
+              post_data: "u=TESTPAYLOAD",
+            },
+          },
+        },
+        {
+          together: {
+            book_with: "Gotogate",
+            price: 230,
+            local_prices: [{ currency: "EUR", price: 230 }],
+            booking_request: {
+              url: "https://www.google.com/travel/clk/f",
+              post_data: "u=OTHER",
+            },
+          },
+        },
+        {
+          departing: {
+            book_with: "Phone Seller",
+            booking_phone: "1 (800) 555-0100",
+            price: 300,
+          },
+        },
+      ],
+    },
+    "EUR",
+  );
+
+  assert.equal(options.length, 3);
+  assert.equal(options[0]!.seller, "KLM");
+  assert.equal(options[0]!.sellerType, "airline");
+  assert.equal(options[0]!.airline, true);
+  assert.equal(options[0]!.price, 242);
+  assert.equal(options[0]!.currency, "EUR");
+  assert.equal(options[0]!.bookingAction?.type, "post");
+  assert.equal(options[0]!.baggagePrices[0], "1 free carry-on");
+  assert.equal(options[1]!.sellerType, "agency");
+  assert.equal(options[1]!.bookingAction?.type, "post");
+  assert.equal(options[2]!.bookingAction?.type, "phone");
+
+  console.log("  booking options normalizer: OK");
+}
+
 async function testGreatCircleAndAntimeridian() {
   const { greatCircleLine, greatCircleGeometry, splitAtAntimeridian } = await import(
     "../lib/routing/flights/greatCircle"
@@ -515,6 +578,7 @@ async function testAirportResolver() {
 async function main() {
   console.log("test:flights");
   await testNormalizeFixtures();
+  await testBookingOptionsNormalizer();
   await testGreatCircleAndAntimeridian();
   await testAirportBuffers();
   await testFlightScore();
