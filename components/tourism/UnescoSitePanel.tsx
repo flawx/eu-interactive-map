@@ -153,24 +153,24 @@ export default function UnescoSitePanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3 backdrop-blur-md">
         <div className="flex items-start gap-3">
           <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/30 text-[#facc15] shadow-sm"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[var(--map-ui-border)] text-[#facc15] shadow-sm"
             style={{ backgroundColor: color }}
           >
             <CategoryIcon category={category} className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-snug">{displayName}</p>
-            <p className="text-[11px] text-slate-300">
+            <p className="text-[11px] text-[var(--map-ui-muted)]">
               {countryLabels.map((c) => c.label).join(" · ")}
             </p>
           </div>
@@ -179,17 +179,17 @@ export default function UnescoSitePanel({
             onClick={onClose}
             aria-label={t.countryPanel.close}
             title={t.countryPanel.close}
-            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-[var(--map-ui-muted)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] hover:text-[var(--map-ui-text)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
             <X aria-hidden="true" size={22} strokeWidth={2} />
           </button>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-[#facc15]">
+          <span className="inline-flex rounded-full border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-2 py-0.5 text-[10px] font-medium text-[#facc15]">
             {tp.badge}
           </span>
           <span
-            className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium text-white"
+            className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium text-[var(--map-ui-text)]"
             style={{
               borderColor: `${color}66`,
               backgroundColor: `${color}33`,
@@ -231,7 +231,7 @@ export default function UnescoSitePanel({
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         <section className="mb-4">
           {currentPhoto ? (
-            <div className="overflow-hidden rounded-lg border border-white/10">
+            <div className="overflow-hidden rounded-lg border border-[var(--map-ui-border)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={currentPhoto.thumbnailUrl ?? currentPhoto.url}
@@ -248,11 +248,11 @@ export default function UnescoSitePanel({
                     )
                   }
                   aria-label={tp.previousPhoto}
-                  className="rounded p-1 text-slate-200 disabled:opacity-40"
+                  className="rounded p-1 text-[var(--map-ui-text)] disabled:opacity-40"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-slate-300">
+                <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-[var(--map-ui-muted)]">
                   {tp.photoCredit}
                   {": "}
                   {[currentPhoto.author, currentPhoto.license]
@@ -266,34 +266,34 @@ export default function UnescoSitePanel({
                     setPhotoIndex((index) => (index + 1) % photos.length)
                   }
                   aria-label={tp.nextPhoto}
-                  className="rounded p-1 text-slate-200 disabled:opacity-40"
+                  className="rounded p-1 text-[var(--map-ui-text)] disabled:opacity-40"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
           ) : loading ? (
-            <div className="h-40 animate-pulse rounded-lg bg-white/10" />
+            <div className="h-40 animate-pulse rounded-lg bg-[var(--map-ui-surface-muted)]" />
           ) : (
-            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/5 text-slate-400">
+            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]">
               <CategoryIcon category={category} className="h-8 w-8" />
             </div>
           )}
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.presentation}
           </h2>
           {loading && !details?.description && !site.shortDescription ? (
             <div className="space-y-2">
-              <div className="h-3 animate-pulse rounded bg-white/10" />
-              <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
+              <div className="h-3 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+              <div className="h-3 w-5/6 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
             </div>
           ) : error && !details?.description && !site.shortDescription ? (
             <p className="text-sm text-amber-200/90">{tp.detailsUnavailable}</p>
           ) : (
-            <p className="text-sm leading-relaxed text-slate-200">
+            <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
               {details?.description ??
                 site.shortDescription ??
                 tp.detailsUnavailable}
@@ -302,56 +302,56 @@ export default function UnescoSitePanel({
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.unescoInfo}
           </h2>
           <dl className="grid grid-cols-1 gap-2 text-[12px]">
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.category}</dt>
-              <dd className="font-medium text-slate-100">{categoryLabel}</dd>
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.category}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">{categoryLabel}</dd>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.inscriptionYear}</dt>
-              <dd className="font-medium text-slate-100">
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.inscriptionYear}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">
                 {site.inscriptionYear}
               </dd>
             </div>
             {site.extensionYears.length > 0 ? (
-              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <dt className="text-slate-400">{tp.extensionYears}</dt>
-                <dd className="font-medium text-slate-100">
+              <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+                <dt className="text-[var(--map-ui-muted)]">{tp.extensionYears}</dt>
+                <dd className="font-medium text-[var(--map-ui-text)]">
                   {site.extensionYears.join(", ")}
                 </dd>
               </div>
             ) : null}
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.criteria}</dt>
-              <dd className="font-medium text-slate-100">
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.criteria}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">
                 {site.criteria.join(" ") || "—"}
               </dd>
-              <p className="mt-1 text-[10px] leading-snug text-slate-400">
+              <p className="mt-1 text-[10px] leading-snug text-[var(--map-ui-muted)]">
                 {tp.criteriaHint}
               </p>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.area}</dt>
-              <dd className="font-medium text-slate-100">
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.area}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">
                 {site.areaHectares != null
                   ? `${formatNumber(site.areaHectares)} ${tp.hectares}`
                   : "—"}
               </dd>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.bufferZone}</dt>
-              <dd className="font-medium text-slate-100">
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.bufferZone}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">
                 {site.bufferZoneHectares != null
                   ? `${formatNumber(site.bufferZoneHectares)} ${tp.hectares}`
                   : "—"}
               </dd>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.dangerStatus}</dt>
-              <dd className="font-medium text-slate-100">
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.dangerStatus}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">
                 {site.dangerStatus === "in-danger"
                   ? `${tp.inDanger}${
                       site.dangerYears.length
@@ -361,21 +361,21 @@ export default function UnescoSitePanel({
                   : tp.notInDanger}
               </dd>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.unescoId}</dt>
-              <dd className="font-medium text-slate-100">{site.unescoId}</dd>
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.unescoId}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">{site.unescoId}</dd>
             </div>
           </dl>
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.location}
           </h2>
           {site.location ? (
-            <p className="mb-1 text-sm text-slate-200">{site.location}</p>
+            <p className="mb-1 text-sm text-[var(--map-ui-text)]">{site.location}</p>
           ) : null}
-          <p className="inline-flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
+          <p className="inline-flex items-start gap-1.5 text-[11px] leading-relaxed text-[var(--map-ui-muted)]">
             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             {tp.representativePoint}
           </p>
@@ -387,7 +387,7 @@ export default function UnescoSitePanel({
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.countries}
           </h2>
           {site.transboundary ? (
@@ -399,7 +399,7 @@ export default function UnescoSitePanel({
             {countryLabels.map((country) => (
               <li
                 key={country.code}
-                className="flex items-center gap-2 text-sm text-slate-200"
+                className="flex items-center gap-2 text-sm text-[var(--map-ui-text)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -416,7 +416,7 @@ export default function UnescoSitePanel({
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.officialLinks}
           </h2>
           <ul className="space-y-1.5 text-sm">
@@ -448,10 +448,10 @@ export default function UnescoSitePanel({
         </section>
 
         <section className="mb-2">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.sources}
           </h2>
-          <ul className="space-y-1 text-[11px] text-slate-400">
+          <ul className="space-y-1 text-[11px] text-[var(--map-ui-muted)]">
             {(details?.sources ?? [{ label: tp.sourceUnesco, url: site.officialUrl }]).map(
               (source) => (
                 <li key={source.url}>
@@ -466,7 +466,7 @@ export default function UnescoSitePanel({
                 </li>
               ),
             )}
-            <li className="pt-1 text-slate-500">
+            <li className="pt-1 text-[var(--map-ui-muted)]">
               {t.legend.unescoAttribution}
               {site.importedAt
                 ? ` · ${new Date(site.importedAt).toLocaleDateString(locale)}`

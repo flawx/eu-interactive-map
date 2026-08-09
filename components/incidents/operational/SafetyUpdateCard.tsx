@@ -35,7 +35,7 @@ export function SafetyUpdateCard({
       className={`space-y-1.5 rounded-lg border px-2.5 py-2 ${
         emphasize
           ? "border-red-400/40 bg-red-500/10"
-          : "border-white/10 bg-white/[0.06]"
+          : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)]"
       }`}
     >
       {communityNotice && (
@@ -43,14 +43,14 @@ export function SafetyUpdateCard({
           {t.incidents.opsCommunityUnverified}
         </p>
       )}
-      <p className="text-xs font-semibold text-slate-100">
+      <p className="text-xs font-semibold text-[var(--map-ui-text)]">
         {update.title || t.incidents.dataUnavailable}
       </p>
       {update.body && (
-        <p className="text-[11px] leading-snug text-slate-300">{update.body}</p>
+        <p className="text-[11px] leading-snug text-[var(--map-ui-muted)]">{update.body}</p>
       )}
       {"locationName" in update && update.locationName && (
-        <p className="text-[11px] text-slate-300">{update.locationName}</p>
+        <p className="text-[11px] text-[var(--map-ui-muted)]">{update.locationName}</p>
       )}
       <div className="flex flex-wrap items-center gap-1.5">
         {verification && update.verificationStatus && (
@@ -60,7 +60,7 @@ export function SafetyUpdateCard({
           />
         )}
       </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--map-ui-muted)]">
         <span>
           {t.incidents.source}: {update.sourceName}
         </span>
@@ -90,7 +90,7 @@ export function SafetyUpdateCard({
           <button
             type="button"
             onClick={() => onFocusGeometry(update.geometry!)}
-            className="rounded border border-white/15 px-2 py-0.5 text-[10px] text-sky-300 outline-none hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="rounded border border-[var(--map-ui-border)] px-2 py-0.5 text-[10px] text-sky-300 outline-none hover:bg-[var(--map-ui-surface-muted)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
             {t.incidents.opsFocusOnMap}
           </button>
@@ -100,7 +100,7 @@ export function SafetyUpdateCard({
             href={update.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded border border-white/15 px-2 py-0.5 text-[10px] text-sky-300 outline-none hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="rounded border border-[var(--map-ui-border)] px-2 py-0.5 text-[10px] text-sky-300 outline-none hover:bg-[var(--map-ui-surface-muted)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
             {t.incidents.opsOpenSource}
           </a>

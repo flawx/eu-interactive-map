@@ -33,7 +33,7 @@ export function OperationalBadge({
                 ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-200"
                 : tone === "violet"
                   ? "border-violet-400/35 bg-violet-500/15 text-violet-200"
-                  : "border-white/10 bg-white/5 text-slate-300";
+                  : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]";
 
   return (
     <span
@@ -82,7 +82,7 @@ export function OperationalCard({
       className={`rounded-lg border px-3 py-2.5 ${
         emphasize
           ? "border-red-400/40 bg-red-500/10"
-          : "border-white/10 bg-white/[0.06]"
+          : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)]"
       }`}
     >
       {(title || icon) && (
@@ -91,7 +91,7 @@ export function OperationalCard({
             <OperationalIconBox icon={icon} className={iconClassName} />
           )}
           {title && (
-            <h3 className="text-[11px] font-semibold text-slate-100">{title}</h3>
+            <h3 className="text-[11px] font-semibold text-[var(--map-ui-text)]">{title}</h3>
           )}
         </div>
       )}
@@ -119,9 +119,9 @@ export function OperationalSection({
         {icon && iconClassName && (
           <OperationalIconBox icon={icon} className={iconClassName} />
         )}
-        <h3 className="text-[11px] font-semibold text-slate-100">{title}</h3>
+        <h3 className="text-[11px] font-semibold text-[var(--map-ui-text)]">{title}</h3>
         {typeof count === "number" && (
-          <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-slate-300">
+          <span className="rounded-full border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-1.5 py-0.5 text-[9px] text-[var(--map-ui-muted)]">
             {count}
           </span>
         )}
@@ -133,8 +133,8 @@ export function OperationalSection({
 
 export function OperationalEmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-3">
-      <p className="text-[11px] leading-snug text-slate-300">{message}</p>
+    <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-3">
+      <p className="text-[11px] leading-snug text-[var(--map-ui-muted)]">{message}</p>
     </div>
   );
 }

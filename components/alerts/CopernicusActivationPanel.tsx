@@ -167,8 +167,8 @@ export default function CopernicusActivationPanel({
     typeof details.metadata.viewerUrl === "string" ? details.metadata.viewerUrl : null;
 
   return (
-    <aside className="absolute inset-y-0 left-0 z-40 flex w-full max-w-[430px] flex-col border-r border-white/10 bg-slate-950/96 pt-[var(--app-header-height,56px)] text-xs text-slate-200 shadow-2xl backdrop-blur-md">
-      <header className="flex shrink-0 items-start gap-3 border-b border-white/10 p-4">
+    <aside className="map-ui-panel absolute inset-y-0 left-0 z-40 flex w-full max-w-[430px] flex-col border-r pt-[var(--app-header-height,56px)] text-xs backdrop-blur-md">
+      <header className="flex shrink-0 items-start gap-3 border-b border-[var(--map-ui-border)] p-4">
         <span className="mt-0.5 rounded-lg border border-white/15 bg-amber-500/15 p-2 text-amber-200">
           {details.category === "landslide" ? (
             <Mountain className="h-5 w-5" />
@@ -177,11 +177,11 @@ export default function CopernicusActivationPanel({
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-wide text-slate-400">
+          <p className="text-[10px] uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.activation}
           </p>
-          <h2 className="mt-1 text-base font-semibold text-white">{details.title}</h2>
-          <p className="mt-1 text-slate-400">
+          <h2 className="mt-1 text-base font-semibold text-[var(--map-ui-text)]">{details.title}</h2>
+          <p className="mt-1 text-[var(--map-ui-muted)]">
             {String(details.metadata.cemsActivationCode ?? details.sourceEventId)} ·{" "}
             {closed ? t.closed : t.open} · {details.countryCodes.join(", ")}
           </p>
@@ -190,7 +190,7 @@ export default function CopernicusActivationPanel({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 hover:bg-white/5"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--map-ui-border)] hover:bg-[var(--map-ui-surface-hover)]"
         >
           <X className="h-4 w-4" />
         </button>
@@ -203,59 +203,59 @@ export default function CopernicusActivationPanel({
           </p>
         )}
         <section>
-          <h3 className="font-semibold uppercase tracking-wide text-slate-400">{t.reason}</h3>
+          <h3 className="font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{t.reason}</h3>
           <p className="mt-1.5 leading-relaxed">{details.description ?? t.unavailable}</p>
         </section>
         <section>
-          <h3 className="font-semibold uppercase tracking-wide text-slate-400">{t.timeline}</h3>
+          <h3 className="font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{t.timeline}</h3>
           <dl className="mt-1.5 space-y-1">
-            <div><dt className="inline text-slate-400">{t.event}: </dt><dd className="inline">{date(details.metadata.eventTime ?? details.onsetAt, locale) ?? t.unavailable}</dd></div>
-            <div><dt className="inline text-slate-400">{t.activated}: </dt><dd className="inline">{date(details.metadata.activationTime ?? details.effectiveAt, locale) ?? t.unavailable}</dd></div>
-            <div><dt className="inline text-slate-400">{t.updated}: </dt><dd className="inline">{date(details.updatedAt, locale) ?? t.unavailable} UTC</dd></div>
+            <div><dt className="inline text-[var(--map-ui-muted)]">{t.event}: </dt><dd className="inline">{date(details.metadata.eventTime ?? details.onsetAt, locale) ?? t.unavailable}</dd></div>
+            <div><dt className="inline text-[var(--map-ui-muted)]">{t.activated}: </dt><dd className="inline">{date(details.metadata.activationTime ?? details.effectiveAt, locale) ?? t.unavailable}</dd></div>
+            <div><dt className="inline text-[var(--map-ui-muted)]">{t.updated}: </dt><dd className="inline">{date(details.updatedAt, locale) ?? t.unavailable} UTC</dd></div>
           </dl>
         </section>
         <section>
-          <h3 className="font-semibold uppercase tracking-wide text-slate-400">{t.aoi}</h3>
+          <h3 className="font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{t.aoi}</h3>
           <p className="mt-1.5">{aois.length || Number(details.metadata.aoiCount ?? 0)}</p>
-          <ul className="mt-1 list-inside list-disc text-slate-300">
+          <ul className="mt-1 list-inside list-disc text-[var(--map-ui-muted)]">
             {aois.map((aoi) => <li key={aoi.id}>{aoi.name}</li>)}
           </ul>
           <p className="mt-2 text-[10px] text-amber-100">{t.aoiWarning}</p>
         </section>
         {(hasDelineation || hasGrading) && (
           <section>
-            <h3 className="font-semibold uppercase tracking-wide text-slate-400">{t.results}</h3>
+            <h3 className="font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{t.results}</h3>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <button type="button" onClick={() => setSelectedProductKind("aoi")} className={`rounded-md border px-2 py-1 ${selectedProductKind === "aoi" ? "border-amber-300 bg-amber-300/15" : "border-white/10"}`}>{t.aoi}</button>
-              {hasDelineation && <button type="button" onClick={() => setSelectedProductKind("delineation")} className={`rounded-md border px-2 py-1 ${selectedProductKind === "delineation" ? "border-cyan-300 bg-cyan-300/15" : "border-white/10"}`}>{t.area}</button>}
-              {hasGrading && <button type="button" onClick={() => setSelectedProductKind("grading")} className={`rounded-md border px-2 py-1 ${selectedProductKind === "grading" ? "border-cyan-300 bg-cyan-300/15" : "border-white/10"}`}>Damage assessment</button>}
+              <button type="button" onClick={() => setSelectedProductKind("aoi")} className={`rounded-md border px-2 py-1 ${selectedProductKind === "aoi" ? "border-amber-300 bg-amber-300/15" : "border-[var(--map-ui-border)]"}`}>{t.aoi}</button>
+              {hasDelineation && <button type="button" onClick={() => setSelectedProductKind("delineation")} className={`rounded-md border px-2 py-1 ${selectedProductKind === "delineation" ? "border-cyan-300 bg-cyan-300/15" : "border-[var(--map-ui-border)]"}`}>{t.area}</button>}
+              {hasGrading && <button type="button" onClick={() => setSelectedProductKind("grading")} className={`rounded-md border px-2 py-1 ${selectedProductKind === "grading" ? "border-cyan-300 bg-cyan-300/15" : "border-[var(--map-ui-border)]"}`}>Damage assessment</button>}
             </div>
           </section>
         )}
         <section>
-          <h3 className="font-semibold uppercase tracking-wide text-slate-400">{t.stats}</h3>
+          <h3 className="font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{t.stats}</h3>
           <dl className="mt-1.5 space-y-1">
-            <div><dt className="inline text-slate-400">{t.area}: </dt><dd className="inline">{area == null ? t.unavailable : `${area.toLocaleString(locale)} km²`}</dd></div>
-            {buildings != null && <div><dt className="inline text-slate-400">{t.buildings}: </dt><dd className="inline">{buildings.toLocaleString(locale)}</dd></div>}
-            {population != null && <div><dt className="inline text-slate-400">{t.population}: </dt><dd className="inline">{population.toLocaleString(locale)}</dd></div>}
+            <div><dt className="inline text-[var(--map-ui-muted)]">{t.area}: </dt><dd className="inline">{area == null ? t.unavailable : `${area.toLocaleString(locale)} km²`}</dd></div>
+            {buildings != null && <div><dt className="inline text-[var(--map-ui-muted)]">{t.buildings}: </dt><dd className="inline">{buildings.toLocaleString(locale)}</dd></div>}
+            {population != null && <div><dt className="inline text-[var(--map-ui-muted)]">{t.population}: </dt><dd className="inline">{population.toLocaleString(locale)}</dd></div>}
           </dl>
         </section>
         <section>
-          <h3 className="font-semibold uppercase tracking-wide text-slate-400">{t.products}</h3>
+          <h3 className="font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{t.products}</h3>
           <div className="mt-1.5 space-y-2">
             {products.length === 0 && <p>{t.unavailable}</p>}
             {products.map((product) => (
-              <article key={product.id} className="rounded-lg border border-white/10 p-2.5">
+              <article key={product.id} className="rounded-lg border border-[var(--map-ui-border)] p-2.5">
                 <p className="font-medium">{product.kind} · v{product.latestVersion ?? "?"}</p>
-                <p className="text-[10px] text-slate-400">{date(product.deliveredAt, locale) ?? t.unavailable}</p>
+                <p className="text-[10px] text-[var(--map-ui-muted)]">{date(product.deliveredAt, locale) ?? t.unavailable}</p>
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {product.layers.map((layer) => (
-                    <a key={layer.url} href={layer.url} target="_blank" rel="noreferrer" className="rounded border border-white/10 px-2 py-1 text-sky-300">
+                    <a key={layer.url} href={layer.url} target="_blank" rel="noreferrer" className="rounded border border-[var(--map-ui-border)] px-2 py-1 text-sky-300">
                       {layer.format} <ExternalLink className="inline h-3 w-3" />
                     </a>
                   ))}
                   {product.downloadUrl && (
-                    <a href={product.downloadUrl} target="_blank" rel="noreferrer" className="rounded border border-white/10 px-2 py-1 text-sky-300">
+                    <a href={product.downloadUrl} target="_blank" rel="noreferrer" className="rounded border border-[var(--map-ui-border)] px-2 py-1 text-sky-300">
                       {t.download} <ExternalLink className="inline h-3 w-3" />
                     </a>
                   )}
@@ -266,7 +266,7 @@ export default function CopernicusActivationPanel({
         </section>
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-amber-100">{t.limitation}</p>
         <section>
-          <h3 className="font-semibold uppercase tracking-wide text-slate-400">{t.sources}</h3>
+          <h3 className="font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{t.sources}</h3>
           <p className="mt-1.5">European Union, Copernicus Emergency Management Service</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {reportUrl && <a href={reportUrl} target="_blank" rel="noreferrer" className="text-sky-300">{t.report} <ExternalLink className="inline h-3 w-3" /></a>}

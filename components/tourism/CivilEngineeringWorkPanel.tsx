@@ -109,14 +109,14 @@ export default function CivilEngineeringWorkPanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/90 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-10 shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3">
         <div className="flex items-start gap-3">
           <div
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border"
@@ -130,7 +130,7 @@ export default function CivilEngineeringWorkPanel({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">{item.name}</p>
-            <p className="text-[11px] text-slate-300">
+            <p className="text-[11px] text-[var(--map-ui-muted)]">
               {item.regionOrCity} · {countries.join(", ")}
             </p>
             <span
@@ -144,7 +144,7 @@ export default function CivilEngineeringWorkPanel({
             type="button"
             onClick={onClose}
             aria-label={t.countryPanel.close}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md hover:bg-white/10"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md hover:bg-[var(--map-ui-surface-hover)]"
           >
             <X size={22} />
           </button>
@@ -165,14 +165,14 @@ export default function CivilEngineeringWorkPanel({
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-3">
         {photo ? (
-          <section className="overflow-hidden rounded-lg border border-white/10">
+          <section className="overflow-hidden rounded-lg border border-[var(--map-ui-border)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photo.thumbnailUrl ?? photo.url}
               alt={photo.title ?? item.name}
               className="h-40 w-full object-cover"
             />
-            <div className="flex items-center gap-2 bg-black/40 px-2 py-1.5 text-[10px] text-slate-300">
+            <div className="flex items-center gap-2 bg-black/40 px-2 py-1.5 text-[10px] text-[var(--map-ui-muted)]">
               {photos.length > 1 ? (
                 <button
                   type="button"
@@ -203,44 +203,44 @@ export default function CivilEngineeringWorkPanel({
           </section>
         ) : loading ? (
           <div
-            className="h-40 animate-pulse rounded-xl bg-white/10"
+            className="h-40 animate-pulse rounded-xl bg-[var(--map-ui-surface-muted)]"
             aria-label={cp.loadingDetails}
           />
         ) : null}
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {cp.overview}
           </h2>
-          <p className="text-sm leading-relaxed text-slate-200">
+          <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
             {details?.description ?? item.summary}
           </p>
           {!loading && (failed || !details?.verified) ? (
-            <p className="mt-2 text-xs text-slate-400">{cp.detailsUnavailable}</p>
+            <p className="mt-2 text-xs text-[var(--map-ui-muted)]">{cp.detailsUnavailable}</p>
           ) : null}
         </section>
 
         <section>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {cp.engineeringFacts}
           </h2>
           <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-            <div><dt className="text-slate-400">{cp.type}</dt><dd>{cp.categories[item.category]}</dd></div>
-            <div><dt className="text-slate-400">{cp.status}</dt><dd>{cp.statuses[item.status]}</dd></div>
-            {item.openingYear != null ? <div><dt className="text-slate-400">{cp.openingYear}</dt><dd>{item.openingYear}</dd></div> : null}
-            <div><dt className="text-slate-400">{cp.carries}</dt><dd>{cp.carriesValues[item.carries]}</dd></div>
-            {item.lengthMeters != null ? <div><dt className="text-slate-400">{cp.length}</dt><dd>{number(item.lengthMeters)} m</dd></div> : null}
-            {item.heightMeters != null ? <div><dt className="text-slate-400">{cp.height}</dt><dd>{number(item.heightMeters)} m</dd></div> : null}
-            {item.mainSpanMeters != null ? <div><dt className="text-slate-400">{cp.mainSpan}</dt><dd>{number(item.mainSpanMeters)} m</dd></div> : null}
-            {item.depthMeters != null ? <div><dt className="text-slate-400">{cp.depth}</dt><dd>{number(item.depthMeters)} m</dd></div> : null}
+            <div><dt className="text-[var(--map-ui-muted)]">{cp.type}</dt><dd>{cp.categories[item.category]}</dd></div>
+            <div><dt className="text-[var(--map-ui-muted)]">{cp.status}</dt><dd>{cp.statuses[item.status]}</dd></div>
+            {item.openingYear != null ? <div><dt className="text-[var(--map-ui-muted)]">{cp.openingYear}</dt><dd>{item.openingYear}</dd></div> : null}
+            <div><dt className="text-[var(--map-ui-muted)]">{cp.carries}</dt><dd>{cp.carriesValues[item.carries]}</dd></div>
+            {item.lengthMeters != null ? <div><dt className="text-[var(--map-ui-muted)]">{cp.length}</dt><dd>{number(item.lengthMeters)} m</dd></div> : null}
+            {item.heightMeters != null ? <div><dt className="text-[var(--map-ui-muted)]">{cp.height}</dt><dd>{number(item.heightMeters)} m</dd></div> : null}
+            {item.mainSpanMeters != null ? <div><dt className="text-[var(--map-ui-muted)]">{cp.mainSpan}</dt><dd>{number(item.mainSpanMeters)} m</dd></div> : null}
+            {item.depthMeters != null ? <div><dt className="text-[var(--map-ui-muted)]">{cp.depth}</dt><dd>{number(item.depthMeters)} m</dd></div> : null}
           </dl>
         </section>
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {cp.location}
           </h2>
-          <p className="text-sm text-slate-200">
+          <p className="text-sm text-[var(--map-ui-text)]">
             {item.regionOrCity} · {countries.join(", ")}
           </p>
           {onOpenCountry ? (
@@ -255,7 +255,7 @@ export default function CivilEngineeringWorkPanel({
         </section>
 
         <section>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {cp.links}
           </h2>
           <ul className="space-y-2 text-sm">
@@ -270,10 +270,10 @@ export default function CivilEngineeringWorkPanel({
 
         {details?.sources.length ? (
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
               {cp.sourcesCredits}
             </h2>
-            <ul className="space-y-1 text-[11px] text-slate-400">
+            <ul className="space-y-1 text-[11px] text-[var(--map-ui-muted)]">
               {details.sources.map((source) => (
                 <li key={source.url}>
                   <a href={source.url} target="_blank" rel="noopener noreferrer">

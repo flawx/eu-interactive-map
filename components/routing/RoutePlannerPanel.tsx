@@ -1031,13 +1031,13 @@ export default function RoutePlannerPanel({
     <>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-slate-50">{t.title}</h2>
-          <p className="text-xs text-slate-400">{t.routes}</p>
+          <h2 className="text-base font-semibold text-[var(--map-ui-text)]">{t.title}</h2>
+          <p className="text-xs text-[var(--map-ui-muted)]">{t.routes}</p>
         </div>
         <div className="flex items-center gap-1">
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-200 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-text)] md:hidden"
             aria-label={mobileExpanded ? t.collapseSheet : t.expandSheet}
             onClick={() => setMobileExpanded((value) => !value)}
           >
@@ -1049,7 +1049,7 @@ export default function RoutePlannerPanel({
           </button>
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-200 hover:bg-white/10"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
             aria-label={t.close}
             onClick={handleClose}
           >
@@ -1078,7 +1078,7 @@ export default function RoutePlannerPanel({
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
-              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-[var(--map-ui-surface-muted)] px-2.5 text-xs text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               onClick={() => void useMyLocation("origin")}
             >
               <Navigation className="h-3.5 w-3.5" aria-hidden />
@@ -1086,7 +1086,7 @@ export default function RoutePlannerPanel({
             </button>
             <button
               type="button"
-              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-[var(--map-ui-surface-muted)] px-2.5 text-xs text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               onClick={() => onPickTargetChange("origin")}
             >
               <MapPin className="h-3.5 w-3.5" aria-hidden />
@@ -1097,7 +1097,7 @@ export default function RoutePlannerPanel({
           <div className="flex justify-center">
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-200 hover:bg-white/10"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               aria-label={t.swap}
               onClick={() =>
                 onPointsChange({
@@ -1127,7 +1127,7 @@ export default function RoutePlannerPanel({
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
-              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-[var(--map-ui-surface-muted)] px-2.5 text-xs text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               onClick={() => void useMyLocation("destination")}
             >
               <Navigation className="h-3.5 w-3.5" aria-hidden />
@@ -1135,7 +1135,7 @@ export default function RoutePlannerPanel({
             </button>
             <button
               type="button"
-              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-white/5 px-2.5 text-xs text-slate-200 hover:bg-white/10"
+              className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-[var(--map-ui-surface-muted)] px-2.5 text-xs text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               onClick={() => onPickTargetChange("destination")}
             >
               <MapPin className="h-3.5 w-3.5" aria-hidden />
@@ -1147,15 +1147,15 @@ export default function RoutePlannerPanel({
             ? waypointDrafts.map((draft, index) => (
                 <div
                   key={draft.id}
-                  className="rounded-xl border border-white/10 bg-slate-950/40 p-2.5"
+                  className="rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] p-2.5"
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[var(--map-ui-muted)]">
                       {t.stop} {index + 1}
                     </span>
                     <button
                       type="button"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[var(--map-ui-muted)] hover:bg-[var(--map-ui-surface-hover)]"
                       aria-label={t.removeStop}
                       onClick={() => {
                         setWaypointDrafts((prev) => {
@@ -1198,7 +1198,7 @@ export default function RoutePlannerPanel({
           waypointDrafts.length < MAX_ROUTE_WAYPOINTS_UI ? (
             <button
               type="button"
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-sm text-slate-200 hover:bg-white/5"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--map-ui-border)] text-sm text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-muted)]"
               onClick={() => {
                 setWaypointDrafts((prev) => [
                   ...prev,
@@ -1231,7 +1231,7 @@ export default function RoutePlannerPanel({
               className={`inline-flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-[10px] font-medium sm:flex-row sm:gap-1.5 sm:text-xs ${
                 mode === value
                   ? "bg-[#1a73e8] text-white"
-                  : "bg-white/5 text-slate-200 hover:bg-white/10"
+                  : "bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               }`}
               onClick={() => setMode(value)}
             >
@@ -1257,8 +1257,8 @@ export default function RoutePlannerPanel({
                   aria-pressed={timing.kind === value}
                   className={`min-h-10 rounded-lg px-2.5 text-xs ${
                     timing.kind === value
-                      ? "bg-white/15 text-white"
-                      : "bg-white/5 text-slate-300"
+                      ? "bg-[var(--map-ui-surface-hover)] text-white"
+                      : "bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]"
                   }`}
                   onClick={() =>
                     setTiming(
@@ -1275,7 +1275,7 @@ export default function RoutePlannerPanel({
             {timing.kind === "depart_at" ? (
               <input
                 type="datetime-local"
-                className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+                className="min-h-11 w-full rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 text-sm text-[var(--map-ui-text)]"
                 value={departAtLocal}
                 onChange={(event) => setDepartAtLocal(event.target.value)}
               />
@@ -1283,7 +1283,7 @@ export default function RoutePlannerPanel({
             {timing.kind === "arrive_at" ? (
               <input
                 type="datetime-local"
-                className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+                className="min-h-11 w-full rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 text-sm text-[var(--map-ui-text)]"
                 value={arriveAtLocal}
                 onChange={(event) => setArriveAtLocal(event.target.value)}
               />
@@ -1294,12 +1294,12 @@ export default function RoutePlannerPanel({
             <input
               type="date"
               min={tomorrowDateInputValue()}
-              className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+              className="min-h-11 w-full rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 text-sm text-[var(--map-ui-text)]"
               value={departureDate}
               aria-label={t.departureDate}
               onChange={(event) => setDepartureDate(event.target.value)}
             />
-            <label className="flex min-h-10 items-center gap-2 text-sm text-slate-200">
+            <label className="flex min-h-10 items-center gap-2 text-sm text-[var(--map-ui-text)]">
               <input
                 type="checkbox"
                 checked={nonStop}
@@ -1321,8 +1321,8 @@ export default function RoutePlannerPanel({
                   aria-pressed={flightSort === value}
                   className={`min-h-10 rounded-lg px-2.5 text-xs ${
                     flightSort === value
-                      ? "bg-white/15 text-white"
-                      : "bg-white/5 text-slate-300"
+                      ? "bg-[var(--map-ui-surface-hover)] text-white"
+                      : "bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]"
                   }`}
                   onClick={() => setFlightSort(value)}
                 >
@@ -1345,8 +1345,8 @@ export default function RoutePlannerPanel({
                 type="button"
                 className={`min-h-10 rounded-lg px-2.5 text-xs ${
                   preference === value
-                    ? "bg-white/15 text-white"
-                    : "bg-white/5 text-slate-300"
+                    ? "bg-[var(--map-ui-surface-hover)] text-white"
+                    : "bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]"
                 }`}
                 onClick={() => setPreference(value)}
               >
@@ -1359,7 +1359,7 @@ export default function RoutePlannerPanel({
         <div className="mt-3 flex gap-2">
           <button
             type="button"
-            className="min-h-10 flex-1 rounded-lg bg-white/5 text-xs text-slate-200"
+            className="min-h-10 flex-1 rounded-lg bg-[var(--map-ui-surface-muted)] text-xs text-[var(--map-ui-text)]"
             onClick={() => setShowOptions((value) => !value)}
           >
             {t.options}
@@ -1367,7 +1367,7 @@ export default function RoutePlannerPanel({
           {mode === "car" ? (
             <button
               type="button"
-              className="min-h-10 flex-1 rounded-lg bg-white/5 text-xs text-slate-200"
+              className="min-h-10 flex-1 rounded-lg bg-[var(--map-ui-surface-muted)] text-xs text-[var(--map-ui-text)]"
               onClick={() => setShowVehicle((value) => !value)}
             >
               {t.vehicleSettings}
@@ -1376,10 +1376,10 @@ export default function RoutePlannerPanel({
         </div>
 
         {showOptions && mode === "transit" ? (
-          <fieldset className="mt-2 space-y-3 rounded-xl border border-white/10 p-3">
-            <legend className="px-1 text-xs text-slate-400">{t.options}</legend>
+          <fieldset className="mt-2 space-y-3 rounded-xl border border-[var(--map-ui-border)] p-3">
+            <legend className="px-1 text-xs text-[var(--map-ui-muted)]">{t.options}</legend>
             <div>
-              <p className="mb-1.5 text-xs text-slate-400">{t.preference}</p>
+              <p className="mb-1.5 text-xs text-[var(--map-ui-muted)]">{t.preference}</p>
               <div className="flex flex-wrap gap-1.5">
                 {(
                   [
@@ -1392,8 +1392,8 @@ export default function RoutePlannerPanel({
                     type="button"
                     className={`min-h-10 rounded-lg px-2.5 text-xs ${
                       transitRoutingPreference === value
-                        ? "bg-white/15 text-white"
-                        : "bg-white/5 text-slate-300"
+                        ? "bg-[var(--map-ui-surface-hover)] text-white"
+                        : "bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]"
                     }`}
                     onClick={() =>
                       setTransitRoutingPreference((prev) =>
@@ -1407,7 +1407,7 @@ export default function RoutePlannerPanel({
               </div>
             </div>
             <div>
-              <p className="mb-1.5 text-xs text-slate-400">{t.transitModes}</p>
+              <p className="mb-1.5 text-xs text-[var(--map-ui-muted)]">{t.transitModes}</p>
               <div className="flex flex-wrap gap-1.5">
                 {TRANSIT_FILTER_CHIPS.map(({ value, labelKey }) => {
                   const active = transitModeFilter === value;
@@ -1418,8 +1418,8 @@ export default function RoutePlannerPanel({
                       aria-pressed={active}
                       className={`min-h-10 rounded-lg px-2.5 text-xs ${
                         active
-                          ? "bg-white/15 text-white"
-                          : "bg-white/5 text-slate-300"
+                          ? "bg-[var(--map-ui-surface-hover)] text-white"
+                          : "bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]"
                       }`}
                       onClick={() => setTransitModeFilter(value)}
                     >
@@ -1433,10 +1433,10 @@ export default function RoutePlannerPanel({
         ) : null}
 
         {showOptions && mode === "flight" ? (
-          <fieldset className="mt-2 space-y-3 rounded-xl border border-white/10 p-3">
-            <legend className="px-1 text-xs text-slate-400">{t.options}</legend>
+          <fieldset className="mt-2 space-y-3 rounded-xl border border-[var(--map-ui-border)] p-3">
+            <legend className="px-1 text-xs text-[var(--map-ui-muted)]">{t.options}</legend>
             <div>
-              <label className="mb-1.5 block text-xs text-slate-400">
+              <label className="mb-1.5 block text-xs text-[var(--map-ui-muted)]">
                 {t.passengers}
               </label>
               <input
@@ -1444,7 +1444,7 @@ export default function RoutePlannerPanel({
                 min={1}
                 max={9}
                 value={adults}
-                className="min-h-11 w-24 rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm text-slate-100"
+                className="min-h-11 w-24 rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 text-sm text-[var(--map-ui-text)]"
                 onChange={(event) =>
                   setAdults(
                     Math.min(9, Math.max(1, Number(event.target.value) || 1)),
@@ -1456,8 +1456,8 @@ export default function RoutePlannerPanel({
         ) : null}
 
         {showOptions && mode !== "transit" && mode !== "flight" ? (
-          <fieldset className="mt-2 space-y-1.5 rounded-xl border border-white/10 p-3">
-            <legend className="px-1 text-xs text-slate-400">{t.options}</legend>
+          <fieldset className="mt-2 space-y-1.5 rounded-xl border border-[var(--map-ui-border)] p-3">
+            <legend className="px-1 text-xs text-[var(--map-ui-muted)]">{t.options}</legend>
             {(
               [
                 ["tollRoads", t.avoidTolls],
@@ -1470,7 +1470,7 @@ export default function RoutePlannerPanel({
             ).map(([key, label]) => (
               <label
                 key={key}
-                className="flex min-h-10 items-center gap-2 text-sm text-slate-200"
+                className="flex min-h-10 items-center gap-2 text-sm text-[var(--map-ui-text)]"
               >
                 <input
                   type="checkbox"
@@ -1492,10 +1492,10 @@ export default function RoutePlannerPanel({
         ) : null}
 
         {showVehicle && mode === "car" ? (
-          <div className="mt-2 space-y-2 rounded-xl border border-white/10 p-3">
-            <label className="block text-xs text-slate-400">{t.propulsion}</label>
+          <div className="mt-2 space-y-2 rounded-xl border border-[var(--map-ui-border)] p-3">
+            <label className="block text-xs text-[var(--map-ui-muted)]">{t.propulsion}</label>
             <select
-              className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 text-sm"
+              className="min-h-11 w-full rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 text-sm"
               value={vehicle.propulsion}
               onChange={(event) => {
                 const next = {
@@ -1540,7 +1540,7 @@ export default function RoutePlannerPanel({
 
         {mode === "transit" && journeys.length > 0 ? (
           <div className="mt-4 space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
               {t.recommendedRoute}
             </h3>
             {journeys.map((journey, index) => {
@@ -1552,7 +1552,7 @@ export default function RoutePlannerPanel({
                   className={`w-full rounded-xl border p-3 text-left transition ${
                     selected
                       ? "border-[#1a73e8]/60 bg-[#1a73e8]/15"
-                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                      : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] hover:bg-[var(--map-ui-surface-hover)]"
                   }`}
                   onClick={() => {
                     setSelectedJourneyId(journey.id);
@@ -1561,20 +1561,20 @@ export default function RoutePlannerPanel({
                   }}
                 >
                   {index > 0 ? (
-                    <p className="mb-1 text-[11px] text-slate-400">
+                    <p className="mb-1 text-[11px] text-[var(--map-ui-muted)]">
                       {t.alternativeRoute} {index}
                     </p>
                   ) : null}
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-lg font-semibold text-slate-50">
+                    <span className="text-lg font-semibold text-[var(--map-ui-text)]">
                       {formatRouteDuration(journey.durationSeconds, locale)}
                     </span>
-                    <span className="text-sm text-slate-300">
+                    <span className="text-sm text-[var(--map-ui-muted)]">
                       {formatTransitClock(journey.departureAt)} →{" "}
                       {formatTransitClock(journey.arrivalAt)}
                     </span>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-300">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-[var(--map-ui-muted)]">
                     <span>
                       {journey.transfers}{" "}
                       {journey.transfers === 1 ? t.transfer : t.transfers}
@@ -1600,7 +1600,7 @@ export default function RoutePlannerPanel({
         {mode === "transit" &&
         journeys.find((journey) => journey.id === selectedJourneyId) ? (
           <div className="mt-3">
-            <h3 className="text-sm font-medium text-slate-100">
+            <h3 className="text-sm font-medium text-[var(--map-ui-text)]">
               {t.instructions}
             </h3>
             <ol className="mt-2 max-h-64 space-y-2 overflow-auto pr-1">
@@ -1615,13 +1615,13 @@ export default function RoutePlannerPanel({
                 return (
                   <li
                     key={leg.id}
-                    className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
+                    className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-2.5 py-2"
                   >
                     {leg.mode === "walk" ? (
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
+                      <div className="flex items-center gap-2 text-sm text-[var(--map-ui-text)]">
                         <TransitModeIcon
                           mode="walk"
-                          className="h-4 w-4 text-slate-400"
+                          className="h-4 w-4 text-[var(--map-ui-muted)]"
                           title={t.walking}
                         />
                         <span>
@@ -1633,14 +1633,14 @@ export default function RoutePlannerPanel({
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2">
                             <TransitLineBadge leg={leg} />
-                            <span className="truncate text-sm font-medium text-slate-100">
+                            <span className="truncate text-sm font-medium text-[var(--map-ui-text)]">
                               {modeLabel(leg.mode, t)}
                               {leg.line?.name && !leg.line.nameShort
                                 ? ` · ${leg.line.name}`
                                 : ""}
                             </span>
                           </div>
-                          <span className="shrink-0 text-xs tabular-nums text-slate-300">
+                          <span className="shrink-0 text-xs tabular-nums text-[var(--map-ui-muted)]">
                             {formatTransitClock(
                               leg.departureAt,
                               leg.timezone ?? undefined,
@@ -1653,11 +1653,11 @@ export default function RoutePlannerPanel({
                           </span>
                         </div>
                         {leg.headsign ? (
-                          <p className="mt-1 text-[11px] text-slate-400">
+                          <p className="mt-1 text-[11px] text-[var(--map-ui-muted)]">
                             {t.direction} {leg.headsign}
                           </p>
                         ) : null}
-                        <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-slate-400">
+                        <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-[var(--map-ui-muted)]">
                           {leg.from.name ? (
                             <span>
                               {t.board}: {leg.from.name}
@@ -1669,7 +1669,7 @@ export default function RoutePlannerPanel({
                             </span>
                           ) : null}
                         </div>
-                        <p className="mt-0.5 text-[11px] text-slate-500">
+                        <p className="mt-0.5 text-[11px] text-[var(--map-ui-text)]0">
                           {minutes} min
                           {leg.stopCount != null
                             ? ` · ${leg.stopCount} ${
@@ -1689,7 +1689,7 @@ export default function RoutePlannerPanel({
 
         {mode === "flight" && multimodalJourneys.length > 0 ? (
           <div className="mt-4 space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
               {t.recommendedRoute}
             </h3>
             {multimodalJourneys.map((journey, index) => {
@@ -1716,7 +1716,7 @@ export default function RoutePlannerPanel({
                   className={`w-full rounded-xl border p-3 text-left transition ${
                     selected
                       ? "border-[#1a73e8]/60 bg-[#1a73e8]/15"
-                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                      : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] hover:bg-[var(--map-ui-surface-hover)]"
                   }`}
                   onClick={() => {
                     selectFlightOffer(journey.id);
@@ -1724,20 +1724,20 @@ export default function RoutePlannerPanel({
                   aria-pressed={selected}
                 >
                   {index > 0 ? (
-                    <p className="mb-1 text-[11px] text-slate-400">
+                    <p className="mb-1 text-[11px] text-[var(--map-ui-muted)]">
                       {t.alternativeRoute} {index}
                     </p>
                   ) : null}
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-lg font-semibold text-slate-50">
+                    <span className="text-lg font-semibold text-[var(--map-ui-text)]">
                       {formatFlightDuration(journey.totalDurationSeconds, locale)}
                     </span>
-                    <span className="text-sm text-slate-300">
+                    <span className="text-sm text-[var(--map-ui-muted)]">
                       {formatFlightClock(journey.departureAt)} →{" "}
                       {formatFlightClock(journey.arrivalAt)}
                     </span>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-300">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-[var(--map-ui-muted)]">
                     <Plane className="h-3.5 w-3.5" aria-hidden />
                     {summary?.firstFlightNumber ? (
                       <span>{summary.firstFlightNumber}</span>
@@ -1801,11 +1801,11 @@ export default function RoutePlannerPanel({
               return (
                 <>
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-slate-100">
+                    <h3 className="text-sm font-medium text-[var(--map-ui-text)]">
                       {t.selectedFlightDetails}
                     </h3>
                     {flightSegment ? (
-                      <div className="space-y-2 rounded-lg border border-white/5 bg-white/5 px-2.5 py-2">
+                      <div className="space-y-2 rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-2.5 py-2">
                         {flightSegment.journey.segments.map(
                           (flightSeg, segIndex) => (
                             <div key={flightSeg.id}>
@@ -1815,17 +1815,17 @@ export default function RoutePlannerPanel({
                                     className="h-4 w-4 shrink-0 text-[#0ea5e9]"
                                     aria-hidden
                                   />
-                                  <span className="truncate text-sm font-medium text-slate-100">
+                                  <span className="truncate text-sm font-medium text-[var(--map-ui-text)]">
                                     {flightSeg.carrierCode}
                                     {flightSeg.flightNumber}
                                   </span>
                                 </div>
-                                <span className="shrink-0 text-xs tabular-nums text-slate-300">
+                                <span className="shrink-0 text-xs tabular-nums text-[var(--map-ui-muted)]">
                                   {formatFlightClock(flightSeg.departure.at)} →{" "}
                                   {formatFlightClock(flightSeg.arrival.at)}
                                 </span>
                               </div>
-                              <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-slate-400">
+                              <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-[var(--map-ui-muted)]">
                                 <span>
                                   {t.departureAirport}:{" "}
                                   {flightSeg.departure.place.iataCode}
@@ -1842,7 +1842,7 @@ export default function RoutePlannerPanel({
                                 </span>
                               </div>
                               {flightSeg.carrierName ? (
-                                <p className="mt-0.5 text-[11px] text-slate-500">
+                                <p className="mt-0.5 text-[11px] text-[var(--map-ui-text)]0">
                                   {t.operatedBy}: {flightSeg.carrierName}
                                 </p>
                               ) : null}
@@ -1869,7 +1869,7 @@ export default function RoutePlannerPanel({
                       </div>
                     ) : null}
                     {searchPrice ? (
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-[var(--map-ui-muted)]">
                         {t.searchPrice}: {searchPrice.amount.toFixed(2)}{" "}
                         {searchPrice.currency}
                       </p>
@@ -1881,11 +1881,11 @@ export default function RoutePlannerPanel({
                       ref={bookingOptionsSectionRef}
                       className="space-y-1.5"
                     >
-                      <h3 className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                      <h3 className="text-[11px] font-medium uppercase tracking-wide text-[var(--map-ui-muted)]">
                         {t.bookingOptionsTitle}
                       </h3>
                       {showBookingLoading ? (
-                        <div className="flex items-center gap-2 rounded-lg bg-white/5 px-2.5 py-3 text-xs text-slate-300">
+                        <div className="flex items-center gap-2 rounded-lg bg-[var(--map-ui-surface-muted)] px-2.5 py-3 text-xs text-[var(--map-ui-muted)]">
                           <Loader2
                             className="h-3.5 w-3.5 animate-spin text-sky-400"
                             aria-hidden
@@ -1900,7 +1900,7 @@ export default function RoutePlannerPanel({
                           </p>
                           <button
                             type="button"
-                            className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-white/10 text-xs font-medium text-slate-100 hover:bg-white/15"
+                            className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-[var(--map-ui-surface-muted)] text-xs font-medium text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
                             onClick={() =>
                               void ensureBookingOptions(selected.id, {
                                 retry: true,
@@ -1944,25 +1944,25 @@ export default function RoutePlannerPanel({
                             return (
                               <li
                                 key={option.id}
-                                className="rounded-lg bg-white/5 px-2.5 py-2 text-xs"
+                                className="rounded-lg bg-[var(--map-ui-surface-muted)] px-2.5 py-2 text-xs"
                               >
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="min-w-0 space-y-0.5">
-                                    <p className="truncate font-medium text-slate-100">
+                                    <p className="truncate font-medium text-[var(--map-ui-text)]">
                                       {seller}
                                     </p>
                                     {badge ? (
-                                      <span className="inline-flex rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-300">
+                                      <span className="inline-flex rounded bg-[var(--map-ui-surface-muted)] px-1.5 py-0.5 text-[10px] text-[var(--map-ui-muted)]">
                                         {badge}
                                       </span>
                                     ) : null}
                                     {option.optionTitle ? (
-                                      <p className="text-[11px] text-slate-400">
+                                      <p className="text-[11px] text-[var(--map-ui-muted)]">
                                         {option.optionTitle}
                                       </p>
                                     ) : null}
                                     {option.baggagePrices.length > 0 ? (
-                                      <p className="text-[11px] text-slate-400">
+                                      <p className="text-[11px] text-[var(--map-ui-muted)]">
                                         {option.baggagePrices
                                           .slice(0, 2)
                                           .join(" · ")}
@@ -1970,7 +1970,7 @@ export default function RoutePlannerPanel({
                                     ) : null}
                                   </div>
                                   {priceLabel ? (
-                                    <span className="shrink-0 tabular-nums text-slate-200">
+                                    <span className="shrink-0 tabular-nums text-[var(--map-ui-text)]">
                                       {priceLabel}
                                     </span>
                                   ) : null}
@@ -2004,16 +2004,16 @@ export default function RoutePlannerPanel({
 
                   {groundSegments.length > 0 ? (
                     <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-slate-100">
+                      <h3 className="text-sm font-medium text-[var(--map-ui-text)]">
                         {t.instructions}
                       </h3>
                       {groundSegments.map((segment) =>
                         segment.kind === "ground_transit" ? (
                           <div
                             key={segment.id}
-                            className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-2"
+                            className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-2.5 py-2"
                           >
-                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                               {t.airportTransfer}
                             </p>
                             {collapseTransitLegsForDisplay(
@@ -2021,12 +2021,12 @@ export default function RoutePlannerPanel({
                             ).map((leg) => (
                               <div
                                 key={leg.id}
-                                className="mt-1 flex items-center justify-between gap-2 text-xs text-slate-300"
+                                className="mt-1 flex items-center justify-between gap-2 text-xs text-[var(--map-ui-muted)]"
                               >
                                 <span className="flex items-center gap-1.5">
                                   <TransitModeIcon
                                     mode={leg.mode}
-                                    className="h-3.5 w-3.5 text-slate-400"
+                                    className="h-3.5 w-3.5 text-[var(--map-ui-muted)]"
                                   />
                                   {leg.mode === "walk"
                                     ? t.walking
@@ -2058,7 +2058,7 @@ export default function RoutePlannerPanel({
 
         {mode !== "transit" && mode !== "flight" && routes.length > 0 ? (
           <div className="mt-4 space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
               {t.recommendedRoute}
             </h3>
             {routes.map((route, index) => {
@@ -2070,7 +2070,7 @@ export default function RoutePlannerPanel({
                   className={`w-full rounded-xl border p-3 text-left transition ${
                     selected
                       ? "border-[#1a73e8]/60 bg-[#1a73e8]/15"
-                      : "border-white/10 bg-white/5 hover:bg-white/10"
+                      : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] hover:bg-[var(--map-ui-surface-hover)]"
                   }`}
                   onClick={() => {
                     setSelectedRouteId(route.id);
@@ -2079,15 +2079,15 @@ export default function RoutePlannerPanel({
                   }}
                 >
                   {index > 0 ? (
-                    <p className="mb-1 text-[11px] text-slate-400">
+                    <p className="mb-1 text-[11px] text-[var(--map-ui-muted)]">
                       {t.alternativeRoute} {index}
                     </p>
                   ) : null}
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-lg font-semibold text-slate-50">
+                    <span className="text-lg font-semibold text-[var(--map-ui-text)]">
                       {formatRouteDuration(route.durationSeconds, locale)}
                     </span>
-                    <span className="text-sm text-slate-300">
+                    <span className="text-sm text-[var(--map-ui-muted)]">
                       {formatRouteDistance(route.distanceMeters, locale)}
                     </span>
                   </div>
@@ -2100,23 +2100,23 @@ export default function RoutePlannerPanel({
                   ) : null}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {route.hasTolls ? (
-                      <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px]">
+                      <span className="rounded-md bg-[var(--map-ui-surface-muted)] px-1.5 py-0.5 text-[10px]">
                         {t.tollsPresent}
                       </span>
                     ) : null}
                     {route.hasFerry ? (
-                      <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px]">
+                      <span className="rounded-md bg-[var(--map-ui-surface-muted)] px-1.5 py-0.5 text-[10px]">
                         {t.ferry}
                       </span>
                     ) : null}
                     {route.hasTunnel ? (
-                      <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px]">
+                      <span className="rounded-md bg-[var(--map-ui-surface-muted)] px-1.5 py-0.5 text-[10px]">
                         {t.tunnel}
                       </span>
                     ) : null}
                   </div>
                   {route.hasTolls ? (
-                    <p className="mt-1 text-[11px] text-slate-400">
+                    <p className="mt-1 text-[11px] text-[var(--map-ui-muted)]">
                       {t.tollPriceUnavailable}
                     </p>
                   ) : null}
@@ -2127,8 +2127,8 @@ export default function RoutePlannerPanel({
         ) : null}
 
         {mode !== "transit" && mode !== "flight" && incidents.length > 0 ? (
-          <div className="mt-3 rounded-xl border border-white/10 p-3">
-            <p className="text-sm font-medium text-slate-100">
+          <div className="mt-3 rounded-xl border border-[var(--map-ui-border)] p-3">
+            <p className="text-sm font-medium text-[var(--map-ui-text)]">
               {incidents.length} {t.incidentsOnRoute}
             </p>
             <ul className="mt-2 space-y-1">
@@ -2136,7 +2136,7 @@ export default function RoutePlannerPanel({
                 <li key={incident.id}>
                   <button
                     type="button"
-                    className="w-full rounded-lg px-2 py-2 text-left text-xs text-slate-200 hover:bg-white/10"
+                    className="w-full rounded-lg px-2 py-2 text-left text-xs text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
                     onClick={() => onSelectIncident(incident.id)}
                   >
                     {incident.title}
@@ -2151,7 +2151,7 @@ export default function RoutePlannerPanel({
         mode !== "flight" &&
         routes.find((r) => r.id === selectedRouteId)?.instructions?.length ? (
           <div className="mt-3">
-            <h3 className="text-sm font-medium text-slate-100">
+            <h3 className="text-sm font-medium text-[var(--map-ui-text)]">
               {t.instructions}
             </h3>
             <ol className="mt-2 max-h-56 space-y-1 overflow-auto pr-1">
@@ -2161,7 +2161,7 @@ export default function RoutePlannerPanel({
                   <li key={instruction.index}>
                     <button
                       type="button"
-                      className="w-full rounded-lg px-2 py-2 text-left hover:bg-white/5"
+                      className="w-full rounded-lg px-2 py-2 text-left hover:bg-[var(--map-ui-surface-muted)]"
                       onClick={() => {
                         if (instruction.point) {
                           onFocusPoint(
@@ -2172,7 +2172,7 @@ export default function RoutePlannerPanel({
                         }
                       }}
                     >
-                      <p className="text-sm text-slate-100">
+                      <p className="text-sm text-[var(--map-ui-text)]">
                         {instruction.index + 1}. {instruction.message}
                       </p>
                     </button>
@@ -2187,12 +2187,12 @@ export default function RoutePlannerPanel({
 
   return (
     <aside
-      className={`pointer-events-auto absolute inset-x-0 bottom-0 z-[40] overflow-hidden rounded-t-2xl border border-white/10 bg-slate-950/90 shadow-2xl backdrop-blur-xl md:inset-x-auto md:bottom-auto md:left-4 md:top-[var(--map-panel-top-offset)] md:w-[min(24rem,calc(100vw-2rem))] md:max-h-[calc(100vh-var(--map-panel-top-offset)-1.5rem)] md:rounded-2xl md:bg-slate-950/80 ${
+      className={`map-ui-panel pointer-events-auto absolute inset-x-0 bottom-0 z-[40] overflow-hidden rounded-t-2xl backdrop-blur-xl md:inset-x-auto md:bottom-auto md:left-4 md:top-[var(--map-panel-top-offset)] md:w-[min(24rem,calc(100vw-2rem))] md:max-h-[calc(100vh-var(--map-panel-top-offset)-1.5rem)] md:rounded-2xl ${
         mobileExpanded ? "max-h-[78vh]" : "max-h-[30vh]"
       }`}
       aria-label={t.title}
     >
-      <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+      <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--map-ui-border)] md:hidden" />
       <div
         ref={panelScrollRef}
         className="max-h-[inherit] overflow-y-auto p-4 pb-6 md:pb-4"

@@ -125,19 +125,19 @@ export default function AlertDetailsPanel({
 
   return (
     <aside
-      className="absolute left-4 z-30 flex w-[min(100%-2rem,25rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/95 text-xs text-slate-200 shadow-2xl backdrop-blur-md"
+      className="absolute left-4 z-30 flex w-[min(100%-2rem,25rem)] flex-col overflow-hidden rounded-xl map-ui-panel text-xs backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-white/10 bg-slate-950/95 px-4 py-3">
+      <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3">
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--map-ui-muted)]">
             {natureLabel}
           </p>
-          <h2 className="mt-1 text-sm font-semibold text-white">{alert.title}</h2>
+          <h2 className="mt-1 text-sm font-semibold text-[var(--map-ui-text)]">{alert.title}</h2>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <span
               className="rounded-full border px-2 py-0.5 text-[10px] font-medium"
@@ -149,7 +149,7 @@ export default function AlertDetailsPanel({
             >
               {t.severity}: {alert.severity}
             </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px]">
+            <span className="rounded-full border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-2 py-0.5 text-[10px]">
               {statusLabel}
             </span>
           </div>
@@ -158,7 +158,7 @@ export default function AlertDetailsPanel({
           type="button"
           onClick={onClose}
           aria-label={t.close}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-sky-400"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--map-ui-border)] hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-sky-400"
         >
           <X className="h-4 w-4" />
         </button>
@@ -166,10 +166,10 @@ export default function AlertDetailsPanel({
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.summary}
           </h3>
-          <p className="mt-1.5 whitespace-pre-line leading-relaxed text-slate-100">
+          <p className="mt-1.5 whitespace-pre-line leading-relaxed text-[var(--map-ui-text)]">
             {alert.description ?? t.unavailable}
           </p>
         </section>
@@ -177,41 +177,41 @@ export default function AlertDetailsPanel({
         {alert.category === "earthquake" && (
           <>
             <section>
-              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                 {t.earthquake}
               </h3>
               <dl className="mt-1.5 space-y-1.5">
                 <div>
-                  <dt className="inline text-slate-400">{t.magnitude}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.magnitude}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {magnitude == null ? t.unavailable : magnitude.toFixed(1)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.magnitudeType}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.magnitudeType}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {typeof alert.metadata.magnitudeType === "string"
                       ? alert.metadata.magnitudeType
                       : t.unavailable}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.depth}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.depth}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {depthKilometers == null
                       ? t.unavailable
                       : `${depthKilometers.toFixed(1)} km`}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.eventTime}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.eventTime}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {onsetAt ?? t.unavailable}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.reviewStatus}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.reviewStatus}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {alert.metadata.reviewStatus === "reviewed"
                       ? t.reviewed
                       : alert.metadata.reviewStatus === "automatic"
@@ -222,27 +222,27 @@ export default function AlertDetailsPanel({
               </dl>
             </section>
             <section>
-              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                 {t.feltReports}
               </h3>
               <dl className="mt-1.5 space-y-1.5">
                 <div>
-                  <dt className="inline text-slate-400">{t.feltReports}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.feltReports}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {feltReports == null
                       ? t.unavailable
                       : new Intl.NumberFormat(locale).format(feltReports)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.reportedIntensity}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.reportedIntensity}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {reportedIntensity ?? t.unavailable}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.estimatedIntensity}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.estimatedIntensity}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {estimatedIntensity ?? t.unavailable}
                   </dd>
                 </div>
@@ -250,14 +250,14 @@ export default function AlertDetailsPanel({
             </section>
             {Object.keys(providerMagnitudes).length > 1 && (
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                   {t.providerValues}
                 </h3>
                 <dl className="mt-1.5 space-y-1.5">
                   {Object.entries(providerMagnitudes).map(([provider, value]) => (
                     <div key={provider}>
-                      <dt className="inline uppercase text-slate-400">{provider}: </dt>
-                      <dd className="inline text-slate-100">M{value.toFixed(1)}</dd>
+                      <dt className="inline uppercase text-[var(--map-ui-muted)]">{provider}: </dt>
+                      <dd className="inline text-[var(--map-ui-text)]">M{value.toFixed(1)}</dd>
                     </div>
                   ))}
                 </dl>
@@ -265,16 +265,16 @@ export default function AlertDetailsPanel({
             )}
             {(gdacsLevel || affectedPopulation != null) && (
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                   {t.impactEstimate}
                 </h3>
                 {gdacsLevel && (
-                  <p className="mt-1.5 text-slate-100">
+                  <p className="mt-1.5 text-[var(--map-ui-text)]">
                     {t.gdacsLevel}: {gdacsLevel}
                   </p>
                 )}
                 {affectedPopulation != null && (
-                  <p className="mt-1 text-slate-100">
+                  <p className="mt-1 text-[var(--map-ui-text)]">
                     {t.potentiallyAffectedPopulation}:{" "}
                     {new Intl.NumberFormat(locale).format(affectedPopulation)}
                   </p>
@@ -283,10 +283,10 @@ export default function AlertDetailsPanel({
             )}
             {typeof alert.metadata.tsunamiFlag === "boolean" && (
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                   {t.tsunamiIndicator}
                 </h3>
-                <p className="mt-1.5 text-slate-100">
+                <p className="mt-1.5 text-[var(--map-ui-text)]">
                   {alert.metadata.tsunamiFlag ? "true" : "false"}
                 </p>
               </section>
@@ -302,21 +302,21 @@ export default function AlertDetailsPanel({
         {alert.category === "volcano" && (
           <>
             <section>
-              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                 {t.volcano}
               </h3>
               <dl className="mt-1.5 space-y-1.5">
                 <div>
-                  <dt className="inline text-slate-400">{t.volcanicActivityType}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.volcanicActivityType}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {typeof alert.metadata.activityType === "string"
                       ? alert.metadata.activityType
                       : t.unavailable}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.eruptionStart}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.eruptionStart}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {formatDate(
                       typeof alert.metadata.eruptionStartAt === "string"
                         ? alert.metadata.eruptionStartAt
@@ -326,8 +326,8 @@ export default function AlertDetailsPanel({
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.lastActivity}: </dt>
-                  <dd className="inline text-slate-100">
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.lastActivity}: </dt>
+                  <dd className="inline text-[var(--map-ui-text)]">
                     {formatDate(
                       typeof alert.metadata.lastActivityAt === "string"
                         ? alert.metadata.lastActivityAt
@@ -338,18 +338,18 @@ export default function AlertDetailsPanel({
                 </div>
                 {gdacsLevel && (
                   <div>
-                    <dt className="inline text-slate-400">{t.gdacsLevel}: </dt>
-                    <dd className="inline text-slate-100">{gdacsLevel}</dd>
+                    <dt className="inline text-[var(--map-ui-muted)]">{t.gdacsLevel}: </dt>
+                    <dd className="inline text-[var(--map-ui-text)]">{gdacsLevel}</dd>
                   </div>
                 )}
               </dl>
             </section>
             {typeof alert.metadata.ashCloudInformation === "string" && (
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                   {t.ashCloudInformation}
                 </h3>
-                <p className="mt-1.5 text-slate-100">
+                <p className="mt-1.5 text-[var(--map-ui-text)]">
                   {alert.metadata.ashCloudInformation}
                 </p>
               </section>
@@ -362,16 +362,16 @@ export default function AlertDetailsPanel({
 
         {alert.category === "flood" && (
           <section>
-            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
               {t.observedArea}
             </h3>
-            <p className="mt-1.5 text-slate-100">
+            <p className="mt-1.5 text-[var(--map-ui-text)]">
               {areaSquareKilometers == null
                 ? t.areaUnavailable
                 : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(areaSquareKilometers)} km²`}
             </p>
             {affectedPopulation != null && (
-              <p className="mt-1 text-slate-300">
+              <p className="mt-1 text-[var(--map-ui-muted)]">
                 {t.potentiallyAffectedPopulation}:{" "}
                 {new Intl.NumberFormat(locale).format(affectedPopulation)}
               </p>
@@ -380,40 +380,40 @@ export default function AlertDetailsPanel({
         )}
 
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.affectedArea}
           </h3>
-          <p className="mt-1.5 text-slate-100">
+          <p className="mt-1.5 text-[var(--map-ui-text)]">
             {[...alert.affectedAreaNames, ...alert.countryCodes].join(" · ") || t.unavailable}
           </p>
         </section>
 
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.timing}
           </h3>
           <dl className="mt-1.5 space-y-1.5">
-            {onsetAt && <div><dt className="inline text-slate-400">{t.onsetAt}: </dt><dd className="inline text-slate-100">{onsetAt}</dd></div>}
-            {expiresAt && <div><dt className="inline text-slate-400">{t.expiresAt}: </dt><dd className="inline text-slate-100">{expiresAt}</dd></div>}
-            <div><dt className="inline text-slate-400">{t.updatedAt}: </dt><dd className="inline text-slate-100">{updatedAt ?? t.unavailable}</dd></div>
+            {onsetAt && <div><dt className="inline text-[var(--map-ui-muted)]">{t.onsetAt}: </dt><dd className="inline text-[var(--map-ui-text)]">{onsetAt}</dd></div>}
+            {expiresAt && <div><dt className="inline text-[var(--map-ui-muted)]">{t.expiresAt}: </dt><dd className="inline text-[var(--map-ui-text)]">{expiresAt}</dd></div>}
+            <div><dt className="inline text-[var(--map-ui-muted)]">{t.updatedAt}: </dt><dd className="inline text-[var(--map-ui-text)]">{updatedAt ?? t.unavailable}</dd></div>
           </dl>
         </section>
 
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.severityAndCertainty}
           </h3>
-          <p className="mt-1.5 text-slate-100">
+          <p className="mt-1.5 text-[var(--map-ui-text)]">
             {t.severity}: {alert.severity}
             {alert.certainty ? ` · ${t.certainty}: ${alert.certainty}` : ""}
           </p>
         </section>
 
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.instructions}
           </h3>
-          <p className="mt-1.5 whitespace-pre-line leading-relaxed text-slate-100">
+          <p className="mt-1.5 whitespace-pre-line leading-relaxed text-[var(--map-ui-text)]">
             {alert.instructions ?? t.noInstructions}
           </p>
         </section>
@@ -421,21 +421,21 @@ export default function AlertDetailsPanel({
         {nature === "satellite-observation" && (
           <>
             <section>
-              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                 {t.associatedData}
               </h3>
               <dl className="mt-1.5 space-y-1.5">
                 {acquisitionTime && (
-                  <div><dt className="inline text-slate-400">{t.acquisitionTime}: </dt><dd className="inline text-slate-100">{acquisitionTime}</dd></div>
+                  <div><dt className="inline text-[var(--map-ui-muted)]">{t.acquisitionTime}: </dt><dd className="inline text-[var(--map-ui-text)]">{acquisitionTime}</dd></div>
                 )}
                 {publishedAt && (
-                  <div><dt className="inline text-slate-400">{t.publishedAt}: </dt><dd className="inline text-slate-100">{publishedAt}</dd></div>
+                  <div><dt className="inline text-[var(--map-ui-muted)]">{t.publishedAt}: </dt><dd className="inline text-[var(--map-ui-text)]">{publishedAt}</dd></div>
                 )}
                 {typeof alert.metadata.satellite === "string" && (
-                  <div><dt className="inline text-slate-400">{t.satellite}: </dt><dd className="inline text-slate-100">{alert.metadata.satellite}</dd></div>
+                  <div><dt className="inline text-[var(--map-ui-muted)]">{t.satellite}: </dt><dd className="inline text-[var(--map-ui-text)]">{alert.metadata.satellite}</dd></div>
                 )}
                 {typeof alert.metadata.confidencePercent === "number" && (
-                  <div><dt className="inline text-slate-400">{t.confidence}: </dt><dd className="inline text-slate-100">{alert.metadata.confidencePercent}%</dd></div>
+                  <div><dt className="inline text-[var(--map-ui-muted)]">{t.confidence}: </dt><dd className="inline text-[var(--map-ui-text)]">{alert.metadata.confidencePercent}%</dd></div>
                 )}
               </dl>
             </section>
@@ -455,17 +455,17 @@ export default function AlertDetailsPanel({
         )}
 
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.sourceAndAttribution}
           </h3>
-          <p className="mt-1.5 text-slate-100">{alert.officialSourceName}</p>
-          <p className="mt-1 text-[10px] text-slate-400">{natureLabel} · {connectorLabel}</p>
+          <p className="mt-1.5 text-[var(--map-ui-text)]">{alert.officialSourceName}</p>
+          <p className="mt-1 text-[10px] text-[var(--map-ui-muted)]">{natureLabel} · {connectorLabel}</p>
           {alert.sourceUrl && (
             <a
               href={alert.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1.5 text-sky-300 hover:bg-white/5"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-[var(--map-ui-border)] px-2.5 py-1.5 text-sky-300 hover:bg-[var(--map-ui-surface-hover)]"
             >
               {t.openOfficialSource}
               <ExternalLink className="h-3 w-3" />
@@ -484,7 +484,7 @@ export default function AlertDetailsPanel({
                     href={url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[10px] uppercase text-sky-300 hover:bg-white/5"
+                    className="inline-flex items-center gap-1 rounded-md border border-[var(--map-ui-border)] px-2 py-1 text-[10px] uppercase text-sky-300 hover:bg-[var(--map-ui-surface-hover)]"
                   >
                     {provider}
                     <ExternalLink className="h-2.5 w-2.5" />

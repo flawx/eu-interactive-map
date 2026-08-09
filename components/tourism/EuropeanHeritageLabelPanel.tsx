@@ -139,21 +139,21 @@ export default function EuropeanHeritageLabelPanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3 backdrop-blur-md">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#facc15]/40 bg-[#003399] text-[#facc15] shadow-sm">
             <Award className="h-6 w-6" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-snug">{displayName}</p>
-            <p className="text-[11px] text-slate-300">
+            <p className="text-[11px] text-[var(--map-ui-muted)]">
               {countryLabels.map((c) => c.label).join(" · ")}
               {" · "}
               {site.awardYear}
@@ -164,7 +164,7 @@ export default function EuropeanHeritageLabelPanel({
             onClick={onClose}
             aria-label={t.countryPanel.close}
             title={t.countryPanel.close}
-            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-[var(--map-ui-muted)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] hover:text-[var(--map-ui-text)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
             <X aria-hidden="true" size={22} strokeWidth={2} />
           </button>
@@ -201,7 +201,7 @@ export default function EuropeanHeritageLabelPanel({
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         <section className="mb-4">
           {currentPhoto ? (
-            <div className="overflow-hidden rounded-lg border border-white/10">
+            <div className="overflow-hidden rounded-lg border border-[var(--map-ui-border)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={currentPhoto.thumbnailUrl ?? currentPhoto.url}
@@ -218,11 +218,11 @@ export default function EuropeanHeritageLabelPanel({
                     )
                   }
                   aria-label={tp.previousPhoto}
-                  className="rounded p-1 text-slate-200 disabled:opacity-40"
+                  className="rounded p-1 text-[var(--map-ui-text)] disabled:opacity-40"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-slate-300">
+                <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-[var(--map-ui-muted)]">
                   {currentPhoto.representedLocationName
                     ? `${currentPhoto.representedLocationName} · `
                     : ""}
@@ -239,16 +239,16 @@ export default function EuropeanHeritageLabelPanel({
                     setPhotoIndex((index) => (index + 1) % photos.length)
                   }
                   aria-label={tp.nextPhoto}
-                  className="rounded p-1 text-slate-200 disabled:opacity-40"
+                  className="rounded p-1 text-[var(--map-ui-text)] disabled:opacity-40"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
           ) : loading ? (
-            <div className="h-40 animate-pulse rounded-lg bg-white/10" />
+            <div className="h-40 animate-pulse rounded-lg bg-[var(--map-ui-surface-muted)]" />
           ) : (
-            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/5 text-slate-400">
+            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)]">
               <Award className="h-8 w-8" aria-hidden="true" />
             </div>
           )}
@@ -256,10 +256,10 @@ export default function EuropeanHeritageLabelPanel({
 
         {details?.europeanSignificance ? (
           <section className="mb-4">
-            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
               {tp.europeanSignificance}
             </h2>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-200">
+            <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--map-ui-text)]">
               {details.europeanSignificance}
             </p>
           </section>
@@ -267,18 +267,18 @@ export default function EuropeanHeritageLabelPanel({
 
         {details?.description || loading || error ? (
           <section className="mb-4">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.presentation}
           </h2>
           {loading && !details?.description ? (
             <div className="space-y-2">
-              <div className="h-3 animate-pulse rounded bg-white/10" />
-              <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
+              <div className="h-3 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+              <div className="h-3 w-5/6 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
             </div>
           ) : error && !details?.description ? (
             <p className="text-sm text-amber-200/90">{tp.detailsUnavailable}</p>
           ) : (
-            <p className="text-sm leading-relaxed text-slate-200">
+            <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
               {details?.description ?? tp.detailsUnavailable}
             </p>
           )}
@@ -286,19 +286,19 @@ export default function EuropeanHeritageLabelPanel({
         ) : null}
 
         <section className="mb-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.history}
           </h2>
           <dl className="grid grid-cols-1 gap-2 text-[12px]">
-            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <dt className="text-slate-400">{tp.awardYear}</dt>
-              <dd className="font-medium text-slate-100">{site.awardYear}</dd>
+            <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+              <dt className="text-[var(--map-ui-muted)]">{tp.awardYear}</dt>
+              <dd className="font-medium text-[var(--map-ui-text)]">{site.awardYear}</dd>
             </div>
           </dl>
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.locationsSection}
           </h2>
           {site.serial ? (
@@ -321,14 +321,14 @@ export default function EuropeanHeritageLabelPanel({
                   className={`rounded-lg border px-3 py-2 ${
                     isActive
                       ? "border-sky-400/60 bg-sky-500/10"
-                      : "border-white/10 bg-white/5"
+                      : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)]"
                   }`}
                 >
                   <div className="flex items-start gap-2">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#facc15]" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">{location.name}</p>
-                      <p className="text-[11px] text-slate-300">
+                      <p className="text-[11px] text-[var(--map-ui-muted)]">
                         {location.cityOrRegion}
                         {" · "}
                         {countryLabel}
@@ -337,7 +337,7 @@ export default function EuropeanHeritageLabelPanel({
                         <button
                           type="button"
                           onClick={() => onFocusLocation(location.id)}
-                          className="mt-2 inline-flex items-center gap-1 rounded-md border border-white/15 px-2 py-1 text-[11px] text-sky-300 hover:bg-white/10"
+                          className="mt-2 inline-flex items-center gap-1 rounded-md border border-[var(--map-ui-border)] px-2 py-1 text-[11px] text-sky-300 hover:bg-[var(--map-ui-surface-hover)]"
                         >
                           {tp.seeOnMap}
                         </button>
@@ -371,7 +371,7 @@ export default function EuropeanHeritageLabelPanel({
             })}
           </ul>
           {hasRepresentativePoint ? (
-            <p className="mt-2 inline-flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
+            <p className="mt-2 inline-flex items-start gap-1.5 text-[11px] leading-relaxed text-[var(--map-ui-muted)]">
               <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {tp.representativePointNote}
             </p>
@@ -379,14 +379,14 @@ export default function EuropeanHeritageLabelPanel({
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.countries}
           </h2>
           <ul className="space-y-1.5">
             {countryLabels.map((country) => (
               <li
                 key={country.code}
-                className="flex items-center gap-2 text-sm text-slate-200"
+                className="flex items-center gap-2 text-sm text-[var(--map-ui-text)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -403,7 +403,7 @@ export default function EuropeanHeritageLabelPanel({
                     onClick={() => onOpenCountry(country.code)}
                     aria-label={tp.openCountry}
                     title={tp.openCountry}
-                    className="rounded-md border border-white/15 px-2 py-1 text-[10px] text-sky-300 hover:bg-white/10"
+                    className="rounded-md border border-[var(--map-ui-border)] px-2 py-1 text-[10px] text-sky-300 hover:bg-[var(--map-ui-surface-hover)]"
                   >
                     {tp.openCountry}
                   </button>
@@ -423,7 +423,7 @@ export default function EuropeanHeritageLabelPanel({
         </section>
 
         <section className="mb-4">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.officialLinks}
           </h2>
           <ul className="space-y-1.5 text-sm">
@@ -468,10 +468,10 @@ export default function EuropeanHeritageLabelPanel({
         </section>
 
         <section className="mb-2">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.sources}
           </h2>
-          <ul className="space-y-1 text-[11px] text-slate-400">
+          <ul className="space-y-1 text-[11px] text-[var(--map-ui-muted)]">
             {(
               details?.sources ?? [
                 { label: tp.dataCommission, url: site.officialCommissionUrl },
@@ -488,7 +488,7 @@ export default function EuropeanHeritageLabelPanel({
                 </a>
               </li>
             ))}
-            <li className="pt-1 text-slate-500">
+            <li className="pt-1 text-[var(--map-ui-muted)]">
               {site.importedAt
                 ? new Date(site.importedAt).toLocaleDateString(locale)
                 : ""}

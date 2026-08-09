@@ -117,25 +117,25 @@ export default function MountainPlacePanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/90 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight: "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-10 shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border" style={{ color: accent, borderColor: `${accent}88`, background: `${accent}22` }}>
             <CategoryIcon category={place.category} />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">{place.canonicalName}</p>
-            <p className="text-[11px] text-slate-300">{place.cityOrRegion} · {countryNames.join(", ")}</p>
+            <p className="text-[11px] text-[var(--map-ui-muted)]">{place.cityOrRegion} · {countryNames.join(", ")}</p>
             <span className="mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px]" style={{ borderColor: `${accent}88`, color: accent }}>
               {mp.categories[place.category]}
             </span>
           </div>
-          <button type="button" onClick={onClose} aria-label={t.countryPanel.close} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md hover:bg-white/10">
+          <button type="button" onClick={onClose} aria-label={t.countryPanel.close} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md hover:bg-[var(--map-ui-surface-hover)]">
             <X size={22} />
           </button>
         </div>
@@ -154,13 +154,13 @@ export default function MountainPlacePanel({
       </header>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-3">
-        {loading ? <div className="h-40 animate-pulse rounded-xl bg-white/10" aria-label={mp.loadingDetails} /> : null}
+        {loading ? <div className="h-40 animate-pulse rounded-xl bg-[var(--map-ui-surface-muted)]" aria-label={mp.loadingDetails} /> : null}
         {!loading && error ? <p className="text-sm text-amber-200">{mp.detailsUnavailable}</p> : null}
         {photo ? (
-          <section className="overflow-hidden rounded-lg border border-white/10">
+          <section className="overflow-hidden rounded-lg border border-[var(--map-ui-border)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photo.thumbnailUrl ?? photo.url} alt={photo.title ?? place.canonicalName} className="h-40 w-full object-cover" />
-            <div className="flex items-center gap-2 bg-black/40 px-2 py-1.5 text-[10px] text-slate-300">
+            <div className="flex items-center gap-2 bg-black/40 px-2 py-1.5 text-[10px] text-[var(--map-ui-muted)]">
               {photos.length > 1 ? <button onClick={() => setPhotoIndex((photoIndex - 1 + photos.length) % photos.length)} aria-label={mp.previousPhoto}><ChevronLeft className="h-4 w-4" /></button> : null}
               <p className="flex-1 text-center">{mp.photoCredit}: {photo.author ?? "Wikimedia Commons"} · {photo.license ?? ""}</p>
               {photos.length > 1 ? <button onClick={() => setPhotoIndex((photoIndex + 1) % photos.length)} aria-label={mp.nextPhoto}><ChevronRight className="h-4 w-4" /></button> : null}
@@ -169,28 +169,28 @@ export default function MountainPlacePanel({
         ) : null}
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{mp.overview}</h2>
-          <p className="text-sm leading-relaxed text-slate-200">{details?.description ?? mp.presentationUnavailable}</p>
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{mp.overview}</h2>
+          <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">{details?.description ?? mp.presentationUnavailable}</p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{mp.altitudeGeography}</h2>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{mp.altitudeGeography}</h2>
           <dl className="space-y-2 text-xs">
-            {place.summitElevationMeters != null ? <div><dt className="text-slate-400">{mp.summitElevation}</dt><dd>{place.summitElevationMeters.toLocaleString(locale)} m</dd></div> : null}
-            {place.resortBaseElevationMeters != null ? <div><dt className="text-slate-400">{mp.baseElevation}</dt><dd>{place.resortBaseElevationMeters.toLocaleString(locale)} m</dd></div> : null}
-            {place.resortTopElevationMeters != null ? <div><dt className="text-slate-400">{mp.topElevation}</dt><dd>{place.resortTopElevationMeters.toLocaleString(locale)} m</dd></div> : null}
-            {place.mountainRange ? <div><dt className="text-slate-400">{mp.mountainRange}</dt><dd>{place.mountainRange}</dd></div> : null}
+            {place.summitElevationMeters != null ? <div><dt className="text-[var(--map-ui-muted)]">{mp.summitElevation}</dt><dd>{place.summitElevationMeters.toLocaleString(locale)} m</dd></div> : null}
+            {place.resortBaseElevationMeters != null ? <div><dt className="text-[var(--map-ui-muted)]">{mp.baseElevation}</dt><dd>{place.resortBaseElevationMeters.toLocaleString(locale)} m</dd></div> : null}
+            {place.resortTopElevationMeters != null ? <div><dt className="text-[var(--map-ui-muted)]">{mp.topElevation}</dt><dd>{place.resortTopElevationMeters.toLocaleString(locale)} m</dd></div> : null}
+            {place.mountainRange ? <div><dt className="text-[var(--map-ui-muted)]">{mp.mountainRange}</dt><dd>{place.mountainRange}</dd></div> : null}
           </dl>
         </section>
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{mp.seasonality}</h2>
-          <p className="text-sm text-slate-200">{mp.seasonal[place.seasonalOperation]}</p>
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{mp.seasonality}</h2>
+          <p className="text-sm text-[var(--map-ui-text)]">{mp.seasonal[place.seasonalOperation]}</p>
           <p className="mt-2 text-xs text-amber-200/90">{mp.officialWarning}</p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{mp.links}</h2>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{mp.links}</h2>
           <ul className="space-y-2 text-sm">
             {place.officialWebsite ? <li><a className="inline-flex gap-1 text-sky-300" href={place.officialWebsite} target="_blank" rel="noopener noreferrer">{mp.officialWebsite}<ExternalLink className="h-4 w-4" /></a></li> : null}
             {place.tourismWebsite ? <li><a className="inline-flex gap-1 text-sky-300" href={place.tourismWebsite} target="_blank" rel="noopener noreferrer">{mp.tourismWebsite}<ExternalLink className="h-4 w-4" /></a></li> : null}
@@ -204,8 +204,8 @@ export default function MountainPlacePanel({
 
         {details?.sources.length ? (
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{mp.sourcesCredits}</h2>
-            <ul className="space-y-1 text-[11px] text-slate-400">{details.sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.label}</a></li>)}</ul>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">{mp.sourcesCredits}</h2>
+            <ul className="space-y-1 text-[11px] text-[var(--map-ui-muted)]">{details.sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.label}</a></li>)}</ul>
           </section>
         ) : null}
       </div>

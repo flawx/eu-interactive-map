@@ -260,7 +260,7 @@ export default function WildfireIncidentPanel({
         ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
         : incident.alertLevel === "red"
           ? "border-red-500/30 bg-red-500/10 text-red-200"
-          : "border-slate-500/30 bg-slate-500/10 text-slate-300";
+          : "border-slate-500/30 bg-slate-500/10 text-[var(--map-ui-muted)]";
 
   const alertDot =
     incident.alertLevel === "green"
@@ -303,19 +303,19 @@ export default function WildfireIncidentPanel({
 
   return (
     <aside
-      className="absolute left-4 z-20 flex w-[min(100%-2rem,24rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/92 text-xs text-slate-200 shadow-2xl backdrop-blur-md"
+      className="absolute left-4 z-20 flex w-[min(100%-2rem,24rem)] flex-col overflow-hidden rounded-xl map-ui-panel text-xs backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <div className="sticky top-0 z-[5] flex shrink-0 items-start justify-between gap-3 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+      <div className="sticky top-0 z-[5] flex shrink-0 items-start justify-between gap-3 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3 backdrop-blur-md">
         <div className="min-w-0 space-y-1">
-          <p className="text-[10px] tracking-[0.14em] text-slate-400">
+          <p className="text-[10px] tracking-[0.14em] text-[var(--map-ui-muted)]">
             {t.incidents.wildfireTitle}
           </p>
-          <h2 className="truncate text-sm font-semibold text-white">
+          <h2 className="truncate text-sm font-semibold text-[var(--map-ui-text)]">
             {incident.title}
           </h2>
         </div>
@@ -323,7 +323,7 @@ export default function WildfireIncidentPanel({
           type="button"
           onClick={onClose}
           aria-label={t.countryPanel.close}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 text-slate-300 outline-none transition hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--map-ui-border)] text-[var(--map-ui-muted)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
         >
           ×
         </button>
@@ -340,36 +340,36 @@ export default function WildfireIncidentPanel({
 
           <div className="space-y-1.5 text-[11px]">
             <div className="flex items-start gap-2">
-              <span className="shrink-0 text-slate-400">
+              <span className="shrink-0 text-[var(--map-ui-muted)]">
                 {t.incidents.country}:
               </span>
-              <span className="text-slate-100">
+              <span className="text-[var(--map-ui-text)]">
                 {incident.countryName ||
                   incident.countryCode ||
                   t.incidents.dataUnavailable}
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="shrink-0 text-slate-400">
+              <span className="shrink-0 text-[var(--map-ui-muted)]">
                 {t.incidents.startedAt}:
               </span>
-              <span className="text-slate-100">
+              <span className="text-[var(--map-ui-text)]">
                 {startedAt || t.incidents.dataUnavailable}
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="shrink-0 text-slate-400">
+              <span className="shrink-0 text-[var(--map-ui-muted)]">
                 {t.incidents.updatedAt}:
               </span>
-              <span className="text-slate-100">
+              <span className="text-[var(--map-ui-text)]">
                 {updatedAt || t.incidents.dataUnavailable}
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="shrink-0 text-slate-400">
+              <span className="shrink-0 text-[var(--map-ui-muted)]">
                 {t.incidents.source}:
               </span>
-              <span className="text-slate-100">{incident.sourceName}</span>
+              <span className="text-[var(--map-ui-text)]">{incident.sourceName}</span>
             </div>
           </div>
 
@@ -378,9 +378,9 @@ export default function WildfireIncidentPanel({
               <h3 className="font-semibold text-sky-100">
                 {t.alertPanel.windSpeed}
               </h3>
-              <dl className="mt-2 space-y-1 text-slate-100">
+              <dl className="mt-2 space-y-1 text-[var(--map-ui-text)]">
                 <div>
-                  <dt className="inline text-slate-400">{t.alertPanel.windFrom}: </dt>
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.alertPanel.windFrom}: </dt>
                   <dd className="inline">
                     {wind.directionDegrees == null
                       ? t.alertPanel.unavailable
@@ -389,7 +389,7 @@ export default function WildfireIncidentPanel({
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.alertPanel.flowTowards}: </dt>
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.alertPanel.flowTowards}: </dt>
                   <dd className="inline">
                     {wind.directionDegrees == null
                       ? t.alertPanel.unavailable
@@ -397,7 +397,7 @@ export default function WildfireIncidentPanel({
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-slate-400">{t.alertPanel.windGusts}: </dt>
+                  <dt className="inline text-[var(--map-ui-muted)]">{t.alertPanel.windGusts}: </dt>
                   <dd className="inline">
                     {wind.gustKmh == null
                       ? t.alertPanel.unavailable
@@ -423,18 +423,18 @@ export default function WildfireIncidentPanel({
           )}
 
           {snapshot && (
-            <p className="text-[10px] leading-snug text-slate-500">
+            <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
               {t.incidents.effisDisclaimer}
             </p>
           )}
 
           {officialRefreshState === "checking" && (
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-[var(--map-ui-muted)]">
               {t.incidents.opsOfficialChecking}
             </p>
           )}
           {officialRefreshState === "done" && officialVerifiedLabel && (
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-[var(--map-ui-muted)]">
               {t.incidents.opsOfficialVerifiedAt.replace(
                 "{time}",
                 officialVerifiedLabel,
@@ -453,10 +453,10 @@ export default function WildfireIncidentPanel({
         <div className="space-y-3 pt-3">
           {opsLoading && (
             <div className="space-y-2" aria-busy="true">
-              <div className="h-3 animate-pulse rounded bg-white/10" />
-              <div className="h-3 w-4/5 animate-pulse rounded bg-white/10" />
-              <div className="h-16 animate-pulse rounded bg-white/5" />
-              <p className="text-[10px] text-slate-400">{t.incidents.opsLoading}</p>
+              <div className="h-3 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+              <div className="h-3 w-4/5 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+              <div className="h-16 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+              <p className="text-[10px] text-[var(--map-ui-muted)]">{t.incidents.opsLoading}</p>
             </div>
           )}
 

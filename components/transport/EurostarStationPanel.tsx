@@ -113,21 +113,21 @@ export default function EurostarStationPanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3 backdrop-blur-md">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-900/50 text-amber-200 shadow-sm">
             <TrainFront className="h-6 w-6" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-snug">{station.name}</p>
-            <p className="text-[11px] text-slate-300">
+            <p className="text-[11px] text-[var(--map-ui-muted)]">
               {station.city} · {countryName}
             </p>
           </div>
@@ -136,7 +136,7 @@ export default function EurostarStationPanel({
             onClick={onClose}
             aria-label={t.countryPanel.close}
             title={t.countryPanel.close}
-            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-[var(--map-ui-muted)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] hover:text-[var(--map-ui-text)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
             <X aria-hidden="true" size={22} strokeWidth={2} />
           </button>
@@ -172,13 +172,13 @@ export default function EurostarStationPanel({
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         {loading && (
           <div className="space-y-3" aria-busy="true" aria-label={tp.loadingDetails}>
-            <div className="h-40 animate-pulse rounded-xl bg-white/10" />
-            <div className="h-3 animate-pulse rounded bg-white/10" />
-            <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
-            <div className="h-3 w-4/6 animate-pulse rounded bg-white/10" />
+            <div className="h-40 animate-pulse rounded-xl bg-[var(--map-ui-surface-muted)]" />
+            <div className="h-3 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+            <div className="h-3 w-5/6 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+            <div className="h-3 w-4/6 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
             <div className="mt-2 space-y-2">
-              <div className="h-8 animate-pulse rounded-lg bg-white/10" />
-              <div className="h-8 animate-pulse rounded-lg bg-white/10" />
+              <div className="h-8 animate-pulse rounded-lg bg-[var(--map-ui-surface-muted)]" />
+              <div className="h-8 animate-pulse rounded-lg bg-[var(--map-ui-surface-muted)]" />
             </div>
           </div>
         )}
@@ -191,7 +191,7 @@ export default function EurostarStationPanel({
           <div className="space-y-5">
             {photo ? (
               <section>
-                <div className="overflow-hidden rounded-lg border border-white/10">
+                <div className="overflow-hidden rounded-lg border border-[var(--map-ui-border)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.thumbnailUrl ?? photo.url}
@@ -202,7 +202,7 @@ export default function EurostarStationPanel({
                     <div className="flex items-center justify-between gap-2 bg-black/40 px-2 py-1.5">
                       <button
                         type="button"
-                        className="rounded p-1 text-slate-200"
+                        className="rounded p-1 text-[var(--map-ui-text)]"
                         onClick={() =>
                           setPhotoIndex(
                             (photoIndex - 1 + images.length) % images.length,
@@ -212,12 +212,12 @@ export default function EurostarStationPanel({
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
-                      <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-slate-300">
+                      <p className="min-w-0 flex-1 text-center text-[10px] leading-snug text-[var(--map-ui-muted)]">
                         {tp.photoCredit}: {photo.author} · {photo.license}
                       </p>
                       <button
                         type="button"
-                        className="rounded p-1 text-slate-200"
+                        className="rounded p-1 text-[var(--map-ui-text)]"
                         onClick={() =>
                           setPhotoIndex((photoIndex + 1) % images.length)
                         }
@@ -227,7 +227,7 @@ export default function EurostarStationPanel({
                       </button>
                     </div>
                   ) : (
-                    <p className="bg-black/40 px-2 py-1.5 text-center text-[10px] leading-snug text-slate-300">
+                    <p className="bg-black/40 px-2 py-1.5 text-center text-[10px] leading-snug text-[var(--map-ui-muted)]">
                       {tp.photoCredit}: {photo.author} · {photo.license}
                     </p>
                   )}
@@ -236,36 +236,36 @@ export default function EurostarStationPanel({
             ) : null}
 
             <section>
-              <h3 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                 <TrainFront className="h-4 w-4 text-amber-400" />
                 {tp.presentation}
               </h3>
               {details?.description ? (
-                <p className="text-sm leading-relaxed text-slate-200">
+                <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
                   {details.description}
                 </p>
               ) : (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[var(--map-ui-muted)]">
                   {tp.presentationUnavailable}
                 </p>
               )}
             </section>
 
             <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                 {tp.directDestinations}
               </h3>
-              <ul className="space-y-1.5 text-sm text-slate-200">
+              <ul className="space-y-1.5 text-sm text-[var(--map-ui-text)]">
                 {destinations.map((dest) => (
                   <li
                     key={dest.stationId}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-2.5 py-1.5"
                   >
                     <span>
                       {dest.name}
-                      <span className="text-slate-400"> · {dest.city}</span>
+                      <span className="text-[var(--map-ui-muted)]"> · {dest.city}</span>
                     </span>
-                    <span className="text-[11px] font-medium uppercase text-slate-400">
+                    <span className="text-[11px] font-medium uppercase text-[var(--map-ui-muted)]">
                       {dest.serviceStatus === "seasonal"
                         ? tp.seasonalService
                         : tp.regularService}
@@ -273,7 +273,7 @@ export default function EurostarStationPanel({
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-[var(--map-ui-muted)]">
                 {tp.schematicLink}. {tp.schematicDisclaimer}
               </p>
             </section>
@@ -282,21 +282,21 @@ export default function EurostarStationPanel({
               details?.borderControlInfo ||
               details?.accessibilityInfo) && (
               <section>
-                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                   {tp.practicalInfo}
                 </h3>
                 {details.recommendedArrivalInfo ? (
-                  <p className="text-sm text-slate-200">
+                  <p className="text-sm text-[var(--map-ui-text)]">
                     {tp.recommendedArrival}: {details.recommendedArrivalInfo}
                   </p>
                 ) : null}
                 {details.borderControlInfo ? (
-                  <p className="text-sm text-slate-200">
+                  <p className="text-sm text-[var(--map-ui-text)]">
                     {tp.borderControl}: {details.borderControlInfo}
                   </p>
                 ) : null}
                 {details.accessibilityInfo ? (
-                  <p className="text-sm text-slate-200">
+                  <p className="text-sm text-[var(--map-ui-text)]">
                     {tp.accessibility}: {details.accessibilityInfo}
                   </p>
                 ) : null}
@@ -304,7 +304,7 @@ export default function EurostarStationPanel({
             )}
 
             <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                 {tp.officialLinks}
               </h3>
               <ul className="space-y-1.5 text-sm">
@@ -350,10 +350,10 @@ export default function EurostarStationPanel({
 
             {details?.sources?.length ? (
               <section>
-                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
                   {tp.sources}
                 </h3>
-                <ul className="space-y-1 text-[11px] text-slate-400">
+                <ul className="space-y-1 text-[11px] text-[var(--map-ui-muted)]">
                   {details.sources.map((source) => (
                     <li key={source.url}>
                       <a

@@ -433,7 +433,7 @@ export default function CountryInfoPanel({
   let travelSafetyLabel = t.countryPanel.safetyUnavailable;
   let travelSafetyDotClass = "bg-slate-400";
   let travelSafetyContainerClass =
-    "border-slate-500/30 bg-slate-500/10 text-slate-300";
+    "border-slate-500/30 bg-slate-500/10 text-[var(--map-ui-muted)]";
 
   if (travelSafety.status === "safe") {
     travelSafetyLabel = t.countryPanel.safetySafe;
@@ -488,21 +488,21 @@ export default function CountryInfoPanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3 backdrop-blur-md">
         <div className="flex items-start gap-2.5">
           <img
             src={flagUrl}
             alt={`${countryName} flag`}
             width={48}
             height={36}
-            className="h-9 w-12 shrink-0 rounded-sm border border-white/20 object-cover shadow-sm"
+            className="h-9 w-12 shrink-0 rounded-sm border border-[var(--map-ui-border)] object-cover shadow-sm"
           />
           <p className="min-w-0 flex-1 pt-1 text-sm font-semibold leading-snug">
             {countryName}
@@ -511,7 +511,7 @@ export default function CountryInfoPanel({
             type="button"
             onClick={onClose}
             aria-label={t.countryPanel.close}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[var(--map-ui-muted)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] hover:text-[var(--map-ui-text)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
             ×
           </button>
@@ -525,14 +525,14 @@ export default function CountryInfoPanel({
           style={{ backgroundColor: status.color }}
           aria-hidden="true"
         />
-        <p className="text-xs leading-snug text-slate-200">{status.label}</p>
+        <p className="text-xs leading-snug text-[var(--map-ui-text)]">{status.label}</p>
       </div>
 
       {currentPhoto && (
         <div className="mt-3 space-y-2">
-          <p className="text-xs text-slate-400">{t.countryPanel.photos}</p>
+          <p className="text-xs text-[var(--map-ui-muted)]">{t.countryPanel.photos}</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-slate-900">
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-[var(--map-ui-surface-muted)]">
             <img
               src={currentPhoto.url}
               alt={`${countryName} — ${photoIndex + 1}`}
@@ -545,7 +545,7 @@ export default function CountryInfoPanel({
                   type="button"
                   onClick={showPreviousPhoto}
                   aria-label={t.countryPanel.previousPhoto}
-                  className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/70 text-white outline-none transition hover:bg-slate-950/90 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+                    className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--map-ui-surface)]/80 text-[var(--map-ui-text)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
                 >
                   <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -553,7 +553,7 @@ export default function CountryInfoPanel({
                   type="button"
                   onClick={showNextPhoto}
                   aria-label={t.countryPanel.nextPhoto}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/70 text-white outline-none transition hover:bg-slate-950/90 focus-visible:ring-2 focus-visible:ring-sky-400/70"
+                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--map-ui-surface)]/80 text-[var(--map-ui-text)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
                 >
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -573,7 +573,7 @@ export default function CountryInfoPanel({
                   className={`h-2 w-2 rounded-full outline-none transition focus-visible:ring-2 focus-visible:ring-sky-400/70 ${
                     index === photoIndex
                       ? "bg-sky-400"
-                      : "bg-white/30 hover:bg-white/50"
+                      : "bg-[var(--map-ui-border)] hover:bg-[var(--map-ui-surface-hover)]"
                   }`}
                 />
               ))}
@@ -586,12 +586,12 @@ export default function CountryInfoPanel({
                 href={currentPhoto.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-[10px] leading-snug text-slate-400 outline-none transition hover:text-sky-400 hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-sky-400/70"
+                className="block text-[10px] leading-snug text-[var(--map-ui-muted)] outline-none transition hover:text-sky-400 hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-sky-400/70"
               >
                 {photoAttribution}
               </a>
             ) : (
-              <p className="text-[10px] leading-snug text-slate-400">
+              <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
                 {photoAttribution}
               </p>
             ))}
@@ -600,175 +600,175 @@ export default function CountryInfoPanel({
 
       <div className="mt-3 space-y-2 text-xs">
         <div className="flex items-center gap-2">
-          <span className="text-slate-400">{t.countryPanel.code}:</span>
-          <span className="text-slate-100">{countryCode}</span>
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.code}:</span>
+          <span className="text-[var(--map-ui-text)]">{countryCode}</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.capital}:</span>
+          <MapPin className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.capital}:</span>
           {isLoading ? (
-            <span className="h-3 w-24 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-24 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : (
-            <span className="text-slate-100">
+            <span className="text-[var(--map-ui-text)]">
               {details?.capital || "—"}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.nationalDay}:</span>
-          <span className="text-slate-100">
+          <CalendarDays className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.nationalDay}:</span>
+          <span className="text-[var(--map-ui-text)]">
             {formattedNationalDays || "—"}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.largestCity}:</span>
+          <Building2 className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.largestCity}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : details?.largestCity ? (
-            <span className="text-slate-100">
+            <span className="text-[var(--map-ui-text)]">
               {details.largestCity.name}
               {formattedLargestCityPopulation
                 ? ` (${formattedLargestCityPopulation})`
                 : ""}
             </span>
           ) : (
-            <span className="text-slate-100">—</span>
+            <span className="text-[var(--map-ui-text)]">—</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.population}:</span>
+          <Users className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.population}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : (
-            <span className="text-slate-100">{populationValue}</span>
+            <span className="text-[var(--map-ui-text)]">{populationValue}</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.gdp}:</span>
+          <TrendingUp className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.gdp}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : formattedGdp ? (
-            <span className="text-slate-100">
+            <span className="text-[var(--map-ui-text)]">
               {formattedGdp}
               {details?.gdpYear ? ` (${details.gdpYear})` : ""}
             </span>
           ) : (
-            <span className="text-slate-100">—</span>
+            <span className="text-[var(--map-ui-text)]">—</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <Maximize2 className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.area}:</span>
+          <Maximize2 className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.area}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : (
-            <span className="text-slate-100">{areaValue}</span>
+            <span className="text-[var(--map-ui-text)]">{areaValue}</span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <Coins className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.currency}:</span>
-          <span className="text-slate-100">
+          <Coins className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.currency}:</span>
+          <span className="text-[var(--map-ui-text)]">
             {currency.symbol} ({currency.code})
           </span>
         </div>
 
         <div className="flex items-start gap-2">
-          <Languages className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="shrink-0 text-slate-400">{t.countryPanel.languages}:</span>
+          <Languages className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="shrink-0 text-[var(--map-ui-muted)]">{t.countryPanel.languages}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : (
-            <span className="text-slate-100">
+            <span className="text-[var(--map-ui-text)]">
               {formattedLanguages || "—"}
             </span>
           )}
         </div>
 
         <div className="flex items-start gap-2">
-          <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="shrink-0 text-slate-400">{t.countryPanel.governmentType}:</span>
+          <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="shrink-0 text-[var(--map-ui-muted)]">{t.countryPanel.governmentType}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : (
-            <span className="text-slate-100">
+            <span className="text-[var(--map-ui-text)]">
               {formattedGovernmentTypes || "—"}
             </span>
           )}
         </div>
 
         <div className="flex items-start gap-2">
-          <Crown className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+          <Crown className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
           <div className="min-w-0 flex-1 space-y-1">
-            <span className="text-slate-400">{t.countryPanel.headOfState}</span>
+            <span className="text-[var(--map-ui-muted)]">{t.countryPanel.headOfState}</span>
             {isLoading ? (
-              <span className="block h-3 w-36 animate-pulse rounded bg-white/15" />
+              <span className="block h-3 w-36 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
             ) : details?.headOfStates?.length ? (
               details.headOfStates.map((leader) => (
                 <p
                   key={`${leader.role ?? "role"}-${leader.name}`}
-                  className="text-slate-100"
+                  className="text-[var(--map-ui-text)]"
                 >
                   {formatLeader(leader)}
                 </p>
               ))
             ) : (
-              <p className="text-slate-100">—</p>
+              <p className="text-[var(--map-ui-text)]">—</p>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Phone className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.callingCode}:</span>
-          <span className="text-slate-100">{callingCode}</span>
+          <Phone className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.callingCode}:</span>
+          <span className="text-[var(--map-ui-text)]">{callingCode}</span>
         </div>
 
         <div className="flex items-start gap-2">
-          <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="shrink-0 text-slate-400">{t.countryPanel.timeZones}:</span>
+          <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="shrink-0 text-[var(--map-ui-muted)]">{t.countryPanel.timeZones}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : (
-            <span className="text-slate-100">
+            <span className="text-[var(--map-ui-text)]">
               {formattedTimeZones || "—"}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <Landmark className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.euAccession}:</span>
-          <span className="text-slate-100">
+          <Landmark className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.euAccession}:</span>
+          <span className="text-[var(--map-ui-text)]">
             {euAccessionYear ?? "—"}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Building className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="text-slate-400">{t.countryPanel.euInstitutions}:</span>
-          <span className="text-slate-100">{euInstitutionCount}</span>
+          <Building className="h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="text-[var(--map-ui-muted)]">{t.countryPanel.euInstitutions}:</span>
+          <span className="text-[var(--map-ui-text)]">{euInstitutionCount}</span>
         </div>
       </div>
 
-      <div className="mt-3 space-y-2 border-t border-white/10 pt-3 text-xs">
+      <div className="mt-3 space-y-2 border-t border-[var(--map-ui-border)] pt-3 text-xs">
         <div className="flex items-start gap-2">
-          <Shield className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+          <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
           <div className="min-w-0 flex-1 space-y-2">
-            <span className="text-slate-400">{t.countryPanel.travelSafety}</span>
+            <span className="text-[var(--map-ui-muted)]">{t.countryPanel.travelSafety}</span>
             {isLoading ? (
-              <span className="block h-8 w-full animate-pulse rounded bg-white/15" />
+              <span className="block h-8 w-full animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
             ) : (
               <>
                 <div
@@ -786,7 +786,7 @@ export default function CountryInfoPanel({
                   </span>
                 </div>
 
-                <p className="text-[10px] leading-snug text-slate-400">
+                <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
                   {t.countryPanel.safetyDisclaimer}
                 </p>
 
@@ -807,29 +807,29 @@ export default function CountryInfoPanel({
         </div>
       </div>
 
-      <div className="mt-3 space-y-2 border-t border-white/10 pt-3 text-xs">
+      <div className="mt-3 space-y-2 border-t border-[var(--map-ui-border)] pt-3 text-xs">
         <div className="flex items-start gap-2">
-          <Quote className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="shrink-0 text-slate-400">{t.countryPanel.nationalMotto}:</span>
+          <Quote className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
+          <span className="shrink-0 text-[var(--map-ui-muted)]">{t.countryPanel.nationalMotto}:</span>
           {isLoading ? (
-            <span className="h-3 w-28 animate-pulse rounded bg-white/15" />
+            <span className="h-3 w-28 animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
           ) : (
-            <span className="text-slate-100">
+            <span className="text-[var(--map-ui-text)]">
               {details?.nationalMotto || "—"}
             </span>
           )}
         </div>
       </div>
 
-      <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+      <div className="mt-3 space-y-2 border-t border-[var(--map-ui-border)] pt-3">
         <div className="flex items-start gap-2">
-          <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+          <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]" aria-hidden="true" />
           <div className="min-w-0 flex-1 space-y-2">
-            <span className="text-xs text-slate-400">{t.countryPanel.overview}</span>
+            <span className="text-xs text-[var(--map-ui-muted)]">{t.countryPanel.overview}</span>
             {isLoading ? (
-              <span className="block h-16 w-full animate-pulse rounded bg-white/15" />
+              <span className="block h-16 w-full animate-pulse rounded bg-[var(--map-ui-surface-hover)]" />
             ) : (
-              <p className="max-h-32 overflow-y-auto text-sm leading-relaxed text-slate-200">
+              <p className="max-h-32 overflow-y-auto text-sm leading-relaxed text-[var(--map-ui-text)]">
                 {details?.wikipediaSummary || "—"}
               </p>
             )}
@@ -850,7 +850,7 @@ export default function CountryInfoPanel({
       </div>
 
       {(details?.officialWebsite || euCountryProfileUrl) && (
-        <div className="mt-3 space-y-2 border-t border-white/10 pt-3 text-xs">
+        <div className="mt-3 space-y-2 border-t border-[var(--map-ui-border)] pt-3 text-xs">
           {details?.officialWebsite && (
             <a
               href={details.officialWebsite}

@@ -47,7 +47,7 @@ export function SituationTab({
       /critical|critique|urgente?/i.test(situationText)
       ? "bg-red-500/20 text-red-300"
       : "bg-amber-500/20 text-amber-300"
-    : "bg-slate-500/20 text-slate-300";
+    : "bg-slate-500/20 text-[var(--map-ui-muted)]";
 
   const causeTone =
     summary.cause.status === "disputed"
@@ -57,7 +57,7 @@ export function SituationTab({
         ? "bg-emerald-500/20 text-emerald-300"
         : summary.cause.status === "known"
           ? "bg-amber-500/20 text-amber-300"
-          : "bg-slate-500/20 text-slate-300";
+          : "bg-slate-500/20 text-[var(--map-ui-muted)]";
 
   const exposedPopulation =
     incident.populationExposure !== null &&
@@ -72,16 +72,16 @@ export function SituationTab({
         icon={Activity}
         iconClassName={situationTone}
       >
-        <p className="text-xs leading-snug text-slate-100">
+        <p className="text-xs leading-snug text-[var(--map-ui-text)]">
           {situationText || t.incidents.opsSituationUnknown}
         </p>
         {!situationText && incident.description && (
-          <p className="mt-1.5 text-[11px] leading-snug text-slate-300">
+          <p className="mt-1.5 text-[11px] leading-snug text-[var(--map-ui-muted)]">
             {incident.description}
           </p>
         )}
         {exposedPopulation && (
-          <p className="mt-2 text-[10px] text-slate-400">
+          <p className="mt-2 text-[10px] text-[var(--map-ui-muted)]">
             {t.incidents.exposedPopulation}: {exposedPopulation}
           </p>
         )}
@@ -92,7 +92,7 @@ export function SituationTab({
         icon={Search}
         iconClassName={causeTone}
       >
-        <p className="text-xs leading-snug text-slate-100">
+        <p className="text-xs leading-snug text-[var(--map-ui-text)]">
           {summary.cause.status === "unknown" || !summary.cause.description
             ? t.incidents.opsCauseUnconfirmed
             : summary.cause.description}
@@ -102,10 +102,10 @@ export function SituationTab({
       <OperationalSection
         title={t.incidents.opsLastKnownAreas}
         icon={Info}
-        iconClassName="bg-slate-500/20 text-slate-300"
+        iconClassName="bg-slate-500/20 text-[var(--map-ui-muted)]"
       >
         {summary.areaMeasurements.length === 0 && (
-          <p className="text-[11px] text-slate-300">
+          <p className="text-[11px] text-[var(--map-ui-muted)]">
             {t.incidents.dataUnavailable}
           </p>
         )}
@@ -122,7 +122,7 @@ export function SituationTab({
             />
           ))}
         </div>
-        <p className="pt-1 text-[10px] leading-snug text-slate-500">
+        <p className="pt-1 text-[10px] leading-snug text-[var(--map-ui-muted)]">
           {t.incidents.opsAreaMethodsNote}
         </p>
       </OperationalSection>
@@ -132,19 +132,19 @@ export function SituationTab({
         icon={Truck}
         iconClassName="bg-sky-500/20 text-sky-300"
       >
-        <p className="text-xs leading-snug text-slate-100">
+        <p className="text-xs leading-snug text-[var(--map-ui-text)]">
           {summary.deployedResources?.summary ||
             t.incidents.opsResourcesUnknown}
         </p>
       </OperationalCard>
 
-      <p className="text-[10px] text-slate-400">
+      <p className="text-[10px] text-[var(--map-ui-muted)]">
         {t.incidents.opsLastUpdate}:{" "}
         {formatIncidentDate(summary.lastUpdatedAt, locale) ||
           t.incidents.dataUnavailable}
       </p>
 
-      <p className="text-[10px] leading-snug text-slate-500">
+      <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
         {t.incidents.disclaimer}
       </p>
     </div>

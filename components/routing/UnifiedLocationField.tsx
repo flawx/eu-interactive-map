@@ -144,7 +144,7 @@ export default function UnifiedLocationField({
 
   return (
     <div ref={rootRef} className="relative">
-      <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
+      <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-[var(--map-ui-muted)]">
         {label}
       </label>
       <div className="relative">
@@ -156,7 +156,7 @@ export default function UnifiedLocationField({
           aria-autocomplete="list"
           aria-controls={listId}
           aria-expanded={open}
-          className="min-h-11 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 pr-9 text-sm text-slate-100 outline-none ring-[#1a73e8]/50 focus:ring-2"
+          className="min-h-11 w-full rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 pr-9 text-sm text-[var(--map-ui-text)] outline-none ring-[#1a73e8]/50 focus:ring-2"
           onChange={(event) => {
             skipSearchRef.current = false;
             setQuery(event.target.value);
@@ -167,14 +167,14 @@ export default function UnifiedLocationField({
           }}
         />
         {loading ? (
-          <LoaderCircle className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" />
+          <LoaderCircle className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--map-ui-muted)]" />
         ) : null}
       </div>
       {open && results.length > 0 ? (
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-white/10 bg-slate-950/95 shadow-xl"
+          className="map-ui-panel absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl"
         >
           {results.map((result) => {
             const Icon = iconFor(result.kind);
@@ -182,7 +182,7 @@ export default function UnifiedLocationField({
               <li key={result.id} role="option">
                 <button
                   type="button"
-                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-white/10"
+                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-[var(--map-ui-surface-hover)]"
                   onClick={() => {
                     skipSearchRef.current = true;
                     onSelect(
@@ -200,14 +200,14 @@ export default function UnifiedLocationField({
                   }}
                 >
                   <Icon
-                    className="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--map-ui-muted)]"
                     aria-hidden
                   />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm text-slate-100">
+                    <span className="block truncate text-sm text-[var(--map-ui-text)]">
                       {result.name}
                     </span>
-                    <span className="block truncate text-xs text-slate-400">
+                    <span className="block truncate text-xs text-[var(--map-ui-muted)]">
                       {result.subtitle}
                     </span>
                   </span>
@@ -218,7 +218,7 @@ export default function UnifiedLocationField({
         </ul>
       ) : null}
       {open && !loading && query.trim().length >= 2 && results.length === 0 ? (
-        <div className="absolute z-30 mt-1 w-full rounded-xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-slate-400 shadow-xl">
+        <div className="map-ui-panel absolute z-30 mt-1 w-full rounded-xl px-3 py-2 text-xs text-[var(--map-ui-muted)]">
           {t.noResults}
         </div>
       ) : null}

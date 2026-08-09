@@ -19,6 +19,8 @@ html[data-theme="light"] {
   --app-header-height: 72px;
   --map-panel-top-offset: calc(76px + env(safe-area-inset-top, 0px));
   --map-ui-surface: var(--surface);
+  --map-ui-surface-elevated: var(--surface-elevated);
+  --map-ui-surface-muted: var(--surface-muted);
   --map-ui-surface-hover: var(--surface-hover);
   --map-ui-text: var(--text);
   --map-ui-muted: var(--text-muted);
@@ -43,6 +45,8 @@ html[data-theme="dark"] {
   --success: #81c995;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
   --map-ui-surface: var(--surface);
+  --map-ui-surface-elevated: var(--surface-elevated);
+  --map-ui-surface-muted: var(--surface-muted);
   --map-ui-surface-hover: var(--surface-hover);
   --map-ui-text: var(--text);
   --map-ui-muted: var(--text-muted);
@@ -69,6 +73,39 @@ html[data-theme="dark"] {
 
 .map-ui-control:hover {
   background: var(--map-ui-surface-hover);
+}
+
+/* Shared themed overlay panels (Legend language, not hardcoded slate). */
+.map-ui-panel {
+  background: var(--map-ui-surface);
+  color: var(--map-ui-text);
+  border: 1px solid var(--map-ui-border);
+  border-radius: var(--map-ui-radius);
+  box-shadow: var(--map-ui-shadow);
+}
+
+.map-ui-panel-muted {
+  background: var(--map-ui-surface-muted);
+  color: var(--map-ui-muted);
+}
+
+.map-ui-seg {
+  background: var(--map-ui-surface-muted);
+}
+
+.map-ui-seg-btn {
+  color: var(--map-ui-muted);
+}
+
+.map-ui-seg-btn:hover {
+  background: var(--map-ui-surface-hover);
+  color: var(--map-ui-text);
+}
+
+.map-ui-seg-btn-active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 @theme inline {

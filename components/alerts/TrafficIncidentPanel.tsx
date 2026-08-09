@@ -236,8 +236,8 @@ export default function TrafficIncidentPanel({
   ];
 
   return (
-    <aside className="absolute bottom-3 left-3 top-[4.5rem] z-40 flex w-[min(25rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/95 text-white shadow-2xl backdrop-blur">
-      <header className="flex shrink-0 items-start gap-3 border-b border-white/10 p-4">
+    <aside className="map-ui-panel absolute bottom-3 left-3 top-[4.5rem] z-40 flex w-[min(25rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl backdrop-blur">
+      <header className="flex shrink-0 items-start gap-3 border-b border-[var(--map-ui-border)] p-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-500/20 text-orange-200">
           <Icon className="h-6 w-6" aria-hidden />
         </span>
@@ -248,7 +248,7 @@ export default function TrafficIncidentPanel({
           <h2 className="mt-1 text-lg font-semibold leading-tight">
             {details.title}
           </h2>
-          <p className="mt-1 text-sm text-slate-300">
+          <p className="mt-1 text-sm text-[var(--map-ui-muted)]">
             {[
               roadNumbers,
               metadata.status,
@@ -261,7 +261,7 @@ export default function TrafficIncidentPanel({
         <button
           type="button"
           onClick={onClose}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] hover:bg-[var(--map-ui-surface-hover)]"
           aria-label="Close"
         >
           <X className="h-5 w-5" aria-hidden />
@@ -270,8 +270,8 @@ export default function TrafficIncidentPanel({
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
         {Boolean(details.description) && (
           <section>
-            <h3 className="text-sm font-semibold text-white">Overview</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
+            <h3 className="text-sm font-semibold text-[var(--map-ui-text)]">Overview</h3>
+            <p className="mt-2 text-sm leading-6 text-[var(--map-ui-muted)]">
               {details.description}
             </p>
           </section>
@@ -294,8 +294,8 @@ export default function TrafficIncidentPanel({
               <dl className="mt-3 space-y-2 text-sm">
                 {visibleRows.map(([label, value]) => (
                   <div key={label} className="flex gap-4">
-                    <dt className="min-w-0 flex-1 text-slate-400">{label}</dt>
-                    <dd className="max-w-[60%] text-right text-slate-100">
+                    <dt className="min-w-0 flex-1 text-[var(--map-ui-muted)]">{label}</dt>
+                    <dd className="max-w-[60%] text-right text-[var(--map-ui-text)]">
                       {value}
                     </dd>
                   </div>
@@ -304,7 +304,7 @@ export default function TrafficIncidentPanel({
             </section>
           );
         })}
-        <section className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-5 text-slate-300">
+        <section className="space-y-2 rounded-xl border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] p-3 text-xs leading-5 text-[var(--map-ui-muted)]">
           <p>
             Traffic conditions can change rapidly. Follow road signs and the
             instructions of road authorities.
@@ -320,7 +320,7 @@ export default function TrafficIncidentPanel({
             <Clock3 className="h-4 w-4" aria-hidden />
             Source and attribution
           </h3>
-          <p className="mt-2 text-sm text-slate-300">{details.officialSourceName}</p>
+          <p className="mt-2 text-sm text-[var(--map-ui-muted)]">{details.officialSourceName}</p>
           {details.sourceUrl && (
             <a
               href={details.sourceUrl}

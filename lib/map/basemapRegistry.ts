@@ -6,23 +6,28 @@ export type BasemapId =
   | "cycling"
   | "satellite";
 
+/** How basemap tiles react to the resolved UI theme. */
+export type BasemapThemeBehavior =
+  | "adaptive"
+  | "fixed-light"
+  | "fixed-dark"
+  | "independent";
+
+export type BasemapTileStyle = {
+  tiles: string[];
+  attribution: string;
+  maxzoom?: number;
+  tileSize?: number;
+};
+
 export type BasemapDefinition = {
   id: BasemapId;
   nameKey: string;
   category: "general" | "thematic" | "imagery";
   styleType: "raster" | "vector";
-  lightStyle: {
-    tiles: string[];
-    attribution: string;
-    maxzoom?: number;
-    tileSize?: number;
-  } | null;
-  darkStyle: {
-    tiles: string[];
-    attribution: string;
-    maxzoom?: number;
-    tileSize?: number;
-  } | null;
+  themeBehavior: BasemapThemeBehavior;
+  lightStyle: BasemapTileStyle | null;
+  darkStyle: BasemapTileStyle | null;
   attribution: string;
   provider: string;
   maxZoom: number;
@@ -36,30 +41,48 @@ export type BasemapDefinition = {
 const CARTO_ATTR =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
+const CARTO_VOYAGER: BasemapTileStyle = {
+  tiles: [
+    "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+    "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+    "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+  ],
+  attribution: CARTO_ATTR,
+  maxzoom: 19,
+  tileSize: 256,
+};
+
+const CARTO_DARK_MATTER: BasemapTileStyle = {
+  tiles: [
+    "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+    "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+    "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+  ],
+  attribution: CARTO_ATTR,
+  maxzoom: 19,
+  tileSize: 256,
+};
+
+const CARTO_POSITRON: BasemapTileStyle = {
+  tiles: [
+    "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+    "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+    "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+  ],
+  attribution: CARTO_ATTR,
+  maxzoom: 19,
+  tileSize: 256,
+};
+
 export const BASEMAP_REGISTRY: readonly BasemapDefinition[] = [
   {
     id: "standard",
     nameKey: "standard",
     category: "general",
     styleType: "raster",
-    lightStyle: {
-      tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-      ],
-      attribution: CARTO_ATTR,
-      maxzoom: 19,
-      tileSize: 256,
-    },
-    darkStyle: {
-      tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-      ],
-      attribution: CARTO_ATTR,
-      maxzoom: 19,
-      tileSize: 256,
-    },
+    themeBehavior: "adaptive",
+    lightStyle: CARTO_VOYAGER,
+    darkStyle: CARTO_DARK_MATTER,
     attribution: CARTO_ATTR,
     provider: "CARTO",
     maxZoom: 19,
@@ -74,15 +97,8 @@ export const BASEMAP_REGISTRY: readonly BasemapDefinition[] = [
     nameKey: "light",
     category: "general",
     styleType: "raster",
-    lightStyle: {
-      tiles: [
-        "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-      ],
-      attribution: CARTO_ATTR,
-      maxzoom: 19,
-      tileSize: 256,
-    },
+    themeBehavior: "fixed-light",
+    lightStyle: CARTO_POSITRON,
     darkStyle: null,
     attribution: CARTO_ATTR,
     provider: "CARTO",
@@ -98,16 +114,9 @@ export const BASEMAP_REGISTRY: readonly BasemapDefinition[] = [
     nameKey: "dark",
     category: "general",
     styleType: "raster",
+    themeBehavior: "fixed-dark",
     lightStyle: null,
-    darkStyle: {
-      tiles: [
-        "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-      ],
-      attribution: CARTO_ATTR,
-      maxzoom: 19,
-      tileSize: 256,
-    },
+    darkStyle: CARTO_DARK_MATTER,
     attribution: CARTO_ATTR,
     provider: "CARTO",
     maxZoom: 19,
@@ -122,6 +131,7 @@ export const BASEMAP_REGISTRY: readonly BasemapDefinition[] = [
     nameKey: "transport",
     category: "thematic",
     styleType: "raster",
+    themeBehavior: "adaptive",
     lightStyle: {
       // OpenFreeMap / community transport-style raster is not licensed for
       // production here; reuse Voyager until a vetted vector style is wired.
@@ -155,6 +165,7 @@ export const BASEMAP_REGISTRY: readonly BasemapDefinition[] = [
     nameKey: "cycling",
     category: "thematic",
     styleType: "raster",
+    themeBehavior: "adaptive",
     lightStyle: {
       tiles: [
         "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
@@ -186,6 +197,7 @@ export const BASEMAP_REGISTRY: readonly BasemapDefinition[] = [
     nameKey: "satellite",
     category: "imagery",
     styleType: "raster",
+    themeBehavior: "independent",
     lightStyle: null,
     darkStyle: null,
     attribution: "",
@@ -211,13 +223,26 @@ export function getBasemapById(id: string): BasemapDefinition | undefined {
 export function resolveBasemapTileConfig(
   basemapId: string,
   resolvedTheme: "light" | "dark",
-): NonNullable<BasemapDefinition["lightStyle"]> | null {
+): BasemapTileStyle | null {
   const basemap = getBasemapById(basemapId) ?? getBasemapById("standard");
   if (!basemap || !basemap.enabled) {
     return getBasemapById("standard")?.lightStyle ?? null;
   }
-  if (resolvedTheme === "dark") {
-    return basemap.darkStyle ?? basemap.lightStyle;
+
+  const pickAdaptive = () =>
+    resolvedTheme === "dark"
+      ? (basemap.darkStyle ?? basemap.lightStyle)
+      : (basemap.lightStyle ?? basemap.darkStyle);
+
+  switch (basemap.themeBehavior) {
+    case "fixed-light":
+      return basemap.lightStyle ?? basemap.darkStyle;
+    case "fixed-dark":
+      return basemap.darkStyle ?? basemap.lightStyle;
+    case "independent":
+      return basemap.lightStyle ?? basemap.darkStyle ?? pickAdaptive();
+    case "adaptive":
+    default:
+      return pickAdaptive();
   }
-  return basemap.lightStyle ?? basemap.darkStyle;
 }

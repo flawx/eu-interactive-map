@@ -34,7 +34,7 @@ export function OperationalTabs({
 
   return (
     <nav
-      className="sticky top-0 z-10 -mx-4 border-b border-white/10 bg-slate-950/95 px-4 py-2 backdrop-blur-md"
+      className="map-ui-panel sticky top-0 z-10 -mx-4 border-b px-4 py-2 backdrop-blur-md"
       aria-label="Operational sections"
     >
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-2">
@@ -50,7 +50,7 @@ export function OperationalTabs({
                 className={`inline-flex min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-[10px] outline-none transition focus-visible:ring-2 focus-visible:ring-sky-400/70 sm:min-w-0 ${
                   isActive
                     ? "border-sky-400/40 bg-sky-500/15 text-sky-100"
-                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                    : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)] hover:bg-[var(--map-ui-surface-hover)]"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />

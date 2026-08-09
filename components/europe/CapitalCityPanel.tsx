@@ -164,35 +164,35 @@ export default function CapitalCityPanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3 backdrop-blur-md">
         <div className="flex items-start gap-2.5">
           <img
             src={flagUrl}
             alt=""
             width={48}
             height={36}
-            className="h-9 w-12 shrink-0 rounded-sm border border-white/20 object-cover shadow-sm"
+            className="h-9 w-12 shrink-0 rounded-sm border border-[var(--map-ui-border)] object-cover shadow-sm"
           />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-snug">{displayName}</p>
             {capital.nativeName !== displayName ? (
-              <p className="text-[11px] text-slate-300">{capital.nativeName}</p>
+              <p className="text-[11px] text-[var(--map-ui-muted)]">{capital.nativeName}</p>
             ) : null}
-            <p className="text-[11px] text-slate-400">{countryName}</p>
+            <p className="text-[11px] text-[var(--map-ui-muted)]">{countryName}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={t.countryPanel.close}
             title={t.countryPanel.close}
-            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-slate-300 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-400/70"
+            className="inline-flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md text-[var(--map-ui-muted)] outline-none transition hover:bg-[var(--map-ui-surface-hover)] hover:text-[var(--map-ui-text)] focus-visible:ring-2 focus-visible:ring-sky-400/70"
           >
             <X aria-hidden="true" size={22} strokeWidth={2} />
           </button>
@@ -216,14 +216,14 @@ export default function CapitalCityPanel({
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
         {capital.noteKey === "governmentInTheHague" ? (
-          <p className="mb-3 text-[11px] leading-relaxed text-slate-300">
+          <p className="mb-3 text-[11px] leading-relaxed text-[var(--map-ui-muted)]">
             {t.capitalPanel.governmentInTheHague}
           </p>
         ) : null}
 
         {currentPhoto ? (
           <div className="space-y-2">
-            <div className="relative aspect-video overflow-hidden rounded-lg bg-slate-900">
+            <div className="relative aspect-video overflow-hidden rounded-lg bg-[var(--map-ui-surface-muted)]">
               <img
                 src={currentPhoto.url}
                 alt={currentPhoto.title ?? displayName}
@@ -239,7 +239,7 @@ export default function CapitalCityPanel({
                         (index) => (index - 1 + photos.length) % photos.length,
                       )
                     }
-                    className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/70 outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
+                    className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--map-ui-surface)]/80 text-[var(--map-ui-text)] outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -249,7 +249,7 @@ export default function CapitalCityPanel({
                     onClick={() =>
                       setPhotoIndex((index) => (index + 1) % photos.length)
                     }
-                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/70 outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
+                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--map-ui-surface)]/80 text-[var(--map-ui-text)] outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -257,7 +257,7 @@ export default function CapitalCityPanel({
               ) : null}
             </div>
             {(currentPhoto.author || currentPhoto.license) && (
-              <p className="text-[10px] leading-snug text-slate-400">
+              <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
                 {t.capitalPanel.photoCredit}
                 {": "}
                 {[currentPhoto.author, currentPhoto.license]
@@ -280,26 +280,26 @@ export default function CapitalCityPanel({
             )}
           </div>
         ) : loading ? (
-          <div className="mb-3 aspect-video animate-pulse rounded-lg bg-white/10" />
+          <div className="mb-3 aspect-video animate-pulse rounded-lg bg-[var(--map-ui-surface-muted)]" />
         ) : (
-          <div className="mb-3 flex aspect-video items-center justify-center rounded-lg border border-dashed border-white/15 bg-slate-900/60 text-[11px] text-slate-400">
+          <div className="mb-3 flex aspect-video items-center justify-center rounded-lg border border-dashed border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] text-[11px] text-[var(--map-ui-muted)]">
             {displayName}
           </div>
         )}
 
         <section className="mt-4 space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.capitalPanel.presentation}
           </h3>
           {loading && !details?.description ? (
             <div className="space-y-2">
-              <div className="h-3 animate-pulse rounded bg-white/10" />
-              <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
-              <div className="h-3 w-4/6 animate-pulse rounded bg-white/10" />
+              <div className="h-3 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+              <div className="h-3 w-5/6 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
+              <div className="h-3 w-4/6 animate-pulse rounded bg-[var(--map-ui-surface-muted)]" />
             </div>
           ) : details?.description ? (
             <>
-              <p className="text-sm leading-relaxed text-slate-200">
+              <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
                 {details.description.length > 520
                   ? `${details.description.slice(0, 520).trim()}…`
                   : details.description}
@@ -317,16 +317,16 @@ export default function CapitalCityPanel({
               ) : null}
             </>
           ) : error ? (
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-[var(--map-ui-muted)]">
               {t.capitalPanel.detailsUnavailable}
             </p>
           ) : (
-            <p className="text-sm text-slate-400">{t.capitalPanel.unavailable}</p>
+            <p className="text-sm text-[var(--map-ui-muted)]">{t.capitalPanel.unavailable}</p>
           )}
         </section>
 
         <section className="mt-4 space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.capitalPanel.keyFigures}
           </h3>
           <div className="grid grid-cols-1 gap-2">
@@ -379,8 +379,8 @@ export default function CapitalCityPanel({
           </div>
         </section>
 
-        <section className="mt-4 space-y-2 border-t border-white/10 pt-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <section className="mt-4 space-y-2 border-t border-[var(--map-ui-border)] pt-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {t.capitalPanel.officialLinks}
           </h3>
           {details?.officialWebsite ? (
@@ -426,8 +426,8 @@ export default function CapitalCityPanel({
           </button>
         </section>
 
-        <section className="mt-4 space-y-1 border-t border-white/10 pt-3 pb-2 text-[10px] leading-relaxed text-slate-400">
-          <p className="font-semibold text-slate-300">{t.capitalPanel.sources}</p>
+        <section className="mt-4 space-y-1 border-t border-[var(--map-ui-border)] pt-3 pb-2 text-[10px] leading-relaxed text-[var(--map-ui-muted)]">
+          <p className="font-semibold text-[var(--map-ui-muted)]">{t.capitalPanel.sources}</p>
           <p>{t.capitalPanel.sourceWikidata}</p>
           <p>{t.capitalPanel.sourceWikipedia}</p>
           <p>{t.capitalPanel.sourceCommons}</p>
@@ -451,13 +451,13 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2">
+    <div className="flex items-start gap-2.5 rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-2.5 py-2">
       <span className="mt-0.5 shrink-0">{icon}</span>
       <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+        <p className="text-[10px] uppercase tracking-wide text-[var(--map-ui-muted)]">
           {label}
         </p>
-        <p className="text-sm font-medium text-slate-100">{value}</p>
+        <p className="text-sm font-medium text-[var(--map-ui-text)]">{value}</p>
       </div>
     </div>
   );

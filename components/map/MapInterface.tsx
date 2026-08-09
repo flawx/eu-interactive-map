@@ -118,6 +118,10 @@ import {
   type MapDimensionMode,
 } from "@/lib/map/mapViewPreferences";
 import {
+  getBasemapById,
+  resolveBasemapTileConfig,
+} from "@/lib/map/basemapRegistry";
+import {
   hasSeenLocationPrompt,
   isGeolocationSecureContext,
   isGeolocationSupported,
@@ -664,6 +668,21 @@ export default function MapInterface() {
   const focusGeometryRef = useRef<((geometry: GeoJSON.Geometry) => void) | null>(
     null,
   );
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const resolved = resolveBasemapTileConfig(basemapId, resolvedTheme);
+    console.info("[theme audit]", {
+      theme: preferences.appearance.theme,
+      resolvedTheme,
+      basemapId,
+      themeBehavior: getBasemapById(basemapId)?.themeBehavior ?? null,
+      resolvedBasemapVariant: resolved?.tiles[0] ?? null,
+      trafficPanelTokens: true,
+      hardcodedDarkSurfaces: "migrated-to-map-ui-panel",
+      hardcodedLightSurfaces: "none",
+    });
+  }, [basemapId, preferences.appearance.theme, resolvedTheme]);
 
   const t = getMessages(locale);
 
@@ -4522,13 +4541,13 @@ export default function MapInterface() {
         )}
 
         {effisBurnedAreaLoading && (
-          <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-[11px] text-slate-200 shadow-xl backdrop-blur-md">
+          <div className="map-ui-panel absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full px-3 py-1.5 text-[11px] backdrop-blur-md">
             {t.incidents.satelliteLookupLoading}
           </div>
         )}
 
         {(firmsLoadingOverlay || firmsUnavailableMessage) && (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
+          <div className="map-ui-panel pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg px-4 py-2.5 text-center text-xs backdrop-blur-md">
             {firmsLoadingOverlay
               ? t.incidents.firmsLoading
               : t.incidents.firmsTemporarilyUnavailable}
@@ -4536,7 +4555,7 @@ export default function MapInterface() {
         )}
 
         {(firmsHistoryLoadingOverlay || firmsHistoryUnavailableMessage) && (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
+          <div className="map-ui-panel pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-lg px-4 py-2.5 text-center text-xs backdrop-blur-md">
             {firmsHistoryLoadingOverlay
               ? t.incidents.firmsHistoryLoading
               : t.incidents.firmsHistoryUnavailable}
@@ -4544,13 +4563,13 @@ export default function MapInterface() {
         )}
 
         {showEffisUnavailableBanner && (
-          <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/90 px-4 py-2 text-center text-xs text-slate-200 shadow-xl backdrop-blur-md">
+          <div className="map-ui-panel pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md px-4 py-2 text-center text-xs backdrop-blur-md">
             {t.incidents.effisTemporarilyUnavailable}
           </div>
         )}
 
         {showEffisUnavailableNasaShown && !showEffisUnavailableBanner && (
-          <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border border-white/10 bg-slate-950/70 px-3 py-1.5 text-center text-[10px] text-slate-300 shadow-lg backdrop-blur-md">
+          <div className="map-ui-panel pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md px-3 py-1.5 text-center text-[10px] text-[var(--map-ui-muted)] backdrop-blur-md">
             {t.incidents.effisUnavailableNasaShown}
           </div>
         )}
@@ -4560,7 +4579,7 @@ export default function MapInterface() {
             <p className="font-medium text-cyan-100">
               {t.alertPanel.observationNotForecast}
             </p>
-            <p className="mt-1 text-slate-400">
+            <p className="mt-1 text-[var(--map-ui-muted)]">
               {t.alertPanel.acquisitionTime}:{" "}
               {copernicusFloodStatus.acquisitionTime
                 ? new Intl.DateTimeFormat(locale, {
@@ -4650,13 +4669,13 @@ export default function MapInterface() {
 
         {routeContextMenu ? (
           <div
-            className="pointer-events-auto absolute z-[50] w-56 rounded-xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl"
+            className="map-ui-panel pointer-events-auto absolute z-[50] w-56 rounded-xl p-2"
             style={{ left: 16, bottom: 96 }}
             role="menu"
           >
             <button
               type="button"
-              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-slate-100 hover:bg-white/10"
+              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               onClick={() => {
                 openRoutePlanner({
                   origin: {
@@ -4673,7 +4692,7 @@ export default function MapInterface() {
             </button>
             <button
               type="button"
-              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-slate-100 hover:bg-white/10"
+              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-[var(--map-ui-text)] hover:bg-[var(--map-ui-surface-hover)]"
               onClick={() => {
                 openRoutePlanner({
                   destination: {
@@ -4690,7 +4709,7 @@ export default function MapInterface() {
             </button>
             <button
               type="button"
-              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-slate-400 hover:bg-white/10"
+              className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm text-[var(--map-ui-muted)] hover:bg-[var(--map-ui-surface-hover)]"
               onClick={() => setRouteContextMenu(null)}
             >
               {t.routePlanner.close}

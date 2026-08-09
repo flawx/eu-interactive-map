@@ -111,12 +111,12 @@ export function AreaMeasurementCard({
       : null;
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5">
+    <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2.5">
       <div className="flex items-start gap-2.5">
         <OperationalIconBox icon={icon} className={className} />
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-[11px] font-medium leading-snug text-slate-100">
+            <p className="text-[11px] font-medium leading-snug text-[var(--map-ui-text)]">
               {measurementTitle(measurement.kind, t)}
             </p>
             <OperationalBadge label={badge.label} tone={badge.tone} />
@@ -126,7 +126,7 @@ export function AreaMeasurementCard({
               ? `${numberFormatter.format(measurement.valueHectares)} ha`
               : t.incidents.dataUnavailable}
           </p>
-          <div className="space-y-0.5 text-[10px] text-slate-400">
+          <div className="space-y-0.5 text-[10px] text-[var(--map-ui-muted)]">
             {measurement.kind === "firms_24h" && observed && (
               <p>
                 {t.incidents.firmsLastObservation}: {observed}
@@ -169,12 +169,12 @@ export function AreaMeasurementCard({
             <p>{measurement.source}</p>
           </div>
           {measurement.kind === "firms_24h" && (
-            <p className="text-[10px] leading-snug text-slate-500">
+            <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
               {t.incidents.firmsAreaDisclaimer}
             </p>
           )}
           {measurement.kind === "firms_7d" && (
-            <p className="text-[10px] leading-snug text-slate-500">
+            <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
               {t.incidents.firmsHistoryDisclaimer}
             </p>
           )}

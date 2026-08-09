@@ -38,12 +38,12 @@ export default function EffisBurnedAreaPanel({
   const updatedAt = formatDate(burnedArea.updatedAt, locale);
 
   return (
-    <aside className="absolute bottom-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/85 p-4 text-white shadow-xl backdrop-blur-md">
+    <aside className="map-ui-panel absolute bottom-4 left-4 z-10 w-80 max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl p-4 backdrop-blur-md">
       <button
         type="button"
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-slate-300 transition hover:bg-white/10 hover:text-white"
+        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-[var(--map-ui-muted)] transition hover:bg-[var(--map-ui-surface-hover)] hover:text-[var(--map-ui-text)]"
       >
         ×
       </button>
@@ -54,59 +54,59 @@ export default function EffisBurnedAreaPanel({
 
       <div className="mt-3 space-y-2 text-xs">
         <div className="flex items-start gap-2">
-          <span className="shrink-0 text-slate-400">
+          <span className="shrink-0 text-[var(--map-ui-muted)]">
             {t.incidents.satelliteArea}:
           </span>
-          <span className="text-slate-100">
+          <span className="text-[var(--map-ui-text)]">
             {areaLabel || t.incidents.dataUnavailable}
           </span>
         </div>
 
         {burnedArea.areaSource === "calculated-from-geometry" && areaLabel && (
-          <p className="text-[10px] leading-snug text-slate-400">
+          <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
             {t.incidents.calculatedArea}
           </p>
         )}
 
         <div className="flex items-start gap-2">
-          <span className="shrink-0 text-slate-400">
+          <span className="shrink-0 text-[var(--map-ui-muted)]">
             {t.incidents.satelliteDetectedAt}:
           </span>
-          <span className="text-slate-100">
+          <span className="text-[var(--map-ui-text)]">
             {detectedAt || t.incidents.dataUnavailable}
           </span>
         </div>
 
         <div className="flex items-start gap-2">
-          <span className="shrink-0 text-slate-400">
+          <span className="shrink-0 text-[var(--map-ui-muted)]">
             {t.incidents.satelliteUpdatedAt}:
           </span>
-          <span className="text-slate-100">
+          <span className="text-[var(--map-ui-text)]">
             {updatedAt || t.incidents.dataUnavailable}
           </span>
         </div>
 
         <div className="flex items-start gap-2">
-          <span className="shrink-0 text-slate-400">{t.incidents.country}:</span>
-          <span className="text-slate-100">
+          <span className="shrink-0 text-[var(--map-ui-muted)]">{t.incidents.country}:</span>
+          <span className="text-[var(--map-ui-text)]">
             {burnedArea.countryName || t.incidents.dataUnavailable}
           </span>
         </div>
 
         {burnedArea.regionName && (
-          <p className="text-slate-200">{burnedArea.regionName}</p>
+          <p className="text-[var(--map-ui-text)]">{burnedArea.regionName}</p>
         )}
 
         <div className="flex items-start gap-2">
-          <span className="shrink-0 text-slate-400">
+          <span className="shrink-0 text-[var(--map-ui-muted)]">
             {t.incidents.sourceLayer}:
           </span>
-          <span className="text-slate-100">{burnedArea.sourceLayer}</span>
+          <span className="text-[var(--map-ui-text)]">{burnedArea.sourceLayer}</span>
         </div>
 
         <div className="flex items-start gap-2">
-          <span className="shrink-0 text-slate-400">{t.incidents.source}:</span>
-          <span className="text-slate-100">{burnedArea.sourceName}</span>
+          <span className="shrink-0 text-[var(--map-ui-muted)]">{t.incidents.source}:</span>
+          <span className="text-[var(--map-ui-text)]">{burnedArea.sourceName}</span>
         </div>
 
         <a
@@ -118,7 +118,7 @@ export default function EffisBurnedAreaPanel({
           {t.incidents.openSource}
         </a>
 
-        <p className="text-[10px] leading-snug text-slate-400">
+        <p className="text-[10px] leading-snug text-[var(--map-ui-muted)]">
           {t.incidents.effisDisclaimer}
         </p>
       </div>

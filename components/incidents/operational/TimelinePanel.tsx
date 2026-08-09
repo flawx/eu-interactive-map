@@ -96,7 +96,7 @@ function iconFor(item: WildfireTimelineItem) {
   }
   return {
     icon: Clock3,
-    className: "bg-slate-500/20 text-slate-300",
+    className: "bg-slate-500/20 text-[var(--map-ui-muted)]",
   };
 }
 
@@ -131,20 +131,20 @@ function TimelineEvent({
   const verification = verificationBadgeLabel(item.verificationStatus, t);
 
   return (
-    <div className="relative flex gap-2.5 border-l border-white/10 pl-3">
+    <div className="relative flex gap-2.5 border-l border-[var(--map-ui-border)] pl-3">
       <span className="absolute -left-[9px] top-1">
         <OperationalIconBox icon={icon} className={className} size="sm" />
       </span>
       <div className="min-w-0 flex-1 space-y-1 pb-3">
-        <p className="text-[10px] text-slate-400">
+        <p className="text-[10px] text-[var(--map-ui-muted)]">
           {when || t.incidents.dataUnavailable}
         </p>
-        <p className="text-xs font-medium text-slate-100">{item.title}</p>
+        <p className="text-xs font-medium text-[var(--map-ui-text)]">{item.title}</p>
         {item.body && (
-          <p className="text-[11px] leading-snug text-slate-300">{item.body}</p>
+          <p className="text-[11px] leading-snug text-[var(--map-ui-muted)]">{item.body}</p>
         )}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] text-slate-400">{item.sourceName}</span>
+          <span className="text-[10px] text-[var(--map-ui-muted)]">{item.sourceName}</span>
           {verification && (
             <OperationalBadge
               label={verification}
@@ -205,7 +205,7 @@ export function TimelinePanel({
             className={`shrink-0 rounded-full border px-2 py-1 text-[9px] outline-none transition focus-visible:ring-2 focus-visible:ring-sky-400/70 ${
               filter === entry.id
                 ? "border-sky-400/40 bg-sky-500/15 text-sky-100"
-                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                : "border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] text-[var(--map-ui-muted)] hover:bg-[var(--map-ui-surface-hover)]"
             }`}
           >
             {entry.label}
@@ -219,7 +219,7 @@ export function TimelinePanel({
 
       {grouped.map(([key, dayItems]) => (
         <div key={key} className="space-y-1">
-          <p className="text-[10px] font-medium text-slate-400">
+          <p className="text-[10px] font-medium text-[var(--map-ui-muted)]">
             {formatDayHeading(dayItems[0]?.occurredAt ?? key, locale)}
           </p>
           <div className="pl-1">

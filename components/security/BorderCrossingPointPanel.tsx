@@ -70,14 +70,14 @@ export default function BorderCrossingPointPanel({
 
   return (
     <aside
-      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 text-white shadow-xl backdrop-blur-md"
+      className="absolute left-4 z-10 flex w-80 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl map-ui-panel backdrop-blur-md"
       style={{
         top: "var(--map-panel-top-offset)",
         maxHeight:
           "calc(100dvh - var(--map-panel-top-offset) - max(16px, env(safe-area-inset-bottom, 0px)))",
       }}
     >
-      <header className="sticky top-0 z-[5] shrink-0 border-b border-white/10 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+      <header className="sticky top-0 z-[5] shrink-0 border-b border-[var(--map-ui-border)] bg-[var(--map-ui-surface)] px-4 py-3 backdrop-blur-md">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-blue-400/40 bg-blue-950/70 text-blue-100">
             <ModeIcon mode={point.mode} />
@@ -86,7 +86,7 @@ export default function BorderCrossingPointPanel({
             <p className="text-sm font-semibold leading-snug">
               {point.officialName}
             </p>
-            <p className="text-[11px] text-slate-300">
+            <p className="text-[11px] text-[var(--map-ui-muted)]">
               {country}
               {neighbour ? ` · ${neighbour}` : ""}
             </p>
@@ -95,7 +95,7 @@ export default function BorderCrossingPointPanel({
             type="button"
             onClick={onClose}
             aria-label={t.countryPanel.close}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-300 hover:bg-white/10 hover:text-white"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[var(--map-ui-muted)] hover:bg-[var(--map-ui-surface-hover)] hover:text-[var(--map-ui-text)]"
           >
             <X size={22} />
           </button>
@@ -124,32 +124,32 @@ export default function BorderCrossingPointPanel({
         </p>
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.status}
           </h2>
-          <p className="text-slate-100">{tp.statuses[point.status]}</p>
+          <p className="text-[var(--map-ui-text)]">{tp.statuses[point.status]}</p>
         </section>
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.mode}
           </h2>
-          <p className="text-slate-100">{tp.modes[point.mode]}</p>
+          <p className="text-[var(--map-ui-text)]">{tp.modes[point.mode]}</p>
         </section>
 
         {(point.passengerTraffic != null || point.freightTraffic != null) && (
           <section className="grid grid-cols-2 gap-2 text-[12px]">
             {point.passengerTraffic != null ? (
-              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <p className="text-slate-400">{tp.passengers}</p>
+              <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+                <p className="text-[var(--map-ui-muted)]">{tp.passengers}</p>
                 <p className="font-medium">
                   {point.passengerTraffic ? tp.yes : tp.no}
                 </p>
               </div>
             ) : null}
             {point.freightTraffic != null ? (
-              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <p className="text-slate-400">{tp.freight}</p>
+              <div className="rounded-lg border border-[var(--map-ui-border)] bg-[var(--map-ui-surface-muted)] px-3 py-2">
+                <p className="text-[var(--map-ui-muted)]">{tp.freight}</p>
                 <p className="font-medium">
                   {point.freightTraffic ? tp.yes : tp.no}
                 </p>
@@ -160,29 +160,29 @@ export default function BorderCrossingPointPanel({
 
         {point.openingHours ? (
           <section>
-            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
               {tp.openingHours}
             </h2>
-            <p className="text-slate-100">{point.openingHours}</p>
+            <p className="text-[var(--map-ui-text)]">{point.openingHours}</p>
           </section>
         ) : null}
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.location}
           </h2>
-          <p className="text-slate-100">
+          <p className="text-[var(--map-ui-text)]">
             {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
           </p>
           {neighbour ? (
-            <p className="mt-1 text-[12px] text-slate-300">
+            <p className="mt-1 text-[12px] text-[var(--map-ui-muted)]">
               {tp.neighbouringCountry}: {neighbour}
             </p>
           ) : null}
         </section>
 
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.officialSource}
           </h2>
           <a
@@ -194,7 +194,7 @@ export default function BorderCrossingPointPanel({
             {point.officialSourceName}
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
-          <p className="mt-2 text-[11px] text-slate-400">
+          <p className="mt-2 text-[11px] text-[var(--map-ui-muted)]">
             {tp.lastVerified}: {point.lastVerifiedAt}
           </p>
         </section>
