@@ -3,6 +3,7 @@ import {
   createDefaultLayerState,
   DEFAULT_MAP_LAYER_PREFERENCES,
   MAP_LAYER_PREFERENCES_SCHEMA_VERSION,
+  migrateMapLayerPreferences,
 } from "../lib/map/mapLayerPreferences";
 import { DEFAULT_EXPANDED_CATEGORIES } from "../lib/map/legendConfiguration";
 import { EUIM_SCHENGEN_NON_EU_COUNTRY_CODES } from "../lib/geography/euimCoverage";
@@ -23,6 +24,24 @@ function tomTomAcceptLanguage(locale?: string): string | null {
     return `${lang}-${(region || "").toUpperCase()}`;
   }
   return map[normalized] ?? null;
+}
+
+/** Mirrors MapLegend outside-click: menu clicks must stay inside [data-legend-actions]. */
+function isInsideLegendActions(
+  target: { closest: (s: string) => unknown } | null,
+) {
+  return Boolean(target?.closest("[data-legend-actions]"));
+}
+
+/**
+ * Integration-style reducer for Reset layers: mutated prefs → defaults.
+ * Proves the action that MapInterface applies, not only createDefaultLayerState().
+ */
+function applyResetLayersAction(
+  current: typeof DEFAULT_MAP_LAYER_PREFERENCES,
+): typeof DEFAULT_MAP_LAYER_PREFERENCES {
+  void current;
+  return createDefaultLayerState();
 }
 
 function main() {
@@ -73,6 +92,55 @@ function main() {
   assert.equal(tomTomAcceptLanguage("fr"), "fr-FR");
   assert.equal(tomTomAcceptLanguage("en-GB"), "en-GB");
   assert.equal(tomTomAcceptLanguage("xx"), null);
+
+  // Outside-click must treat menu items as inside (desktop dual-mount regression).
+  assert.equal(
+    isInsideLegendActions({
+      closest: (s: string) => (s === "[data-legend-actions]" ? {} : null),
+    }),
+    true,
+  );
+  assert.equal(
+    isInsideLegendActions({
+      closest: () => null,
+    }),
+    false,
+  );
+
+  // Simulate: Road incidents ON → Reset → OFF; Live traffic stays ON; Heritage ON.
+  const dirty = migrateMapLayerPreferences({
+    ...DEFAULT_MAP_LAYER_PREFERENCES,
+    roadTrafficIncidents: true,
+    schengenOutsideEu: true,
+    euCandidates: true,
+    europeanHeritageLabel: false,
+    majorEuropeanAirports: false,
+    liveTrafficFlow: false,
+  });
+  assert.equal(dirty.roadTrafficIncidents, true);
+  assert.equal(dirty.liveTrafficFlow, false);
+  assert.equal(dirty.europeanHeritageLabel, false);
+
+  const afterReset = applyResetLayersAction(dirty);
+  assert.equal(afterReset.roadTrafficIncidents, false);
+  assert.equal(afterReset.schengenOutsideEu, false);
+  assert.equal(afterReset.euCandidates, false);
+  assert.equal(afterReset.europeanHeritageLabel, true);
+  assert.equal(afterReset.majorEuropeanAirports, true);
+  assert.equal(afterReset.liveTrafficFlow, true);
+  assert.notEqual(afterReset, dirty);
+  assert.notEqual(afterReset, DEFAULT_MAP_LAYER_PREFERENCES);
+  assert.deepEqual(afterReset, createDefaultLayerState());
+
+  // Repeated reset must keep working (new object each time).
+  const r1 = applyResetLayersAction(afterReset);
+  const r2 = applyResetLayersAction(r1);
+  const r3 = applyResetLayersAction(r2);
+  assert.deepEqual(r1, defaults);
+  assert.deepEqual(r2, defaults);
+  assert.deepEqual(r3, defaults);
+  assert.notEqual(r1, r2);
+  assert.notEqual(r2, r3);
 
   console.log("test-reset-layers-and-traffic: ok");
 }

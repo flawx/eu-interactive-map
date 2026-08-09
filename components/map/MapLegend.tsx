@@ -4,7 +4,6 @@ import {
   useEffect,
   useId,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
   type ReactNode,
@@ -111,7 +110,15 @@ export default function MapLegend({
       alerts: majorActiveAlertCount > 0,
     });
     setExpandedFilters({});
-  }, [resetToken, majorActiveAlertCount]);
+    const nextGroups: Record<string, boolean> = {};
+    for (const category of categories) {
+      for (const group of category.groups) {
+        nextGroups[group.id] = false;
+      }
+    }
+    setExpandedGroups(nextGroups);
+    saveLegendGroupExpanded(nextGroups);
+  }, [resetToken, majorActiveAlertCount, categories]);
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     () => getDefaultGroupsForHydration(),
@@ -124,10 +131,19 @@ export default function MapLegend({
   const [openDescriptionId, setOpenDescriptionId] = useState<string | null>(
     null,
   );
-  const actionsRef = useRef<HTMLDivElement | null>(null);
+  /** Desktop vs mobile: mount a single legend panel so refs/menus stay consistent. */
+  const [isDesktopViewport, setIsDesktopViewport] = useState(true);
 
   useEffect(() => {
     setExpandedGroups(loadLegendGroupExpanded());
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const sync = () => setIsDesktopViewport(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
   }, []);
 
   useEffect(() => {
@@ -153,7 +169,10 @@ export default function MapLegend({
   useEffect(() => {
     if (!actionsOpen) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (!actionsRef.current?.contains(event.target as Node)) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      // Use closest (not a single ref): desktop+mobile must not steal each other's hit target.
+      if (!target.closest("[data-legend-actions]")) {
         setActionsOpen(false);
         setConfirmReset(false);
       }
@@ -236,6 +255,13 @@ export default function MapLegend({
   };
 
   const handleReset = () => {
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[reset-ui]", {
+        buttonClicked: true,
+        legendInstance: isDesktopViewport ? "desktop" : "mobile",
+        timestamp: Date.now(),
+      });
+    }
     onResetLayers();
     setConfirmReset(false);
     setActionsOpen(false);
@@ -297,7 +323,7 @@ export default function MapLegend({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
-          <div className="relative" ref={actionsRef}>
+          <div className="relative" data-legend-actions="">
             <button
               type="button"
               className="inline-flex h-10 w-10 items-center justify-center rounded-full outline-none hover:bg-[var(--map-ui-surface-hover)] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/60"
@@ -462,34 +488,31 @@ export default function MapLegend({
     pointerEvents: "none",
   };
 
-  const legendUi = (
+  const legendUi = isDesktopViewport ? (
+    <div style={desktopAnchorStyle}>
+      <div style={{ pointerEvents: "auto" }}>
+        {open ? panel : compactButton}
+      </div>
+    </div>
+  ) : (
     <>
-      {/* Desktop: fixed top-right */}
-      <div className="hidden md:block" style={desktopAnchorStyle}>
-        <div style={{ pointerEvents: "auto" }}>
-          {open ? panel : compactButton}
+      {!open ? (
+        <div
+          style={{
+            position: "fixed",
+            left: "50%",
+            transform: "translateX(-50%)",
+            bottom: "max(1rem, calc(16px + env(safe-area-inset-bottom, 0px)))",
+            zIndex: 920,
+            pointerEvents: "none",
+          }}
+        >
+          <div style={{ pointerEvents: "auto" }}>{compactButton}</div>
         </div>
-      </div>
+      ) : null}
 
-      {/* Mobile: compact trigger */}
-      <div
-        className="md:hidden"
-        style={{
-          position: "fixed",
-          left: "50%",
-          transform: "translateX(-50%)",
-          bottom: "max(1rem, calc(16px + env(safe-area-inset-bottom, 0px)))",
-          zIndex: 920,
-          pointerEvents: "none",
-        }}
-      >
-        <div style={{ pointerEvents: "auto" }}>{compactButton}</div>
-      </div>
-
-      {/* Mobile: bottom drawer when open */}
       {open ? (
         <div
-          className="md:hidden"
           style={{
             position: "fixed",
             inset: 0,

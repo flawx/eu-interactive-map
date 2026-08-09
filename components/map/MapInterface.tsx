@@ -1466,6 +1466,22 @@ export default function MapInterface() {
   const handleLegendLayersReset = () => {
     const defaults = createDefaultLayerState();
     if (process.env.NODE_ENV !== "production") {
+      console.info("[reset-before]", {
+        liveTrafficFlow: showLiveTrafficFlow,
+        roadIncidents: showRoadTrafficIncidents,
+        schengenOutsideEu: showSchengenNonEU,
+        candidates: showCandidates,
+        heritage: showEuropeanHeritageLabel,
+        airports: showMajorEuropeanAirports,
+      });
+      console.info("[reset-target]", {
+        liveTrafficFlow: defaults.liveTrafficFlow,
+        roadIncidents: defaults.roadTrafficIncidents,
+        schengenOutsideEu: defaults.schengenOutsideEu,
+        candidates: defaults.euCandidates,
+        heritage: defaults.europeanHeritageLabel,
+        airports: defaults.majorEuropeanAirports,
+      });
       console.info("[reset layers]", {
         clicked: true,
         storageVersion: MAP_LAYER_PREFERENCES_SCHEMA_VERSION,
@@ -1569,6 +1585,18 @@ export default function MapInterface() {
     setShowBorderCrossingSea(defaults.borderCrossingSea);
     setTrafficPanelCollapseToken((token) => token + 1);
     setLegendResetToken((token) => token + 1);
+    if (process.env.NODE_ENV !== "production") {
+      // State setters above are queued; log the defaults that will render.
+      console.info("[reset-render]", {
+        liveTrafficFlow: defaults.liveTrafficFlow,
+        roadIncidents: defaults.roadTrafficIncidents,
+        schengenOutsideEu: defaults.schengenOutsideEu,
+        candidates: defaults.euCandidates,
+        heritage: defaults.europeanHeritageLabel,
+        airports: defaults.majorEuropeanAirports,
+        resetTokenNext: "incremented",
+      });
+    }
   };
 
   useEffect(() => {
