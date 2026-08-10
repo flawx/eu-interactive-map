@@ -5,6 +5,9 @@ export type MapLayerPreferences = {
   euCandidates: boolean;
   euCapitals: boolean;
   euMainInstitutions: boolean;
+  euBodiesAgencies: boolean;
+  internationalOrganisations: boolean;
+  europeanCapitalsOfCulture: boolean;
   unescoWorldHeritage: boolean;
   unescoCultural: boolean;
   unescoNatural: boolean;
@@ -101,6 +104,9 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   euCandidates: false,
   euCapitals: true,
   euMainInstitutions: true,
+  euBodiesAgencies: false,
+  internationalOrganisations: false,
+  europeanCapitalsOfCulture: false,
   unescoWorldHeritage: false,
   unescoCultural: true,
   unescoNatural: true,
@@ -185,10 +191,11 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   borderCrossingSea: true,
 };
 
-const LAYER_PREFS_KEY = "eu-map-layer-preferences-v3";
+const LAYER_PREFS_KEY = "eu-map-layer-preferences-v4";
+const LEGACY_LAYER_PREFS_KEY_V3 = "eu-map-layer-preferences-v3";
 const LEGACY_LAYER_PREFS_KEY_V2 = "eu-map-layer-preferences-v2";
 const LEGACY_LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
-export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 3;
+export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 4;
 const LEGEND_COLLAPSED_KEY = "eu-map-legend-collapsed-v1";
 
 const LAYER_KEYS = [
@@ -198,6 +205,9 @@ const LAYER_KEYS = [
   "euCandidates",
   "euCapitals",
   "euMainInstitutions",
+  "euBodiesAgencies",
+  "internationalOrganisations",
+  "europeanCapitalsOfCulture",
   "unescoWorldHeritage",
   "unescoCultural",
   "unescoNatural",
@@ -312,6 +322,7 @@ export function loadMapLayerPreferences(): MapLayerPreferences {
   try {
     const raw =
       window.localStorage.getItem(LAYER_PREFS_KEY) ??
+      window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V3) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V2) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY);
     if (!raw) {
@@ -337,6 +348,9 @@ export function saveMapLayerPreferences(
       euCandidates: Boolean(preferences.euCandidates),
       euCapitals: Boolean(preferences.euCapitals),
       euMainInstitutions: Boolean(preferences.euMainInstitutions),
+      euBodiesAgencies: Boolean(preferences.euBodiesAgencies),
+      internationalOrganisations: Boolean(preferences.internationalOrganisations),
+      europeanCapitalsOfCulture: Boolean(preferences.europeanCapitalsOfCulture),
       unescoWorldHeritage: Boolean(preferences.unescoWorldHeritage),
       unescoCultural: Boolean(preferences.unescoCultural),
       unescoNatural: Boolean(preferences.unescoNatural),

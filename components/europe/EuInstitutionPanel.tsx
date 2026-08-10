@@ -15,6 +15,7 @@ import { getMessages } from "@/lib/i18n/messages";
 import type { EuInstitutionDetails } from "@/lib/europe/euInstitutionDetails";
 import {
   getEuInstitutionById,
+  type EuInstitution,
   type EuInstitutionId,
   type EuInstitutionSiteType,
 } from "@/lib/europe/euInstitutions";
@@ -64,6 +65,18 @@ function institutionTypeLabel(
       return t.typeLegislativeAssembly;
     case "central-bank":
       return t.typeCentralBank;
+    case "judicial":
+      return t.typeJudicial;
+    case "audit":
+      return t.typeAudit;
+    case "investment-bank":
+      return t.typeInvestmentBank;
+    case "ombudsman":
+      return t.typeOmbudsman;
+    case "advisory-regions":
+      return t.typeAdvisoryRegions;
+    case "advisory-economic-social":
+      return t.typeAdvisoryEconomicSocial;
     default:
       return institutionType;
   }
@@ -72,6 +85,7 @@ function institutionTypeLabel(
 function shortNameFor(
   id: EuInstitutionId,
   t: ReturnType<typeof getMessages>["institutionPanel"],
+  institution: EuInstitution | null,
 ): string {
   switch (id) {
     case "european-commission":
@@ -84,12 +98,15 @@ function shortNameFor(
       return t.shortParliament;
     case "european-central-bank":
       return t.shortEcb;
+    default:
+      return institution?.shortName ?? id;
   }
 }
 
 function localNameFor(
   id: EuInstitutionId,
   t: ReturnType<typeof getMessages>["institutionPanel"],
+  institution: EuInstitution | null,
 ): string {
   switch (id) {
     case "european-commission":
@@ -102,12 +119,37 @@ function localNameFor(
       return t.nameParliament;
     case "european-central-bank":
       return t.nameEcb;
+    default:
+      return institution?.canonicalName ?? id;
+  }
+}
+
+function roleTextByType(
+  institutionType: string,
+  t: ReturnType<typeof getMessages>["institutionPanel"],
+): string | null {
+  switch (institutionType) {
+    case "judicial":
+      return t.roleJudicial;
+    case "audit":
+      return t.roleAudit;
+    case "investment-bank":
+      return t.roleInvestmentBank;
+    case "ombudsman":
+      return t.roleOmbudsman;
+    case "advisory-regions":
+      return t.roleAdvisoryRegions;
+    case "advisory-economic-social":
+      return t.roleAdvisoryEconomicSocial;
+    default:
+      return null;
   }
 }
 
 function roleText(
   id: EuInstitutionId,
   t: ReturnType<typeof getMessages>["institutionPanel"],
+  institution: EuInstitution | null,
 ): string {
   switch (id) {
     case "european-commission":
@@ -120,6 +162,11 @@ function roleText(
       return t.roleParliament;
     case "european-central-bank":
       return t.roleEcb;
+    default:
+      return (
+        roleTextByType(institution?.institutionType ?? "", t) ??
+        t.functioningGeneric
+      );
   }
 }
 
@@ -138,6 +185,8 @@ function functioningText(
       return t.functioningParliament;
     case "european-central-bank":
       return t.functioningEcb;
+    default:
+      return t.functioningGeneric;
   }
 }
 
@@ -219,8 +268,10 @@ export default function EuInstitutionPanel({
 
   if (!institution) return null;
 
-  const displayName = details?.name ?? localNameFor(institution.id, tp);
-  const shortName = details?.shortName ?? shortNameFor(institution.id, tp);
+  const displayName =
+    details?.name ?? localNameFor(institution.id, tp, institution);
+  const shortName =
+    details?.shortName ?? shortNameFor(institution.id, tp, institution);
   const photos = details?.images ?? [];
   const currentPhoto = photos[photoIndex] ?? null;
   const sites = details?.sites?.length
@@ -360,7 +411,7 @@ export default function EuInstitutionPanel({
             {tp.role}
           </h2>
           <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
-            {details?.roleSummary ?? roleText(institution.id, tp)}
+            {details?.roleSummary ?? roleText(institution.id, tp, institution)}
           </p>
         </section>
 
@@ -448,7 +499,7 @@ export default function EuInstitutionPanel({
                               }
                               className="rounded-md border border-[var(--map-ui-border)] px-2 py-1 text-[10px] text-sky-300 hover:bg-[var(--map-ui-surface-hover)]"
                             >
-                              {localNameFor(otherId, tp)}
+                              {localNameFor(otherId, tp, getEuInstitutionById(otherId) ?? null)}
                             </button>
                           ))}
                         </div>

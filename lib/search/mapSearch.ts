@@ -6,6 +6,7 @@ import {
 import { EU_CAPITALS, EU_MEMBER_COUNTRY_CODES } from "@/lib/europe/euCapitals";
 import {
   EU_INSTITUTIONS,
+  getEuInstitutionById,
   uniquePhysicalSites,
   type EuInstitutionId as MainEuInstitutionId,
 } from "@/lib/europe/euInstitutions";
@@ -254,6 +255,8 @@ function mainInstitutionLocalName(
       return tp.nameParliament;
     case "european-central-bank":
       return tp.nameEcb;
+    default:
+      return getEuInstitutionById(id)?.canonicalName ?? id;
   }
 }
 
@@ -273,6 +276,8 @@ function mainInstitutionShortName(
       return tp.shortParliament;
     case "european-central-bank":
       return tp.shortEcb;
+    default:
+      return getEuInstitutionById(id)?.shortName ?? id;
   }
 }
 

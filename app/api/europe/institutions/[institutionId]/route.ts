@@ -51,6 +51,13 @@ const WIKIPEDIA_TITLES: Record<EuInstitutionId, string> = {
   "council-of-the-eu": "Council_of_the_European_Union",
   "european-parliament": "European_Parliament",
   "european-central-bank": "European_Central_Bank",
+  "court-of-justice-of-the-eu": "Court_of_Justice_of_the_European_Union",
+  "european-court-of-auditors": "European_Court_of_Auditors",
+  "european-investment-bank": "European_Investment_Bank",
+  "european-ombudsman": "European_Ombudsman",
+  "european-committee-of-the-regions": "European_Committee_of_the_Regions",
+  "european-economic-and-social-committee":
+    "European_Economic_and_Social_Committee",
 };
 
 function resolveLocale(requested: string | null): Locale {
@@ -82,6 +89,15 @@ function metadataValue(
   return stripHtml(entry.value);
 }
 
+const ROLE_BY_INSTITUTION_TYPE: Record<string, keyof ReturnType<typeof getMessages>["institutionPanel"]> = {
+  judicial: "roleJudicial",
+  audit: "roleAudit",
+  "investment-bank": "roleInvestmentBank",
+  ombudsman: "roleOmbudsman",
+  "advisory-regions": "roleAdvisoryRegions",
+  "advisory-economic-social": "roleAdvisoryEconomicSocial",
+};
+
 function roleSummaryFor(
   institutionId: EuInstitutionId,
   locale: Locale,
@@ -98,6 +114,13 @@ function roleSummaryFor(
       return t.roleParliament;
     case "european-central-bank":
       return t.roleEcb;
+    default: {
+      const institution = getEuInstitutionById(institutionId);
+      const key = institution
+        ? ROLE_BY_INSTITUTION_TYPE[institution.institutionType]
+        : undefined;
+      return key ? t[key] : t.functioningGeneric;
+    }
   }
 }
 
@@ -119,6 +142,8 @@ function institutionDisplayName(
       return t.nameParliament;
     case "european-central-bank":
       return t.nameEcb;
+    default:
+      return institution.canonicalName;
   }
 }
 

@@ -63,7 +63,7 @@ function main() {
   assert.equal(defaults.euCandidates, false);
   assert.equal(defaults.unescoWorldHeritage, false);
   assert.equal(defaults.majorWildfires, false);
-  assert.equal(MAP_LAYER_PREFERENCES_SCHEMA_VERSION, 3);
+  assert.equal(MAP_LAYER_PREFERENCES_SCHEMA_VERSION, 4);
 
   assert.deepEqual([...EUIM_SCHENGEN_NON_EU_COUNTRY_CODES].sort(), [
     "CH",

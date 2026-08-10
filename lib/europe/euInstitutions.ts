@@ -7,6 +7,17 @@
  * - europarl.europa.eu
  * - ecb.europa.eu
  * - european-union.europa.eu
+ * - curia.europa.eu
+ * - eca.europa.eu
+ * - eib.org
+ * - ombudsman.europa.eu
+ * - cor.europa.eu
+ * - eesc.europa.eu
+ *
+ * The General Secretariat of the Council and the Secretariat-General of the
+ * European Commission are administrative bodies of existing institutions —
+ * they are documented as aliases on `council-of-the-eu` / `european-commission`
+ * rather than as separate fake institutions.
  */
 
 export type EuInstitutionId =
@@ -14,7 +25,13 @@ export type EuInstitutionId =
   | "european-council"
   | "council-of-the-eu"
   | "european-parliament"
-  | "european-central-bank";
+  | "european-central-bank"
+  | "court-of-justice-of-the-eu"
+  | "european-court-of-auditors"
+  | "european-investment-bank"
+  | "european-ombudsman"
+  | "european-committee-of-the-regions"
+  | "european-economic-and-social-committee";
 
 export type EuInstitutionSiteType =
   | "headquarters"
@@ -61,6 +78,12 @@ const ALLOWED_OFFICIAL_HOSTS = [
   "europarl.europa.eu",
   "ecb.europa.eu",
   "visiting.europarl.europa.eu",
+  "curia.europa.eu",
+  "eca.europa.eu",
+  "eib.org",
+  "ombudsman.europa.eu",
+  "cor.europa.eu",
+  "eesc.europa.eu",
 ] as const;
 
 /** Shared seat of the European Council and the Council of the EU. */
@@ -188,6 +211,96 @@ const ECB_FRANKFURT: EuInstitutionSite = {
   ],
 };
 
+const CJEU_LUXEMBOURG: EuInstitutionSite = {
+  id: "cjeu-luxembourg",
+  institutionIds: ["court-of-justice-of-the-eu"],
+  name: "Palais de la Cour de Justice",
+  city: "Luxembourg",
+  countryCode: "LU",
+  longitude: 6.1411,
+  latitude: 49.6214,
+  siteType: "headquarters",
+  address: "Rue du Fort Niedergrünewald, L-2925 Luxembourg, Luxembourg",
+  officialUrl: "https://curia.europa.eu/jcms/jcms/Jo2_7000/en/",
+  sharedSite: false,
+  aliases: ["Palais de la Cour de Justice", "CJEU", "Curia", "Kirchberg"],
+};
+
+const ECA_LUXEMBOURG: EuInstitutionSite = {
+  id: "eca-luxembourg",
+  institutionIds: ["european-court-of-auditors"],
+  name: "European Court of Auditors",
+  city: "Luxembourg",
+  countryCode: "LU",
+  longitude: 6.1428,
+  latitude: 49.6275,
+  siteType: "headquarters",
+  address: "12 Rue Alcide De Gasperi, L-1615 Luxembourg, Luxembourg",
+  officialUrl: "https://www.eca.europa.eu/en/Pages/Contact.aspx",
+  sharedSite: false,
+  aliases: ["Court of Auditors", "ECA", "Cour des comptes européenne"],
+};
+
+const EIB_LUXEMBOURG: EuInstitutionSite = {
+  id: "eib-luxembourg",
+  institutionIds: ["european-investment-bank"],
+  name: "European Investment Bank",
+  city: "Luxembourg",
+  countryCode: "LU",
+  longitude: 6.1439,
+  latitude: 49.6203,
+  siteType: "headquarters",
+  address: "98-100 Boulevard Konrad Adenauer, L-2950 Luxembourg, Luxembourg",
+  officialUrl: "https://www.eib.org/en/about/contact/index.htm",
+  sharedSite: false,
+  aliases: ["EIB", "Banque européenne d'investissement"],
+};
+
+const OMBUDSMAN_STRASBOURG: EuInstitutionSite = {
+  id: "ombudsman-strasbourg",
+  institutionIds: ["european-ombudsman"],
+  name: "European Ombudsman",
+  city: "Strasbourg",
+  countryCode: "FR",
+  longitude: 7.7469,
+  latitude: 48.595,
+  siteType: "headquarters",
+  address: "1 Avenue du Président Robert Schuman, CS 30403, F-67001 Strasbourg, France",
+  officialUrl: "https://www.ombudsman.europa.eu/en/contact",
+  sharedSite: false,
+  aliases: ["Médiateur européen", "EU Ombudsman"],
+};
+
+const COR_BRUSSELS: EuInstitutionSite = {
+  id: "cor-brussels",
+  institutionIds: ["european-committee-of-the-regions"],
+  name: "Jacques Delors building",
+  city: "Brussels",
+  countryCode: "BE",
+  longitude: 4.3768,
+  latitude: 50.8408,
+  siteType: "headquarters",
+  address: "Rue Belliard/Belliardstraat 99-101, 1040 Brussels, Belgium",
+  officialUrl: "https://cor.europa.eu/en/about/Pages/contacts.aspx",
+  sharedSite: false,
+  aliases: ["CoR", "Committee of the Regions", "Comité des régions"],
+};
+
+const EESC_BRUSSELS: EuInstitutionSite = {
+  id: "eesc-brussels",
+  institutionIds: ["european-economic-and-social-committee"],
+  name: "Jacques Delors building",
+  city: "Brussels",
+  countryCode: "BE",
+  longitude: 4.3765,
+  latitude: 50.841,
+  siteType: "headquarters",
+  address: "Rue Belliard/Belliardstraat 99-101, 1040 Brussels, Belgium",
+  officialUrl: "https://www.eesc.europa.eu/en/about/contact-us",
+  sharedSite: false,
+  aliases: ["EESC", "Comité économique et social européen"],
+};
+
 export const EU_INSTITUTION_SITES: readonly EuInstitutionSite[] = [
   BERLAYMONT_BRUSSELS,
   EUROPA_BUILDING_BRUSSELS,
@@ -195,6 +308,12 @@ export const EU_INSTITUTION_SITES: readonly EuInstitutionSite[] = [
   PARLIAMENT_STRASBOURG,
   PARLIAMENT_LUXEMBOURG,
   ECB_FRANKFURT,
+  CJEU_LUXEMBOURG,
+  ECA_LUXEMBOURG,
+  EIB_LUXEMBOURG,
+  OMBUDSMAN_STRASBOURG,
+  COR_BRUSSELS,
+  EESC_BRUSSELS,
 ];
 
 export const EU_INSTITUTIONS: readonly EuInstitution[] = [
@@ -209,6 +328,8 @@ export const EU_INSTITUTIONS: readonly EuInstitution[] = [
       "European Commission",
       "Comisión Europea",
       "Europäische Kommission",
+      "Secretariat-General of the European Commission",
+      "Secrétariat général de la Commission européenne",
     ],
     institutionType: "executive",
     officialWebsite: "https://commission.europa.eu/",
@@ -253,6 +374,8 @@ export const EU_INSTITUTIONS: readonly EuInstitution[] = [
       "Council of Ministers",
       "Consejo de la UE",
       "Rat der EU",
+      "General Secretariat of the Council",
+      "Secrétariat général du Conseil",
     ],
     institutionType: "legislative-council",
     officialWebsite: "https://www.consilium.europa.eu/en/council-eu/",
@@ -313,14 +436,144 @@ export const EU_INSTITUTIONS: readonly EuInstitution[] = [
     sites: [ECB_FRANKFURT],
     establishedYear: 1998,
   },
+  {
+    id: "court-of-justice-of-the-eu",
+    canonicalName: "Court of Justice of the European Union",
+    shortName: "CJEU",
+    aliases: [
+      "Cour de justice de l'Union européenne",
+      "CJUE",
+      "CJEU",
+      "Europäischer Gerichtshof",
+      "EuGH",
+      "Tribunal de Justicia de la UE",
+    ],
+    institutionType: "judicial",
+    officialWebsite: "https://curia.europa.eu/",
+    officialInformationUrl:
+      "https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/institutions-and-bodies-profiles/court-justice-european-union-cjeu_en",
+    wikidataId: "Q4951",
+    color: "#003399",
+    icon: "landmark",
+    sites: [CJEU_LUXEMBOURG],
+    establishedYear: 1952,
+  },
+  {
+    id: "european-court-of-auditors",
+    canonicalName: "European Court of Auditors",
+    shortName: "Court of Auditors",
+    aliases: [
+      "Cour des comptes européenne",
+      "ECA",
+      "CCE",
+      "Europäischer Rechnungshof",
+      "Tribunal de Cuentas Europeo",
+    ],
+    institutionType: "audit",
+    officialWebsite: "https://www.eca.europa.eu/",
+    officialInformationUrl:
+      "https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/institutions-and-bodies-profiles/european-court-auditors-eca_en",
+    wikidataId: "Q8900",
+    color: "#003399",
+    icon: "landmark",
+    sites: [ECA_LUXEMBOURG],
+    establishedYear: 1977,
+  },
+  {
+    id: "european-investment-bank",
+    canonicalName: "European Investment Bank",
+    shortName: "EIB",
+    aliases: [
+      "Banque européenne d'investissement",
+      "BEI",
+      "Europäische Investitionsbank",
+      "Banco Europeo de Inversiones",
+    ],
+    institutionType: "investment-bank",
+    officialWebsite: "https://www.eib.org/",
+    officialInformationUrl:
+      "https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/institutions-and-bodies-profiles/european-investment-bank-eib_en",
+    wikidataId: "Q192247",
+    color: "#003399",
+    icon: "landmark",
+    sites: [EIB_LUXEMBOURG],
+    establishedYear: 1958,
+  },
+  {
+    id: "european-ombudsman",
+    canonicalName: "European Ombudsman",
+    shortName: "Ombudsman",
+    aliases: [
+      "Médiateur européen",
+      "EU Ombudsman",
+      "Europäischer Bürgerbeauftragter",
+      "Defensor del Pueblo Europeo",
+    ],
+    institutionType: "ombudsman",
+    officialWebsite: "https://www.ombudsman.europa.eu/",
+    officialInformationUrl:
+      "https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/institutions-and-bodies-profiles/european-ombudsman_en",
+    wikidataId: "Q220893",
+    color: "#003399",
+    icon: "landmark",
+    sites: [OMBUDSMAN_STRASBOURG],
+    establishedYear: 1995,
+  },
+  {
+    id: "european-committee-of-the-regions",
+    canonicalName: "European Committee of the Regions",
+    shortName: "Committee of the Regions",
+    aliases: [
+      "Comité européen des régions",
+      "CoR",
+      "CdR",
+      "Europäischer Ausschuss der Regionen",
+      "Comité Europeo de las Regiones",
+    ],
+    institutionType: "advisory-regions",
+    officialWebsite: "https://cor.europa.eu/",
+    officialInformationUrl:
+      "https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/institutions-and-bodies-profiles/european-committee-regions-cor_en",
+    wikidataId: "Q205203",
+    color: "#003399",
+    icon: "landmark",
+    sites: [COR_BRUSSELS],
+    establishedYear: 1994,
+  },
+  {
+    id: "european-economic-and-social-committee",
+    canonicalName: "European Economic and Social Committee",
+    shortName: "EESC",
+    aliases: [
+      "Comité économique et social européen",
+      "CESE",
+      "Europäischer Wirtschafts- und Sozialausschuss",
+      "Comité Económico y Social Europeo",
+    ],
+    institutionType: "advisory-economic-social",
+    officialWebsite: "https://www.eesc.europa.eu/",
+    officialInformationUrl:
+      "https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/institutions-and-bodies-profiles/european-economic-and-social-committee-eesc_en",
+    wikidataId: "Q331024",
+    color: "#003399",
+    icon: "landmark",
+    sites: [EESC_BRUSSELS],
+    establishedYear: 1958,
+  },
 ];
 
-const INSTITUTION_IDS: readonly EuInstitutionId[] = [
+export const INSTITUTION_IDS: readonly EuInstitutionId[] = [
   "european-commission",
   "european-council",
   "council-of-the-eu",
   "european-parliament",
   "european-central-bank",
+  "court-of-justice-of-the-eu",
+  "european-court-of-auditors",
+  "european-investment-bank",
+  "european-ombudsman",
+  "european-committee-of-the-regions",
+  "european-economic-and-social-committee",
 ];
 
 const FORBIDDEN_ALIASES = [
@@ -379,8 +632,8 @@ export function uniquePhysicalSites(): EuInstitutionSite[] {
 export function validateEuInstitutions(): string[] {
   const errors: string[] = [];
 
-  if (EU_INSTITUTIONS.length !== 5) {
-    errors.push(`Expected 5 institutions, found ${EU_INSTITUTIONS.length}`);
+  if (EU_INSTITUTIONS.length !== 11) {
+    errors.push(`Expected 11 institutions, found ${EU_INSTITUTIONS.length}`);
   }
 
   const institutionIds = new Set<string>();

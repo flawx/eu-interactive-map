@@ -61,9 +61,16 @@ import type { FirmsIncidentSnapshot } from "@/lib/incidents/firmsFootprints";
 import { EU_CAPITALS } from "@/lib/europe/euCapitals";
 import {
   EU_INSTITUTION_SITES,
+  getEuInstitutionById,
   uniquePhysicalSites,
   type EuInstitutionId,
 } from "@/lib/europe/euInstitutions";
+import {
+  attachEuropeInstitutionsV2Handlers,
+  ensureEuropeInstitutionsV2Layers,
+  setEuropeInstitutionsV2Visibility,
+  updateEuropeInstitutionsV2Selection,
+} from "@/lib/map/dataLayers/europeInstitutionsLayers";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import {
@@ -546,6 +553,8 @@ function shortNameForInstitution(
       return tp.shortParliament;
     case "european-central-bank":
       return tp.shortEcb;
+    default:
+      return getEuInstitutionById(id)?.shortName ?? id;
   }
 }
 
@@ -564,6 +573,8 @@ function localNameForInstitution(
       return tp.nameParliament;
     case "european-central-bank":
       return tp.nameEcb;
+    default:
+      return getEuInstitutionById(id)?.canonicalName ?? id;
   }
 }
 
@@ -980,6 +991,15 @@ export default function MapContainer({
   showEuMainInstitutions = false,
   selectedInstitutionSiteId = null,
   onInstitutionSiteSelect,
+  showEuBodiesAgencies = false,
+  selectedEuBodyAgencyId = null,
+  onEuBodyAgencySelect,
+  showInternationalOrganisations = false,
+  selectedInternationalOrganisationId = null,
+  onInternationalOrganisationSelect,
+  showEuropeanCapitalsOfCulture = false,
+  selectedCapitalOfCultureId = null,
+  onCapitalOfCultureSelect,
   showUnescoWorldHeritage = false,
   showUnescoCultural = true,
   showUnescoNatural = true,
@@ -1155,6 +1175,15 @@ export default function MapContainer({
   showEuMainInstitutions?: boolean;
   selectedInstitutionSiteId?: string | null;
   onInstitutionSiteSelect?: (siteId: string | null) => void;
+  showEuBodiesAgencies?: boolean;
+  selectedEuBodyAgencyId?: string | null;
+  onEuBodyAgencySelect?: (agencyId: string | null) => void;
+  showInternationalOrganisations?: boolean;
+  selectedInternationalOrganisationId?: string | null;
+  onInternationalOrganisationSelect?: (organisationId: string | null) => void;
+  showEuropeanCapitalsOfCulture?: boolean;
+  selectedCapitalOfCultureId?: string | null;
+  onCapitalOfCultureSelect?: (capitalOfCultureId: string | null) => void;
   showUnescoWorldHeritage?: boolean;
   showUnescoCultural?: boolean;
   showUnescoNatural?: boolean;
@@ -1308,6 +1337,37 @@ export default function MapContainer({
   selectedInstitutionSiteIdRef.current = selectedInstitutionSiteId;
   const onInstitutionSiteSelectRef = useRef(onInstitutionSiteSelect);
   onInstitutionSiteSelectRef.current = onInstitutionSiteSelect;
+  const showEuBodiesAgenciesRef = useRef(showEuBodiesAgencies);
+  showEuBodiesAgenciesRef.current = showEuBodiesAgencies;
+  const selectedEuBodyAgencyIdRef = useRef(selectedEuBodyAgencyId);
+  selectedEuBodyAgencyIdRef.current = selectedEuBodyAgencyId;
+  const onEuBodyAgencySelectRef = useRef(onEuBodyAgencySelect);
+  onEuBodyAgencySelectRef.current = onEuBodyAgencySelect;
+  const showInternationalOrganisationsRef = useRef(
+    showInternationalOrganisations,
+  );
+  showInternationalOrganisationsRef.current = showInternationalOrganisations;
+  const selectedInternationalOrganisationIdRef = useRef(
+    selectedInternationalOrganisationId,
+  );
+  selectedInternationalOrganisationIdRef.current =
+    selectedInternationalOrganisationId;
+  const onInternationalOrganisationSelectRef = useRef(
+    onInternationalOrganisationSelect,
+  );
+  onInternationalOrganisationSelectRef.current =
+    onInternationalOrganisationSelect;
+  const showEuropeanCapitalsOfCultureRef = useRef(
+    showEuropeanCapitalsOfCulture,
+  );
+  showEuropeanCapitalsOfCultureRef.current = showEuropeanCapitalsOfCulture;
+  const selectedCapitalOfCultureIdRef = useRef(selectedCapitalOfCultureId);
+  selectedCapitalOfCultureIdRef.current = selectedCapitalOfCultureId;
+  const onCapitalOfCultureSelectRef = useRef(onCapitalOfCultureSelect);
+  onCapitalOfCultureSelectRef.current = onCapitalOfCultureSelect;
+  const detachEuropeInstitutionsV2HandlersRef = useRef<(() => void) | null>(
+    null,
+  );
   const showUnescoWorldHeritageRef = useRef(showUnescoWorldHeritage);
   showUnescoWorldHeritageRef.current = showUnescoWorldHeritage;
   const showUnescoCulturalRef = useRef(showUnescoCultural);
@@ -1831,6 +1891,30 @@ export default function MapContainer({
       const siteId = feature?.properties?.siteId;
       if (typeof siteId === "string") {
         onInstitutionSiteSelectRef.current?.(siteId);
+      }
+    };
+
+    const handleEuBodyAgencyClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onEuBodyAgencySelectRef.current?.(id);
+      }
+    };
+
+    const handleInternationalOrganisationClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onInternationalOrganisationSelectRef.current?.(id);
+      }
+    };
+
+    const handleCapitalOfCultureClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onCapitalOfCultureSelectRef.current?.(id);
       }
     };
 
@@ -3448,6 +3532,16 @@ export default function MapContainer({
         });
       }
 
+      ensureEuropeInstitutionsV2Layers(map, {
+        showEuBodiesAgencies: showEuBodiesAgenciesRef.current,
+        showInternationalOrganisations: showInternationalOrganisationsRef.current,
+        showEuropeanCapitalsOfCulture: showEuropeanCapitalsOfCultureRef.current,
+        selectedEuBodyAgencyId: selectedEuBodyAgencyIdRef.current,
+        selectedInternationalOrganisationId:
+          selectedInternationalOrganisationIdRef.current,
+        selectedCapitalOfCultureId: selectedCapitalOfCultureIdRef.current,
+      });
+
       if (!map.getSource("unesco-world-heritage-sites")) {
         map.addSource("unesco-world-heritage-sites", {
           type: "geojson",
@@ -4757,6 +4851,20 @@ export default function MapContainer({
       map.on("click", "eu-main-institutions-symbol", handleInstitutionSiteClick);
       map.on("mouseenter", "eu-main-institutions-symbol", setPointerCursor);
       map.on("mouseleave", "eu-main-institutions-symbol", resetCursor);
+      detachEuropeInstitutionsV2HandlersRef.current?.();
+      detachEuropeInstitutionsV2HandlersRef.current =
+        attachEuropeInstitutionsV2Handlers(
+          map,
+          {
+            onEuBodyAgencyClick: handleEuBodyAgencyClick,
+            onInternationalOrganisationClick:
+              handleInternationalOrganisationClick,
+            onCapitalOfCultureClick: handleCapitalOfCultureClick,
+            onEuBodyAgenciesClusterClick: () => {},
+          },
+          setPointerCursor,
+          resetCursor,
+        );
       map.on("click", "unesco-clusters", handleUnescoClusterClick);
       map.on("mouseenter", "unesco-clusters", setPointerCursor);
       map.on("mouseleave", "unesco-clusters", resetCursor);
@@ -4882,6 +4990,8 @@ export default function MapContainer({
       );
       map.off("mouseenter", "eu-main-institutions-symbol", setPointerCursor);
       map.off("mouseleave", "eu-main-institutions-symbol", resetCursor);
+      detachEuropeInstitutionsV2HandlersRef.current?.();
+      detachEuropeInstitutionsV2HandlersRef.current = null;
       map.off("click", "unesco-clusters", handleUnescoClusterClick);
       map.off("mouseenter", "unesco-clusters", setPointerCursor);
       map.off("mouseleave", "unesco-clusters", resetCursor);
@@ -5325,6 +5435,38 @@ export default function MapContainer({
       );
     }
   }, [selectedInstitutionSiteId, mapSourcesReadyVersion]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    setEuropeInstitutionsV2Visibility(map, {
+      showEuBodiesAgencies,
+      showInternationalOrganisations,
+      showEuropeanCapitalsOfCulture,
+    });
+  }, [
+    showEuBodiesAgencies,
+    showInternationalOrganisations,
+    showEuropeanCapitalsOfCulture,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    updateEuropeInstitutionsV2Selection(map, {
+      selectedEuBodyAgencyId,
+      selectedInternationalOrganisationId,
+      selectedCapitalOfCultureId,
+    });
+  }, [
+    selectedEuBodyAgencyId,
+    selectedInternationalOrganisationId,
+    selectedCapitalOfCultureId,
+    mapSourcesReadyVersion,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
