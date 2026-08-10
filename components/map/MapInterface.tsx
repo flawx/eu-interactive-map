@@ -14,6 +14,9 @@ import EuInstitutionPanel from "@/components/europe/EuInstitutionPanel";
 import EuBodyAgencyPanel from "@/components/europe/EuBodyAgencyPanel";
 import InternationalOrganisationPanel from "@/components/europe/InternationalOrganisationPanel";
 import CapitalOfCulturePanel from "@/components/europe/CapitalOfCulturePanel";
+import EuProjectPanel from "@/components/europe/EuProjectPanel";
+import BusinessDistrictPanel from "@/components/europe/BusinessDistrictPanel";
+import FreightPortPanel from "@/components/europe/FreightPortPanel";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
@@ -36,6 +39,9 @@ import { getEuCapitalById } from "@/lib/europe/euCapitals";
 import { getEuBodyAgencyById } from "@/lib/europe/euBodiesAgencies";
 import { getInternationalOrganisationById } from "@/lib/europe/internationalOrganisations";
 import { getEuropeanCapitalOfCultureById } from "@/lib/europe/europeanCapitalsOfCulture";
+import { getEuProjectById } from "@/lib/europe/euProjects/entities";
+import { getMajorBusinessDistrictById } from "@/lib/europe/majorBusinessDistricts";
+import { getMajorFreightPortById } from "@/lib/europe/majorFreightPorts";
 import {
   getEuInstitutionById,
   getEuInstitutionSiteById,
@@ -311,6 +317,40 @@ export default function MapInterface() {
   ] = useState(DEFAULT_MAP_LAYER_PREFERENCES.europeanCapitalsOfCulture);
   const [selectedCapitalOfCultureId, setSelectedCapitalOfCultureId] =
     useState<string | null>(null);
+  const [showEuProjectsTransport, setShowEuProjectsTransport] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euProjectsTransport,
+  );
+  const [showEuProjectsSportCulture, setShowEuProjectsSportCulture] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euProjectsSportCulture,
+  );
+  const [showEuProjectsProtection, setShowEuProjectsProtection] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euProjectsProtection,
+  );
+  const [showEuProjectsPublicSocial, setShowEuProjectsPublicSocial] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euProjectsPublicSocial,
+  );
+  const [showEuProjectsResearch, setShowEuProjectsResearch] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euProjectsResearch,
+  );
+  const [showEuProjectsEnvironment, setShowEuProjectsEnvironment] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.euProjectsEnvironment,
+  );
+  const [selectedEuProjectId, setSelectedEuProjectId] = useState<
+    string | null
+  >(null);
+  const [showEuropeanEconomicArea, setShowEuropeanEconomicArea] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.europeanEconomicArea,
+  );
+  const [showMajorBusinessDistricts, setShowMajorBusinessDistricts] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.majorBusinessDistricts);
+  const [selectedBusinessDistrictId, setSelectedBusinessDistrictId] =
+    useState<string | null>(null);
+  const [showMajorFreightPorts, setShowMajorFreightPorts] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorFreightPorts,
+  );
+  const [selectedFreightPortId, setSelectedFreightPortId] = useState<
+    string | null
+  >(null);
   const [showUnescoWorldHeritage, setShowUnescoWorldHeritage] = useState(
     DEFAULT_MAP_LAYER_PREFERENCES.unescoWorldHeritage,
   );
@@ -894,6 +934,15 @@ export default function MapInterface() {
     setShowEuBodiesAgencies(prefs.euBodiesAgencies);
     setShowInternationalOrganisations(prefs.internationalOrganisations);
     setShowEuropeanCapitalsOfCulture(prefs.europeanCapitalsOfCulture);
+    setShowEuProjectsTransport(prefs.euProjectsTransport);
+    setShowEuProjectsSportCulture(prefs.euProjectsSportCulture);
+    setShowEuProjectsProtection(prefs.euProjectsProtection);
+    setShowEuProjectsPublicSocial(prefs.euProjectsPublicSocial);
+    setShowEuProjectsResearch(prefs.euProjectsResearch);
+    setShowEuProjectsEnvironment(prefs.euProjectsEnvironment);
+    setShowEuropeanEconomicArea(prefs.europeanEconomicArea);
+    setShowMajorBusinessDistricts(prefs.majorBusinessDistricts);
+    setShowMajorFreightPorts(prefs.majorFreightPorts);
     setShowUnescoWorldHeritage(prefs.unescoWorldHeritage);
     setShowUnescoCultural(prefs.unescoCultural);
     setShowUnescoNatural(prefs.unescoNatural);
@@ -1114,6 +1163,15 @@ export default function MapInterface() {
       roadworks: showRoadworks,
       trafficActiveRoadworks: showTrafficActiveRoadworks,
       trafficPlannedRoadworks: showTrafficPlannedRoadworks,
+      euProjectsTransport: showEuProjectsTransport,
+      euProjectsSportCulture: showEuProjectsSportCulture,
+      euProjectsProtection: showEuProjectsProtection,
+      euProjectsPublicSocial: showEuProjectsPublicSocial,
+      euProjectsResearch: showEuProjectsResearch,
+      euProjectsEnvironment: showEuProjectsEnvironment,
+      europeanEconomicArea: showEuropeanEconomicArea,
+      majorBusinessDistricts: showMajorBusinessDistricts,
+      majorFreightPorts: showMajorFreightPorts,
     });
   }, [
     layerPrefsHydrated,
@@ -1126,6 +1184,15 @@ export default function MapInterface() {
     showEuBodiesAgencies,
     showInternationalOrganisations,
     showEuropeanCapitalsOfCulture,
+    showEuProjectsTransport,
+    showEuProjectsSportCulture,
+    showEuProjectsProtection,
+    showEuProjectsPublicSocial,
+    showEuProjectsResearch,
+    showEuProjectsEnvironment,
+    showEuropeanEconomicArea,
+    showMajorBusinessDistricts,
+    showMajorFreightPorts,
     showUnescoWorldHeritage,
     showUnescoCultural,
     showUnescoNatural,
@@ -1303,6 +1370,15 @@ export default function MapInterface() {
       roadworks: showRoadworks,
       trafficActiveRoadworks: showTrafficActiveRoadworks,
       trafficPlannedRoadworks: showTrafficPlannedRoadworks,
+      euProjectsTransport: showEuProjectsTransport,
+      euProjectsSportCulture: showEuProjectsSportCulture,
+      euProjectsProtection: showEuProjectsProtection,
+      euProjectsPublicSocial: showEuProjectsPublicSocial,
+      euProjectsResearch: showEuProjectsResearch,
+      euProjectsEnvironment: showEuProjectsEnvironment,
+      europeanEconomicArea: showEuropeanEconomicArea,
+      majorBusinessDistricts: showMajorBusinessDistricts,
+      majorFreightPorts: showMajorFreightPorts,
     }),
     [
       showEurozone,
@@ -1314,6 +1390,15 @@ export default function MapInterface() {
       showEuBodiesAgencies,
       showInternationalOrganisations,
       showEuropeanCapitalsOfCulture,
+      showEuProjectsTransport,
+      showEuProjectsSportCulture,
+      showEuProjectsProtection,
+      showEuProjectsPublicSocial,
+      showEuProjectsResearch,
+      showEuProjectsEnvironment,
+      showEuropeanEconomicArea,
+      showMajorBusinessDistricts,
+      showMajorFreightPorts,
       showUnescoWorldHeritage,
       showUnescoCultural,
       showUnescoNatural,
@@ -1435,6 +1520,15 @@ export default function MapInterface() {
       euBodiesAgencies: setShowEuBodiesAgencies,
       internationalOrganisations: setShowInternationalOrganisations,
       europeanCapitalsOfCulture: setShowEuropeanCapitalsOfCulture,
+      euProjectsTransport: setShowEuProjectsTransport,
+      euProjectsSportCulture: setShowEuProjectsSportCulture,
+      euProjectsProtection: setShowEuProjectsProtection,
+      euProjectsPublicSocial: setShowEuProjectsPublicSocial,
+      euProjectsResearch: setShowEuProjectsResearch,
+      euProjectsEnvironment: setShowEuProjectsEnvironment,
+      europeanEconomicArea: setShowEuropeanEconomicArea,
+      majorBusinessDistricts: setShowMajorBusinessDistricts,
+      majorFreightPorts: setShowMajorFreightPorts,
       unescoWorldHeritage: setShowUnescoWorldHeritage,
       unescoCultural: setShowUnescoCultural,
       unescoNatural: setShowUnescoNatural,
@@ -1561,6 +1655,15 @@ export default function MapInterface() {
     setShowEuBodiesAgencies(defaults.euBodiesAgencies);
     setShowInternationalOrganisations(defaults.internationalOrganisations);
     setShowEuropeanCapitalsOfCulture(defaults.europeanCapitalsOfCulture);
+    setShowEuProjectsTransport(defaults.euProjectsTransport);
+    setShowEuProjectsSportCulture(defaults.euProjectsSportCulture);
+    setShowEuProjectsProtection(defaults.euProjectsProtection);
+    setShowEuProjectsPublicSocial(defaults.euProjectsPublicSocial);
+    setShowEuProjectsResearch(defaults.euProjectsResearch);
+    setShowEuProjectsEnvironment(defaults.euProjectsEnvironment);
+    setShowEuropeanEconomicArea(defaults.europeanEconomicArea);
+    setShowMajorBusinessDistricts(defaults.majorBusinessDistricts);
+    setShowMajorFreightPorts(defaults.majorFreightPorts);
     setShowUnescoWorldHeritage(defaults.unescoWorldHeritage);
     setShowUnescoCultural(defaults.unescoCultural);
     setShowUnescoNatural(defaults.unescoNatural);
@@ -2982,6 +3085,24 @@ export default function MapInterface() {
     clearTemporaryControlSelection();
   };
 
+  const clearEuProjectSelection = () => {
+    setSelectedEuProjectId(null);
+  };
+
+  const clearBusinessDistrictSelection = () => {
+    setSelectedBusinessDistrictId(null);
+  };
+
+  const clearFreightPortSelection = () => {
+    setSelectedFreightPortId(null);
+  };
+
+  const clearEuProjectsEconomySelection = () => {
+    clearEuProjectSelection();
+    clearBusinessDistrictSelection();
+    clearFreightPortSelection();
+  };
+
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
@@ -2996,6 +3117,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     setSelectedCountryCode(countryCode);
   };
 
@@ -3013,6 +3135,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setSelectedCapitalId(capitalId);
 
@@ -3044,6 +3167,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setSelectedEuBodyAgencyId(agencyId);
 
@@ -3077,6 +3201,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setSelectedInternationalOrganisationId(organisationId);
 
@@ -3108,6 +3233,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setSelectedCapitalOfCultureId(capitalOfCultureId);
 
@@ -3120,6 +3246,107 @@ export default function MapInterface() {
           longitude: capital.longitude,
           latitude: capital.latitude,
           zoom: 8,
+        });
+      }
+    }
+  };
+
+  const handleEuProjectSelect = (projectId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearBusinessDistrictSelection();
+    clearFreightPortSelection();
+    clearTemporaryPlace();
+    setSelectedEuProjectId(projectId);
+
+    if (projectId) {
+      const project = getEuProjectById(projectId);
+      if (project) {
+        requestFocus({
+          kind: "point",
+          longitude: project.longitude,
+          latitude: project.latitude,
+          zoom: 10,
+        });
+      }
+    }
+  };
+
+  const handleBusinessDistrictSelect = (districtId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectSelection();
+    clearFreightPortSelection();
+    clearTemporaryPlace();
+    setSelectedBusinessDistrictId(districtId);
+
+    if (districtId) {
+      setShowMajorBusinessDistricts(true);
+      const district = getMajorBusinessDistrictById(districtId);
+      if (district) {
+        requestFocus({
+          kind: "point",
+          longitude: district.longitude,
+          latitude: district.latitude,
+          zoom: 11,
+        });
+      }
+    }
+  };
+
+  const handleFreightPortSelect = (portId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectSelection();
+    clearBusinessDistrictSelection();
+    clearTemporaryPlace();
+    setSelectedFreightPortId(portId);
+
+    if (portId) {
+      setShowMajorFreightPorts(true);
+      const port = getMajorFreightPortById(portId);
+      if (port) {
+        requestFocus({
+          kind: "point",
+          longitude: port.longitude,
+          latitude: port.latitude,
+          zoom: 9,
         });
       }
     }
@@ -3276,6 +3503,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setSelectedAlertId(null);
     setRouteContextMenu(null);
@@ -3372,6 +3600,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     setSelectedWildfireId(incidentId);
   };
 
@@ -3418,6 +3647,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -3445,6 +3675,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setSelectedInstitutionId(institutionId);
     setSelectedInstitutionSiteId(siteId ?? null);
@@ -3532,6 +3763,7 @@ export default function MapInterface() {
     clearEhlSelection();
     clearTouristPlaceSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setShowEuMainInstitutions(true);
     setSelectedInstitutionId(institutionId);
@@ -3568,6 +3800,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
 
     setShowUnescoWorldHeritage(true);
     if (site.category === "cultural") setShowUnescoCultural(true);
@@ -3614,6 +3847,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
 
     setShowEuropeanHeritageLabel(true);
     setSelectedEhlSiteId(siteId);
@@ -3712,6 +3946,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
 
     setShowMajorTouristPlaces(true);
@@ -3747,6 +3982,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     if (alert.source === "meteoalarm") {
       setShowOfficialWeatherWarnings(true);
@@ -3826,6 +4062,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
     setShowObservedFloodExtent(true);
     setSelectedAlertId(alert.id);
@@ -3868,6 +4105,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
 
     setShowEuropeanMountainPlaces(true);
@@ -3913,6 +4151,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
 
     setShowMajorCivilEngineeringWorks(true);
@@ -3947,6 +4186,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearEurostarSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
 
     setShowMajorEuropeanAirports(true);
@@ -3980,6 +4220,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearAirportSelection();
     clearBorderSelections();
+    clearEuProjectsEconomySelection();
     clearTemporaryPlace();
 
     setShowEurostarStations(true);
@@ -4316,6 +4557,36 @@ export default function MapInterface() {
           showEuMainInstitutions={showEuMainInstitutions}
           selectedInstitutionSiteId={selectedInstitutionSiteId}
           onInstitutionSiteSelect={handleInstitutionSiteSelect}
+          showEuBodiesAgencies={showEuBodiesAgencies}
+          selectedEuBodyAgencyId={selectedEuBodyAgencyId}
+          onEuBodyAgencySelect={handleEuBodyAgencySelect}
+          showInternationalOrganisations={showInternationalOrganisations}
+          selectedInternationalOrganisationId={
+            selectedInternationalOrganisationId
+          }
+          onInternationalOrganisationSelect={
+            handleInternationalOrganisationSelect
+          }
+          showEuropeanCapitalsOfCulture={showEuropeanCapitalsOfCulture}
+          selectedCapitalOfCultureId={selectedCapitalOfCultureId}
+          onCapitalOfCultureSelect={handleCapitalOfCultureSelect}
+          euProjectCategoryVisibility={{
+            transport: showEuProjectsTransport,
+            sportCulture: showEuProjectsSportCulture,
+            protection: showEuProjectsProtection,
+            publicSocial: showEuProjectsPublicSocial,
+            research: showEuProjectsResearch,
+            environment: showEuProjectsEnvironment,
+          }}
+          selectedEuProjectId={selectedEuProjectId}
+          onEuProjectSelect={handleEuProjectSelect}
+          showEuropeanEconomicArea={showEuropeanEconomicArea}
+          showMajorBusinessDistricts={showMajorBusinessDistricts}
+          selectedBusinessDistrictId={selectedBusinessDistrictId}
+          onBusinessDistrictSelect={handleBusinessDistrictSelect}
+          showMajorFreightPorts={showMajorFreightPorts}
+          selectedFreightPortId={selectedFreightPortId}
+          onFreightPortSelect={handleFreightPortSelect}
           showUnescoWorldHeritage={showUnescoWorldHeritage}
           showUnescoCultural={showUnescoCultural}
           showUnescoNatural={showUnescoNatural}
@@ -4397,6 +4668,7 @@ export default function MapInterface() {
               clearAirportSelection();
               clearEurostarSelection();
               clearBorderSelections();
+              clearEuProjectsEconomySelection();
               clearTemporaryPlace();
             }
           }}
@@ -5050,6 +5322,84 @@ export default function MapInterface() {
               capitalOfCultureId={selectedCapitalOfCultureId}
               locale={locale}
               onClose={clearCapitalOfCultureSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedEuProjectId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <EuProjectPanel
+              projectId={selectedEuProjectId}
+              locale={locale}
+              onClose={clearEuProjectSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedBusinessDistrictId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <BusinessDistrictPanel
+              districtId={selectedBusinessDistrictId}
+              locale={locale}
+              onClose={clearBusinessDistrictSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedFreightPortId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <FreightPortPanel
+              portId={selectedFreightPortId}
+              locale={locale}
+              onClose={clearFreightPortSelection}
               onRouteToPlace={handleRouteToPlace}
             />
           )}

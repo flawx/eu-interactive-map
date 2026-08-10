@@ -71,6 +71,13 @@ import {
   setEuropeInstitutionsV2Visibility,
   updateEuropeInstitutionsV2Selection,
 } from "@/lib/map/dataLayers/europeInstitutionsLayers";
+import {
+  attachEuropeProjectsEconomyHandlers,
+  ensureEuropeProjectsEconomyLayers,
+  setEuropeProjectsEconomyVisibility,
+  updateEuropeProjectsEconomySelection,
+  type EuProjectCategoryVisibility,
+} from "@/lib/map/dataLayers/europeProjectsEconomyLayers";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import {
@@ -271,7 +278,17 @@ const SELECTABLE_FILL_LAYERS = [
   "eurozone-fill",
   "non-eurozone-fill",
   "eu-candidates-fill",
+  "european-economic-area-fill",
 ] as const;
+
+const DEFAULT_EU_PROJECT_CATEGORY_VISIBILITY: EuProjectCategoryVisibility = {
+  transport: false,
+  sportCulture: false,
+  protection: false,
+  publicSocial: false,
+  research: false,
+  environment: false,
+};
 
 const EFFIS_WMS_BASE =
   "https://maps.effis.emergency.copernicus.eu/effis";
@@ -1000,6 +1017,16 @@ export default function MapContainer({
   showEuropeanCapitalsOfCulture = false,
   selectedCapitalOfCultureId = null,
   onCapitalOfCultureSelect,
+  euProjectCategoryVisibility = DEFAULT_EU_PROJECT_CATEGORY_VISIBILITY,
+  selectedEuProjectId = null,
+  onEuProjectSelect,
+  showEuropeanEconomicArea = false,
+  showMajorBusinessDistricts = false,
+  selectedBusinessDistrictId = null,
+  onBusinessDistrictSelect,
+  showMajorFreightPorts = false,
+  selectedFreightPortId = null,
+  onFreightPortSelect,
   showUnescoWorldHeritage = false,
   showUnescoCultural = true,
   showUnescoNatural = true,
@@ -1184,6 +1211,16 @@ export default function MapContainer({
   showEuropeanCapitalsOfCulture?: boolean;
   selectedCapitalOfCultureId?: string | null;
   onCapitalOfCultureSelect?: (capitalOfCultureId: string | null) => void;
+  euProjectCategoryVisibility?: EuProjectCategoryVisibility;
+  selectedEuProjectId?: string | null;
+  onEuProjectSelect?: (projectId: string | null) => void;
+  showEuropeanEconomicArea?: boolean;
+  showMajorBusinessDistricts?: boolean;
+  selectedBusinessDistrictId?: string | null;
+  onBusinessDistrictSelect?: (districtId: string | null) => void;
+  showMajorFreightPorts?: boolean;
+  selectedFreightPortId?: string | null;
+  onFreightPortSelect?: (portId: string | null) => void;
   showUnescoWorldHeritage?: boolean;
   showUnescoCultural?: boolean;
   showUnescoNatural?: boolean;
@@ -1365,6 +1402,29 @@ export default function MapContainer({
   selectedCapitalOfCultureIdRef.current = selectedCapitalOfCultureId;
   const onCapitalOfCultureSelectRef = useRef(onCapitalOfCultureSelect);
   onCapitalOfCultureSelectRef.current = onCapitalOfCultureSelect;
+  const euProjectCategoryVisibilityRef = useRef(euProjectCategoryVisibility);
+  euProjectCategoryVisibilityRef.current = euProjectCategoryVisibility;
+  const selectedEuProjectIdRef = useRef(selectedEuProjectId);
+  selectedEuProjectIdRef.current = selectedEuProjectId;
+  const onEuProjectSelectRef = useRef(onEuProjectSelect);
+  onEuProjectSelectRef.current = onEuProjectSelect;
+  const showEuropeanEconomicAreaRef = useRef(showEuropeanEconomicArea);
+  showEuropeanEconomicAreaRef.current = showEuropeanEconomicArea;
+  const showMajorBusinessDistrictsRef = useRef(showMajorBusinessDistricts);
+  showMajorBusinessDistrictsRef.current = showMajorBusinessDistricts;
+  const selectedBusinessDistrictIdRef = useRef(selectedBusinessDistrictId);
+  selectedBusinessDistrictIdRef.current = selectedBusinessDistrictId;
+  const onBusinessDistrictSelectRef = useRef(onBusinessDistrictSelect);
+  onBusinessDistrictSelectRef.current = onBusinessDistrictSelect;
+  const showMajorFreightPortsRef = useRef(showMajorFreightPorts);
+  showMajorFreightPortsRef.current = showMajorFreightPorts;
+  const selectedFreightPortIdRef = useRef(selectedFreightPortId);
+  selectedFreightPortIdRef.current = selectedFreightPortId;
+  const onFreightPortSelectRef = useRef(onFreightPortSelect);
+  onFreightPortSelectRef.current = onFreightPortSelect;
+  const detachEuropeProjectsEconomyHandlersRef = useRef<(() => void) | null>(
+    null,
+  );
   const detachEuropeInstitutionsV2HandlersRef = useRef<(() => void) | null>(
     null,
   );
@@ -1915,6 +1975,30 @@ export default function MapContainer({
       const id = feature?.properties?.id;
       if (typeof id === "string") {
         onCapitalOfCultureSelectRef.current?.(id);
+      }
+    };
+
+    const handleBusinessDistrictClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onBusinessDistrictSelectRef.current?.(id);
+      }
+    };
+
+    const handleFreightPortClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onFreightPortSelectRef.current?.(id);
+      }
+    };
+
+    const handleEuProjectClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onEuProjectSelectRef.current?.(id);
       }
     };
 
@@ -3542,6 +3626,16 @@ export default function MapContainer({
         selectedCapitalOfCultureId: selectedCapitalOfCultureIdRef.current,
       });
 
+      ensureEuropeProjectsEconomyLayers(map, {
+        showEuropeanEconomicArea: showEuropeanEconomicAreaRef.current,
+        showMajorBusinessDistricts: showMajorBusinessDistrictsRef.current,
+        showMajorFreightPorts: showMajorFreightPortsRef.current,
+        euProjectCategoryVisibility: euProjectCategoryVisibilityRef.current,
+        selectedBusinessDistrictId: selectedBusinessDistrictIdRef.current,
+        selectedFreightPortId: selectedFreightPortIdRef.current,
+        selectedEuProjectId: selectedEuProjectIdRef.current,
+      });
+
       if (!map.getSource("unesco-world-heritage-sites")) {
         map.addSource("unesco-world-heritage-sites", {
           type: "geojson",
@@ -4865,6 +4959,18 @@ export default function MapContainer({
           setPointerCursor,
           resetCursor,
         );
+      detachEuropeProjectsEconomyHandlersRef.current?.();
+      detachEuropeProjectsEconomyHandlersRef.current =
+        attachEuropeProjectsEconomyHandlers(
+          map,
+          {
+            onBusinessDistrictClick: handleBusinessDistrictClick,
+            onFreightPortClick: handleFreightPortClick,
+            onEuProjectClick: handleEuProjectClick,
+          },
+          setPointerCursor,
+          resetCursor,
+        );
       map.on("click", "unesco-clusters", handleUnescoClusterClick);
       map.on("mouseenter", "unesco-clusters", setPointerCursor);
       map.on("mouseleave", "unesco-clusters", resetCursor);
@@ -4992,6 +5098,8 @@ export default function MapContainer({
       map.off("mouseleave", "eu-main-institutions-symbol", resetCursor);
       detachEuropeInstitutionsV2HandlersRef.current?.();
       detachEuropeInstitutionsV2HandlersRef.current = null;
+      detachEuropeProjectsEconomyHandlersRef.current?.();
+      detachEuropeProjectsEconomyHandlersRef.current = null;
       map.off("click", "unesco-clusters", handleUnescoClusterClick);
       map.off("mouseenter", "unesco-clusters", setPointerCursor);
       map.off("mouseleave", "unesco-clusters", resetCursor);
@@ -5465,6 +5573,40 @@ export default function MapContainer({
     selectedEuBodyAgencyId,
     selectedInternationalOrganisationId,
     selectedCapitalOfCultureId,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    setEuropeProjectsEconomyVisibility(map, {
+      showEuropeanEconomicArea,
+      showMajorBusinessDistricts,
+      showMajorFreightPorts,
+      euProjectCategoryVisibility,
+    });
+  }, [
+    showEuropeanEconomicArea,
+    showMajorBusinessDistricts,
+    showMajorFreightPorts,
+    euProjectCategoryVisibility,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    updateEuropeProjectsEconomySelection(map, {
+      selectedBusinessDistrictId,
+      selectedFreightPortId,
+      selectedEuProjectId,
+    });
+  }, [
+    selectedBusinessDistrictId,
+    selectedFreightPortId,
+    selectedEuProjectId,
     mapSourcesReadyVersion,
   ]);
 

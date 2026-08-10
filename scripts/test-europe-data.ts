@@ -23,6 +23,30 @@ import {
   createDefaultLayerState,
 } from "../lib/map/mapLayerPreferences";
 import { DATA_LAYER_REGISTRY } from "../lib/map/dataLayers/dataLayerRegistry";
+import { DATA_SOURCES_REGISTRY } from "../lib/map/dataSourcesRegistry";
+import {
+  EUROPEAN_ECONOMIC_AREA_MEMBER_CODES,
+  auditEuropeanEconomicArea,
+  isEeaMember,
+} from "../lib/europe/europeanEconomicArea";
+import {
+  MAJOR_BUSINESS_DISTRICTS,
+  auditMajorBusinessDistricts,
+} from "../lib/europe/majorBusinessDistricts";
+import {
+  MAJOR_FREIGHT_PORTS,
+  auditMajorFreightPorts,
+} from "../lib/europe/majorFreightPorts";
+import { auditEuProjects } from "../lib/europe/euProjects/entities";
+import { EU_PROJECTS_FIXTURE } from "../lib/europe/euProjects/fixtureProjects";
+import { normalizeEntityStatus } from "../lib/map/dataLayers/entityStatus";
+import {
+  buildRequestKey,
+  EuProjectsViewportCache,
+  debounce,
+  resolveZoomStrategy,
+  createEuProjectsViewportLoader,
+} from "../lib/europe/euProjects/viewportLoader";
 
 const FORBIDDEN_ALIASES = [
   "general secretariat of the european union",
@@ -168,6 +192,235 @@ function testRegistryPreferenceKeysMatch(): void {
   }
 }
 
+function testEuropeanEconomicAreaMembership(): void {
+  const audit = auditEuropeanEconomicArea();
+  assert.ok(audit.includesIS, "EEA must include Iceland");
+  assert.ok(audit.includesNO, "EEA must include Norway");
+  assert.ok(audit.includesLI, "EEA must include Liechtenstein");
+  assert.ok(audit.excludesCH, "EEA must exclude Switzerland");
+  assert.ok(audit.excludesUK, "EEA must exclude the United Kingdom");
+  assert.ok(
+    audit.chStillInEUIMScope,
+    "Switzerland must remain in EUIM scope (Schengen) despite EEA exclusion",
+  );
+  assert.ok(isEeaMember("FR"), "EU members must be EEA members");
+  assert.equal(isEeaMember("CH"), false);
+  assert.equal(isEeaMember("UK"), false);
+  assert.equal(isEeaMember("GB"), false);
+  assert.ok(EUROPEAN_ECONOMIC_AREA_MEMBER_CODES.includes("IS"));
+  assert.ok(EUROPEAN_ECONOMIC_AREA_MEMBER_CODES.includes("NO"));
+  assert.ok(EUROPEAN_ECONOMIC_AREA_MEMBER_CODES.includes("LI"));
+  assert.ok(!EUROPEAN_ECONOMIC_AREA_MEMBER_CODES.includes("CH"));
+}
+
+function testBusinessDistrictsInScopeNoUK(): void {
+  const audit = auditMajorBusinessDistricts();
+  assert.equal(audit.duplicateIds.length, 0, "duplicate business district ids");
+  assert.equal(audit.missingCoordinates.length, 0, "districts missing coords");
+  assert.equal(audit.outsideScope.length, 0, "districts outside EUIM scope");
+  assert.equal(audit.ukEntries.length, 0, "no UK business districts expected");
+  assert.equal(audit.total, MAJOR_BUSINESS_DISTRICTS.length);
+  assert.ok(audit.total >= 8, "expected a reasonably sized curated district list");
+
+  for (const district of MAJOR_BUSINESS_DISTRICTS) {
+    assert.ok(isCountryInEUIMScope(district.countryCode), district.id);
+    assert.ok(district.id.startsWith("business-district-"), district.id);
+  }
+}
+
+function testFreightPortsInScopeNoUK(): void {
+  const audit = auditMajorFreightPorts();
+  assert.equal(audit.duplicateIds.length, 0, "duplicate freight port ids");
+  assert.equal(audit.missingCoordinates.length, 0, "ports missing coords");
+  assert.equal(audit.outsideScope.length, 0, "ports outside EUIM scope");
+  assert.equal(audit.ukEntries.length, 0, "no UK freight ports expected");
+  assert.equal(audit.total, MAJOR_FREIGHT_PORTS.length);
+  assert.ok(audit.total >= 10, "expected a reasonably sized curated port list");
+
+  for (const port of MAJOR_FREIGHT_PORTS) {
+    assert.ok(isCountryInEUIMScope(port.countryCode), port.id);
+  }
+}
+
+function testEuProjectsFixtureQuality(): void {
+  const audit = auditEuProjects();
+  assert.equal(audit.duplicateIds.length, 0, "duplicate EU project ids");
+  assert.equal(audit.missingCoordinates.length, 0, "projects missing coords");
+  assert.equal(audit.outsideScope.length, 0, "projects outside EUIM scope");
+  assert.equal(audit.invalidBudgets.length, 0, "projects with invalid budget values");
+  assert.equal(audit.total, EU_PROJECTS_FIXTURE.length);
+  assert.ok(
+    audit.total >= 20 && audit.total <= 40,
+    "expected ~20-40 curated representative EU projects",
+  );
+
+  const expectedCategories = [
+    "transport",
+    "sportCulture",
+    "protection",
+    "publicSocial",
+    "research",
+    "environment",
+  ];
+  for (const category of expectedCategories) {
+    assert.ok(
+      (audit.byCategory[category] ?? 0) > 0,
+      `expected at least one project in category ${category}`,
+    );
+  }
+
+  for (const project of EU_PROJECTS_FIXTURE) {
+    if (project.budgetEUR !== null) {
+      assert.ok(
+        Number.isFinite(project.budgetEUR) && project.budgetEUR >= 0,
+        `${project.id} has an invalid non-null budget`,
+      );
+    }
+  }
+}
+
+function testEntityStatusNormalizationDefaultsUnknown(): void {
+  assert.equal(normalizeEntityStatus(undefined), "unknown");
+  assert.equal(normalizeEntityStatus(null), "unknown");
+  assert.equal(normalizeEntityStatus(""), "unknown");
+  assert.equal(normalizeEntityStatus("nonsense-value"), "unknown");
+  assert.equal(normalizeEntityStatus("closed"), "unknown");
+  assert.equal(normalizeEntityStatus("under construction"), "under_construction");
+  assert.equal(normalizeEntityStatus("cancelled"), "cancelled");
+}
+
+function testNewDataSourcesRegistered(): void {
+  const expectedSourceIds = [
+    "kohesio",
+    "cinea-cef",
+    "ten-t-dg-move",
+    "cordis",
+    "efta-eea",
+    "business-districts-curated",
+    "ten-t-ports",
+  ];
+  for (const id of expectedSourceIds) {
+    const source = DATA_SOURCES_REGISTRY.find((entry) => entry.id === id);
+    assert.ok(source, `missing data source registry entry for ${id}`);
+  }
+}
+
+function testEuProjectsAndEconomyPreferencesDefaultOff(): void {
+  const newKeys = [
+    "euProjectsTransport",
+    "euProjectsSportCulture",
+    "euProjectsProtection",
+    "euProjectsPublicSocial",
+    "euProjectsResearch",
+    "euProjectsEnvironment",
+    "europeanEconomicArea",
+    "majorBusinessDistricts",
+    "majorFreightPorts",
+  ] as const;
+
+  for (const key of newKeys) {
+    assert.equal(
+      DEFAULT_MAP_LAYER_PREFERENCES[key],
+      false,
+      `${key} must default to false`,
+    );
+  }
+
+  const defaults = createDefaultLayerState();
+  for (const key of newKeys) {
+    assert.equal(defaults[key], false, `reset must keep ${key} off`);
+  }
+
+  // Existing defaults from earlier commits must remain untouched.
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.euroArea, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.liveTrafficFlow, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.euCapitals, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.euMainInstitutions, true);
+}
+
+function testEuProjectsAndEconomyRegistryEntries(): void {
+  const expected: Array<[string, string]> = [
+    ["eu-projects-transport", "euProjectsTransport"],
+    ["eu-projects-sport-culture", "euProjectsSportCulture"],
+    ["eu-projects-protection", "euProjectsProtection"],
+    ["eu-projects-public-social", "euProjectsPublicSocial"],
+    ["eu-projects-research", "euProjectsResearch"],
+    ["eu-projects-environment", "euProjectsEnvironment"],
+    ["european-economic-area", "europeanEconomicArea"],
+    ["major-business-districts", "majorBusinessDistricts"],
+    ["major-freight-ports", "majorFreightPorts"],
+  ];
+
+  for (const [layerId, preferenceKey] of expected) {
+    const layer = DATA_LAYER_REGISTRY.find((entry) => entry.id === layerId);
+    assert.ok(layer, `missing registry entry for ${layerId}`);
+    assert.equal(layer!.preferenceKey, preferenceKey);
+    assert.equal(layer!.defaultEnabled, false);
+  }
+}
+
+async function testEuProjectsViewportLoaderPureFunctions(): Promise<void> {
+  assert.deepEqual(resolveZoomStrategy(3), { majorOnly: true, limit: 60 });
+  assert.deepEqual(resolveZoomStrategy(6), { majorOnly: true, limit: 120 });
+  assert.deepEqual(resolveZoomStrategy(9), { majorOnly: false, limit: 300 });
+
+  const bboxA: [number, number, number, number] = [1, 2, 3, 4];
+  const bboxB: [number, number, number, number] = [1.0001, 2, 3, 4];
+  const strategy = resolveZoomStrategy(8);
+  assert.equal(
+    buildRequestKey(bboxA, strategy, {}),
+    buildRequestKey(bboxB, strategy, {}),
+    "keys should round bbox to reduce cache thrash",
+  );
+  assert.notEqual(
+    buildRequestKey(bboxA, strategy, { category: "transport" }),
+    buildRequestKey(bboxA, strategy, { category: "research" }),
+  );
+
+  let clock = 1_000;
+  const cache = new EuProjectsViewportCache<number>(1_000, () => clock);
+  cache.set("k", 42);
+  assert.equal(cache.get("k"), 42);
+  clock += 1_001;
+  assert.equal(cache.get("k"), undefined, "entry must expire after ttl");
+
+  let calls = 0;
+  const debounced = debounce(() => {
+    calls += 1;
+  }, 20);
+  debounced.call();
+  debounced.call();
+  debounced.call();
+  await new Promise((resolve) => setTimeout(resolve, 40));
+  assert.equal(calls, 1, "only the trailing debounced call should fire");
+
+  let fetchCount = 0;
+  const loader = createEuProjectsViewportLoader({
+    debounceMs: 5,
+    cacheTtlMs: 5_000,
+    fetchImpl: async () => {
+      fetchCount += 1;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ type: "FeatureCollection", features: [] }),
+      };
+    },
+    onData: () => {},
+  });
+
+  loader.requestViewport([1, 2, 3, 4], 8, {});
+  loader.requestViewport([1, 2, 3, 4], 8, {});
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(fetchCount, 1, "debounce + dedupe must collapse repeated requests");
+
+  loader.requestViewport([1, 2, 3, 4], 8, {});
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(fetchCount, 1, "cached response must avoid a second fetch");
+
+  loader.destroy();
+}
+
 function main(): void {
   testInstitutionIdsUniqueAndNoForbiddenAliases();
   testAgenciesInScopeWithCoordinates();
@@ -177,7 +430,19 @@ function main(): void {
   testNewLayerPreferencesDefaultOff();
   testResetKeepsNewPrefsOff();
   testRegistryPreferenceKeysMatch();
-  console.log("test-europe-data: ok");
+  testEuropeanEconomicAreaMembership();
+  testBusinessDistrictsInScopeNoUK();
+  testFreightPortsInScopeNoUK();
+  testEuProjectsFixtureQuality();
+  testEntityStatusNormalizationDefaultsUnknown();
+  testNewDataSourcesRegistered();
+  testEuProjectsAndEconomyPreferencesDefaultOff();
+  testEuProjectsAndEconomyRegistryEntries();
+  console.log("test-europe-data: ok (sync checks)");
 }
 
 main();
+
+void testEuProjectsViewportLoaderPureFunctions().then(() => {
+  console.log("test-europe-data: ok (viewport loader)");
+});

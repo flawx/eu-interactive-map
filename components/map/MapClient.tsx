@@ -40,6 +40,7 @@ import type {
   TrafficFilters,
   TrafficParentLayers,
 } from "@/components/map/trafficMapLayers";
+import type { EuProjectCategoryVisibility } from "@/lib/map/dataLayers/europeProjectsEconomyLayers";
 
 const MapContainer = dynamic(() => import("@/components/map/MapContainer"), {
   ssr: false,
@@ -58,6 +59,25 @@ type MapClientProps = {
   showEuMainInstitutions: boolean;
   selectedInstitutionSiteId: string | null;
   onInstitutionSiteSelect?: (siteId: string | null) => void;
+  showEuBodiesAgencies?: boolean;
+  selectedEuBodyAgencyId?: string | null;
+  onEuBodyAgencySelect?: (agencyId: string | null) => void;
+  showInternationalOrganisations?: boolean;
+  selectedInternationalOrganisationId?: string | null;
+  onInternationalOrganisationSelect?: (organisationId: string | null) => void;
+  showEuropeanCapitalsOfCulture?: boolean;
+  selectedCapitalOfCultureId?: string | null;
+  onCapitalOfCultureSelect?: (capitalOfCultureId: string | null) => void;
+  euProjectCategoryVisibility?: EuProjectCategoryVisibility;
+  selectedEuProjectId?: string | null;
+  onEuProjectSelect?: (projectId: string | null) => void;
+  showEuropeanEconomicArea?: boolean;
+  showMajorBusinessDistricts?: boolean;
+  selectedBusinessDistrictId?: string | null;
+  onBusinessDistrictSelect?: (districtId: string | null) => void;
+  showMajorFreightPorts?: boolean;
+  selectedFreightPortId?: string | null;
+  onFreightPortSelect?: (portId: string | null) => void;
   showUnescoWorldHeritage: boolean;
   showUnescoCultural: boolean;
   showUnescoNatural: boolean;
@@ -197,6 +217,25 @@ export default function MapClient({
   showEuMainInstitutions,
   selectedInstitutionSiteId,
   onInstitutionSiteSelect,
+  showEuBodiesAgencies,
+  selectedEuBodyAgencyId,
+  onEuBodyAgencySelect,
+  showInternationalOrganisations,
+  selectedInternationalOrganisationId,
+  onInternationalOrganisationSelect,
+  showEuropeanCapitalsOfCulture,
+  selectedCapitalOfCultureId,
+  onCapitalOfCultureSelect,
+  euProjectCategoryVisibility,
+  selectedEuProjectId,
+  onEuProjectSelect,
+  showEuropeanEconomicArea,
+  showMajorBusinessDistricts,
+  selectedBusinessDistrictId,
+  onBusinessDistrictSelect,
+  showMajorFreightPorts,
+  selectedFreightPortId,
+  onFreightPortSelect,
   showUnescoWorldHeritage,
   showUnescoCultural,
   showUnescoNatural,
@@ -324,6 +363,25 @@ export default function MapClient({
       showEuMainInstitutions={showEuMainInstitutions}
       selectedInstitutionSiteId={selectedInstitutionSiteId}
       onInstitutionSiteSelect={onInstitutionSiteSelect}
+      showEuBodiesAgencies={showEuBodiesAgencies}
+      selectedEuBodyAgencyId={selectedEuBodyAgencyId}
+      onEuBodyAgencySelect={onEuBodyAgencySelect}
+      showInternationalOrganisations={showInternationalOrganisations}
+      selectedInternationalOrganisationId={selectedInternationalOrganisationId}
+      onInternationalOrganisationSelect={onInternationalOrganisationSelect}
+      showEuropeanCapitalsOfCulture={showEuropeanCapitalsOfCulture}
+      selectedCapitalOfCultureId={selectedCapitalOfCultureId}
+      onCapitalOfCultureSelect={onCapitalOfCultureSelect}
+      euProjectCategoryVisibility={euProjectCategoryVisibility}
+      selectedEuProjectId={selectedEuProjectId}
+      onEuProjectSelect={onEuProjectSelect}
+      showEuropeanEconomicArea={showEuropeanEconomicArea}
+      showMajorBusinessDistricts={showMajorBusinessDistricts}
+      selectedBusinessDistrictId={selectedBusinessDistrictId}
+      onBusinessDistrictSelect={onBusinessDistrictSelect}
+      showMajorFreightPorts={showMajorFreightPorts}
+      selectedFreightPortId={selectedFreightPortId}
+      onFreightPortSelect={onFreightPortSelect}
       showUnescoWorldHeritage={showUnescoWorldHeritage}
       showUnescoCultural={showUnescoCultural}
       showUnescoNatural={showUnescoNatural}

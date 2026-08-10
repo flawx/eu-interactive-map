@@ -27,6 +27,9 @@ import {
  * Traffic stays below interactive POI / photo markers / user location.
  */
 export const EUIM_LAYER_STACK_BOTTOM_TO_TOP: readonly string[] = [
+  // Economy / membership fills (below traffic & POI)
+  "european-economic-area-fill",
+  "european-economic-area-border",
   // Wildfire / satellite history fills
   "firms-recent-history-fill",
   "firms-recent-history-border",
@@ -129,6 +132,15 @@ export const EUIM_LAYER_STACK_BOTTOM_TO_TOP: readonly string[] = [
   "european-capitals-of-culture-halo",
   "european-capitals-of-culture-symbol",
   "european-capitals-of-culture-label",
+  "eu-projects-halo",
+  "eu-projects-symbol",
+  "eu-projects-label",
+  "major-business-districts-halo",
+  "major-business-districts-symbol",
+  "major-business-districts-label",
+  "major-freight-ports-halo",
+  "major-freight-ports-symbol",
+  "major-freight-ports-label",
   "unesco-world-heritage-halo",
   "unesco-world-heritage-symbol",
   "unesco-world-heritage-labels",

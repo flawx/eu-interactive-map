@@ -9,12 +9,20 @@ import {
 import { DATA_SOURCES_REGISTRY } from "../lib/map/dataSourcesRegistry";
 import { DATA_LAYER_SOURCE_IDS } from "../lib/map/dataLayers/sourceIds";
 import { isCountryInEUIMScope } from "../lib/geography/euimCoverage";
+import { auditEuropeanEconomicArea } from "../lib/europe/europeanEconomicArea";
+import { auditMajorBusinessDistricts } from "../lib/europe/majorBusinessDistricts";
+import { auditMajorFreightPorts } from "../lib/europe/majorFreightPorts";
+import { auditEuProjects } from "../lib/europe/euProjects/entities";
 
 function main() {
   const institutionErrors = validateEuInstitutions();
   const agencies = auditEuBodiesAgencies();
   const orgs = auditInternationalOrganisations();
   const culture = auditEuropeanCapitalsOfCulture();
+  const eea = auditEuropeanEconomicArea();
+  const districts = auditMajorBusinessDistricts();
+  const ports = auditMajorFreightPorts();
+  const projects = auditEuProjects();
 
   const knownSourceIds = new Set(DATA_SOURCES_REGISTRY.map((s) => s.id));
   const invalidSources: string[] = [];
@@ -40,16 +48,16 @@ function main() {
 
   console.log("[data-layers-v2 audit-europe]");
   console.log(
-    `entities=${EU_INSTITUTIONS.length + agencies.total + orgs.total + culture.total}`,
+    `entities=${EU_INSTITUTIONS.length + agencies.total + orgs.total + culture.total + districts.total + ports.total + projects.total}`,
   );
   console.log(
-    `missingCoordinates=${[...missingCoords, ...agencies.missingCoordinates, ...orgs.missingCoordinates, ...culture.missingCoordinates].join(",") || "none"}`,
+    `missingCoordinates=${[...missingCoords, ...agencies.missingCoordinates, ...orgs.missingCoordinates, ...culture.missingCoordinates, ...districts.missingCoordinates, ...ports.missingCoordinates, ...projects.missingCoordinates].join(",") || "none"}`,
   );
   console.log(
-    `outsideScope=${[...outsideScopeSites, ...agencies.outsideScope, ...orgs.outsideScope, ...culture.outsideScope].join(",") || "none"}`,
+    `outsideScope=${[...outsideScopeSites, ...agencies.outsideScope, ...orgs.outsideScope, ...culture.outsideScope, ...districts.outsideScope, ...ports.outsideScope, ...projects.outsideScope].join(",") || "none"}`,
   );
   console.log(
-    `duplicateIds=${[...agencies.duplicateIds, ...orgs.duplicateIds, ...culture.duplicateIds].join(",") || "none"}`,
+    `duplicateIds=${[...agencies.duplicateIds, ...orgs.duplicateIds, ...culture.duplicateIds, ...districts.duplicateIds, ...ports.duplicateIds, ...projects.duplicateIds].join(",") || "none"}`,
   );
   console.log(
     `invalidCountryCodes=${[...outsideScopeSites, ...agencies.outsideScope, ...orgs.outsideScope, ...culture.outsideScope].join(",") || "none"}`,
@@ -60,6 +68,18 @@ function main() {
   );
   console.log(
     `cultureTemporal=past:${culture.past},current:${culture.current},upcoming:${culture.upcoming}`,
+  );
+  console.log(
+    `eea=members:${eea.memberCount},includesIS:${eea.includesIS},includesNO:${eea.includesNO},includesLI:${eea.includesLI},excludesCH:${eea.excludesCH},excludesUK:${eea.excludesUK},chStillInEUIMScope:${eea.chStillInEUIMScope}`,
+  );
+  console.log(
+    `businessDistricts=total:${districts.total},inScope:${districts.inScope},ukEntries:${districts.ukEntries.length}`,
+  );
+  console.log(
+    `freightPorts=total:${ports.total},inScope:${ports.inScope},ukEntries:${ports.ukEntries.length}`,
+  );
+  console.log(
+    `euProjects=total:${projects.total},inScope:${projects.inScope},invalidBudgets:${projects.invalidBudgets.length},byCategory:${JSON.stringify(projects.byCategory)}`,
   );
 }
 

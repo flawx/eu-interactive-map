@@ -63,7 +63,16 @@ function main() {
   assert.equal(defaults.euCandidates, false);
   assert.equal(defaults.unescoWorldHeritage, false);
   assert.equal(defaults.majorWildfires, false);
-  assert.equal(MAP_LAYER_PREFERENCES_SCHEMA_VERSION, 4);
+  assert.equal(MAP_LAYER_PREFERENCES_SCHEMA_VERSION, 5);
+  assert.equal(defaults.euProjectsTransport, false);
+  assert.equal(defaults.euProjectsSportCulture, false);
+  assert.equal(defaults.euProjectsProtection, false);
+  assert.equal(defaults.euProjectsPublicSocial, false);
+  assert.equal(defaults.euProjectsResearch, false);
+  assert.equal(defaults.euProjectsEnvironment, false);
+  assert.equal(defaults.europeanEconomicArea, false);
+  assert.equal(defaults.majorBusinessDistricts, false);
+  assert.equal(defaults.majorFreightPorts, false);
 
   assert.deepEqual([...EUIM_SCHENGEN_NON_EU_COUNTRY_CODES].sort(), [
     "CH",

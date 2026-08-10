@@ -8,6 +8,15 @@ export type MapLayerPreferences = {
   euBodiesAgencies: boolean;
   internationalOrganisations: boolean;
   europeanCapitalsOfCulture: boolean;
+  euProjectsTransport: boolean;
+  euProjectsSportCulture: boolean;
+  euProjectsProtection: boolean;
+  euProjectsPublicSocial: boolean;
+  euProjectsResearch: boolean;
+  euProjectsEnvironment: boolean;
+  europeanEconomicArea: boolean;
+  majorBusinessDistricts: boolean;
+  majorFreightPorts: boolean;
   unescoWorldHeritage: boolean;
   unescoCultural: boolean;
   unescoNatural: boolean;
@@ -107,6 +116,15 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   euBodiesAgencies: false,
   internationalOrganisations: false,
   europeanCapitalsOfCulture: false,
+  euProjectsTransport: false,
+  euProjectsSportCulture: false,
+  euProjectsProtection: false,
+  euProjectsPublicSocial: false,
+  euProjectsResearch: false,
+  euProjectsEnvironment: false,
+  europeanEconomicArea: false,
+  majorBusinessDistricts: false,
+  majorFreightPorts: false,
   unescoWorldHeritage: false,
   unescoCultural: true,
   unescoNatural: true,
@@ -191,11 +209,12 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   borderCrossingSea: true,
 };
 
-const LAYER_PREFS_KEY = "eu-map-layer-preferences-v4";
+const LAYER_PREFS_KEY = "eu-map-layer-preferences-v5";
+const LEGACY_LAYER_PREFS_KEY_V4 = "eu-map-layer-preferences-v4";
 const LEGACY_LAYER_PREFS_KEY_V3 = "eu-map-layer-preferences-v3";
 const LEGACY_LAYER_PREFS_KEY_V2 = "eu-map-layer-preferences-v2";
 const LEGACY_LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
-export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 4;
+export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 5;
 const LEGEND_COLLAPSED_KEY = "eu-map-legend-collapsed-v1";
 
 const LAYER_KEYS = [
@@ -208,6 +227,15 @@ const LAYER_KEYS = [
   "euBodiesAgencies",
   "internationalOrganisations",
   "europeanCapitalsOfCulture",
+  "euProjectsTransport",
+  "euProjectsSportCulture",
+  "euProjectsProtection",
+  "euProjectsPublicSocial",
+  "euProjectsResearch",
+  "euProjectsEnvironment",
+  "europeanEconomicArea",
+  "majorBusinessDistricts",
+  "majorFreightPorts",
   "unescoWorldHeritage",
   "unescoCultural",
   "unescoNatural",
@@ -322,6 +350,7 @@ export function loadMapLayerPreferences(): MapLayerPreferences {
   try {
     const raw =
       window.localStorage.getItem(LAYER_PREFS_KEY) ??
+      window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V4) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V3) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V2) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY);
@@ -351,6 +380,15 @@ export function saveMapLayerPreferences(
       euBodiesAgencies: Boolean(preferences.euBodiesAgencies),
       internationalOrganisations: Boolean(preferences.internationalOrganisations),
       europeanCapitalsOfCulture: Boolean(preferences.europeanCapitalsOfCulture),
+      euProjectsTransport: Boolean(preferences.euProjectsTransport),
+      euProjectsSportCulture: Boolean(preferences.euProjectsSportCulture),
+      euProjectsProtection: Boolean(preferences.euProjectsProtection),
+      euProjectsPublicSocial: Boolean(preferences.euProjectsPublicSocial),
+      euProjectsResearch: Boolean(preferences.euProjectsResearch),
+      euProjectsEnvironment: Boolean(preferences.euProjectsEnvironment),
+      europeanEconomicArea: Boolean(preferences.europeanEconomicArea),
+      majorBusinessDistricts: Boolean(preferences.majorBusinessDistricts),
+      majorFreightPorts: Boolean(preferences.majorFreightPorts),
       unescoWorldHeritage: Boolean(preferences.unescoWorldHeritage),
       unescoCultural: Boolean(preferences.unescoCultural),
       unescoNatural: Boolean(preferences.unescoNatural),
