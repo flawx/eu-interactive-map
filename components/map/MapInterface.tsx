@@ -21,6 +21,10 @@ import Wifi4EuPanel from "@/components/travel/Wifi4EuPanel";
 import TouristOfficePanel from "@/components/travel/TouristOfficePanel";
 import DiplomaticMissionPanel from "@/components/travel/DiplomaticMissionPanel";
 import VisitorSafetyPanel from "@/components/travel/VisitorSafetyPanel";
+import Natura2000Panel from "@/components/travel/Natura2000Panel";
+import BathingWaterPanel from "@/components/travel/BathingWaterPanel";
+import BeachResortPanel from "@/components/travel/BeachResortPanel";
+import OutdoorRoutePanel from "@/components/travel/OutdoorRoutePanel";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
@@ -50,6 +54,10 @@ import { getWifi4EuHotspotById } from "@/lib/travel/wifi4eu/fixtureHotspots";
 import { getTouristOfficeById } from "@/lib/travel/touristOffices";
 import { getDiplomaticMissionById } from "@/lib/travel/diplomaticMissions";
 import { getVisitorSafetyLocationById } from "@/lib/travel/visitorSafety";
+import { getMajorBeachById } from "@/lib/travel/majorBeaches";
+import { getOutdoorRouteById } from "@/lib/map/dataLayers/outdoorRoutesLayers";
+import type { Natura2000Site } from "@/lib/travel/natura2000/types";
+import type { BathingWaterPanelSite } from "@/components/travel/BathingWaterPanel";
 import {
   getEuInstitutionById,
   getEuInstitutionSiteById,
@@ -474,6 +482,35 @@ export default function MapInterface() {
     useState(DEFAULT_MAP_LAYER_PREFERENCES.visitorSafetyAssistance);
   const [selectedVisitorSafetyLocationId, setSelectedVisitorSafetyLocationId] =
     useState<string | null>(null);
+  const [showNatura2000, setShowNatura2000] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.natura2000,
+  );
+  const [selectedNatura2000Site, setSelectedNatura2000Site] =
+    useState<Natura2000Site | null>(null);
+  const [showEuropeanBathingWaters, setShowEuropeanBathingWaters] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.europeanBathingWaters,
+  );
+  const [selectedBathingWaterSiteId, setSelectedBathingWaterSiteId] =
+    useState<string | null>(null);
+  const [selectedBathingWaterSite, setSelectedBathingWaterSite] =
+    useState<BathingWaterPanelSite | null>(null);
+  const [showMajorBeachesSeasideResorts, setShowMajorBeachesSeasideResorts] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.majorBeachesSeasideResorts);
+  const [selectedBeachId, setSelectedBeachId] = useState<string | null>(null);
+  const [showMajorHikingRoutes, setShowMajorHikingRoutes] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorHikingRoutes,
+  );
+  const [showMajorCyclingRoutes, setShowMajorCyclingRoutes] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorCyclingRoutes,
+  );
+  const [showMajorRunningRoutes, setShowMajorRunningRoutes] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.majorRunningRoutes,
+  );
+  const [selectedOutdoorRouteId, setSelectedOutdoorRouteId] = useState<
+    string | null
+  >(null);
+  const [selectedOutdoorRouteClickPoint, setSelectedOutdoorRouteClickPoint] =
+    useState<[number, number] | null>(null);
   const [showSchengenExternalBorderCrossings, setShowSchengenExternalBorderCrossings] =
     useState(DEFAULT_MAP_LAYER_PREFERENCES.schengenExternalBorderCrossings);
   const [showSchengenTemporaryInternalControls, setShowSchengenTemporaryInternalControls] =
@@ -1204,6 +1241,12 @@ export default function MapInterface() {
       touristInformationOffices: showTouristInformationOffices,
       diplomaticMissions: showDiplomaticMissions,
       visitorSafetyAssistance: showVisitorSafetyAssistance,
+      natura2000: showNatura2000,
+      europeanBathingWaters: showEuropeanBathingWaters,
+      majorBeachesSeasideResorts: showMajorBeachesSeasideResorts,
+      majorHikingRoutes: showMajorHikingRoutes,
+      majorCyclingRoutes: showMajorCyclingRoutes,
+      majorRunningRoutes: showMajorRunningRoutes,
     });
   }, [
     layerPrefsHydrated,
@@ -1311,6 +1354,12 @@ export default function MapInterface() {
     showTouristInformationOffices,
     showDiplomaticMissions,
     showVisitorSafetyAssistance,
+    showNatura2000,
+    showEuropeanBathingWaters,
+    showMajorBeachesSeasideResorts,
+    showMajorHikingRoutes,
+    showMajorCyclingRoutes,
+    showMajorRunningRoutes,
   ]);
 
   const legendPreferences = useMemo<MapLayerPreferences>(
@@ -1419,6 +1468,12 @@ export default function MapInterface() {
       touristInformationOffices: showTouristInformationOffices,
       diplomaticMissions: showDiplomaticMissions,
       visitorSafetyAssistance: showVisitorSafetyAssistance,
+      natura2000: showNatura2000,
+      europeanBathingWaters: showEuropeanBathingWaters,
+      majorBeachesSeasideResorts: showMajorBeachesSeasideResorts,
+      majorHikingRoutes: showMajorHikingRoutes,
+      majorCyclingRoutes: showMajorCyclingRoutes,
+      majorRunningRoutes: showMajorRunningRoutes,
     }),
     [
       showEurozone,
@@ -1525,6 +1580,12 @@ export default function MapInterface() {
       showTouristInformationOffices,
       showDiplomaticMissions,
       showVisitorSafetyAssistance,
+      showNatura2000,
+      showEuropeanBathingWaters,
+      showMajorBeachesSeasideResorts,
+      showMajorHikingRoutes,
+      showMajorCyclingRoutes,
+      showMajorRunningRoutes,
     ],
   );
 
@@ -1577,6 +1638,12 @@ export default function MapInterface() {
       touristInformationOffices: setShowTouristInformationOffices,
       diplomaticMissions: setShowDiplomaticMissions,
       visitorSafetyAssistance: setShowVisitorSafetyAssistance,
+      natura2000: setShowNatura2000,
+      europeanBathingWaters: setShowEuropeanBathingWaters,
+      majorBeachesSeasideResorts: setShowMajorBeachesSeasideResorts,
+      majorHikingRoutes: setShowMajorHikingRoutes,
+      majorCyclingRoutes: setShowMajorCyclingRoutes,
+      majorRunningRoutes: setShowMajorRunningRoutes,
       unescoWorldHeritage: setShowUnescoWorldHeritage,
       unescoCultural: setShowUnescoCultural,
       unescoNatural: setShowUnescoNatural,
@@ -1716,6 +1783,12 @@ export default function MapInterface() {
     setShowTouristInformationOffices(defaults.touristInformationOffices);
     setShowDiplomaticMissions(defaults.diplomaticMissions);
     setShowVisitorSafetyAssistance(defaults.visitorSafetyAssistance);
+    setShowNatura2000(defaults.natura2000);
+    setShowEuropeanBathingWaters(defaults.europeanBathingWaters);
+    setShowMajorBeachesSeasideResorts(defaults.majorBeachesSeasideResorts);
+    setShowMajorHikingRoutes(defaults.majorHikingRoutes);
+    setShowMajorCyclingRoutes(defaults.majorCyclingRoutes);
+    setShowMajorRunningRoutes(defaults.majorRunningRoutes);
     setShowUnescoWorldHeritage(defaults.unescoWorldHeritage);
     setShowUnescoCultural(defaults.unescoCultural);
     setShowUnescoNatural(defaults.unescoNatural);
@@ -3178,6 +3251,31 @@ export default function MapInterface() {
     clearVisitorSafetySelection();
   };
 
+  const clearNatura2000Selection = () => {
+    setSelectedNatura2000Site(null);
+  };
+
+  const clearBathingWaterSelection = () => {
+    setSelectedBathingWaterSiteId(null);
+    setSelectedBathingWaterSite(null);
+  };
+
+  const clearBeachSelection = () => {
+    setSelectedBeachId(null);
+  };
+
+  const clearOutdoorRouteSelection = () => {
+    setSelectedOutdoorRouteId(null);
+    setSelectedOutdoorRouteClickPoint(null);
+  };
+
+  const clearTravelNatureBathingSelection = () => {
+    clearNatura2000Selection();
+    clearBathingWaterSelection();
+    clearBeachSelection();
+    clearOutdoorRouteSelection();
+  };
+
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
@@ -3194,6 +3292,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     setSelectedCountryCode(countryCode);
   };
 
@@ -3213,6 +3312,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedCapitalId(capitalId);
 
@@ -3246,6 +3346,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedEuBodyAgencyId(agencyId);
 
@@ -3281,6 +3382,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedInternationalOrganisationId(organisationId);
 
@@ -3314,6 +3416,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedCapitalOfCultureId(capitalOfCultureId);
 
@@ -3349,6 +3452,7 @@ export default function MapInterface() {
     clearBusinessDistrictSelection();
     clearFreightPortSelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedEuProjectId(projectId);
 
@@ -3383,6 +3487,7 @@ export default function MapInterface() {
     clearEuProjectSelection();
     clearFreightPortSelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedBusinessDistrictId(districtId);
 
@@ -3418,6 +3523,7 @@ export default function MapInterface() {
     clearEuProjectSelection();
     clearBusinessDistrictSelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedFreightPortId(portId);
 
@@ -3579,6 +3685,147 @@ export default function MapInterface() {
     }
   };
 
+  const handleNatura2000SiteSelect = (site: Natura2000Site | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
+    clearBathingWaterSelection();
+    clearBeachSelection();
+    clearOutdoorRouteSelection();
+    clearTemporaryPlace();
+    setSelectedNatura2000Site(site);
+
+    if (site) {
+      setShowNatura2000(true);
+      requestFocus({
+        kind: "point",
+        longitude: site.longitude,
+        latitude: site.latitude,
+        zoom: 12,
+      });
+    }
+  };
+
+  const handleBathingWaterSiteSelect = (site: BathingWaterPanelSite | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
+    clearNatura2000Selection();
+    clearBeachSelection();
+    clearOutdoorRouteSelection();
+    clearTemporaryPlace();
+    setSelectedBathingWaterSite(site);
+    setSelectedBathingWaterSiteId(site?.id ?? null);
+
+    if (site) {
+      setShowEuropeanBathingWaters(true);
+      requestFocus({
+        kind: "point",
+        longitude: site.longitude,
+        latitude: site.latitude,
+        zoom: 13,
+      });
+    }
+  };
+
+  const handleBeachSelect = (beachId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
+    clearNatura2000Selection();
+    clearBathingWaterSelection();
+    clearOutdoorRouteSelection();
+    clearTemporaryPlace();
+    setSelectedBeachId(beachId);
+
+    if (beachId) {
+      setShowMajorBeachesSeasideResorts(true);
+      const beach = getMajorBeachById(beachId);
+      if (beach) {
+        requestFocus({
+          kind: "point",
+          longitude: beach.longitude,
+          latitude: beach.latitude,
+          zoom: 13,
+        });
+      }
+    }
+  };
+
+  const handleOutdoorRouteSelect = (
+    routeId: string | null,
+    clickPoint?: [number, number] | null,
+  ) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
+    clearNatura2000Selection();
+    clearBathingWaterSelection();
+    clearBeachSelection();
+    clearTemporaryPlace();
+    setSelectedOutdoorRouteId(routeId);
+    setSelectedOutdoorRouteClickPoint(clickPoint ?? null);
+
+    if (routeId) {
+      const route = getOutdoorRouteById(routeId);
+      if (route?.routeType === "hiking") setShowMajorHikingRoutes(true);
+      else if (route?.routeType === "cycling") setShowMajorCyclingRoutes(true);
+      else if (route?.routeType === "running") setShowMajorRunningRoutes(true);
+    }
+  };
+
   const handleRoutePlannerPointsChange = useCallback(
     (next: RoutePlannerPointsState) => {
       setRoutePlannerPointsState((current) =>
@@ -3732,6 +3979,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedAlertId(null);
     setRouteContextMenu(null);
@@ -3830,6 +4078,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     setSelectedWildfireId(incidentId);
   };
 
@@ -3878,6 +4127,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -3907,6 +4157,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setSelectedInstitutionId(institutionId);
     setSelectedInstitutionSiteId(siteId ?? null);
@@ -3996,6 +4247,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setShowEuMainInstitutions(true);
     setSelectedInstitutionId(institutionId);
@@ -4034,6 +4286,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
 
     setShowUnescoWorldHeritage(true);
     if (site.category === "cultural") setShowUnescoCultural(true);
@@ -4082,6 +4335,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
 
     setShowEuropeanHeritageLabel(true);
     setSelectedEhlSiteId(siteId);
@@ -4182,6 +4436,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
 
     setShowMajorTouristPlaces(true);
@@ -4219,6 +4474,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     if (alert.source === "meteoalarm") {
       setShowOfficialWeatherWarnings(true);
@@ -4300,6 +4556,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
     setShowObservedFloodExtent(true);
     setSelectedAlertId(alert.id);
@@ -4344,6 +4601,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
 
     setShowEuropeanMountainPlaces(true);
@@ -4391,6 +4649,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
 
     setShowMajorCivilEngineeringWorks(true);
@@ -4427,6 +4686,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
 
     setShowMajorEuropeanAirports(true);
@@ -4462,6 +4722,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
     clearTemporaryPlace();
 
     setShowEurostarStations(true);
@@ -4840,6 +5101,20 @@ export default function MapInterface() {
           showVisitorSafetyAssistance={showVisitorSafetyAssistance}
           selectedVisitorSafetyLocationId={selectedVisitorSafetyLocationId}
           onVisitorSafetySelect={handleVisitorSafetySelect}
+          showNatura2000={showNatura2000}
+          selectedNatura2000SiteId={selectedNatura2000Site?.siteCode ?? null}
+          onNatura2000SiteSelect={handleNatura2000SiteSelect}
+          showEuropeanBathingWaters={showEuropeanBathingWaters}
+          selectedBathingWaterSiteId={selectedBathingWaterSiteId}
+          onBathingWaterSiteSelect={handleBathingWaterSiteSelect}
+          showMajorBeachesSeasideResorts={showMajorBeachesSeasideResorts}
+          selectedBeachId={selectedBeachId}
+          onBeachSelect={handleBeachSelect}
+          showMajorHikingRoutes={showMajorHikingRoutes}
+          showMajorCyclingRoutes={showMajorCyclingRoutes}
+          showMajorRunningRoutes={showMajorRunningRoutes}
+          selectedOutdoorRouteId={selectedOutdoorRouteId}
+          onOutdoorRouteSelect={handleOutdoorRouteSelect}
           showUnescoWorldHeritage={showUnescoWorldHeritage}
           showUnescoCultural={showUnescoCultural}
           showUnescoNatural={showUnescoNatural}
@@ -4923,6 +5198,7 @@ export default function MapInterface() {
               clearBorderSelections();
               clearEuProjectsEconomySelection();
     clearTravelVisitorServicesSelection();
+    clearTravelNatureBathingSelection();
               clearTemporaryPlace();
             }
           }}
@@ -5677,6 +5953,10 @@ export default function MapInterface() {
           !selectedTouristOfficeId &&
           !selectedDiplomaticMissionId &&
           !selectedVisitorSafetyLocationId &&
+          !selectedNatura2000Site &&
+          !selectedBathingWaterSiteId &&
+          !selectedBeachId &&
+          !selectedOutdoorRouteId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -5707,6 +5987,10 @@ export default function MapInterface() {
           !selectedWifi4EuHotspotId &&
           !selectedDiplomaticMissionId &&
           !selectedVisitorSafetyLocationId &&
+          !selectedNatura2000Site &&
+          !selectedBathingWaterSiteId &&
+          !selectedBeachId &&
+          !selectedOutdoorRouteId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -5737,6 +6021,10 @@ export default function MapInterface() {
           !selectedWifi4EuHotspotId &&
           !selectedTouristOfficeId &&
           !selectedVisitorSafetyLocationId &&
+          !selectedNatura2000Site &&
+          !selectedBathingWaterSiteId &&
+          !selectedBeachId &&
+          !selectedOutdoorRouteId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -5767,6 +6055,10 @@ export default function MapInterface() {
           !selectedWifi4EuHotspotId &&
           !selectedTouristOfficeId &&
           !selectedDiplomaticMissionId &&
+          !selectedNatura2000Site &&
+          !selectedBathingWaterSiteId &&
+          !selectedBeachId &&
+          !selectedOutdoorRouteId &&
           !selectedWildfire &&
           !selectedEffisBurnedArea &&
           !selectedCountryCode && (
@@ -5774,6 +6066,144 @@ export default function MapInterface() {
               locationId={selectedVisitorSafetyLocationId}
               locale={locale}
               onClose={clearVisitorSafetySelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedNatura2000Site &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWifi4EuHotspotId &&
+          !selectedTouristOfficeId &&
+          !selectedDiplomaticMissionId &&
+          !selectedVisitorSafetyLocationId &&
+          !selectedBathingWaterSiteId &&
+          !selectedBeachId &&
+          !selectedOutdoorRouteId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <Natura2000Panel
+              site={selectedNatura2000Site}
+              locale={locale}
+              onClose={clearNatura2000Selection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedBathingWaterSiteId &&
+          selectedBathingWaterSite &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWifi4EuHotspotId &&
+          !selectedTouristOfficeId &&
+          !selectedDiplomaticMissionId &&
+          !selectedVisitorSafetyLocationId &&
+          !selectedNatura2000Site &&
+          !selectedBeachId &&
+          !selectedOutdoorRouteId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <BathingWaterPanel
+              site={selectedBathingWaterSite}
+              locale={locale}
+              onClose={clearBathingWaterSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedBeachId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWifi4EuHotspotId &&
+          !selectedTouristOfficeId &&
+          !selectedDiplomaticMissionId &&
+          !selectedVisitorSafetyLocationId &&
+          !selectedNatura2000Site &&
+          !selectedBathingWaterSiteId &&
+          !selectedOutdoorRouteId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <BeachResortPanel
+              beachId={selectedBeachId}
+              locale={locale}
+              onClose={clearBeachSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedOutdoorRouteId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWifi4EuHotspotId &&
+          !selectedTouristOfficeId &&
+          !selectedDiplomaticMissionId &&
+          !selectedVisitorSafetyLocationId &&
+          !selectedNatura2000Site &&
+          !selectedBathingWaterSiteId &&
+          !selectedBeachId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <OutdoorRoutePanel
+              routeId={selectedOutdoorRouteId}
+              referencePoint={selectedOutdoorRouteClickPoint}
+              locale={locale}
+              onClose={clearOutdoorRouteSelection}
               onRouteToPlace={handleRouteToPlace}
             />
           )}

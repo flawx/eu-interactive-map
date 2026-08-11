@@ -34,6 +34,7 @@ export type DataLayerZOrderGroup =
   | "entity-points"
   | "institutions"
   | "poi"
+  | "route-lines"
   | "selected";
 
 export type DataLayerDefinition = {
@@ -414,6 +415,100 @@ export const DATA_LAYER_REGISTRY: readonly DataLayerDefinition[] = [
     geometryTypes: ["Point"],
     sourceIds: [DATA_LAYER_SOURCE_IDS.VISITOR_SAFETY_CURATED],
     zOrderGroup: "entity-points",
+  },
+
+  // --- Tourism Travel V2: nature, protected areas & bathing (commit 2) ---
+  {
+    id: "natura2000",
+    category: "tourism",
+    section: "natureProtected",
+    preferenceKey: "natura2000",
+    nameKey: "natura2000",
+    descriptionKey: "natura2000Description",
+    icon: "leaf",
+    defaultEnabled: false,
+    cluster: null,
+    geometryTypes: ["Point", "Polygon", "MultiPolygon"],
+    sourceIds: [
+      DATA_LAYER_SOURCE_IDS.EEA_NATURA2000,
+      DATA_LAYER_SOURCE_IDS.EUROPEAN_COMMISSION_NATURA2000,
+    ],
+    zOrderGroup: "fills",
+  },
+  {
+    id: "european-bathing-waters",
+    category: "tourism",
+    section: "beachesBathing",
+    preferenceKey: "europeanBathingWaters",
+    nameKey: "europeanBathingWaters",
+    descriptionKey: "europeanBathingWatersDescription",
+    icon: "waves",
+    defaultEnabled: false,
+    cluster: { enabled: true, maxZoom: 12, radius: 50 },
+    geometryTypes: ["Point"],
+    sourceIds: [DATA_LAYER_SOURCE_IDS.EEA_BATHING_WATER],
+    zOrderGroup: "entity-points",
+  },
+  {
+    id: "major-beaches-seaside-resorts",
+    category: "tourism",
+    section: "beachesBathing",
+    preferenceKey: "majorBeachesSeasideResorts",
+    nameKey: "majorBeachesSeasideResorts",
+    descriptionKey: "majorBeachesSeasideResortsDescription",
+    icon: "beach",
+    defaultEnabled: false,
+    cluster: null,
+    geometryTypes: ["Point"],
+    sourceIds: [DATA_LAYER_SOURCE_IDS.BEACHES_CURATED],
+    zOrderGroup: "entity-points",
+  },
+
+  // --- Tourism Travel V2: outdoor routes (commit 3) ---
+  {
+    id: "major-hiking-routes",
+    category: "tourism",
+    section: "outdoorRoutes",
+    preferenceKey: "majorHikingRoutes",
+    nameKey: "majorHikingRoutes",
+    descriptionKey: "majorHikingRoutesDescription",
+    icon: "hiking",
+    defaultEnabled: false,
+    cluster: null,
+    geometryTypes: ["LineString"],
+    sourceIds: [DATA_LAYER_SOURCE_IDS.HIKING_ROUTES_SOURCE],
+    zOrderGroup: "route-lines",
+  },
+  {
+    id: "major-cycling-routes",
+    category: "tourism",
+    section: "outdoorRoutes",
+    preferenceKey: "majorCyclingRoutes",
+    nameKey: "majorCyclingRoutes",
+    descriptionKey: "majorCyclingRoutesDescription",
+    icon: "cycling",
+    defaultEnabled: false,
+    cluster: null,
+    geometryTypes: ["LineString"],
+    sourceIds: [
+      DATA_LAYER_SOURCE_IDS.EUROVELO,
+      DATA_LAYER_SOURCE_IDS.OPENSTREETMAP_ROUTES,
+    ],
+    zOrderGroup: "route-lines",
+  },
+  {
+    id: "major-running-routes",
+    category: "tourism",
+    section: "outdoorRoutes",
+    preferenceKey: "majorRunningRoutes",
+    nameKey: "majorRunningRoutes",
+    descriptionKey: "majorRunningRoutesDescription",
+    icon: "running",
+    defaultEnabled: false,
+    cluster: null,
+    geometryTypes: ["LineString"],
+    sourceIds: [DATA_LAYER_SOURCE_IDS.OPENSTREETMAP_ROUTES],
+    zOrderGroup: "route-lines",
   },
 ] as const;
 

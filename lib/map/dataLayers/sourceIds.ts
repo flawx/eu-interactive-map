@@ -16,6 +16,13 @@ export const DATA_LAYER_SOURCE_IDS = {
   EEAS_DIPLOMATIC: "eeas-diplomatic",
   DIPLOMATIC_CURATED: "diplomatic-curated",
   VISITOR_SAFETY_CURATED: "visitor-safety-curated",
+  EEA_NATURA2000: "eea-natura2000",
+  EUROPEAN_COMMISSION_NATURA2000: "european-commission-natura2000",
+  EEA_BATHING_WATER: "eea-bathing-water",
+  BEACHES_CURATED: "beaches-curated",
+  EUROVELO: "eurovelo",
+  HIKING_ROUTES_SOURCE: "hiking-routes-source",
+  OPENSTREETMAP_ROUTES: "openstreetmap-routes",
 } as const;
 
 export type DataLayerSourceId =

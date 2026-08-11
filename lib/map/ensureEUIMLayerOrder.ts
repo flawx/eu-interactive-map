@@ -30,6 +30,8 @@ export const EUIM_LAYER_STACK_BOTTOM_TO_TOP: readonly string[] = [
   // Economy / membership fills (below traffic & POI)
   "european-economic-area-fill",
   "european-economic-area-border",
+  // Tourism Travel V2: Natura 2000 raster (below traffic, commit 2)
+  "natura2000-raster",
   // Wildfire / satellite history fills
   "firms-recent-history-fill",
   "firms-recent-history-border",
@@ -85,6 +87,13 @@ export const EUIM_LAYER_STACK_BOTTOM_TO_TOP: readonly string[] = [
   "normalized-alert-selected-point",
   "geological-alert-selected",
   "traffic-incident-selected",
+  // Tourism Travel V2: outdoor routes (commit 3) — below Directions/route planner lines
+  "outdoor-hiking-routes-halo",
+  "outdoor-hiking-routes-line-layer",
+  "outdoor-cycling-routes-halo",
+  "outdoor-cycling-routes-line-layer",
+  "outdoor-running-routes-halo",
+  "outdoor-running-routes-line-layer",
   // Route geometries
   "eurostar-routes-line",
   ROUTE_PLANNER_LAYER_ALT,
@@ -189,6 +198,14 @@ export const EUIM_LAYER_STACK_BOTTOM_TO_TOP: readonly string[] = [
   "visitor-safety-assistance-halo",
   "visitor-safety-assistance-symbol",
   "visitor-safety-assistance-label",
+  // Tourism Travel V2: bathing waters & beaches (above traffic, commit 2)
+  "bathing-waters-clusters",
+  "bathing-waters-cluster-count",
+  "bathing-waters-halo",
+  "bathing-waters-symbol",
+  "major-beaches-halo",
+  "major-beaches-symbol",
+  "major-beaches-label",
   // User location on top
   "user-location-accuracy",
   "user-location-halo",

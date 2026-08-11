@@ -36,6 +36,8 @@ import type {
   IndustrialIncidentFilters,
   WeatherHazardFilters,
 } from "@/components/map/alertMapLayers";
+import type { Natura2000Site } from "@/lib/travel/natura2000/types";
+import type { BathingWaterPanelSite } from "@/components/travel/BathingWaterPanel";
 import type {
   TrafficFilters,
   TrafficParentLayers,
@@ -90,6 +92,23 @@ type MapClientProps = {
   showVisitorSafetyAssistance?: boolean;
   selectedVisitorSafetyLocationId?: string | null;
   onVisitorSafetySelect?: (locationId: string | null) => void;
+  showNatura2000?: boolean;
+  selectedNatura2000SiteId?: string | null;
+  onNatura2000SiteSelect?: (site: Natura2000Site | null) => void;
+  showEuropeanBathingWaters?: boolean;
+  selectedBathingWaterSiteId?: string | null;
+  onBathingWaterSiteSelect?: (site: BathingWaterPanelSite | null) => void;
+  showMajorBeachesSeasideResorts?: boolean;
+  selectedBeachId?: string | null;
+  onBeachSelect?: (beachId: string | null) => void;
+  showMajorHikingRoutes?: boolean;
+  showMajorCyclingRoutes?: boolean;
+  showMajorRunningRoutes?: boolean;
+  selectedOutdoorRouteId?: string | null;
+  onOutdoorRouteSelect?: (
+    routeId: string | null,
+    clickPoint?: [number, number] | null,
+  ) => void;
   showUnescoWorldHeritage: boolean;
   showUnescoCultural: boolean;
   showUnescoNatural: boolean;
@@ -260,6 +279,20 @@ export default function MapClient({
   showVisitorSafetyAssistance,
   selectedVisitorSafetyLocationId,
   onVisitorSafetySelect,
+  showNatura2000,
+  selectedNatura2000SiteId,
+  onNatura2000SiteSelect,
+  showEuropeanBathingWaters,
+  selectedBathingWaterSiteId,
+  onBathingWaterSiteSelect,
+  showMajorBeachesSeasideResorts,
+  selectedBeachId,
+  onBeachSelect,
+  showMajorHikingRoutes,
+  showMajorCyclingRoutes,
+  showMajorRunningRoutes,
+  selectedOutdoorRouteId,
+  onOutdoorRouteSelect,
   showUnescoWorldHeritage,
   showUnescoCultural,
   showUnescoNatural,
@@ -418,6 +451,20 @@ export default function MapClient({
       showVisitorSafetyAssistance={showVisitorSafetyAssistance}
       selectedVisitorSafetyLocationId={selectedVisitorSafetyLocationId}
       onVisitorSafetySelect={onVisitorSafetySelect}
+      showNatura2000={showNatura2000}
+      selectedNatura2000SiteId={selectedNatura2000SiteId}
+      onNatura2000SiteSelect={onNatura2000SiteSelect}
+      showEuropeanBathingWaters={showEuropeanBathingWaters}
+      selectedBathingWaterSiteId={selectedBathingWaterSiteId}
+      onBathingWaterSiteSelect={onBathingWaterSiteSelect}
+      showMajorBeachesSeasideResorts={showMajorBeachesSeasideResorts}
+      selectedBeachId={selectedBeachId}
+      onBeachSelect={onBeachSelect}
+      showMajorHikingRoutes={showMajorHikingRoutes}
+      showMajorCyclingRoutes={showMajorCyclingRoutes}
+      showMajorRunningRoutes={showMajorRunningRoutes}
+      selectedOutdoorRouteId={selectedOutdoorRouteId}
+      onOutdoorRouteSelect={onOutdoorRouteSelect}
       showUnescoWorldHeritage={showUnescoWorldHeritage}
       showUnescoCultural={showUnescoCultural}
       showUnescoNatural={showUnescoNatural}

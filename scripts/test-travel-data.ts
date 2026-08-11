@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   DEFAULT_MAP_LAYER_PREFERENCES,
   createDefaultLayerState,
@@ -39,6 +41,33 @@ import {
   getVisitorSafetyLocationById,
   toFeatureCollection as buildVisitorSafetyCollection,
 } from "../lib/travel/visitorSafety";
+import {
+  normalizeDesignationType,
+} from "../lib/travel/natura2000/types";
+import {
+  normalizeBathingWaterClassification,
+  normalizeBathingWaterType,
+  bathingWaterSitesToFeatureCollection,
+  type BathingWaterSite,
+} from "../lib/travel/bathingWaters/types";
+import {
+  MAJOR_BEACHES,
+  auditMajorBeaches,
+  getMajorBeachById,
+  toFeatureCollection as buildMajorBeachesCollection,
+} from "../lib/travel/majorBeaches";
+import {
+  auditOutdoorRoutes,
+  nearestPointOnRoute,
+  outdoorRoutesToFeatureCollection,
+} from "../lib/travel/outdoorRoutes/types";
+import { HIKING_ROUTES } from "../lib/travel/outdoorRoutes/hikingRoutes";
+import { CYCLING_ROUTES } from "../lib/travel/outdoorRoutes/cyclingRoutes";
+import { RUNNING_ROUTES } from "../lib/travel/outdoorRoutes/runningRoutes";
+import {
+  getOutdoorRouteById,
+  ALL_OUTDOOR_ROUTES,
+} from "../lib/map/dataLayers/outdoorRoutesLayers";
 
 function testNewPreferencesDefaultOff(): void {
   const newKeys = [
@@ -275,6 +304,286 @@ function testVisitorSafetyPhysicalOnlyNo112Markers(): void {
   assert.ok(collection.features.length > 0);
 }
 
+// --- COMMIT 2: Nature, protected areas, bathing waters, beaches ---
+
+function testCommit2PreferencesDefaultOff(): void {
+  const newKeys = [
+    "natura2000",
+    "europeanBathingWaters",
+    "majorBeachesSeasideResorts",
+  ] as const;
+
+  for (const key of newKeys) {
+    assert.equal(
+      DEFAULT_MAP_LAYER_PREFERENCES[key],
+      false,
+      `${key} must default to false`,
+    );
+    assert.equal(createDefaultLayerState()[key], false, `${key} reset must stay false`);
+  }
+
+  // Commit-1 defaults must remain untouched.
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.wifi4eu, false);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.touristInformationOffices, false);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.diplomaticMissions, false);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.visitorSafetyAssistance, false);
+  // Untouched pre-existing tourism defaults.
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.europeanHeritageLabel, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.majorTouristPlaces, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.majorEuropeanAirports, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.liveTrafficFlow, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.roadTrafficIncidents, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.roadClosuresRestrictions, true);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.roadworks, true);
+}
+
+function testNatura2000DesignationNormalization(): void {
+  assert.equal(normalizeDesignationType("SPA"), "SPA");
+  assert.equal(normalizeDesignationType("sac"), "SAC");
+  assert.equal(normalizeDesignationType("SCI"), "SCI");
+  assert.equal(normalizeDesignationType("pSCI"), "pSCI");
+  assert.equal(normalizeDesignationType("P-SCI"), "pSCI");
+  assert.equal(normalizeDesignationType("something-else"), "unknown");
+  assert.equal(normalizeDesignationType(undefined), "unknown");
+}
+
+function testBathingWaterClassificationNormalization(): void {
+  assert.equal(normalizeBathingWaterClassification("Excellent"), "excellent");
+  assert.equal(normalizeBathingWaterClassification("good"), "good");
+  assert.equal(normalizeBathingWaterClassification("Sufficient"), "sufficient");
+  assert.equal(normalizeBathingWaterClassification("Poor"), "poor");
+  assert.equal(normalizeBathingWaterClassification("Not classified"), "notClassified");
+  assert.equal(normalizeBathingWaterClassification(undefined), "notClassified");
+
+  assert.equal(normalizeBathingWaterType("Coastal water"), "coastal");
+  assert.equal(normalizeBathingWaterType("Marine"), "coastal");
+  assert.equal(normalizeBathingWaterType("Inland / river"), "inland");
+  assert.equal(normalizeBathingWaterType("Lake"), "inland");
+  assert.equal(normalizeBathingWaterType(undefined), "unknown");
+
+  const sample: BathingWaterSite = {
+    id: "test-site",
+    name: "Test Beach",
+    countryCode: "ES",
+    waterType: "coastal",
+    classification: "excellent",
+    seasonYear: 2024,
+    longitude: 2.0,
+    latitude: 41.0,
+    sourceIds: [DATA_LAYER_SOURCE_IDS.EEA_BATHING_WATER],
+  };
+  const collection = bathingWaterSitesToFeatureCollection([sample]);
+  assert.equal(collection.features.length, 1);
+  assert.equal(collection.features[0]!.properties?.classification, "excellent");
+}
+
+function testBathingWaterNoUK(): void {
+  // Static fixture uses only the curated beaches list for scope checks (no
+  // bundled bathing water dataset client-side); ensure the helper types and
+  // EUIM scope filter reject UK/GB codes explicitly.
+  assert.equal(isCountryInEUIMScope("GB"), false, "GB must be outside EUIM scope");
+  assert.equal(isCountryInEUIMScope("UK"), false, "UK code must be outside EUIM scope");
+}
+
+function testBathingWaterAnnualDisclaimerPresent(): void {
+  const panelSource = readFileSync(
+    join(__dirname, "..", "components", "travel", "BathingWaterPanel.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    /tp\.disclaimer/.test(panelSource),
+    "BathingWaterPanel must render an annual/real-time disclaimer message",
+  );
+  const messagesSource = readFileSync(
+    join(__dirname, "..", "lib", "i18n", "messages", "en.ts"),
+    "utf8",
+  );
+  assert.ok(
+    /annual|previous bathing season/i.test(messagesSource) &&
+      /real-time/i.test(messagesSource),
+    "en messages must carry an annual (not real-time) bathing water disclaimer",
+  );
+}
+
+function testMajorBeachesDistinctFromBathingWaterNoUK(): void {
+  const audit = auditMajorBeaches();
+  assert.equal(audit.duplicateIds.length, 0, "duplicate beach ids");
+  assert.equal(audit.missingCoordinates.length, 0, "beaches missing coords");
+  assert.equal(audit.outsideScope.length, 0, "beaches outside EUIM scope");
+  assert.equal(audit.ukEntries.length, 0, "no UK beaches expected");
+  assert.equal(audit.total, MAJOR_BEACHES.length);
+  assert.ok(audit.total >= 15 && audit.total <= 25, "expected ~15-25 curated beaches");
+
+  for (const beach of MAJOR_BEACHES) {
+    assert.ok(isCountryInEUIMScope(beach.countryCode), beach.id);
+    assert.ok(beach.id.startsWith("beach-"), `${beach.id} must be a beach id, distinct from bathing water site ids`);
+  }
+
+  const found = getMajorBeachById(MAJOR_BEACHES[0].id);
+  assert.ok(found);
+  assert.equal(getMajorBeachById("does-not-exist"), undefined);
+
+  const collection = buildMajorBeachesCollection();
+  assert.ok(collection.features.length > 0);
+  assert.equal(
+    collection.features.every((f) => f.properties?.layerId === "major-beaches-seaside-resorts"),
+    true,
+    "beach features must use the beaches layerId, distinct from europeanBathingWaters",
+  );
+}
+
+function testCommit2EeaSourceIdsRegistered(): void {
+  const expectedSourceIds = [
+    DATA_LAYER_SOURCE_IDS.EEA_NATURA2000,
+    DATA_LAYER_SOURCE_IDS.EUROPEAN_COMMISSION_NATURA2000,
+    DATA_LAYER_SOURCE_IDS.EEA_BATHING_WATER,
+    DATA_LAYER_SOURCE_IDS.BEACHES_CURATED,
+  ];
+  for (const id of expectedSourceIds) {
+    const source = DATA_SOURCES_REGISTRY.find((entry) => entry.id === id);
+    assert.ok(source, `missing data source registry entry for ${id}`);
+  }
+
+  const expectedLayers: Array<[string, string]> = [
+    ["natura2000", "natura2000"],
+    ["european-bathing-waters", "europeanBathingWaters"],
+    ["major-beaches-seaside-resorts", "majorBeachesSeasideResorts"],
+  ];
+  for (const [layerId, preferenceKey] of expectedLayers) {
+    const layer = DATA_LAYER_REGISTRY.find((entry) => entry.id === layerId);
+    assert.ok(layer, `missing registry entry for ${layerId}`);
+    assert.equal(layer!.preferenceKey, preferenceKey);
+    assert.equal(layer!.defaultEnabled, false);
+  }
+}
+
+// --- COMMIT 3: Outdoor routes ---
+
+function testCommit3PreferencesDefaultOff(): void {
+  const newKeys = [
+    "majorHikingRoutes",
+    "majorCyclingRoutes",
+    "majorRunningRoutes",
+  ] as const;
+
+  for (const key of newKeys) {
+    assert.equal(
+      DEFAULT_MAP_LAYER_PREFERENCES[key],
+      false,
+      `${key} must default to false`,
+    );
+    assert.equal(createDefaultLayerState()[key], false, `${key} reset must stay false`);
+  }
+
+  // Commit-2 defaults must remain untouched.
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.natura2000, false);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.europeanBathingWaters, false);
+  assert.equal(DEFAULT_MAP_LAYER_PREFERENCES.majorBeachesSeasideResorts, false);
+}
+
+function testOutdoorRouteGeometryValid(): void {
+  for (const routes of [HIKING_ROUTES, CYCLING_ROUTES, RUNNING_ROUTES]) {
+    const audit = auditOutdoorRoutes(routes);
+    assert.equal(audit.duplicateIds.length, 0, "duplicate route ids");
+    assert.equal(audit.invalidGeometry.length, 0, "routes with invalid LineString geometry");
+    assert.equal(audit.outsideScope.length, 0, "routes outside EUIM scope");
+  }
+
+  for (const route of ALL_OUTDOOR_ROUTES) {
+    assert.ok(route.coordinates.length >= 2, `${route.id} must have >= 2 points`);
+    for (const [lng, lat] of route.coordinates) {
+      assert.ok(Number.isFinite(lng) && Number.isFinite(lat), `${route.id} has non-finite coordinate`);
+    }
+    assert.ok(route.sourceIds.length > 0, `${route.id} must declare sourceIds`);
+  }
+
+  const collection = outdoorRoutesToFeatureCollection(ALL_OUTDOOR_ROUTES);
+  assert.ok(collection.features.length > 0);
+  for (const feature of collection.features) {
+    assert.equal(feature.geometry.type, "LineString");
+  }
+}
+
+function testOutdoorRouteTypesSeparateAndEUIMScope(): void {
+  const hikingIds = new Set(HIKING_ROUTES.map((r) => r.id));
+  const cyclingIds = new Set(CYCLING_ROUTES.map((r) => r.id));
+  const runningIds = new Set(RUNNING_ROUTES.map((r) => r.id));
+
+  for (const id of hikingIds) {
+    assert.ok(!cyclingIds.has(id) && !runningIds.has(id), `${id} must be unique across route types`);
+  }
+  for (const id of cyclingIds) {
+    assert.ok(!runningIds.has(id), `${id} must be unique across route types`);
+  }
+
+  assert.ok(HIKING_ROUTES.length >= 4 && HIKING_ROUTES.length <= 6, "expected 4-6 hiking routes");
+  assert.ok(CYCLING_ROUTES.length >= 3, "expected at least 3 cycling routes");
+  assert.ok(
+    RUNNING_ROUTES.length >= 3 && RUNNING_ROUTES.length <= 5,
+    "expected 3-5 running routes",
+  );
+
+  for (const route of HIKING_ROUTES) assert.equal(route.routeType, "hiking");
+  for (const route of CYCLING_ROUTES) assert.equal(route.routeType, "cycling");
+  for (const route of RUNNING_ROUTES) assert.equal(route.routeType, "running");
+
+  for (const route of ALL_OUTDOOR_ROUTES) {
+    assert.ok(
+      route.countries.some((code) => isCountryInEUIMScope(code)),
+      `${route.id} must have at least one EUIM-scoped country`,
+    );
+    assert.ok(!route.countries.includes("UK") && !route.countries.includes("GB"), `${route.id} must not be UK-only`);
+  }
+
+  const found = getOutdoorRouteById(HIKING_ROUTES[0].id);
+  assert.ok(found);
+  assert.equal(getOutdoorRouteById("does-not-exist"), undefined);
+}
+
+function testOutdoorRouteNearestPointHelper(): void {
+  const route = HIKING_ROUTES[0];
+  const midIndex = Math.floor(route.coordinates.length / 2);
+  const onLinePoint = route.coordinates[midIndex];
+  const nearest = nearestPointOnRoute(route, onLinePoint);
+  assert.ok(Number.isFinite(nearest[0]) && Number.isFinite(nearest[1]));
+  // A point already on the line should map back to (approximately) itself.
+  assert.ok(Math.abs(nearest[0] - onLinePoint[0]) < 0.01);
+  assert.ok(Math.abs(nearest[1] - onLinePoint[1]) < 0.01);
+}
+
+function testCommit3RegistryAndSourceIds(): void {
+  const expectedLayers: Array<[string, string]> = [
+    ["major-hiking-routes", "majorHikingRoutes"],
+    ["major-cycling-routes", "majorCyclingRoutes"],
+    ["major-running-routes", "majorRunningRoutes"],
+  ];
+  for (const [layerId, preferenceKey] of expectedLayers) {
+    const layer = DATA_LAYER_REGISTRY.find((entry) => entry.id === layerId);
+    assert.ok(layer, `missing registry entry for ${layerId}`);
+    assert.equal(layer!.preferenceKey, preferenceKey);
+    assert.equal(layer!.defaultEnabled, false);
+    assert.deepEqual(layer!.geometryTypes, ["LineString"]);
+    for (const sourceId of layer!.sourceIds) {
+      assert.ok(
+        DATA_SOURCES_REGISTRY.some((source) => source.id === sourceId),
+        `${layerId} references unknown data source ${sourceId}`,
+      );
+    }
+  }
+
+  const expectedSourceIds = [
+    DATA_LAYER_SOURCE_IDS.EUROVELO,
+    DATA_LAYER_SOURCE_IDS.HIKING_ROUTES_SOURCE,
+    DATA_LAYER_SOURCE_IDS.OPENSTREETMAP_ROUTES,
+  ];
+  for (const id of expectedSourceIds) {
+    assert.ok(
+      DATA_SOURCES_REGISTRY.some((entry) => entry.id === id),
+      `missing data source registry entry for ${id}`,
+    );
+  }
+}
+
 async function testGenericViewportLoaderAbortCacheDedupe(): Promise<void> {
   // TtlCache expiry with an injectable clock.
   let clock = 1_000;
@@ -364,6 +673,23 @@ function main(): void {
   testTouristOfficesInScopeNoUK();
   testDiplomaticMissionsTypesValidAndInScope();
   testVisitorSafetyPhysicalOnlyNo112Markers();
+
+  // Commit 2: nature, protected areas, bathing waters, beaches
+  testCommit2PreferencesDefaultOff();
+  testNatura2000DesignationNormalization();
+  testBathingWaterClassificationNormalization();
+  testBathingWaterNoUK();
+  testBathingWaterAnnualDisclaimerPresent();
+  testMajorBeachesDistinctFromBathingWaterNoUK();
+  testCommit2EeaSourceIdsRegistered();
+
+  // Commit 3: outdoor routes
+  testCommit3PreferencesDefaultOff();
+  testOutdoorRouteGeometryValid();
+  testOutdoorRouteTypesSeparateAndEUIMScope();
+  testOutdoorRouteNearestPointHelper();
+  testCommit3RegistryAndSourceIds();
+
   console.log("test-travel-data: ok (sync checks)");
 }
 
