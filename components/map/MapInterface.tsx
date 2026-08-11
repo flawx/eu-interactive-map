@@ -17,6 +17,10 @@ import CapitalOfCulturePanel from "@/components/europe/CapitalOfCulturePanel";
 import EuProjectPanel from "@/components/europe/EuProjectPanel";
 import BusinessDistrictPanel from "@/components/europe/BusinessDistrictPanel";
 import FreightPortPanel from "@/components/europe/FreightPortPanel";
+import Wifi4EuPanel from "@/components/travel/Wifi4EuPanel";
+import TouristOfficePanel from "@/components/travel/TouristOfficePanel";
+import DiplomaticMissionPanel from "@/components/travel/DiplomaticMissionPanel";
+import VisitorSafetyPanel from "@/components/travel/VisitorSafetyPanel";
 import CountryInfoPanel from "@/components/map/CountryInfoPanel";
 import MapClient from "@/components/map/MapClient";
 import MapControlDock from "@/components/map/MapControlDock";
@@ -42,6 +46,10 @@ import { getEuropeanCapitalOfCultureById } from "@/lib/europe/europeanCapitalsOf
 import { getEuProjectById } from "@/lib/europe/euProjects/entities";
 import { getMajorBusinessDistrictById } from "@/lib/europe/majorBusinessDistricts";
 import { getMajorFreightPortById } from "@/lib/europe/majorFreightPorts";
+import { getWifi4EuHotspotById } from "@/lib/travel/wifi4eu/fixtureHotspots";
+import { getTouristOfficeById } from "@/lib/travel/touristOffices";
+import { getDiplomaticMissionById } from "@/lib/travel/diplomaticMissions";
+import { getVisitorSafetyLocationById } from "@/lib/travel/visitorSafety";
 import {
   getEuInstitutionById,
   getEuInstitutionSiteById,
@@ -446,6 +454,26 @@ export default function MapInterface() {
   const [selectedAirportId, setSelectedAirportId] = useState<string | null>(
     null,
   );
+  const [showWifi4Eu, setShowWifi4Eu] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.wifi4eu,
+  );
+  const [selectedWifi4EuHotspotId, setSelectedWifi4EuHotspotId] = useState<
+    string | null
+  >(null);
+  const [showTouristInformationOffices, setShowTouristInformationOffices] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.touristInformationOffices);
+  const [selectedTouristOfficeId, setSelectedTouristOfficeId] = useState<
+    string | null
+  >(null);
+  const [showDiplomaticMissions, setShowDiplomaticMissions] = useState(
+    DEFAULT_MAP_LAYER_PREFERENCES.diplomaticMissions,
+  );
+  const [selectedDiplomaticMissionId, setSelectedDiplomaticMissionId] =
+    useState<string | null>(null);
+  const [showVisitorSafetyAssistance, setShowVisitorSafetyAssistance] =
+    useState(DEFAULT_MAP_LAYER_PREFERENCES.visitorSafetyAssistance);
+  const [selectedVisitorSafetyLocationId, setSelectedVisitorSafetyLocationId] =
+    useState<string | null>(null);
   const [showSchengenExternalBorderCrossings, setShowSchengenExternalBorderCrossings] =
     useState(DEFAULT_MAP_LAYER_PREFERENCES.schengenExternalBorderCrossings);
   const [showSchengenTemporaryInternalControls, setShowSchengenTemporaryInternalControls] =
@@ -1172,6 +1200,10 @@ export default function MapInterface() {
       europeanEconomicArea: showEuropeanEconomicArea,
       majorBusinessDistricts: showMajorBusinessDistricts,
       majorFreightPorts: showMajorFreightPorts,
+      wifi4eu: showWifi4Eu,
+      touristInformationOffices: showTouristInformationOffices,
+      diplomaticMissions: showDiplomaticMissions,
+      visitorSafetyAssistance: showVisitorSafetyAssistance,
     });
   }, [
     layerPrefsHydrated,
@@ -1275,6 +1307,10 @@ export default function MapInterface() {
     showRoadworks,
     showTrafficActiveRoadworks,
     showTrafficPlannedRoadworks,
+    showWifi4Eu,
+    showTouristInformationOffices,
+    showDiplomaticMissions,
+    showVisitorSafetyAssistance,
   ]);
 
   const legendPreferences = useMemo<MapLayerPreferences>(
@@ -1379,6 +1415,10 @@ export default function MapInterface() {
       europeanEconomicArea: showEuropeanEconomicArea,
       majorBusinessDistricts: showMajorBusinessDistricts,
       majorFreightPorts: showMajorFreightPorts,
+      wifi4eu: showWifi4Eu,
+      touristInformationOffices: showTouristInformationOffices,
+      diplomaticMissions: showDiplomaticMissions,
+      visitorSafetyAssistance: showVisitorSafetyAssistance,
     }),
     [
       showEurozone,
@@ -1481,6 +1521,10 @@ export default function MapInterface() {
       showRoadworks,
       showTrafficActiveRoadworks,
       showTrafficPlannedRoadworks,
+      showWifi4Eu,
+      showTouristInformationOffices,
+      showDiplomaticMissions,
+      showVisitorSafetyAssistance,
     ],
   );
 
@@ -1529,6 +1573,10 @@ export default function MapInterface() {
       europeanEconomicArea: setShowEuropeanEconomicArea,
       majorBusinessDistricts: setShowMajorBusinessDistricts,
       majorFreightPorts: setShowMajorFreightPorts,
+      wifi4eu: setShowWifi4Eu,
+      touristInformationOffices: setShowTouristInformationOffices,
+      diplomaticMissions: setShowDiplomaticMissions,
+      visitorSafetyAssistance: setShowVisitorSafetyAssistance,
       unescoWorldHeritage: setShowUnescoWorldHeritage,
       unescoCultural: setShowUnescoCultural,
       unescoNatural: setShowUnescoNatural,
@@ -1664,6 +1712,10 @@ export default function MapInterface() {
     setShowEuropeanEconomicArea(defaults.europeanEconomicArea);
     setShowMajorBusinessDistricts(defaults.majorBusinessDistricts);
     setShowMajorFreightPorts(defaults.majorFreightPorts);
+    setShowWifi4Eu(defaults.wifi4eu);
+    setShowTouristInformationOffices(defaults.touristInformationOffices);
+    setShowDiplomaticMissions(defaults.diplomaticMissions);
+    setShowVisitorSafetyAssistance(defaults.visitorSafetyAssistance);
     setShowUnescoWorldHeritage(defaults.unescoWorldHeritage);
     setShowUnescoCultural(defaults.unescoCultural);
     setShowUnescoNatural(defaults.unescoNatural);
@@ -3103,6 +3155,29 @@ export default function MapInterface() {
     clearFreightPortSelection();
   };
 
+  const clearWifi4EuSelection = () => {
+    setSelectedWifi4EuHotspotId(null);
+  };
+
+  const clearTouristOfficeSelection = () => {
+    setSelectedTouristOfficeId(null);
+  };
+
+  const clearDiplomaticMissionSelection = () => {
+    setSelectedDiplomaticMissionId(null);
+  };
+
+  const clearVisitorSafetySelection = () => {
+    setSelectedVisitorSafetyLocationId(null);
+  };
+
+  const clearTravelVisitorServicesSelection = () => {
+    clearWifi4EuSelection();
+    clearTouristOfficeSelection();
+    clearDiplomaticMissionSelection();
+    clearVisitorSafetySelection();
+  };
+
   const handleCountrySelect = (countryCode: string | null) => {
     setSelectedWildfireId(null);
     setSelectedEffisBurnedArea(null);
@@ -3118,6 +3193,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     setSelectedCountryCode(countryCode);
   };
 
@@ -3136,6 +3212,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedCapitalId(capitalId);
 
@@ -3168,6 +3245,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedEuBodyAgencyId(agencyId);
 
@@ -3202,6 +3280,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedInternationalOrganisationId(organisationId);
 
@@ -3234,6 +3313,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedCapitalOfCultureId(capitalOfCultureId);
 
@@ -3268,6 +3348,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearBusinessDistrictSelection();
     clearFreightPortSelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedEuProjectId(projectId);
 
@@ -3301,6 +3382,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectSelection();
     clearFreightPortSelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedBusinessDistrictId(districtId);
 
@@ -3335,6 +3417,7 @@ export default function MapInterface() {
     clearBorderSelections();
     clearEuProjectSelection();
     clearBusinessDistrictSelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedFreightPortId(portId);
 
@@ -3347,6 +3430,150 @@ export default function MapInterface() {
           longitude: port.longitude,
           latitude: port.latitude,
           zoom: 9,
+        });
+      }
+    }
+  };
+
+  const handleWifi4EuHotspotSelect = (hotspotId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearTouristOfficeSelection();
+    clearDiplomaticMissionSelection();
+    clearVisitorSafetySelection();
+    clearTemporaryPlace();
+    setSelectedWifi4EuHotspotId(hotspotId);
+
+    if (hotspotId) {
+      setShowWifi4Eu(true);
+      const hotspot = getWifi4EuHotspotById(hotspotId);
+      if (hotspot) {
+        requestFocus({
+          kind: "point",
+          longitude: hotspot.longitude,
+          latitude: hotspot.latitude,
+          zoom: 15,
+        });
+      }
+    }
+  };
+
+  const handleTouristOfficeSelect = (officeId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearWifi4EuSelection();
+    clearDiplomaticMissionSelection();
+    clearVisitorSafetySelection();
+    clearTemporaryPlace();
+    setSelectedTouristOfficeId(officeId);
+
+    if (officeId) {
+      setShowTouristInformationOffices(true);
+      const office = getTouristOfficeById(officeId);
+      if (office) {
+        requestFocus({
+          kind: "point",
+          longitude: office.longitude,
+          latitude: office.latitude,
+          zoom: 10,
+        });
+      }
+    }
+  };
+
+  const handleDiplomaticMissionSelect = (missionId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearWifi4EuSelection();
+    clearTouristOfficeSelection();
+    clearVisitorSafetySelection();
+    clearTemporaryPlace();
+    setSelectedDiplomaticMissionId(missionId);
+
+    if (missionId) {
+      setShowDiplomaticMissions(true);
+      const mission = getDiplomaticMissionById(missionId);
+      if (mission) {
+        requestFocus({
+          kind: "point",
+          longitude: mission.longitude,
+          latitude: mission.latitude,
+          zoom: 12,
+        });
+      }
+    }
+  };
+
+  const handleVisitorSafetySelect = (locationId: string | null) => {
+    setSelectedWildfireId(null);
+    setSelectedEffisBurnedArea(null);
+    setSelectedCountryCode(null);
+    setSelectedCapitalId(null);
+    clearInstitutionSelection();
+    clearEuBodyAgencySelection();
+    clearInternationalOrganisationSelection();
+    clearCapitalOfCultureSelection();
+    clearUnescoSelection();
+    clearEhlSelection();
+    clearTouristPlaceSelection();
+    clearAirportSelection();
+    clearEurostarSelection();
+    clearBorderSelections();
+    clearEuProjectsEconomySelection();
+    clearWifi4EuSelection();
+    clearTouristOfficeSelection();
+    clearDiplomaticMissionSelection();
+    clearTemporaryPlace();
+    setSelectedVisitorSafetyLocationId(locationId);
+
+    if (locationId) {
+      setShowVisitorSafetyAssistance(true);
+      const location = getVisitorSafetyLocationById(locationId);
+      if (location) {
+        requestFocus({
+          kind: "point",
+          longitude: location.longitude,
+          latitude: location.latitude,
+          zoom: 12,
         });
       }
     }
@@ -3504,6 +3731,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedAlertId(null);
     setRouteContextMenu(null);
@@ -3601,6 +3829,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     setSelectedWildfireId(incidentId);
   };
 
@@ -3648,6 +3877,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     requestFocus({ kind: "europe" });
   };
@@ -3676,6 +3906,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setSelectedInstitutionId(institutionId);
     setSelectedInstitutionSiteId(siteId ?? null);
@@ -3764,6 +3995,7 @@ export default function MapInterface() {
     clearTouristPlaceSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setShowEuMainInstitutions(true);
     setSelectedInstitutionId(institutionId);
@@ -3801,6 +4033,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
 
     setShowUnescoWorldHeritage(true);
     if (site.category === "cultural") setShowUnescoCultural(true);
@@ -3848,6 +4081,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
 
     setShowEuropeanHeritageLabel(true);
     setSelectedEhlSiteId(siteId);
@@ -3947,6 +4181,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
 
     setShowMajorTouristPlaces(true);
@@ -3983,6 +4218,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     if (alert.source === "meteoalarm") {
       setShowOfficialWeatherWarnings(true);
@@ -4063,6 +4299,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
     setShowObservedFloodExtent(true);
     setSelectedAlertId(alert.id);
@@ -4106,6 +4343,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
 
     setShowEuropeanMountainPlaces(true);
@@ -4152,6 +4390,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
 
     setShowMajorCivilEngineeringWorks(true);
@@ -4187,6 +4426,7 @@ export default function MapInterface() {
     clearEurostarSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
 
     setShowMajorEuropeanAirports(true);
@@ -4221,6 +4461,7 @@ export default function MapInterface() {
     clearAirportSelection();
     clearBorderSelections();
     clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
     clearTemporaryPlace();
 
     setShowEurostarStations(true);
@@ -4587,6 +4828,18 @@ export default function MapInterface() {
           showMajorFreightPorts={showMajorFreightPorts}
           selectedFreightPortId={selectedFreightPortId}
           onFreightPortSelect={handleFreightPortSelect}
+          showWifi4Eu={showWifi4Eu}
+          selectedWifi4EuHotspotId={selectedWifi4EuHotspotId}
+          onWifi4EuHotspotSelect={handleWifi4EuHotspotSelect}
+          showTouristInformationOffices={showTouristInformationOffices}
+          selectedTouristOfficeId={selectedTouristOfficeId}
+          onTouristOfficeSelect={handleTouristOfficeSelect}
+          showDiplomaticMissions={showDiplomaticMissions}
+          selectedDiplomaticMissionId={selectedDiplomaticMissionId}
+          onDiplomaticMissionSelect={handleDiplomaticMissionSelect}
+          showVisitorSafetyAssistance={showVisitorSafetyAssistance}
+          selectedVisitorSafetyLocationId={selectedVisitorSafetyLocationId}
+          onVisitorSafetySelect={handleVisitorSafetySelect}
           showUnescoWorldHeritage={showUnescoWorldHeritage}
           showUnescoCultural={showUnescoCultural}
           showUnescoNatural={showUnescoNatural}
@@ -4669,6 +4922,7 @@ export default function MapInterface() {
               clearEurostarSelection();
               clearBorderSelections();
               clearEuProjectsEconomySelection();
+    clearTravelVisitorServicesSelection();
               clearTemporaryPlace();
             }
           }}
@@ -5400,6 +5654,126 @@ export default function MapInterface() {
               portId={selectedFreightPortId}
               locale={locale}
               onClose={clearFreightPortSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedWifi4EuHotspotId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedTouristOfficeId &&
+          !selectedDiplomaticMissionId &&
+          !selectedVisitorSafetyLocationId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <Wifi4EuPanel
+              hotspot={getWifi4EuHotspotById(selectedWifi4EuHotspotId) ?? null}
+              locale={locale}
+              onClose={clearWifi4EuSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedTouristOfficeId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWifi4EuHotspotId &&
+          !selectedDiplomaticMissionId &&
+          !selectedVisitorSafetyLocationId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <TouristOfficePanel
+              officeId={selectedTouristOfficeId}
+              locale={locale}
+              onClose={clearTouristOfficeSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedDiplomaticMissionId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWifi4EuHotspotId &&
+          !selectedTouristOfficeId &&
+          !selectedVisitorSafetyLocationId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <DiplomaticMissionPanel
+              missionId={selectedDiplomaticMissionId}
+              locale={locale}
+              onClose={clearDiplomaticMissionSelection}
+              onRouteToPlace={handleRouteToPlace}
+            />
+          )}
+
+        {selectedVisitorSafetyLocationId &&
+          !selectedCapitalId &&
+          !selectedInstitutionId &&
+          !selectedEuBodyAgencyId &&
+          !selectedInternationalOrganisationId &&
+          !selectedCapitalOfCultureId &&
+          !selectedEuProjectId &&
+          !selectedBusinessDistrictId &&
+          !selectedFreightPortId &&
+          !selectedUnescoSiteId &&
+          !selectedEhlSiteId &&
+          !selectedTouristPlaceId &&
+          !selectedAirportId &&
+          !selectedEurostarStationId &&
+          !selectedBorderCrossingId &&
+          !selectedTemporaryControlId &&
+          !selectedWifi4EuHotspotId &&
+          !selectedTouristOfficeId &&
+          !selectedDiplomaticMissionId &&
+          !selectedWildfire &&
+          !selectedEffisBurnedArea &&
+          !selectedCountryCode && (
+            <VisitorSafetyPanel
+              locationId={selectedVisitorSafetyLocationId}
+              locale={locale}
+              onClose={clearVisitorSafetySelection}
               onRouteToPlace={handleRouteToPlace}
             />
           )}

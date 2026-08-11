@@ -78,6 +78,18 @@ type MapClientProps = {
   showMajorFreightPorts?: boolean;
   selectedFreightPortId?: string | null;
   onFreightPortSelect?: (portId: string | null) => void;
+  showWifi4Eu?: boolean;
+  selectedWifi4EuHotspotId?: string | null;
+  onWifi4EuHotspotSelect?: (hotspotId: string | null) => void;
+  showTouristInformationOffices?: boolean;
+  selectedTouristOfficeId?: string | null;
+  onTouristOfficeSelect?: (officeId: string | null) => void;
+  showDiplomaticMissions?: boolean;
+  selectedDiplomaticMissionId?: string | null;
+  onDiplomaticMissionSelect?: (missionId: string | null) => void;
+  showVisitorSafetyAssistance?: boolean;
+  selectedVisitorSafetyLocationId?: string | null;
+  onVisitorSafetySelect?: (locationId: string | null) => void;
   showUnescoWorldHeritage: boolean;
   showUnescoCultural: boolean;
   showUnescoNatural: boolean;
@@ -236,6 +248,18 @@ export default function MapClient({
   showMajorFreightPorts,
   selectedFreightPortId,
   onFreightPortSelect,
+  showWifi4Eu,
+  selectedWifi4EuHotspotId,
+  onWifi4EuHotspotSelect,
+  showTouristInformationOffices,
+  selectedTouristOfficeId,
+  onTouristOfficeSelect,
+  showDiplomaticMissions,
+  selectedDiplomaticMissionId,
+  onDiplomaticMissionSelect,
+  showVisitorSafetyAssistance,
+  selectedVisitorSafetyLocationId,
+  onVisitorSafetySelect,
   showUnescoWorldHeritage,
   showUnescoCultural,
   showUnescoNatural,
@@ -382,6 +406,18 @@ export default function MapClient({
       showMajorFreightPorts={showMajorFreightPorts}
       selectedFreightPortId={selectedFreightPortId}
       onFreightPortSelect={onFreightPortSelect}
+      showWifi4Eu={showWifi4Eu}
+      selectedWifi4EuHotspotId={selectedWifi4EuHotspotId}
+      onWifi4EuHotspotSelect={onWifi4EuHotspotSelect}
+      showTouristInformationOffices={showTouristInformationOffices}
+      selectedTouristOfficeId={selectedTouristOfficeId}
+      onTouristOfficeSelect={onTouristOfficeSelect}
+      showDiplomaticMissions={showDiplomaticMissions}
+      selectedDiplomaticMissionId={selectedDiplomaticMissionId}
+      onDiplomaticMissionSelect={onDiplomaticMissionSelect}
+      showVisitorSafetyAssistance={showVisitorSafetyAssistance}
+      selectedVisitorSafetyLocationId={selectedVisitorSafetyLocationId}
+      onVisitorSafetySelect={onVisitorSafetySelect}
       showUnescoWorldHeritage={showUnescoWorldHeritage}
       showUnescoCultural={showUnescoCultural}
       showUnescoNatural={showUnescoNatural}

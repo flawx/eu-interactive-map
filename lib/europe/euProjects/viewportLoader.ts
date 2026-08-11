@@ -1,22 +1,30 @@
 /**
  * Client-side viewport loader for the `/api/eu-projects` endpoint.
  *
- * Responsibilities (kept as small pure/testable pieces where possible):
+ * This is now a thin wrapper around the generic
+ * `lib/map/dataLayers/viewportDataLoader.ts` helper — kept as its own module
+ * (re-exporting the generic pieces under their original names) so existing
+ * imports/tests keep working unchanged.
+ *
+ * Responsibilities specific to EU projects:
  * - `resolveZoomStrategy`: low zoom → majorOnly + larger radius bbox padding,
  *   high zoom → full local detail with a tighter limit.
- * - `buildRequestKey`: stable cache/dedupe key from bbox + filters.
- * - `EuProjectsViewportCache`: short TTL (default 45s) in-memory cache keyed
- *   by request key, with an injectable clock for tests.
- * - `createEuProjectsViewportLoader`: ties together AbortController-based
- *   cancellation of superseded requests, in-flight request dedupe, the
- *   cache, and a debounce wrapper meant to be called on `moveend` (not on
- *   every pixel of pan/zoom).
+ * - `buildRequestKey` / `buildApiUrl`: EU-projects-specific key/URL builders
+ *   passed into the generic loader.
  */
 
 import type { EntityStatus } from "@/lib/map/dataLayers/entityStatus";
+import {
+  createViewportDataLoader,
+  debounce,
+  TtlCache,
+  type FetchLike,
+  type ViewportBbox,
+} from "@/lib/map/dataLayers/viewportDataLoader";
 import type { EuProjectCategory } from "./types";
 
-export type ViewportBbox = [number, number, number, number];
+export type { ViewportBbox, FetchLike };
+export { debounce };
 
 export type EuProjectsViewportFilters = {
   category?: EuProjectCategory | EuProjectCategory[];
@@ -58,72 +66,12 @@ export function buildRequestKey(
   ].join("::");
 }
 
-export type CachedEntry<T> = {
-  data: T;
-  expiresAt: number;
-};
-
-/** Small TTL cache with an injectable clock for deterministic tests. */
-export class EuProjectsViewportCache<T> {
-  private readonly store = new Map<string, CachedEntry<T>>();
-
-  constructor(
-    private readonly ttlMs: number = 45_000,
-    private readonly now: () => number = () => Date.now(),
-  ) {}
-
-  get(key: string): T | undefined {
-    const entry = this.store.get(key);
-    if (!entry) return undefined;
-    if (entry.expiresAt <= this.now()) {
-      this.store.delete(key);
-      return undefined;
-    }
-    return entry.data;
-  }
-
-  set(key: string, data: T): void {
-    this.store.set(key, { data, expiresAt: this.now() + this.ttlMs });
-  }
-
-  clear(): void {
-    this.store.clear();
-  }
-
-  get size(): number {
-    return this.store.size;
-  }
-}
-
-/** Debounce helper — only the trailing call within `waitMs` fires. */
-export function debounce<Args extends unknown[]>(
-  fn: (...args: Args) => void,
-  waitMs: number,
-): { call: (...args: Args) => void; cancel: () => void } {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  return {
-    call: (...args: Args) => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        fn(...args);
-      }, waitMs);
-    },
-    cancel: () => {
-      if (timer) clearTimeout(timer);
-      timer = null;
-    },
-  };
-}
+/** Backwards-compatible alias — same small TTL cache, now backed by the generic `TtlCache`. */
+export class EuProjectsViewportCache<T> extends TtlCache<T> {}
 
 export type EuProjectsFeatureCollection = GeoJSON.FeatureCollection & {
   meta?: { fetchedAt: string; totalMatched: number; nextCursor: number | null };
 };
-
-export type FetchLike = (
-  input: string,
-  init?: { signal?: AbortSignal },
-) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
 
 function buildApiUrl(
   bbox: ViewportBbox,
@@ -153,13 +101,11 @@ function buildApiUrl(
 }
 
 export type EuProjectsViewportLoader = {
-  /** Debounced entry point — call on `moveend`. */
   requestViewport: (
     bbox: ViewportBbox,
     zoom: number,
     filters?: EuProjectsViewportFilters,
   ) => void;
-  /** Cancels any pending debounce/in-flight request without firing a new one. */
   cancel: () => void;
   destroy: () => void;
 };
@@ -176,88 +122,26 @@ export type EuProjectsViewportLoaderOptions = {
 export function createEuProjectsViewportLoader(
   options: EuProjectsViewportLoaderOptions,
 ): EuProjectsViewportLoader {
-  const fetchImpl: FetchLike = options.fetchImpl ?? (fetch as unknown as FetchLike);
-  const cache = new EuProjectsViewportCache<EuProjectsFeatureCollection>(
-    options.cacheTtlMs ?? 45_000,
-    options.now,
-  );
-
-  let currentController: AbortController | null = null;
-  let inFlightKey: string | null = null;
-  let inFlightPromise: Promise<void> | null = null;
-
-  const runRequest = async (
-    bbox: ViewportBbox,
-    strategy: ZoomStrategy,
-    filters: EuProjectsViewportFilters,
-    key: string,
-  ): Promise<void> => {
-    const cached = cache.get(key);
-    if (cached) {
-      options.onData(cached, key);
-      return;
-    }
-
-    if (inFlightKey === key && inFlightPromise) {
-      return inFlightPromise;
-    }
-
-    currentController?.abort();
-    const controller = new AbortController();
-    currentController = controller;
-    inFlightKey = key;
-
-    const promise = (async () => {
-      try {
-        const response = await fetchImpl(buildApiUrl(bbox, strategy, filters), {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`eu-projects request failed: ${response.status}`);
-        }
-        const data = (await response.json()) as EuProjectsFeatureCollection;
-        cache.set(key, data);
-        options.onData(data, key);
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        options.onError?.(error, key);
-      } finally {
-        if (inFlightKey === key) {
-          inFlightKey = null;
-          inFlightPromise = null;
-        }
-      }
-    })();
-
-    inFlightPromise = promise;
-    return promise;
-  };
-
-  const debounced = debounce(
-    (
-      bbox: ViewportBbox,
-      zoom: number,
-      filters: EuProjectsViewportFilters,
-    ) => {
-      const strategy = resolveZoomStrategy(zoom);
-      const key = buildRequestKey(bbox, strategy, filters);
-      void runRequest(bbox, strategy, filters, key);
-    },
-    options.debounceMs ?? 300,
-  );
+  const loader = createViewportDataLoader<
+    EuProjectsFeatureCollection,
+    EuProjectsViewportFilters
+  >({
+    fetchUrl: (bbox, zoom, filters) =>
+      buildApiUrl(bbox, resolveZoomStrategy(zoom), filters),
+    buildKey: (bbox, zoom, filters) =>
+      buildRequestKey(bbox, resolveZoomStrategy(zoom), filters),
+    onData: options.onData,
+    onError: options.onError,
+    fetchImpl: options.fetchImpl,
+    debounceMs: options.debounceMs,
+    ttlMs: options.cacheTtlMs,
+    now: options.now,
+  });
 
   return {
-    requestViewport: (bbox, zoom, filters = {}) => {
-      debounced.call(bbox, zoom, filters);
-    },
-    cancel: () => {
-      debounced.cancel();
-      currentController?.abort();
-    },
-    destroy: () => {
-      debounced.cancel();
-      currentController?.abort();
-      cache.clear();
-    },
+    requestViewport: (bbox, zoom, filters = {}) =>
+      loader.requestViewport(bbox, zoom, filters),
+    cancel: loader.cancel,
+    destroy: loader.destroy,
   };
 }

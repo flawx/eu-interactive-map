@@ -99,6 +99,10 @@ export type MapLayerPreferences = {
   borderCrossingRail: boolean;
   borderCrossingAir: boolean;
   borderCrossingSea: boolean;
+  wifi4eu: boolean;
+  touristInformationOffices: boolean;
+  diplomaticMissions: boolean;
+  visitorSafetyAssistance: boolean;
 };
 
 /** Shared default layer state — first visit and Reset Layers must match. */
@@ -207,14 +211,19 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   borderCrossingRail: true,
   borderCrossingAir: true,
   borderCrossingSea: true,
+  wifi4eu: false,
+  touristInformationOffices: false,
+  diplomaticMissions: false,
+  visitorSafetyAssistance: false,
 };
 
-const LAYER_PREFS_KEY = "eu-map-layer-preferences-v5";
+const LAYER_PREFS_KEY = "eu-map-layer-preferences-v6";
+const LEGACY_LAYER_PREFS_KEY_V5 = "eu-map-layer-preferences-v5";
 const LEGACY_LAYER_PREFS_KEY_V4 = "eu-map-layer-preferences-v4";
 const LEGACY_LAYER_PREFS_KEY_V3 = "eu-map-layer-preferences-v3";
 const LEGACY_LAYER_PREFS_KEY_V2 = "eu-map-layer-preferences-v2";
 const LEGACY_LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
-export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 5;
+export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 6;
 const LEGEND_COLLAPSED_KEY = "eu-map-legend-collapsed-v1";
 
 const LAYER_KEYS = [
@@ -318,6 +327,10 @@ const LAYER_KEYS = [
   "borderCrossingRail",
   "borderCrossingAir",
   "borderCrossingSea",
+  "wifi4eu",
+  "touristInformationOffices",
+  "diplomaticMissions",
+  "visitorSafetyAssistance",
 ] as const satisfies ReadonlyArray<keyof MapLayerPreferences>;
 
 function isBoolean(value: unknown): value is boolean {
@@ -350,6 +363,7 @@ export function loadMapLayerPreferences(): MapLayerPreferences {
   try {
     const raw =
       window.localStorage.getItem(LAYER_PREFS_KEY) ??
+      window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V5) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V4) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V3) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V2) ??
@@ -479,6 +493,10 @@ export function saveMapLayerPreferences(
       borderCrossingRail: Boolean(preferences.borderCrossingRail),
       borderCrossingAir: Boolean(preferences.borderCrossingAir),
       borderCrossingSea: Boolean(preferences.borderCrossingSea),
+      wifi4eu: Boolean(preferences.wifi4eu),
+      touristInformationOffices: Boolean(preferences.touristInformationOffices),
+      diplomaticMissions: Boolean(preferences.diplomaticMissions),
+      visitorSafetyAssistance: Boolean(preferences.visitorSafetyAssistance),
     };
     window.localStorage.setItem(
       LAYER_PREFS_KEY,

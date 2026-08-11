@@ -27,6 +27,7 @@
     "test:default-layers": "tsx scripts/test-default-layers.ts",
     "test:data-layers": "tsx scripts/test-data-layers.ts",
     "test:europe-data": "tsx scripts/test-europe-data.ts",
+    "test:travel-data": "tsx scripts/test-travel-data.ts",
     "data:eu-agencies": "tsx scripts/data-eu-agencies.ts",
     "data:audit-europe": "tsx scripts/data-audit-europe.ts",
     "test:settings-basemap": "tsx scripts/test-settings-basemap.ts",

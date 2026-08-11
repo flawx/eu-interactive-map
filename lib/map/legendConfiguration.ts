@@ -296,8 +296,8 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
     icon: "plane",
     groups: [
       {
-        id: "tourism-heritage",
-        titleKey: { ns: "legend", key: "groupHeritage" },
+        id: "tourism-culture-attractions",
+        titleKey: { ns: "legend", key: "groupCultureAttractions" },
         defaultExpanded: true,
         footerNoteKeys: [{ ns: "legend", key: "unescoAttribution" }],
         layers: [
@@ -350,13 +350,6 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
               boxShadow: "inset 0 0 0 1.5px #facc15",
             },
           },
-        ],
-      },
-      {
-        id: "tourism-destinations",
-        titleKey: { ns: "legend", key: "groupTouristDestinations" },
-        defaultExpanded: false,
-        layers: [
           {
             id: "major-tourist-places",
             preferenceKey: "majorTouristPlaces",
@@ -498,12 +491,13 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
         ],
       },
       {
-        id: "tourism-transport",
-        titleKey: { ns: "legend", key: "groupInternationalTransport" },
+        id: "tourism-visitor-services",
+        titleKey: { ns: "legend", key: "groupTravelVisitorServices" },
         defaultExpanded: false,
         footerNoteKeys: [
           { ns: "legend", key: "eurostarTransportDescription" },
           { ns: "legend", key: "eurostarSchematicNote" },
+          { ns: "legend", key: "emergency112Note" },
         ],
         layers: [
           {
@@ -517,6 +511,48 @@ export const LEGEND_CONFIGURATION: readonly LegendCategoryDefinition[] = [
             icon: "airport",
             color: "#0e7490",
             swatchClassName: "rounded-[3px]",
+          },
+          {
+            id: "wifi4eu",
+            preferenceKey: "wifi4eu",
+            titleKey: { ns: "legend", key: "wifi4eu" },
+            descriptionKey: { ns: "legend", key: "wifi4euDescription" },
+            icon: "wifi",
+            color: "#0891b2",
+            swatchClassName: "rounded-full",
+          },
+          {
+            id: "tourist-information-offices",
+            preferenceKey: "touristInformationOffices",
+            titleKey: { ns: "legend", key: "touristInformationOffices" },
+            descriptionKey: {
+              ns: "legend",
+              key: "touristInformationOfficesDescription",
+            },
+            icon: "info",
+            color: "#0d9488",
+            swatchClassName: "rounded-full",
+          },
+          {
+            id: "diplomatic-missions",
+            preferenceKey: "diplomaticMissions",
+            titleKey: { ns: "legend", key: "diplomaticMissions" },
+            descriptionKey: { ns: "legend", key: "diplomaticMissionsDescription" },
+            icon: "diplomatic",
+            color: "#334155",
+            swatchClassName: "rounded-full",
+          },
+          {
+            id: "visitor-safety-assistance",
+            preferenceKey: "visitorSafetyAssistance",
+            titleKey: { ns: "legend", key: "visitorSafetyAssistance" },
+            descriptionKey: {
+              ns: "legend",
+              key: "visitorSafetyAssistanceDescription",
+            },
+            icon: "safety",
+            color: "#dc2626",
+            swatchClassName: "rounded-full",
           },
           {
             id: "eurostar-stations",

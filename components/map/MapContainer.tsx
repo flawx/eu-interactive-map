@@ -78,6 +78,13 @@ import {
   updateEuropeProjectsEconomySelection,
   type EuProjectCategoryVisibility,
 } from "@/lib/map/dataLayers/europeProjectsEconomyLayers";
+import {
+  attachTravelVisitorServicesHandlers,
+  createWifi4EuViewportLoader,
+  ensureTravelVisitorServicesLayers,
+  setTravelVisitorServicesVisibility,
+  updateTravelVisitorServicesSelection,
+} from "@/lib/map/dataLayers/travelVisitorServicesLayers";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import {
@@ -1027,6 +1034,18 @@ export default function MapContainer({
   showMajorFreightPorts = false,
   selectedFreightPortId = null,
   onFreightPortSelect,
+  showWifi4Eu = false,
+  selectedWifi4EuHotspotId = null,
+  onWifi4EuHotspotSelect,
+  showTouristInformationOffices = false,
+  selectedTouristOfficeId = null,
+  onTouristOfficeSelect,
+  showDiplomaticMissions = false,
+  selectedDiplomaticMissionId = null,
+  onDiplomaticMissionSelect,
+  showVisitorSafetyAssistance = false,
+  selectedVisitorSafetyLocationId = null,
+  onVisitorSafetySelect,
   showUnescoWorldHeritage = false,
   showUnescoCultural = true,
   showUnescoNatural = true,
@@ -1221,6 +1240,18 @@ export default function MapContainer({
   showMajorFreightPorts?: boolean;
   selectedFreightPortId?: string | null;
   onFreightPortSelect?: (portId: string | null) => void;
+  showWifi4Eu?: boolean;
+  selectedWifi4EuHotspotId?: string | null;
+  onWifi4EuHotspotSelect?: (hotspotId: string | null) => void;
+  showTouristInformationOffices?: boolean;
+  selectedTouristOfficeId?: string | null;
+  onTouristOfficeSelect?: (officeId: string | null) => void;
+  showDiplomaticMissions?: boolean;
+  selectedDiplomaticMissionId?: string | null;
+  onDiplomaticMissionSelect?: (missionId: string | null) => void;
+  showVisitorSafetyAssistance?: boolean;
+  selectedVisitorSafetyLocationId?: string | null;
+  onVisitorSafetySelect?: (locationId: string | null) => void;
   showUnescoWorldHeritage?: boolean;
   showUnescoCultural?: boolean;
   showUnescoNatural?: boolean;
@@ -1422,6 +1453,40 @@ export default function MapContainer({
   selectedFreightPortIdRef.current = selectedFreightPortId;
   const onFreightPortSelectRef = useRef(onFreightPortSelect);
   onFreightPortSelectRef.current = onFreightPortSelect;
+  const showWifi4EuRef = useRef(showWifi4Eu);
+  showWifi4EuRef.current = showWifi4Eu;
+  const selectedWifi4EuHotspotIdRef = useRef(selectedWifi4EuHotspotId);
+  selectedWifi4EuHotspotIdRef.current = selectedWifi4EuHotspotId;
+  const onWifi4EuHotspotSelectRef = useRef(onWifi4EuHotspotSelect);
+  onWifi4EuHotspotSelectRef.current = onWifi4EuHotspotSelect;
+  const showTouristInformationOfficesRef = useRef(
+    showTouristInformationOffices,
+  );
+  showTouristInformationOfficesRef.current = showTouristInformationOffices;
+  const selectedTouristOfficeIdRef = useRef(selectedTouristOfficeId);
+  selectedTouristOfficeIdRef.current = selectedTouristOfficeId;
+  const onTouristOfficeSelectRef = useRef(onTouristOfficeSelect);
+  onTouristOfficeSelectRef.current = onTouristOfficeSelect;
+  const showDiplomaticMissionsRef = useRef(showDiplomaticMissions);
+  showDiplomaticMissionsRef.current = showDiplomaticMissions;
+  const selectedDiplomaticMissionIdRef = useRef(selectedDiplomaticMissionId);
+  selectedDiplomaticMissionIdRef.current = selectedDiplomaticMissionId;
+  const onDiplomaticMissionSelectRef = useRef(onDiplomaticMissionSelect);
+  onDiplomaticMissionSelectRef.current = onDiplomaticMissionSelect;
+  const showVisitorSafetyAssistanceRef = useRef(showVisitorSafetyAssistance);
+  showVisitorSafetyAssistanceRef.current = showVisitorSafetyAssistance;
+  const selectedVisitorSafetyLocationIdRef = useRef(
+    selectedVisitorSafetyLocationId,
+  );
+  selectedVisitorSafetyLocationIdRef.current = selectedVisitorSafetyLocationId;
+  const onVisitorSafetySelectRef = useRef(onVisitorSafetySelect);
+  onVisitorSafetySelectRef.current = onVisitorSafetySelect;
+  const detachTravelVisitorServicesHandlersRef = useRef<(() => void) | null>(
+    null,
+  );
+  const wifi4EuViewportLoaderRef = useRef<ReturnType<
+    typeof createWifi4EuViewportLoader
+  > | null>(null);
   const detachEuropeProjectsEconomyHandlersRef = useRef<(() => void) | null>(
     null,
   );
@@ -2000,6 +2065,52 @@ export default function MapContainer({
       if (typeof id === "string") {
         onEuProjectSelectRef.current?.(id);
       }
+    };
+
+    const handleWifi4EuHotspotClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onWifi4EuHotspotSelectRef.current?.(id);
+      }
+    };
+
+    const handleTouristOfficeClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onTouristOfficeSelectRef.current?.(id);
+      }
+    };
+
+    const handleDiplomaticMissionClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onDiplomaticMissionSelectRef.current?.(id);
+      }
+    };
+
+    const handleVisitorSafetyLocationClick = (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature?.properties?.id;
+      if (typeof id === "string") {
+        onVisitorSafetySelectRef.current?.(id);
+      }
+    };
+
+    const handleWifi4EuMoveEnd = () => {
+      if (!showWifi4EuRef.current) return;
+      const bounds = map.getBounds();
+      wifi4EuViewportLoaderRef.current?.requestViewport(
+        [
+          bounds.getWest(),
+          bounds.getSouth(),
+          bounds.getEast(),
+          bounds.getNorth(),
+        ],
+        map.getZoom(),
+      );
     };
 
     const handleUnescoClusterClick = (e: MapLayerMouseEvent) => {
@@ -3636,6 +3747,18 @@ export default function MapContainer({
         selectedEuProjectId: selectedEuProjectIdRef.current,
       });
 
+      ensureTravelVisitorServicesLayers(map, {
+        showWifi4Eu: showWifi4EuRef.current,
+        showTouristInformationOffices: showTouristInformationOfficesRef.current,
+        showDiplomaticMissions: showDiplomaticMissionsRef.current,
+        showVisitorSafetyAssistance: showVisitorSafetyAssistanceRef.current,
+        selectedWifi4EuHotspotId: selectedWifi4EuHotspotIdRef.current,
+        selectedTouristOfficeId: selectedTouristOfficeIdRef.current,
+        selectedDiplomaticMissionId: selectedDiplomaticMissionIdRef.current,
+        selectedVisitorSafetyLocationId:
+          selectedVisitorSafetyLocationIdRef.current,
+      });
+
       if (!map.getSource("unesco-world-heritage-sites")) {
         map.addSource("unesco-world-heritage-sites", {
           type: "geojson",
@@ -4971,6 +5094,25 @@ export default function MapContainer({
           setPointerCursor,
           resetCursor,
         );
+      detachTravelVisitorServicesHandlersRef.current?.();
+      detachTravelVisitorServicesHandlersRef.current =
+        attachTravelVisitorServicesHandlers(
+          map,
+          {
+            onWifi4EuHotspotClick: handleWifi4EuHotspotClick,
+            onWifi4EuClusterClick: () => {},
+            onTouristOfficeClick: handleTouristOfficeClick,
+            onDiplomaticMissionClick: handleDiplomaticMissionClick,
+            onDiplomaticMissionClusterClick: () => {},
+            onVisitorSafetyLocationClick: handleVisitorSafetyLocationClick,
+          },
+          setPointerCursor,
+          resetCursor,
+        );
+      if (!wifi4EuViewportLoaderRef.current) {
+        wifi4EuViewportLoaderRef.current = createWifi4EuViewportLoader(map);
+      }
+      map.on("moveend", handleWifi4EuMoveEnd);
       map.on("click", "unesco-clusters", handleUnescoClusterClick);
       map.on("mouseenter", "unesco-clusters", setPointerCursor);
       map.on("mouseleave", "unesco-clusters", resetCursor);
@@ -5100,6 +5242,11 @@ export default function MapContainer({
       detachEuropeInstitutionsV2HandlersRef.current = null;
       detachEuropeProjectsEconomyHandlersRef.current?.();
       detachEuropeProjectsEconomyHandlersRef.current = null;
+      detachTravelVisitorServicesHandlersRef.current?.();
+      detachTravelVisitorServicesHandlersRef.current = null;
+      map.off("moveend", handleWifi4EuMoveEnd);
+      wifi4EuViewportLoaderRef.current?.destroy();
+      wifi4EuViewportLoaderRef.current = null;
       map.off("click", "unesco-clusters", handleUnescoClusterClick);
       map.off("mouseenter", "unesco-clusters", setPointerCursor);
       map.off("mouseleave", "unesco-clusters", resetCursor);
@@ -5607,6 +5754,57 @@ export default function MapContainer({
     selectedBusinessDistrictId,
     selectedFreightPortId,
     selectedEuProjectId,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    setTravelVisitorServicesVisibility(map, {
+      showWifi4Eu,
+      showTouristInformationOffices,
+      showDiplomaticMissions,
+      showVisitorSafetyAssistance,
+    });
+
+    if (!showWifi4Eu) {
+      wifi4EuViewportLoaderRef.current?.cancel();
+    } else {
+      const bounds = map.getBounds();
+      wifi4EuViewportLoaderRef.current?.requestViewport(
+        [
+          bounds.getWest(),
+          bounds.getSouth(),
+          bounds.getEast(),
+          bounds.getNorth(),
+        ],
+        map.getZoom(),
+      );
+    }
+  }, [
+    showWifi4Eu,
+    showTouristInformationOffices,
+    showDiplomaticMissions,
+    showVisitorSafetyAssistance,
+    mapSourcesReadyVersion,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    updateTravelVisitorServicesSelection(map, {
+      selectedWifi4EuHotspotId,
+      selectedTouristOfficeId,
+      selectedDiplomaticMissionId,
+      selectedVisitorSafetyLocationId,
+    });
+  }, [
+    selectedWifi4EuHotspotId,
+    selectedTouristOfficeId,
+    selectedDiplomaticMissionId,
+    selectedVisitorSafetyLocationId,
     mapSourcesReadyVersion,
   ]);
 
