@@ -63,7 +63,7 @@ function main() {
   assert.equal(defaults.euCandidates, false);
   assert.equal(defaults.unescoWorldHeritage, false);
   assert.equal(defaults.majorWildfires, false);
-  assert.equal(MAP_LAYER_PREFERENCES_SCHEMA_VERSION, 8);
+  assert.equal(MAP_LAYER_PREFERENCES_SCHEMA_VERSION, 9);
   assert.equal(defaults.euProjectsTransport, false);
   assert.equal(defaults.euProjectsSportCulture, false);
   assert.equal(defaults.euProjectsProtection, false);
@@ -78,11 +78,9 @@ function main() {
   assert.equal(defaults.diplomaticMissions, false);
   assert.equal(defaults.visitorSafetyAssistance, false);
   assert.equal(defaults.natura2000, false);
-  assert.equal(defaults.europeanBathingWaters, false);
   assert.equal(defaults.majorBeachesSeasideResorts, false);
   assert.equal(defaults.majorHikingRoutes, false);
   assert.equal(defaults.majorCyclingRoutes, false);
-  assert.equal(defaults.majorRunningRoutes, false);
 
   assert.deepEqual([...EUIM_SCHENGEN_NON_EU_COUNTRY_CODES].sort(), [
     "CH",
@@ -167,8 +165,8 @@ function main() {
   assert.notEqual(r1, r2);
   assert.notEqual(r2, r3);
 
-  // Migration from a pre-v8 stored payload (missing commit 2/3 keys) must fill
-  // in safe (false) defaults for natura2000/bathing/beaches/outdoor routes.
+  // Migration from a pre-v9 stored payload (missing commit 2/3 keys) must fill
+  // in safe (false) defaults for natura2000/beaches/outdoor routes.
   const legacyV6Payload = {
     schemaVersion: 6,
     preferences: {
@@ -181,11 +179,9 @@ function main() {
   assert.equal(migrated.euroArea, true);
   assert.equal(migrated.wifi4eu, true, "v6 payload values must still migrate");
   assert.equal(migrated.natura2000, false);
-  assert.equal(migrated.europeanBathingWaters, false);
   assert.equal(migrated.majorBeachesSeasideResorts, false);
   assert.equal(migrated.majorHikingRoutes, false);
   assert.equal(migrated.majorCyclingRoutes, false);
-  assert.equal(migrated.majorRunningRoutes, false);
 
   console.log("test-reset-layers-and-traffic: ok");
 }

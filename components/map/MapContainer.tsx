@@ -90,8 +90,6 @@ import {
 } from "@/lib/map/dataLayers/travelVisitorServicesLayers";
 import {
   attachTravelNatureBathingHandlers,
-  BATHING_WATERS_SOURCE_ID,
-  createBathingWaterViewportLoader,
   ensureTravelNatureBathingLayers,
   setTravelNatureBathingVisibility,
   updateTravelNatureBathingSelection,
@@ -103,11 +101,6 @@ import {
   updateOutdoorRoutesSelection,
 } from "@/lib/map/dataLayers/outdoorRoutesLayers";
 import type { Natura2000Site } from "@/lib/travel/natura2000/types";
-import type { BathingWaterPanelSite } from "@/components/travel/BathingWaterPanel";
-import {
-  normalizeBathingWaterClassification,
-  normalizeBathingWaterType,
-} from "@/lib/travel/bathingWaters/types";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import {
@@ -1072,15 +1065,11 @@ export default function MapContainer({
   showNatura2000 = false,
   selectedNatura2000SiteId = null,
   onNatura2000SiteSelect,
-  showEuropeanBathingWaters = false,
-  selectedBathingWaterSiteId = null,
-  onBathingWaterSiteSelect,
   showMajorBeachesSeasideResorts = false,
   selectedBeachId = null,
   onBeachSelect,
   showMajorHikingRoutes = false,
   showMajorCyclingRoutes = false,
-  showMajorRunningRoutes = false,
   selectedOutdoorRouteId = null,
   onOutdoorRouteSelect,
   showUnescoWorldHeritage = false,
@@ -1292,15 +1281,11 @@ export default function MapContainer({
   showNatura2000?: boolean;
   selectedNatura2000SiteId?: string | null;
   onNatura2000SiteSelect?: (site: Natura2000Site | null) => void;
-  showEuropeanBathingWaters?: boolean;
-  selectedBathingWaterSiteId?: string | null;
-  onBathingWaterSiteSelect?: (site: BathingWaterPanelSite | null) => void;
   showMajorBeachesSeasideResorts?: boolean;
   selectedBeachId?: string | null;
   onBeachSelect?: (beachId: string | null) => void;
   showMajorHikingRoutes?: boolean;
   showMajorCyclingRoutes?: boolean;
-  showMajorRunningRoutes?: boolean;
   selectedOutdoorRouteId?: string | null;
   onOutdoorRouteSelect?: (
     routeId: string | null,
@@ -1547,12 +1532,6 @@ export default function MapContainer({
   selectedNatura2000SiteIdRef.current = selectedNatura2000SiteId;
   const onNatura2000SiteSelectRef = useRef(onNatura2000SiteSelect);
   onNatura2000SiteSelectRef.current = onNatura2000SiteSelect;
-  const showEuropeanBathingWatersRef = useRef(showEuropeanBathingWaters);
-  showEuropeanBathingWatersRef.current = showEuropeanBathingWaters;
-  const selectedBathingWaterSiteIdRef = useRef(selectedBathingWaterSiteId);
-  selectedBathingWaterSiteIdRef.current = selectedBathingWaterSiteId;
-  const onBathingWaterSiteSelectRef = useRef(onBathingWaterSiteSelect);
-  onBathingWaterSiteSelectRef.current = onBathingWaterSiteSelect;
   const showMajorBeachesSeasideResortsRef = useRef(
     showMajorBeachesSeasideResorts,
   );
@@ -1565,8 +1544,6 @@ export default function MapContainer({
   showMajorHikingRoutesRef.current = showMajorHikingRoutes;
   const showMajorCyclingRoutesRef = useRef(showMajorCyclingRoutes);
   showMajorCyclingRoutesRef.current = showMajorCyclingRoutes;
-  const showMajorRunningRoutesRef = useRef(showMajorRunningRoutes);
-  showMajorRunningRoutesRef.current = showMajorRunningRoutes;
   const selectedOutdoorRouteIdRef = useRef(selectedOutdoorRouteId);
   selectedOutdoorRouteIdRef.current = selectedOutdoorRouteId;
   const onOutdoorRouteSelectRef = useRef(onOutdoorRouteSelect);
@@ -1575,9 +1552,6 @@ export default function MapContainer({
     null,
   );
   const detachOutdoorRoutesHandlersRef = useRef<(() => void) | null>(null);
-  const bathingWaterViewportLoaderRef = useRef<ReturnType<
-    typeof createBathingWaterViewportLoader
-  > | null>(null);
   const natura2000RequestSeqRef = useRef(0);
   const detachEuropeProjectsEconomyHandlersRef = useRef<(() => void) | null>(
     null,
@@ -2205,34 +2179,6 @@ export default function MapContainer({
       );
     };
 
-    const handleBathingWaterSiteClick = (e: MapLayerMouseEvent) => {
-      const feature = e.features?.[0];
-      const props = feature?.properties;
-      if (
-        !props ||
-        typeof props.id !== "string" ||
-        feature.geometry.type !== "Point"
-      ) {
-        return;
-      }
-      const [longitude, latitude] = feature.geometry.coordinates;
-      onBathingWaterSiteSelectRef.current?.({
-        id: props.id,
-        name: typeof props.name === "string" ? props.name : props.id,
-        countryCode:
-          typeof props.countryCode === "string" ? props.countryCode : "",
-        waterType: normalizeBathingWaterType(props.waterType),
-        classification: normalizeBathingWaterClassification(
-          props.classification,
-        ),
-        seasonYear:
-          typeof props.seasonYear === "number" ? props.seasonYear : null,
-        longitude,
-        latitude,
-        sourceIds: Array.isArray(props.sourceIds) ? props.sourceIds : [],
-      });
-    };
-
     const handleBeachClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
       const id = feature?.properties?.id;
@@ -2247,20 +2193,6 @@ export default function MapContainer({
       if (typeof id === "string") {
         onOutdoorRouteSelectRef.current?.(id, [e.lngLat.lng, e.lngLat.lat]);
       }
-    };
-
-    const handleBathingWaterMoveEnd = () => {
-      if (!showEuropeanBathingWatersRef.current) return;
-      const bounds = map.getBounds();
-      bathingWaterViewportLoaderRef.current?.requestViewport(
-        [
-          bounds.getWest(),
-          bounds.getSouth(),
-          bounds.getEast(),
-          bounds.getNorth(),
-        ],
-        map.getZoom(),
-      );
     };
 
     /**
@@ -3946,17 +3878,14 @@ export default function MapContainer({
 
       ensureTravelNatureBathingLayers(map, {
         showNatura2000: showNatura2000Ref.current,
-        showEuropeanBathingWaters: showEuropeanBathingWatersRef.current,
         showMajorBeachesSeasideResorts:
           showMajorBeachesSeasideResortsRef.current,
-        selectedBathingWaterSiteId: selectedBathingWaterSiteIdRef.current,
         selectedBeachId: selectedBeachIdRef.current,
       });
 
       ensureOutdoorRoutesLayers(map, {
         showMajorHikingRoutes: showMajorHikingRoutesRef.current,
         showMajorCyclingRoutes: showMajorCyclingRoutesRef.current,
-        showMajorRunningRoutes: showMajorRunningRoutesRef.current,
         selectedOutdoorRouteId: selectedOutdoorRouteIdRef.current,
       });
 
@@ -5319,18 +5248,11 @@ export default function MapContainer({
         attachTravelNatureBathingHandlers(
           map,
           {
-            onBathingWaterSiteClick: handleBathingWaterSiteClick,
-            onBathingWaterClusterClick: () => {},
             onBeachClick: handleBeachClick,
           },
           setPointerCursor,
           resetCursor,
         );
-      if (!bathingWaterViewportLoaderRef.current) {
-        bathingWaterViewportLoaderRef.current =
-          createBathingWaterViewportLoader(map);
-      }
-      map.on("moveend", handleBathingWaterMoveEnd);
       map.on("click", handleNatura2000MapClick);
       detachOutdoorRoutesHandlersRef.current?.();
       detachOutdoorRoutesHandlersRef.current = attachOutdoorRoutesHandlers(
@@ -5475,10 +5397,7 @@ export default function MapContainer({
       wifi4EuViewportLoaderRef.current = null;
       detachTravelNatureBathingHandlersRef.current?.();
       detachTravelNatureBathingHandlersRef.current = null;
-      map.off("moveend", handleBathingWaterMoveEnd);
       map.off("click", handleNatura2000MapClick);
-      bathingWaterViewportLoaderRef.current?.destroy();
-      bathingWaterViewportLoaderRef.current = null;
       detachOutdoorRoutesHandlersRef.current?.();
       detachOutdoorRoutesHandlersRef.current = null;
       map.off("click", "unesco-clusters", handleUnescoClusterClick);
@@ -6048,31 +5967,10 @@ export default function MapContainer({
 
     setTravelNatureBathingVisibility(map, {
       showNatura2000,
-      showEuropeanBathingWaters,
       showMajorBeachesSeasideResorts,
     });
-
-    if (!showEuropeanBathingWaters) {
-      bathingWaterViewportLoaderRef.current?.cancel();
-      const source = map.getSource(BATHING_WATERS_SOURCE_ID) as
-        | GeoJSONSource
-        | undefined;
-      source?.setData({ type: "FeatureCollection", features: [] });
-    } else {
-      const bounds = map.getBounds();
-      bathingWaterViewportLoaderRef.current?.requestViewport(
-        [
-          bounds.getWest(),
-          bounds.getSouth(),
-          bounds.getEast(),
-          bounds.getNorth(),
-        ],
-        map.getZoom(),
-      );
-    }
   }, [
     showNatura2000,
-    showEuropeanBathingWaters,
     showMajorBeachesSeasideResorts,
     mapSourcesReadyVersion,
   ]);
@@ -6082,10 +5980,9 @@ export default function MapContainer({
     if (!map) return;
 
     updateTravelNatureBathingSelection(map, {
-      selectedBathingWaterSiteId,
       selectedBeachId,
     });
-  }, [selectedBathingWaterSiteId, selectedBeachId, mapSourcesReadyVersion]);
+  }, [selectedBeachId, mapSourcesReadyVersion]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -6094,12 +5991,10 @@ export default function MapContainer({
     setOutdoorRoutesVisibility(map, {
       showMajorHikingRoutes,
       showMajorCyclingRoutes,
-      showMajorRunningRoutes,
     });
   }, [
     showMajorHikingRoutes,
     showMajorCyclingRoutes,
-    showMajorRunningRoutes,
     mapSourcesReadyVersion,
   ]);
 

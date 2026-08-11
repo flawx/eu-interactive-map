@@ -5,31 +5,44 @@ import { useMemo } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/messages";
 import { DATA_SOURCES_REGISTRY } from "@/lib/map/dataSourcesRegistry";
+import type { Wifi4EuEntityType, Wifi4EuSourceType } from "@/lib/travel/wifi4eu/types";
 import type { RoutePoint } from "@/lib/routing/types";
 import DirectionsToButton from "@/components/routing/DirectionsToButton";
 
-export type Wifi4EuPanelHotspot = {
+export type Wifi4EuPanelRecord = {
   id: string;
+  entityType: Wifi4EuEntityType;
   name: string;
   countryCode: string;
   longitude: number;
   latitude: number;
   address: string | null;
   municipality: string;
-  indoorOutdoor: string;
+  indoorOutdoor: string | null;
   programme: string;
+  sourceType: Wifi4EuSourceType;
   sourceIds: string[];
+  locationPrecision: "exact" | "municipality";
 };
 
 type Wifi4EuPanelProps = {
-  hotspot: Wifi4EuPanelHotspot | null;
+  record: Wifi4EuPanelRecord | null;
   locale: Locale;
   onClose: () => void;
   onRouteToPlace?: (point: RoutePoint) => void;
 };
 
+function sourceLabel(
+  sourceType: Wifi4EuSourceType,
+  tp: ReturnType<typeof getMessages>["wifi4EuPanel"],
+): string {
+  if (sourceType === "official") return tp.sourceOfficial;
+  if (sourceType === "municipal_official") return tp.sourceMunicipal;
+  return tp.sourceCommunity;
+}
+
 export default function Wifi4EuPanel({
-  hotspot,
+  record,
   locale,
   onClose,
   onRouteToPlace,
@@ -45,13 +58,14 @@ export default function Wifi4EuPanel({
     }
   }, [locale]);
 
-  if (!hotspot) return null;
+  if (!record) return null;
 
+  const isMunicipality = record.entityType === "wifi4eu_municipality";
   const countryLabel =
-    regionNames?.of(hotspot.countryCode === "EL" ? "GR" : hotspot.countryCode) ??
-    hotspot.countryCode;
+    regionNames?.of(record.countryCode === "EL" ? "GR" : record.countryCode) ??
+    record.countryCode;
   const source = DATA_SOURCES_REGISTRY.find((entry) =>
-    hotspot.sourceIds.includes(entry.id),
+    record.sourceIds.includes(entry.id),
   );
 
   return (
@@ -69,9 +83,11 @@ export default function Wifi4EuPanel({
             <Wifi className="h-6 w-6" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold leading-snug">{hotspot.name}</p>
+            <p className="text-sm font-semibold leading-snug">
+              {isMunicipality ? tp.municipalityTitle : record.name}
+            </p>
             <p className="text-[11px] text-[var(--map-ui-muted)]">
-              {hotspot.municipality}
+              {record.municipality}
             </p>
           </div>
           <button
@@ -85,16 +101,16 @@ export default function Wifi4EuPanel({
           </button>
         </div>
         <p className="mt-2 inline-flex rounded-full border border-cyan-400/40 bg-cyan-500/15 px-2 py-0.5 text-[10px] font-medium text-cyan-200">
-          {tp.badge}
+          {isMunicipality ? tp.municipalityBadge : tp.badge}
         </p>
         {onRouteToPlace ? (
           <div className="mt-2">
             <DirectionsToButton
               locale={locale}
-              name={hotspot.name}
-              latitude={hotspot.latitude}
-              longitude={hotspot.longitude}
-              countryCode={hotspot.countryCode}
+              name={record.name}
+              latitude={record.latitude}
+              longitude={record.longitude}
+              countryCode={record.countryCode}
               onDirectionsTo={onRouteToPlace}
             />
           </div>
@@ -102,22 +118,40 @@ export default function Wifi4EuPanel({
       </header>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">
-        <section className="mb-4">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
-            {tp.location}
-          </h2>
-          <p className="flex items-center gap-1.5 text-sm leading-relaxed text-[var(--map-ui-text)]">
-            <MapPin className="h-4 w-4 shrink-0 text-cyan-300" />
-            {hotspot.address ?? hotspot.municipality}
-          </p>
-        </section>
+        {isMunicipality ? (
+          <section className="mb-4">
+            <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
+              {tp.municipalityAvailabilityNote}
+            </p>
+          </section>
+        ) : (
+          <>
+            <section className="mb-4">
+              <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
+                {tp.location}
+              </h2>
+              <p className="flex items-center gap-1.5 text-sm leading-relaxed text-[var(--map-ui-text)]">
+                <MapPin className="h-4 w-4 shrink-0 text-cyan-300" />
+                {record.address ?? record.municipality}
+              </p>
+            </section>
+            <section className="mb-4">
+              <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
+                {tp.locationPrecision}
+              </h2>
+              <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
+                {tp.exactHotspotPrecision}
+              </p>
+            </section>
+          </>
+        )}
 
         <section className="mb-4">
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.municipality}
           </h2>
           <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
-            {hotspot.municipality}
+            {record.municipality}
           </p>
         </section>
 
@@ -130,40 +164,45 @@ export default function Wifi4EuPanel({
           </p>
         </section>
 
-        <section className="mb-4">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
-            {tp.freePublicWifi}
-          </h2>
-          <p className="flex items-center gap-1.5 text-sm leading-relaxed text-[var(--map-ui-text)]">
-            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
-            {tp.freePublicWifiNote}
-          </p>
-        </section>
+        {!isMunicipality ? (
+          <section className="mb-4">
+            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
+              {tp.freePublicWifi}
+            </h2>
+            <p className="flex items-center gap-1.5 text-sm leading-relaxed text-[var(--map-ui-text)]">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+              {tp.freePublicWifiNote}
+            </p>
+          </section>
+        ) : null}
 
         <section className="mb-4">
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
             {tp.programme}
           </h2>
           <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
-            {hotspot.programme}
+            {record.programme}
           </p>
         </section>
 
-        {source ? (
-          <section className="mb-2">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
-              {tp.source}
-            </h2>
+        <section className="mb-2">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--map-ui-muted)]">
+            {tp.source}
+          </h2>
+          <p className="text-sm leading-relaxed text-[var(--map-ui-text)]">
+            {sourceLabel(record.sourceType, tp)}
+          </p>
+          {source ? (
             <a
               href={source.officialUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-[var(--map-ui-muted)] hover:text-sky-300 hover:underline"
+              className="mt-1 inline-block text-[11px] text-[var(--map-ui-muted)] hover:text-sky-300 hover:underline"
             >
               {source.name}
             </a>
-          </section>
-        ) : null}
+          ) : null}
+        </section>
       </div>
     </aside>
   );

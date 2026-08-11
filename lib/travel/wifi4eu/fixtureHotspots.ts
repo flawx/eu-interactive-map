@@ -23,8 +23,11 @@
  * placeholder coordinates or invented hotspots are never added here.
  */
 
-import type { WifiHotspot } from "./types";
-import { WIFI4EU_HOTSPOT_SOURCE_IDS } from "./types";
+import type { Wifi4EuRecord } from "./types";
+import { makeHotspotRecord } from "./providers/types";
+import { DATA_LAYER_SOURCE_IDS } from "@/lib/map/dataLayers/sourceIds";
+
+const SOURCE_IDS = [DATA_LAYER_SOURCE_IDS.WIFI4EU_MUNICIPAL_OPEN_DATA];
 
 function dublin(
   slug: string,
@@ -32,10 +35,10 @@ function dublin(
   address: string,
   longitude: number,
   latitude: number,
-  indoorOutdoor: WifiHotspot["indoorOutdoor"],
+  indoorOutdoor: "indoor" | "outdoor" | "indoor_outdoor",
   locationType: string,
-): WifiHotspot {
-  return {
+): Wifi4EuRecord {
+  return makeHotspotRecord({
     id: `wifi4eu-dublin-${slug}`,
     name,
     address,
@@ -45,13 +48,13 @@ function dublin(
     latitude,
     indoorOutdoor,
     locationType,
-    programme: "WiFi4EU",
-    sourceIds: [...WIFI4EU_HOTSPOT_SOURCE_IDS],
-  };
+    sourceType: "municipal_official",
+    sourceIds: SOURCE_IDS,
+  });
 }
 
 /** Dublin City Council WiFi4EU access points (CC-BY, data.smartdublin.ie). */
-export const WIFI4EU_FIXTURE_HOTSPOTS: readonly WifiHotspot[] = [
+export const WIFI4EU_FIXTURE_HOTSPOTS: readonly Wifi4EuRecord[] = [
   dublin("artane-coolock-frc", "Artane Coolock Family Resource Centre", "55 Gracefield Road, Artane, D05 V1Y2", -6.1975778, 53.3821231, "indoor", "Other"),
   dublin("arts-office-the-lab", "Arts Office, The Lab", "The Lab, Liberty Corner, Foley Street, Dublin, D01 N5H6", -6.2530722, 53.3513895, "indoor", "Museum/Culture Centre"),
   dublin("ballygall-community-centre", "Ballygall Community Centre", "Drapier Rd, Ballygall, D11 PX81", -6.2739057, 53.3848589, "indoor", "Other"),
@@ -90,6 +93,6 @@ export const WIFI4EU_FIXTURE_HOTSPOTS: readonly WifiHotspot[] = [
   dublin("ymca", "YMCA", "1 Whitefriars, Aungier Street, Dublin 2, D02 AE40", -6.2664638, 53.3393582, "indoor", "Sports Hall / Stadium"),
 ];
 
-export function getWifi4EuHotspotById(id: string): WifiHotspot | undefined {
+export function getWifi4EuHotspotById(id: string): Wifi4EuRecord | undefined {
   return WIFI4EU_FIXTURE_HOTSPOTS.find((hotspot) => hotspot.id === id);
 }

@@ -6,10 +6,9 @@
  * coverage, and a mix of coastal types (Atlantic, Mediterranean, Baltic,
  * North Sea, Adriatic, Aegean). United Kingdom beaches are out of scope.
  *
- * Distinct from the EEA `europeanBathingWaters` layer (official annual
- * water-quality classification) — this layer is about well-known seaside
- * *destinations*, not water-quality assessment. Coordinates are the
- * beach/resort's well-known public location, not a survey-grade fix.
+ * This layer is about well-known seaside destinations, not water-quality
+ * assessment. Coordinates are the beach/resort's well-known public location,
+ * not a survey-grade fix.
  */
 
 import { isCountryInEUIMScope } from "@/lib/geography/euimCoverage";

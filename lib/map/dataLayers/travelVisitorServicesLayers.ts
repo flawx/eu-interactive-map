@@ -19,10 +19,33 @@ import { toFeatureCollection as buildTouristOfficesCollection } from "@/lib/trav
 import { toFeatureCollection as buildDiplomaticMissionsCollection } from "@/lib/travel/diplomaticMissions";
 import { toFeatureCollection as buildVisitorSafetyCollection } from "@/lib/travel/visitorSafety";
 import {
+  createWifi4EuHotspotIcon,
+  createWifi4EuMunicipalityIcon,
+  wifi4EuIconExpression,
+  WIFI4EU_HOTSPOT_ICON_ID,
+  WIFI4EU_MUNICIPALITY_ICON_ID,
+} from "@/components/map/wifi4euMapLayers";
+import {
   createViewportDataLoader,
   type ViewportBbox,
   type ViewportDataLoader,
 } from "@/lib/map/dataLayers/viewportDataLoader";
+
+export function ensureWifi4EuMapImages(map: MapLibreMap): void {
+  if (typeof document === "undefined") return;
+  if (!map.hasImage(WIFI4EU_HOTSPOT_ICON_ID)) {
+    map.addImage(WIFI4EU_HOTSPOT_ICON_ID, createWifi4EuHotspotIcon(), {
+      pixelRatio: 2,
+    });
+  }
+  if (!map.hasImage(WIFI4EU_MUNICIPALITY_ICON_ID)) {
+    map.addImage(
+      WIFI4EU_MUNICIPALITY_ICON_ID,
+      createWifi4EuMunicipalityIcon(),
+      { pixelRatio: 2 },
+    );
+  }
+}
 
 export const WIFI4EU_SOURCE_ID = "wifi4eu";
 export const TOURIST_INFORMATION_OFFICES_SOURCE_ID =
@@ -96,6 +119,8 @@ export function ensureTravelVisitorServicesLayers(
   options: TravelVisitorServicesLayerOptions,
 ): void {
   // --- WiFi4EU hotspots (clustered, viewport-loaded) ---
+  ensureWifi4EuMapImages(map);
+
   if (!map.getSource(WIFI4EU_SOURCE_ID)) {
     map.addSource(WIFI4EU_SOURCE_ID, {
       type: "geojson",
@@ -169,22 +194,20 @@ export function ensureTravelVisitorServicesLayers(
   if (!map.getLayer("wifi4eu-symbol")) {
     map.addLayer({
       id: "wifi4eu-symbol",
-      type: "circle",
+      type: "symbol",
       source: WIFI4EU_SOURCE_ID,
       filter: ["!", ["has", "point_count"]],
       minzoom: 3,
       layout: {
         visibility: options.showWifi4Eu ? "visible" : "none",
-      },
-      paint: {
-        "circle-radius": entitySelectionRadiusExpression(
+        "icon-image": wifi4EuIconExpression(),
+        "icon-size": entitySelectionRadiusExpression(
           options.selectedWifi4EuHotspotId,
-          8,
-          6,
+          1.05,
+          0.9,
         ),
-        "circle-color": "#0891b2",
-        "circle-stroke-color": "#ffffff",
-        "circle-stroke-width": 1.5,
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": false,
       },
     });
   }
@@ -489,10 +512,10 @@ export function updateTravelVisitorServicesSelection(
     );
   }
   if (map.getLayer("wifi4eu-symbol")) {
-    map.setPaintProperty(
+    map.setLayoutProperty(
       "wifi4eu-symbol",
-      "circle-radius",
-      entitySelectionRadiusExpression(options.selectedWifi4EuHotspotId, 8, 6),
+      "icon-size",
+      entitySelectionRadiusExpression(options.selectedWifi4EuHotspotId, 1.05, 0.9),
     );
   }
   if (map.getLayer("tourist-information-offices-halo")) {

@@ -1,15 +1,14 @@
 /**
  * MapLibre layer wiring for the "Tourism Travel V2" commit-3 outdoor route
- * datasets (hiking, cycling, running) — small curated LineString sources,
- * each with its own source/layer set so hiking/cycling/running can be
- * toggled independently. Mirrors `travelNatureBathingLayers.ts`.
+ * datasets (hiking, cycling) — small curated LineString sources, each with
+ * its own source/layer set so hiking/cycling can be toggled independently.
+ * Mirrors `travelNatureBathingLayers.ts`.
  */
 
 import type { Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 
 import { HIKING_ROUTES } from "@/lib/travel/outdoorRoutes/hikingRoutes";
 import { CYCLING_ROUTES } from "@/lib/travel/outdoorRoutes/cyclingRoutes";
-import { RUNNING_ROUTES } from "@/lib/travel/outdoorRoutes/runningRoutes";
 import {
   OUTDOOR_ROUTE_COLORS,
   outdoorRoutesToFeatureCollection,
@@ -19,10 +18,11 @@ import {
 
 export const OUTDOOR_HIKING_SOURCE_ID = "outdoor-hiking-routes-line";
 export const OUTDOOR_CYCLING_SOURCE_ID = "outdoor-cycling-routes-line";
-export const OUTDOOR_RUNNING_SOURCE_ID = "outdoor-running-routes-line";
+
+type ActiveOutdoorRouteType = Extract<OutdoorRouteType, "hiking" | "cycling">;
 
 const ROUTE_LAYER_CONFIG: Record<
-  OutdoorRouteType,
+  ActiveOutdoorRouteType,
   { sourceId: string; lineLayerId: string; haloLayerId: string; routes: readonly OutdoorRoute[] }
 > = {
   hiking: {
@@ -37,18 +37,15 @@ const ROUTE_LAYER_CONFIG: Record<
     haloLayerId: "outdoor-cycling-routes-halo",
     routes: CYCLING_ROUTES,
   },
-  running: {
-    sourceId: OUTDOOR_RUNNING_SOURCE_ID,
-    lineLayerId: "outdoor-running-routes-line-layer",
-    haloLayerId: "outdoor-running-routes-halo",
-    routes: RUNNING_ROUTES,
-  },
 };
+
+const ACTIVE_ROUTE_TYPES = Object.keys(
+  ROUTE_LAYER_CONFIG,
+) as ActiveOutdoorRouteType[];
 
 export const ALL_OUTDOOR_ROUTES: readonly OutdoorRoute[] = [
   ...HIKING_ROUTES,
   ...CYCLING_ROUTES,
-  ...RUNNING_ROUTES,
 ];
 
 export function getOutdoorRouteById(id: string): OutdoorRoute | undefined {
@@ -58,7 +55,6 @@ export function getOutdoorRouteById(id: string): OutdoorRoute | undefined {
 export type OutdoorRoutesLayerOptions = {
   showMajorHikingRoutes: boolean;
   showMajorCyclingRoutes: boolean;
-  showMajorRunningRoutes: boolean;
   selectedOutdoorRouteId: string | null;
 };
 
@@ -81,26 +77,25 @@ function selectionWidthExpression(
 }
 
 function visibilityFor(
-  type: OutdoorRouteType,
+  type: ActiveOutdoorRouteType,
   options: Pick<
     OutdoorRoutesLayerOptions,
-    "showMajorHikingRoutes" | "showMajorCyclingRoutes" | "showMajorRunningRoutes"
+    "showMajorHikingRoutes" | "showMajorCyclingRoutes"
   >,
 ): boolean {
   if (type === "hiking") return options.showMajorHikingRoutes;
-  if (type === "cycling") return options.showMajorCyclingRoutes;
-  return options.showMajorRunningRoutes;
+  return options.showMajorCyclingRoutes;
 }
 
 /**
- * Adds sources/layers for the three outdoor route types if they don't
+ * Adds sources/layers for hiking and cycling route types if they don't
  * already exist. Safe to call repeatedly (e.g. on every `style.load`).
  */
 export function ensureOutdoorRoutesLayers(
   map: MapLibreMap,
   options: OutdoorRoutesLayerOptions,
 ): void {
-  for (const type of Object.keys(ROUTE_LAYER_CONFIG) as OutdoorRouteType[]) {
+  for (const type of ACTIVE_ROUTE_TYPES) {
     const config = ROUTE_LAYER_CONFIG[type];
     const visible = visibilityFor(type, options);
     const color = OUTDOOR_ROUTE_COLORS[type];
@@ -162,10 +157,10 @@ export function setOutdoorRoutesVisibility(
   map: MapLibreMap,
   options: Pick<
     OutdoorRoutesLayerOptions,
-    "showMajorHikingRoutes" | "showMajorCyclingRoutes" | "showMajorRunningRoutes"
+    "showMajorHikingRoutes" | "showMajorCyclingRoutes"
   >,
 ): void {
-  for (const type of Object.keys(ROUTE_LAYER_CONFIG) as OutdoorRouteType[]) {
+  for (const type of ACTIVE_ROUTE_TYPES) {
     const config = ROUTE_LAYER_CONFIG[type];
     const visible = visibilityFor(type, options);
     for (const layerId of [config.haloLayerId, config.lineLayerId]) {
@@ -180,7 +175,7 @@ export function updateOutdoorRoutesSelection(
   map: MapLibreMap,
   options: { selectedOutdoorRouteId: string | null },
 ): void {
-  for (const type of Object.keys(ROUTE_LAYER_CONFIG) as OutdoorRouteType[]) {
+  for (const type of ACTIVE_ROUTE_TYPES) {
     const config = ROUTE_LAYER_CONFIG[type];
     if (map.getLayer(config.haloLayerId)) {
       map.setPaintProperty(
@@ -203,7 +198,7 @@ export type OutdoorRoutesClickHandlers = {
   onRouteClick: (event: MapLayerMouseEvent) => void;
 };
 
-/** Attaches click / hover listeners across all three route line layers; returns a cleanup function. */
+/** Attaches click / hover listeners across route line layers; returns a cleanup function. */
 export function attachOutdoorRoutesHandlers(
   map: MapLibreMap,
   handlers: OutdoorRoutesClickHandlers,

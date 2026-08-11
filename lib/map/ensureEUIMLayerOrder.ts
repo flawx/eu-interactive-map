@@ -92,8 +92,6 @@ export const EUIM_LAYER_STACK_BOTTOM_TO_TOP: readonly string[] = [
   "outdoor-hiking-routes-line-layer",
   "outdoor-cycling-routes-halo",
   "outdoor-cycling-routes-line-layer",
-  "outdoor-running-routes-halo",
-  "outdoor-running-routes-line-layer",
   // Route geometries
   "eurostar-routes-line",
   ROUTE_PLANNER_LAYER_ALT,
@@ -198,11 +196,7 @@ export const EUIM_LAYER_STACK_BOTTOM_TO_TOP: readonly string[] = [
   "visitor-safety-assistance-halo",
   "visitor-safety-assistance-symbol",
   "visitor-safety-assistance-label",
-  // Tourism Travel V2: bathing waters & beaches (above traffic, commit 2)
-  "bathing-waters-clusters",
-  "bathing-waters-cluster-count",
-  "bathing-waters-halo",
-  "bathing-waters-symbol",
+  // Tourism Travel V2: major beaches (above traffic, commit 2)
   "major-beaches-halo",
   "major-beaches-symbol",
   "major-beaches-label",

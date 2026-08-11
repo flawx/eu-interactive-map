@@ -1,63 +1,37 @@
 /**
- * In-memory bbox/zoom/limit filtering over the curated WiFi4EU fixture.
- * Mirrors `lib/europe/euProjects/queryFixture.ts` — kept pure/testable so it
- * can be shared by the API route and unit tests.
+ * WiFi4EU query layer — delegates to multi-source provider aggregator.
  */
 
 import { isCountryInEUIMScope } from "@/lib/geography/euimCoverage";
 import { WIFI4EU_FIXTURE_HOTSPOTS } from "./fixtureHotspots";
-import type { WifiHotspot, WifiHotspotQueryMeta } from "./types";
+import { WIFI4EU_DLR_HOTSPOTS } from "./municipalDlrHotspots";
+import {
+  getWifi4EuGlobalCounts,
+  queryWifi4EuRecords,
+} from "./providers/index";
+import type { Wifi4EuRecord } from "./types";
 
-const DEFAULT_LIMIT = 200;
-const MAX_LIMIT = 500;
-
-export const WIFI4EU_HOTSPOTS_IN_SCOPE: readonly WifiHotspot[] =
-  WIFI4EU_FIXTURE_HOTSPOTS.filter((hotspot) => isCountryInEUIMScope(hotspot.countryCode));
-
-function pointInBbox(
-  longitude: number,
-  latitude: number,
-  bbox: readonly [number, number, number, number],
-): boolean {
-  const [minLng, minLat, maxLng, maxLat] = bbox;
-  return (
-    longitude >= minLng &&
-    longitude <= maxLng &&
-    latitude >= minLat &&
-    latitude <= maxLat
-  );
-}
+export { queryWifi4EuRecords, getWifi4EuGlobalCounts };
 
 export type Wifi4EuQueryFilters = {
   bbox?: [number, number, number, number];
   limit?: number;
   cursor?: number;
+  includeOsm?: boolean;
 };
 
-export function queryWifi4EuHotspots(filters: Wifi4EuQueryFilters = {}): {
-  hotspots: WifiHotspot[];
-  meta: WifiHotspotQueryMeta;
-} {
-  const limit = Math.max(1, Math.min(filters.limit ?? DEFAULT_LIMIT, MAX_LIMIT));
-  const cursor = Math.max(0, filters.cursor ?? 0);
-
-  const matched = WIFI4EU_HOTSPOTS_IN_SCOPE.filter((hotspot) => {
-    if (filters.bbox && !pointInBbox(hotspot.longitude, hotspot.latitude, filters.bbox)) {
-      return false;
-    }
-    return true;
-  });
-
-  const totalMatched = matched.length;
-  const page = matched.slice(cursor, cursor + limit);
-  const nextCursor = cursor + limit < totalMatched ? cursor + limit : null;
-
+export async function queryWifi4EuHotspots(filters: Wifi4EuQueryFilters = {}) {
+  const { records, metadata } = await queryWifi4EuRecords(filters);
   return {
-    hotspots: page,
+    hotspots: records,
     meta: {
-      fetchedAt: new Date().toISOString(),
-      totalMatched,
-      nextCursor,
+      fetchedAt: metadata.fetchedAt,
+      totalMatched: metadata.totalMatched,
+      nextCursor: metadata.nextCursor,
+      coverageType: metadata.coverageType,
+      sources: metadata.sources,
+      exactHotspotCount: metadata.exactHotspotCount,
+      municipalityCount: metadata.municipalityCount,
     },
   };
 }
@@ -83,7 +57,14 @@ export type Wifi4EuAudit = {
   duplicateIds: string[];
   ukEntries: string[];
   hasPasswordField: boolean;
+  exactHotspotCount: number;
+  municipalityCount: number;
 };
+
+const ALL_EMBEDDED_HOTSPOTS: readonly Wifi4EuRecord[] = [
+  ...WIFI4EU_FIXTURE_HOTSPOTS,
+  ...WIFI4EU_DLR_HOTSPOTS,
+];
 
 export function auditWifi4EuHotspots(): Wifi4EuAudit {
   const ids = new Set<string>();
@@ -92,7 +73,7 @@ export function auditWifi4EuHotspots(): Wifi4EuAudit {
   const missingCoordinates: string[] = [];
   const ukEntries: string[] = [];
 
-  for (const hotspot of WIFI4EU_FIXTURE_HOTSPOTS) {
+  for (const hotspot of ALL_EMBEDDED_HOTSPOTS) {
     if (ids.has(hotspot.id)) duplicateIds.push(hotspot.id);
     ids.add(hotspot.id);
 
@@ -109,17 +90,27 @@ export function auditWifi4EuHotspots(): Wifi4EuAudit {
     }
   }
 
-  const hasPasswordField = WIFI4EU_FIXTURE_HOTSPOTS.some((hotspot) =>
+  const hasPasswordField = ALL_EMBEDDED_HOTSPOTS.some((hotspot) =>
     Object.prototype.hasOwnProperty.call(hotspot, "password"),
   );
 
+  const global = getWifi4EuGlobalCounts();
+
   return {
-    total: WIFI4EU_FIXTURE_HOTSPOTS.length,
-    inScope: WIFI4EU_FIXTURE_HOTSPOTS.length - outsideScope.length,
+    total: ALL_EMBEDDED_HOTSPOTS.length,
+    inScope: ALL_EMBEDDED_HOTSPOTS.length - outsideScope.length,
     outsideScope,
     missingCoordinates,
     duplicateIds,
     ukEntries,
     hasPasswordField,
+    exactHotspotCount: global.exactHotspotCount,
+    municipalityCount: global.municipalityCount,
   };
 }
+
+/** @deprecated synchronous in-memory query — use queryWifi4EuHotspots instead. */
+export const WIFI4EU_HOTSPOTS_IN_SCOPE: readonly Wifi4EuRecord[] =
+  ALL_EMBEDDED_HOTSPOTS.filter((hotspot) =>
+    isCountryInEUIMScope(hotspot.countryCode),
+  );

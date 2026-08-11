@@ -417,7 +417,7 @@ export const DATA_LAYER_REGISTRY: readonly DataLayerDefinition[] = [
     zOrderGroup: "entity-points",
   },
 
-  // --- Tourism Travel V2: nature, protected areas & bathing (commit 2) ---
+  // --- Tourism Travel V2: nature, protected areas & beaches (commit 2) ---
   {
     id: "natura2000",
     category: "tourism",
@@ -436,23 +436,9 @@ export const DATA_LAYER_REGISTRY: readonly DataLayerDefinition[] = [
     zOrderGroup: "fills",
   },
   {
-    id: "european-bathing-waters",
-    category: "tourism",
-    section: "beachesBathing",
-    preferenceKey: "europeanBathingWaters",
-    nameKey: "europeanBathingWaters",
-    descriptionKey: "europeanBathingWatersDescription",
-    icon: "waves",
-    defaultEnabled: false,
-    cluster: { enabled: true, maxZoom: 12, radius: 50 },
-    geometryTypes: ["Point"],
-    sourceIds: [DATA_LAYER_SOURCE_IDS.EEA_BATHING_WATER],
-    zOrderGroup: "entity-points",
-  },
-  {
     id: "major-beaches-seaside-resorts",
     category: "tourism",
-    section: "beachesBathing",
+    section: "beachesSeaside",
     preferenceKey: "majorBeachesSeasideResorts",
     nameKey: "majorBeachesSeasideResorts",
     descriptionKey: "majorBeachesSeasideResortsDescription",
@@ -494,20 +480,6 @@ export const DATA_LAYER_REGISTRY: readonly DataLayerDefinition[] = [
       DATA_LAYER_SOURCE_IDS.EUROVELO,
       DATA_LAYER_SOURCE_IDS.OPENSTREETMAP_ROUTES,
     ],
-    zOrderGroup: "route-lines",
-  },
-  {
-    id: "major-running-routes",
-    category: "tourism",
-    section: "outdoorRoutes",
-    preferenceKey: "majorRunningRoutes",
-    nameKey: "majorRunningRoutes",
-    descriptionKey: "majorRunningRoutesDescription",
-    icon: "running",
-    defaultEnabled: false,
-    cluster: null,
-    geometryTypes: ["LineString"],
-    sourceIds: [DATA_LAYER_SOURCE_IDS.OPENSTREETMAP_ROUTES],
     zOrderGroup: "route-lines",
   },
 ] as const;

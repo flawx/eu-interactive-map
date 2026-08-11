@@ -1,12 +1,9 @@
 /**
- * WiFi4EU hotspots — types.
+ * WiFi4EU — types for multi-source provider architecture.
  *
- * DATA ACCESS REALITY (see fixtureHotspots.ts header for the full note):
- * there is no officially redistributable pan-EU WiFi4EU hotspot API from the
- * European Commission for third-party apps — official discovery only happens
- * through the WiFi4EU mobile app / portal. This module therefore models a
- * small curated fixture built from redistributable *municipal* open data
- * (currently Dublin City Council, CC-BY) rather than a live EU feed.
+ * Two entity types:
+ *   wifi4eu_hotspot      — exact access-point coordinate from municipal/OSM data
+ *   wifi4eu_municipality — official beneficiary municipality (no exact AP coords)
  */
 
 import { DATA_LAYER_SOURCE_IDS } from "@/lib/map/dataLayers/sourceIds";
@@ -15,58 +12,88 @@ import {
   type EUIMMapEntity,
 } from "@/lib/map/dataLayers/mapEntity";
 
+export type Wifi4EuEntityType = "wifi4eu_hotspot" | "wifi4eu_municipality";
+
+export type Wifi4EuSourceType = "official" | "municipal_official" | "community";
+
+export type Wifi4EuLocationPrecision = "exact" | "municipality";
+
 export type WifiHotspotIndoorOutdoor = "indoor" | "outdoor" | "indoor_outdoor";
 
-export type WifiHotspot = {
+export type Wifi4EuRecord = {
   id: string;
+  entityType: Wifi4EuEntityType;
   name: string;
-  address: string | null;
   municipality: string;
   countryCode: string;
   longitude: number;
   latitude: number;
-  indoorOutdoor: WifiHotspotIndoorOutdoor;
-  /** Free-text venue category from the source municipal dataset (e.g. "Park", "Square"). */
+  locationPrecision: Wifi4EuLocationPrecision;
+  sourceType: Wifi4EuSourceType;
+  sourceIds: readonly string[];
+  address: string | null;
+  indoorOutdoor: WifiHotspotIndoorOutdoor | null;
   locationType: string | null;
   programme: "WiFi4EU";
-  sourceIds: string[];
 };
+
+/** @deprecated Use Wifi4EuRecord — kept for fixture compatibility during migration. */
+export type WifiHotspot = Wifi4EuRecord & { entityType: "wifi4eu_hotspot" };
 
 export const WIFI4EU_HOTSPOT_SOURCE_IDS: readonly string[] = [
   DATA_LAYER_SOURCE_IDS.WIFI4EU,
   DATA_LAYER_SOURCE_IDS.WIFI4EU_MUNICIPAL_OPEN_DATA,
 ];
 
-export function wifiHotspotToEntity(hotspot: WifiHotspot): EUIMMapEntity {
+export const WIFI4EU_OSM_SOURCE_IDS: readonly string[] = [
+  DATA_LAYER_SOURCE_IDS.WIFI4EU_OSM_COMMUNITY,
+];
+
+export function wifi4EuRecordToEntity(record: Wifi4EuRecord): EUIMMapEntity {
+  const isMunicipality = record.entityType === "wifi4eu_municipality";
   return {
-    id: hotspot.id,
+    id: record.id,
     category: "travel",
     subcategory: "wifi4eu",
     layerId: "wifi4eu",
-    name: hotspot.name,
-    countryCode: hotspot.countryCode,
+    name: isMunicipality ? `${record.municipality} (WiFi4EU)` : record.name,
+    countryCode: record.countryCode,
     geometry: {
       type: "Point",
-      coordinates: [hotspot.longitude, hotspot.latitude],
+      coordinates: [record.longitude, record.latitude],
     },
-    icon: "wifi",
-    color: "#0891b2",
-    sourceIds: hotspot.sourceIds,
+    icon: isMunicipality ? "wifi-municipality" : "wifi",
+    color: isMunicipality ? "#06b6d4" : "#0891b2",
+    sourceIds: [...record.sourceIds],
     properties: {
-      address: hotspot.address,
-      municipality: hotspot.municipality,
-      indoorOutdoor: hotspot.indoorOutdoor,
-      locationType: hotspot.locationType,
-      programme: hotspot.programme,
-      // WiFi4EU hotspots never expose a password field — free public Wi-Fi only.
+      entityType: record.entityType,
+      locationPrecision: record.locationPrecision,
+      sourceType: record.sourceType,
+      address: record.address,
+      municipality: record.municipality,
+      indoorOutdoor: record.indoorOutdoor,
+      locationType: record.locationType,
+      programme: record.programme,
     },
   };
 }
 
-export function wifiHotspotsToFeatureCollection(
-  hotspots: readonly WifiHotspot[],
+export function wifi4EuRecordsToFeatureCollection(
+  records: readonly Wifi4EuRecord[],
 ): GeoJSON.FeatureCollection {
-  return entitiesToFeatureCollection(hotspots.map(wifiHotspotToEntity));
+  return entitiesToFeatureCollection(records.map(wifi4EuRecordToEntity));
+}
+
+/** @deprecated */
+export function wifiHotspotToEntity(hotspot: Wifi4EuRecord): EUIMMapEntity {
+  return wifi4EuRecordToEntity(hotspot);
+}
+
+/** @deprecated */
+export function wifiHotspotsToFeatureCollection(
+  hotspots: readonly Wifi4EuRecord[],
+): GeoJSON.FeatureCollection {
+  return wifi4EuRecordsToFeatureCollection(hotspots);
 }
 
 export type WifiHotspotQueryMeta = {

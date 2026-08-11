@@ -123,10 +123,7 @@ export type Messages = {
     natura2000: string;
     natura2000Description: string;
     natura2000Attribution: string;
-    groupBeachesBathing: string;
-    europeanBathingWaters: string;
-    europeanBathingWatersDescription: string;
-    bathingWaterAnnualNote: string;
+    groupBeachesSeaside: string;
     majorBeachesSeasideResorts: string;
     majorBeachesSeasideResortsDescription: string;
     groupOutdoorRoutes: string;
@@ -134,8 +131,6 @@ export type Messages = {
     majorHikingRoutesDescription: string;
     majorCyclingRoutes: string;
     majorCyclingRoutesDescription: string;
-    majorRunningRoutes: string;
-    majorRunningRoutesDescription: string;
     groupTravelVisitorServices: string;
     wifi4eu: string;
     wifi4euDescription: string;
@@ -1025,13 +1020,21 @@ export type Messages = {
   };
   wifi4EuPanel: {
     badge: string;
+    municipalityBadge: string;
+    municipalityTitle: string;
+    municipalityAvailabilityNote: string;
     location: string;
     municipality: string;
     country: string;
+    locationPrecision: string;
+    exactHotspotPrecision: string;
     freePublicWifi: string;
     freePublicWifiNote: string;
     programme: string;
     source: string;
+    sourceOfficial: string;
+    sourceMunicipal: string;
+    sourceCommunity: string;
     close: string;
   };
   touristOfficePanel: {
@@ -1097,24 +1100,6 @@ export type Messages = {
     source: string;
     close: string;
     directionsDisclaimer: string;
-  };
-  bathingWaterPanel: {
-    badge: string;
-    waterType: string;
-    waterTypeCoastal: string;
-    waterTypeInland: string;
-    waterTypeUnknown: string;
-    classification: string;
-    classificationExcellent: string;
-    classificationGood: string;
-    classificationSufficient: string;
-    classificationPoor: string;
-    classificationNotClassified: string;
-    seasonYear: string;
-    seasonYearUnavailable: string;
-    disclaimer: string;
-    source: string;
-    close: string;
   };
   beachResortPanel: {
     badge: string;

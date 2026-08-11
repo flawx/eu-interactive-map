@@ -104,11 +104,9 @@ export type MapLayerPreferences = {
   diplomaticMissions: boolean;
   visitorSafetyAssistance: boolean;
   natura2000: boolean;
-  europeanBathingWaters: boolean;
   majorBeachesSeasideResorts: boolean;
   majorHikingRoutes: boolean;
   majorCyclingRoutes: boolean;
-  majorRunningRoutes: boolean;
 };
 
 /** Shared default layer state — first visit and Reset Layers must match. */
@@ -222,14 +220,13 @@ export const DEFAULT_MAP_LAYER_PREFERENCES: MapLayerPreferences = {
   diplomaticMissions: false,
   visitorSafetyAssistance: false,
   natura2000: false,
-  europeanBathingWaters: false,
   majorBeachesSeasideResorts: false,
   majorHikingRoutes: false,
   majorCyclingRoutes: false,
-  majorRunningRoutes: false,
 };
 
-const LAYER_PREFS_KEY = "eu-map-layer-preferences-v8";
+const LAYER_PREFS_KEY = "eu-map-layer-preferences-v9";
+const LEGACY_LAYER_PREFS_KEY_V8 = "eu-map-layer-preferences-v8";
 const LEGACY_LAYER_PREFS_KEY_V7 = "eu-map-layer-preferences-v7";
 const LEGACY_LAYER_PREFS_KEY_V6 = "eu-map-layer-preferences-v6";
 const LEGACY_LAYER_PREFS_KEY_V5 = "eu-map-layer-preferences-v5";
@@ -237,7 +234,7 @@ const LEGACY_LAYER_PREFS_KEY_V4 = "eu-map-layer-preferences-v4";
 const LEGACY_LAYER_PREFS_KEY_V3 = "eu-map-layer-preferences-v3";
 const LEGACY_LAYER_PREFS_KEY_V2 = "eu-map-layer-preferences-v2";
 const LEGACY_LAYER_PREFS_KEY = "eu-map-layer-preferences-v1";
-export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 8;
+export const MAP_LAYER_PREFERENCES_SCHEMA_VERSION = 9;
 const LEGEND_COLLAPSED_KEY = "eu-map-legend-collapsed-v1";
 
 const LAYER_KEYS = [
@@ -346,11 +343,9 @@ const LAYER_KEYS = [
   "diplomaticMissions",
   "visitorSafetyAssistance",
   "natura2000",
-  "europeanBathingWaters",
   "majorBeachesSeasideResorts",
   "majorHikingRoutes",
   "majorCyclingRoutes",
-  "majorRunningRoutes",
 ] as const satisfies ReadonlyArray<keyof MapLayerPreferences>;
 
 function isBoolean(value: unknown): value is boolean {
@@ -383,6 +378,7 @@ export function loadMapLayerPreferences(): MapLayerPreferences {
   try {
     const raw =
       window.localStorage.getItem(LAYER_PREFS_KEY) ??
+      window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V8) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V7) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V6) ??
       window.localStorage.getItem(LEGACY_LAYER_PREFS_KEY_V5) ??
@@ -520,11 +516,9 @@ export function saveMapLayerPreferences(
       diplomaticMissions: Boolean(preferences.diplomaticMissions),
       visitorSafetyAssistance: Boolean(preferences.visitorSafetyAssistance),
       natura2000: Boolean(preferences.natura2000),
-      europeanBathingWaters: Boolean(preferences.europeanBathingWaters),
       majorBeachesSeasideResorts: Boolean(preferences.majorBeachesSeasideResorts),
       majorHikingRoutes: Boolean(preferences.majorHikingRoutes),
       majorCyclingRoutes: Boolean(preferences.majorCyclingRoutes),
-      majorRunningRoutes: Boolean(preferences.majorRunningRoutes),
     };
     window.localStorage.setItem(
       LAYER_PREFS_KEY,
