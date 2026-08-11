@@ -39,6 +39,7 @@ import {
   type LegendTranslationKey,
 } from "@/lib/map/legendConfiguration";
 import type { MapLayerPreferences } from "@/lib/map/mapLayerPreferences";
+import { LegendLayerIcon } from "@/lib/map/dataLayers/layerIcons";
 
 type MapLegendProps = {
   locale: Locale;
@@ -761,13 +762,11 @@ function LayerRow({
               onTogglePreference(layer.preferenceKey, event.target.checked)
             }
           />
-          <span
-            className={`h-3.5 w-3.5 shrink-0 border border-white/70 shadow-sm ${layer.swatchClassName ?? "rounded-[2px]"}`}
-            style={{
-              backgroundColor: layer.color,
-              ...(layer.swatchStyle as CSSProperties | undefined),
-            }}
-            aria-hidden="true"
+          <LegendLayerIcon
+            iconKey={layer.icon}
+            color={layer.color}
+            swatchClassName={layer.swatchClassName}
+            swatchStyle={layer.swatchStyle}
           />
           <span className="min-w-0 flex-1 truncate text-[13px] leading-snug">
             <span className="block truncate">{title}</span>
